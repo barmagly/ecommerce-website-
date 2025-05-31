@@ -374,11 +374,6 @@ export default function ShopProducts() {
                 <span className="text-danger fw-bold">{item.price} ج.م</span>
                 {item.oldPrice && <span className="text-muted text-decoration-line-through ms-2">{item.oldPrice} ج.م</span>}
               </div>
-              <div className="d-flex gap-1 mb-2">
-                {item.colors.map((color, idx) => (
-                  <span key={idx} style={{width: 16, height: 16, borderRadius: '50%', background: color, border: '1px solid #eee', display: 'inline-block'}}></span>
-                ))}
-              </div>
               <div className="d-flex gap-1 mb-2 flex-wrap">
                 {item.sizes.filter(s => s !== 'قياسي' && s !== 'ورقي').map((size, idx) => (
                   <span key={idx} className="badge bg-light text-dark border" style={{fontSize: '0.85em', margin: 1}}>{size}</span>

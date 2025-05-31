@@ -1,0 +1,175 @@
+.flashsales-section {
+  background: #fff;
+  padding-top: 40px;
+  padding-bottom: 0;
+}
+.flashsales-header {
+  margin-bottom: 60px !important;
+  gap: 2.5rem !important;
+}
+.flashsales-bar {
+  width: 20px;
+  height: 40px;
+  background: #DB4444 !important;
+  border-radius: 8px;
+}
+.flashsales-colon {
+  width: 4px;
+  height: 16px;
+  margin-top: 26px;
+  object-fit: fill;
+}
+.flashsales-arrow {
+  width: 46px;
+  height: 46px;
+  object-fit: fill;
+}
+.flashsales-products {
+  margin-bottom: 60px !important;
+  gap: 30px !important;
+}
+.flashsales-card {
+  background: #f3f3f3 !important;
+  border-radius: 16px !important;
+  min-width: 270px;
+  max-width: 320px;
+  box-shadow: 0 2px 8px #eee;
+  margin-right: 30px !important;
+}
+.flashsales-discount {
+  background: #DB4444 !important;
+  color: #F9F9F9 !important;
+  font-size: 0.9rem;
+  border-radius: 8px !important;
+  padding: 4px 16px !important;
+  border: none !important;
+}
+.flashsales-product-img {
+  width: 190px;
+  height: 180px;
+  border-radius: 12px;
+  object-fit: fill;
+}
+.flashsales-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: fill;
+}
+.flashsales-rating {
+  width: 100px;
+  height: 20px;
+  object-fit: fill;
+}
+.flashsales-viewall {
+  background: #DB4444 !important;
+  color: #F9F9F9 !important;
+  font-size: 1.1rem;
+  border-radius: 8px !important;
+  border: none !important;
+}
+.flashsales-divider {
+  background: #000;
+  height: 2px;
+  width: 100%;
+  margin-bottom: 78px !important;
+}
+@media (max-width: 991px) {
+  .flashsales-header, .flashsales-products {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+  .flashsales-card {
+    min-width: 220px;
+    max-width: 100%;
+  }
+}
+@media (max-width: 600px) {
+  .flashsales-header {
+    flex-direction: column !important;
+    gap: 1.2rem !important;
+    margin-bottom: 32px !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .flashsales-header > div, .flashsales-header > button, .flashsales-header > .d-flex {
+    width: 100%;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center;
+  }
+  .flashsales-header .display-5, .flashsales-header .fw-bold {
+    font-size: 1.5rem !important;
+    text-align: center;
+    width: 100%;
+  }
+  .flashsales-header .d-flex.align-items-center.gap-3,
+  .flashsales-header .d-flex.align-items-center.gap-2,
+  .flashsales-header .d-flex.align-items-center {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    width: 100%;
+    overflow-x: auto;
+    margin-bottom: 10px;
+  }
+  .flashsales-header .text-center, .flashsales-header .text-black {
+    min-width: 60px;
+    font-size: 1rem !important;
+    padding: 0 2px;
+  }
+  .flashsales-header .fw-bold.fs-2 {
+    font-size: 1.1rem !important;
+  }
+  .flashsales-products {
+    flex-direction: column !important;
+    gap: 12px !important;
+    margin-bottom: 24px !important;
+  }
+  .flashsales-card {
+    min-width: 90vw;
+    max-width: 98vw;
+    margin-right: 0 !important;
+    margin-left: 0 !important;
+    margin-bottom: 12px !important;
+    padding: 10px 6px !important;
+  }
+  .flashsales-product-img {
+    width: 120px;
+    height: 100px;
+  }
+  .flashsales-icon {
+    width: 24px;
+    height: 24px;
+  }
+  .flashsales-rating {
+    width: 60px;
+    height: 14px;
+  }
+  .flashsales-viewall {
+    font-size: 1rem;
+    padding: 10px 18px !important;
+  }
+  .flashsales-divider {
+    margin-bottom: 32px !important;
+  }
+  .flashsales-timer-row {
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    gap: 0.3rem !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .flashsales-timer-row .text-center, .flashsales-timer-row .text-black {
+    min-width: 48px;
+    font-size: 0.95rem !important;
+    padding: 0 1px;
+  }
+  .flashsales-timer-row .fw-bold.fs-2 {
+    font-size: 1rem !important;
+  }
+} 

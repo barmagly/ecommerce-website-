@@ -109,28 +109,7 @@ export default function ShopFilters() {
         </div>
       </div>
 
-      {/* فلتر الألوان */}
-      <div className="mb-4">
-        <label className="form-label fw-bold">اللون</label>
-        <div className="d-flex gap-2 flex-wrap">
-          {colors.map(color => (
-            <button
-              key={color.id}
-              className="color-btn"
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: '50%',
-                border: '2px solid #eee',
-                background: color.code,
-                boxShadow: selectedColors.includes(color.id) ? '0 0 0 2px #DB4444' : 'none'
-              }}
-              onClick={() => handleColorToggle(color.id)}
-              title={color.name}
-            />
-          ))}
-        </div>
-      </div>
+     
 
       {/* فلتر الماركة */}
       <div className="mb-4">

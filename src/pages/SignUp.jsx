@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
 
 export default function SignUp() {
   return (
@@ -67,7 +68,7 @@ export default function SignUp() {
             </form>
             <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
               <span style={{fontSize: '16px'}}>لديك حساب بالفعل؟</span>
-              <a href="/login" className="fw-bold text-danger" style={{fontSize: '16px', textDecoration: 'none'}}>تسجيل الدخول</a>
+              <Link to="/login" className="fw-bold text-danger" style={{fontSize: '16px', textDecoration: 'none'}}>تسجيل الدخول</Link>
             </div>
           </div>
         </div>

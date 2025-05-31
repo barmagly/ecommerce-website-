@@ -480,47 +480,81 @@ export default function ProductDetails() {
         {/* وصف تفصيلي للمنتج */}
         <div className="row justify-content-center mt-4 mb-5">
           <div className="col-12 col-md-10 col-lg-8">
-            <div className="bg-light rounded p-4 text-center shadow-sm" style={{fontSize: '1.13em', border: '1px solid #eee'}}>
-              <h5 className="fw-bold mb-3 text-danger">وصف المنتج التفصيلي</h5>
-              <div className="text-muted">{product.details}</div>
+            <div className="bg-light rounded p-4 text-end shadow-sm" style={{fontSize: '1.13em', border: '1px solid #eee', direction: 'rtl', marginBottom: 24}}>
+              <h5 className="fw-bold mb-3 text-danger text-end" style={{fontSize: '1.25em'}}>عن هذه السلعة</h5>
+              <ul style={{paddingRight: 24, paddingLeft: 0, listStyle: 'disc', color: '#222', fontSize: '1.08em'}}>
+                <li>معالج V1 المدمج المطور الجديد يفتح الإمكانيات الكاملة لمعالج إلغاء الضوضاء QN1 مع جودة HD عالية الدقة لتقديم جودة غير مسبوقة لإلغاء الضوضاء.</li>
+                <li>مصممة بدقة لتقديم صوت استثنائي على الهاتف وجودة مكالمات رائدة في الصناعة، بفضل تقنية التقاط الصوت الدقيق ومعالجة الإشارات الصوتية المتقدمة.</li>
+                <li>سماعة ذكية ومبتكرة وسهلة، التحكم في الصوت التكيفي يضبط إعدادات الصوت بشكل أوتوماتيكي حسب بيئتك، مع مستشعرات تكتشف ما إذا كنت ترتدي السماعة أم لا.</li>
+                <li>إزالة الضوضاء الخارجية الرائدة يمكن سماعها في أي مكان، حتى في البيئات الصاخبة.</li>
+                <li>عمر بطارية يصل حتى 30 ساعة، شحن سريع، تصميم قابل للطي لسهولة الحمل أثناء السفر والتنقل.</li>
+              </ul>
             </div>
           </div>
         </div>
         {/* قسم التقييمات */}
         <div className="row mt-5">
-          <div className="col-12 col-lg-8 mx-auto">
+          <div className="col-12 col-lg-10 mx-auto">
             <div className="bg-white rounded shadow-sm p-4 mb-4" style={{border: '1px solid #eee'}}>
-              <h4 className="fw-bold mb-4 text-center"><i className="fas fa-star text-warning ms-2"></i> تقييمات العملاء</h4>
-              <div className="mb-4">
-                {reviews.length === 0 && <div className="alert alert-info text-center">لا توجد تقييمات بعد.</div>}
-                {reviews.map((r, i) => (
-                  <div key={i} className="border-bottom pb-3 mb-3">
-                    <div className="d-flex align-items-center gap-2 mb-1">
-                      <StarRating rating={r.rating} />
-                      <b>{r.name}</b>
-                      <span className="text-muted small">{r.date}</span>
+              <div className="row g-4">
+                {/* العمود الأيمن: ملخص التقييم وزر كتابة مراجعة */}
+                <div className="col-12 col-md-4 border-end-md" style={{borderLeft: '1.5px solid #eee'}}>
+                  <div className="fw-bold mb-2 text-center" style={{fontSize: '1.18em'}}>مراجعات المستخدمين</div>
+                  <div className="d-flex align-items-center justify-content-center mt-2 mb-1">
+                    <span className="fw-bold text-warning" style={{fontSize: '2.2em', lineHeight: 1}}>{product.rating}</span>
+                    <span className="ms-2"><StarRating rating={product.rating} /></span>
+                  </div>
+                  <div className="text-muted text-center mb-3">{product.reviews} تقييم</div>
+                  {[5,4,3,2,1].map(star => {
+                    const percent = star === 5 ? 71 : star === 4 ? 13 : star === 3 ? 7 : star === 2 ? 3 : 6;
+                    return (
+                      <div key={star} className="d-flex align-items-center mb-1" style={{fontSize: '1em'}}>
+                        <span className="me-2" style={{width: 48, textAlign: 'left'}}>{star} {star === 1 ? 'نجمة' : star === 2 ? 'نجمتان' : star === 3 ? '3 نجوم' : star === 4 ? '4 نجوم' : '5 نجوم'}</span>
+                        <div className="progress flex-grow-1 mx-2" style={{height: 10, background: '#f3f3f3'}}>
+                          <div className="progress-bar bg-warning" role="progressbar" style={{width: percent + '%'}} aria-valuenow={percent} aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                        <span className="text-muted" style={{width: 32, textAlign: 'right'}}>{percent}%</span>
+                      </div>
+                    );
+                  })}
+                
+               
+                </div>
+                {/* العمود الأيسر: قائمة المراجعات ونموذج التقييم */}
+                <div className="col-12 col-md-8">
+                  <h4 className="fw-bold mb-4 text-center"><i className="fas fa-star text-warning ms-2"></i> أفضل التقييمات</h4>
+                  <div className="mb-4">
+                    {reviews.length === 0 && <div className="alert alert-info text-center">لا توجد تقييمات بعد.</div>}
+                    {reviews.map((r, i) => (
+                      <div key={i} className="border-bottom pb-3 mb-3">
+                        <div className="d-flex align-items-center gap-2 mb-1">
+                          <StarRating rating={r.rating} />
+                          <b>{r.name}</b>
+                          <span className="text-muted small">{r.date}</span>
+                        </div>
+                        <div className="text-muted" style={{fontSize: '1.08em'}}>{r.comment}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <form onSubmit={handleReviewSubmit} className="border rounded p-3 bg-light mt-3">
+                    <h6 className="fw-bold mb-3 text-center">أضف تقييمك</h6>
+                    <div className="row g-2 mb-2 align-items-center justify-content-center">
+                      <div className="col-md-4 mb-2 mb-md-0">
+                        <input type="text" name="name" className="form-control" placeholder="اسمك" value={reviewForm.name} onChange={handleReviewChange} required />
+                      </div>
+                      <div className="col-md-4 mb-2 mb-md-0 text-center">
+                        <StarRating rating={reviewForm.rating} setRating={r => setReviewForm(f => ({...f, rating: r}))} interactive={true} />
+                      </div>
+                      <div className="col-md-4">
+                        <input type="text" name="comment" className="form-control" placeholder="تعليقك" value={reviewForm.comment} onChange={handleReviewChange} required />
+                      </div>
                     </div>
-                    <div className="text-muted" style={{fontSize: '1.08em'}}>{r.comment}</div>
-                  </div>
-                ))}
+                    <div className="text-center">
+                      <button className="btn btn-danger mt-2 px-5" type="submit">إرسال التقييم</button>
+                    </div>
+                  </form>
+                </div>
               </div>
-              <form onSubmit={handleReviewSubmit} className="border rounded p-3 bg-light">
-                <h6 className="fw-bold mb-3 text-center">أضف تقييمك</h6>
-                <div className="row g-2 mb-2 align-items-center justify-content-center">
-                  <div className="col-md-4 mb-2 mb-md-0">
-                    <input type="text" name="name" className="form-control" placeholder="اسمك" value={reviewForm.name} onChange={handleReviewChange} required />
-                  </div>
-                  <div className="col-md-4 mb-2 mb-md-0 text-center">
-                    <StarRating rating={reviewForm.rating} setRating={r => setReviewForm(f => ({...f, rating: r}))} interactive={true} />
-                  </div>
-                  <div className="col-md-4">
-                    <input type="text" name="comment" className="form-control" placeholder="تعليقك" value={reviewForm.comment} onChange={handleReviewChange} required />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <button className="btn btn-danger mt-2 px-5" type="submit">إرسال التقييم</button>
-                </div>
-              </form>
             </div>
           </div>
         </div>
@@ -564,9 +598,6 @@ export default function ProductDetails() {
                       <div className="text-muted mb-1" style={{fontSize: '0.98em'}}>{item.brand}</div>
                       <div className="text-muted mb-2" style={{fontSize: '0.97em', minHeight: 36, overflow: 'hidden', textOverflow: 'ellipsis'}}>{item.description}</div>
                       <div className="d-flex justify-content-center gap-1 flex-wrap mb-2">
-                        {item.colors.map((color, idx) => (
-                          <span key={idx} style={{width: 18, height: 18, borderRadius: '50%', background: color, border: '1.5px solid #eee', display: 'inline-block'}}></span>
-                        ))}
                       </div>
                       <div className="d-flex justify-content-center gap-1 flex-wrap">
                         {item.sizes.filter(s => s !== 'قياسي' && s !== 'ورقي').map((size, idx) => (

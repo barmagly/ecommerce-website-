@@ -1,0 +1,368 @@
+html, body {
+  scroll-behavior: smooth;
+}
+
+.home-bg-animated {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: radial-gradient(circle at 80% 20%, #e0e7ff 0%, transparent 60%),
+              radial-gradient(circle at 20% 80%, #ffe0f0 0%, transparent 60%);
+  animation: bgFade 10s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes bgFade {
+  0% { opacity: 0.7; }
+  100% { opacity: 1; }
+}
+
+/* Modern Gradient Backgrounds for Home Page Sections */
+.main-slider-section {
+  width: 100vw;
+  max-width: 100%;
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  padding: 0;
+}
+
+.main-carousel {
+  width: 100vw !important;
+  max-width: 100% !important;
+  margin: 0 auto !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.07);
+  overflow: hidden;
+  position: relative;
+}
+
+.main-carousel .swiper-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+  position: relative;
+}
+
+.carousel-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 380px;
+  padding: 2.5rem 4vw;
+  border-radius: 2rem;
+  width: 100%;
+  box-shadow: none;
+  position: relative;
+  overflow: hidden;
+  background: none !important;
+  gap: 3rem;
+  flex-wrap: wrap;
+}
+
+.carousel-image {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  min-width: 220px;
+}
+
+.carousel-image img {
+  max-height: 320px;
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  transition: transform 0.5s cubic-bezier(.4,2,.3,1);
+  width: auto;
+  max-width: 100%;
+  display: block;
+}
+
+.carousel-image img:hover {
+  transform: scale(1.05) rotate(-2deg);
+}
+
+.carousel-text {
+  flex: 1;
+  padding-left: 2rem;
+  padding-right: 2rem;
+  text-align: center;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  word-break: break-word;
+  max-width: 420px;
+}
+
+.carousel-text h2 {
+  margin-bottom: 1.2rem;
+}
+
+.carousel-text h6 {
+  margin-bottom: 0.7rem;
+}
+
+.carousel-text .shop-now-link {
+  margin-top: 0.7rem;
+  margin-bottom: 0.2rem;
+}
+
+.shop-now-link {
+  color: #fff;
+  background: #dc3545;
+  padding: 0.7rem 2rem;
+  border-radius: 2rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(220,53,69,0.08);
+}
+
+.shop-now-link:hover {
+  background: #b52a37;
+  color: #fff;
+}
+
+@media (max-width: 991px) {
+  .main-slider-section {
+    min-height: 40vh;
+  }
+  .carousel-content {
+    flex-direction: column-reverse;
+    min-height: 320px;
+    padding: 1.5rem 0.5rem;
+    text-align: center;
+    gap: 1.5rem;
+  }
+  .carousel-text, .carousel-image {
+    padding: 0 !important;
+    max-width: 100%;
+  }
+  .carousel-image img {
+    max-height: 180px;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-slider-section {
+    min-height: 20vh;
+  }
+  .main-carousel {
+    border-radius: 1rem !important;
+  }
+  .carousel-content {
+    min-height: 200px;
+    padding: 0.5rem 0.2rem;
+    gap: 0.5rem;
+  }
+  .carousel-text {
+    max-width: 100vw;
+    padding: 0 0.5rem;
+  }
+}
+
+.flashsales-section-bg {
+  background: linear-gradient(135deg, #fff8f8 0%, #ffe6e6 100%) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 4px 32px rgba(219, 68, 68, 0.08) !important, 0 0 0 1px rgba(219, 68, 68, 0.05) !important;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.flashsales-section-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 30% 30%, rgba(255, 99, 71, 0.15) 0%, transparent 70%),
+    radial-gradient(circle at 70% 70%, rgba(255, 69, 0, 0.15) 0%, transparent 70%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  animation: pulseGradient 12s ease-in-out infinite alternate;
+  filter: blur(15px);
+}
+
+.categories-section-bg {
+  background: linear-gradient(135deg, #f5f9ff 0%, #e6f0ff 100%) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 4px 32px rgba(59, 130, 246, 0.08) !important, 0 0 0 1px rgba(59, 130, 246, 0.05) !important;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.categories-section-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 40% 40%, rgba(30, 144, 255, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 60% 60%, rgba(0, 191, 255, 0.15) 0%, transparent 60%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  animation: floatGradient 15s ease-in-out infinite alternate;
+  filter: blur(15px);
+}
+
+.bestsellers-section-bg {
+  background: linear-gradient(135deg, #fffbf0 0%, #fff7cc 100%) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 4px 32px rgba(245, 158, 66, 0.08) !important, 0 0 0 1px rgba(245, 158, 66, 0.05) !important;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.bestsellers-section-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.15) 0%, transparent 70%),
+    radial-gradient(circle at 80% 20%, rgba(255, 165, 0, 0.15) 0%, transparent 70%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  animation: shimmerGradient 15s ease-in-out infinite alternate;
+  filter: blur(15px);
+}
+
+.servicefeatures-section-bg {
+  background: linear-gradient(135deg, #f5fff7 0%, #e6fff0 100%) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 4px 32px rgba(16, 185, 129, 0.08) !important, 0 0 0 1px rgba(16, 185, 129, 0.05) !important;
+  margin: 2rem 0;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.servicefeatures-section-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(46, 213, 115, 0.15) 0%, transparent 60%),
+    radial-gradient(circle at 80% 20%, rgba(52, 211, 153, 0.15) 0%, transparent 60%),
+    linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+  animation: waveGradient 18s ease-in-out infinite alternate;
+  filter: blur(15px);
+}
+
+/* Enhanced Animation Keyframes */
+@keyframes gradientShift {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.1) rotate(1deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2) rotate(-1deg);
+    opacity: 0.7;
+  }
+}
+
+@keyframes pulseGradient {
+  0% {
+    transform: scale(1) translate(0, 0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1.05) translate(-5px, -5px);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.1) translate(5px, 5px);
+    opacity: 0.5;
+  }
+}
+
+@keyframes floatGradient {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05) rotate(1deg);
+  }
+  100% {
+    transform: translateY(-20px) scale(1.1) rotate(-1deg);
+  }
+}
+
+@keyframes shimmerGradient {
+  0% {
+    transform: translateX(-5%) scale(1) rotate(0deg);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateX(0%) scale(1.05) rotate(1deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(5%) scale(1.1) rotate(-1deg);
+    opacity: 0.5;
+  }
+}
+
+@keyframes waveGradient {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg) scale(1.05);
+  }
+  100% {
+    transform: translateY(-15px) rotate(-2deg) scale(1.1);
+  }
+}
+
+/* Ensure content stays above gradients with enhanced styling */
+.main-slider-section > *,
+.flashsales-section-bg > *,
+.categories-section-bg > *,
+.bestsellers-section-bg > *,
+.servicefeatures-section-bg > * {
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Add hover effects to cards within sections */
+.flashsales-section-bg .card,
+.categories-section-bg .card,
+.bestsellers-section-bg .card,
+.servicefeatures-section-bg .card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+  margin-left: 20px;
+}
+
+.flashsales-section-bg .card:hover,
+.categories-section-bg .card:hover,
+.bestsellers-section-bg .card:hover,
+.servicefeatures-section-bg .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}

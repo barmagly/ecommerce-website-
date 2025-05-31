@@ -5,6 +5,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import SignUp from './pages/SignUp';
 import Error404 from './pages/Error404';
@@ -31,6 +32,7 @@ function App() {
       <Router>
         <WhatsAppFloat />
         <Routes>
+          <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/about" element={<About />} />

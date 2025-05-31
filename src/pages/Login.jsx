@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { Link } from "react-router-dom";
 
 export default function Login() {
   const [showModal, setShowModal] = useState(false);
@@ -61,7 +62,7 @@ export default function Login() {
             </form>
             <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
               <span style={{fontSize: '16px'}}>ليس لديك حساب؟</span>
-              <a href="/signup" className="fw-bold text-danger" style={{fontSize: '16px', textDecoration: 'none'}}>سجل الآن</a>
+              <Link to="/signup" className="fw-bold text-danger" style={{fontSize: '16px', textDecoration: 'none'}}>سجل الآن</Link>
             </div>
             <button
               type="button"
