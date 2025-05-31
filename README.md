@@ -1,12 +1,94 @@
-# React + Vite
+# متجر إلكتروني متكامل (Ecommerce Website)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## نبذة عن المشروع
 
-Currently, two official plugins are available:
+هذا المشروع عبارة عن متجر إلكتروني متكامل تم تطويره باستخدام React وBootstrap ويدعم اللغة العربية بالكامل (RTL)، ويحتوي على جميع الصفحات الأساسية لأي متجر احترافي مع تصميم عصري وتجربة مستخدم رائعة.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## الصفحات والمميزات الرئيسية
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **الصفحة الرئيسية (تسجيل الدخول/الرئيسية):**
+  - تسجيل دخول مع نافذة منبثقة "نسيت كلمة المرور؟".
+  - دعم تسجيل الدخول عبر Google.
+  - دعم اللغة العربية واتجاه RTL.
+
+- **صفحة التسجيل (Sign Up):**
+  - إنشاء حساب جديد مع جميع الحقول المطلوبة.
+
+- **صفحة من نحن (About):**
+  - أقسام منفصلة: القصة، الإحصائيات، الفريق، المميزات.
+  - أنيميشن عند التمرير (AOS).
+
+- **صفحة تواصل معنا (Contact):**
+  - أقسام منفصلة: معلومات التواصل، نموذج التواصل، خريطة تفاعلية (نجع حمادي - قنا) باستخدام Leaflet.
+  - زر واتساب عائم للتواصل المباشر.
+
+- **صفحة سلة المشتريات (Cart):**
+  - جدول المنتجات مع إمكانية تعديل الكمية وحذف المنتجات.
+  - ملخص الطلب وزر إتمام الشراء.
+
+- **صفحة المفضلة (Wishlist):**
+  - عرض المنتجات المفضلة مع إمكانية الإضافة للسلة أو الحذف.
+  - قسم "منتجات مقترحة لك".
+
+- **صفحة نتائج البحث (Search):**
+  - شريط بحث في الهيدر يوجه للصفحة مع النتائج.
+  - عرض النتائج في شبكة بطاقات.
+
+- **صفحة المتجر (Shop):**
+  - مقسمة إلى مكونات: الفلاتر، الأقسام (دوائر ملونة)، المنتجات.
+  - فلاتر حسب السعر، الماركة، التقييم.
+
+- **صفحة 404:**
+  - صفحة خطأ مخصصة عند إدخال مسار غير موجود.
+
+- **هيدر وفوتر منفصلان:**
+  - الهيدر يحتوي على بحث، سلة، مفضلة، وروابط.
+  - الفوتر يحتوي على روابط سريعة، معلومات الشركة، وسائل التواصل، وشعار.
+
+---
+
+## مميزات إضافية
+- دعم كامل للغة العربية وRTL.
+- أنيميشن AOS في جميع الصفحات.
+- تصميم متجاوب مع جميع الأجهزة.
+- استخدام أيقونات Font Awesome.
+- زر واتساب عائم في جميع الصفحات.
+- ربط البحث بين الهيدر وصفحة النتائج.
+- جميع الصفحات منظمة في مكونات منفصلة لسهولة التطوير.
+
+---
+
+## طريقة التشغيل
+
+1. تثبيت الحزم:
+   ```bash
+   npm install
+   ```
+2. تشغيل المشروع:
+   ```bash
+   npm start
+   ```
+
+---
+
+## هيكلية المشروع
+- `src/components` : جميع المكونات (الهيدر، الفوتر، الفلاتر، ...)
+- `src/pages` : جميع الصفحات الرئيسية
+- `public/images` : صور الشعار والمنتجات
+
+---
+
+## روابط مهمة
+- [رابط المشروع على GitHub](https://github.com/barmagly/ecommerce-website-)
+- [رابط برانش التطوير (khaled)](https://github.com/barmagly/ecommerce-website-/tree/khaled)
+
+---
+
+## المطور
+- برمجلى Barmagly
+
+---
+
+> تم تنفيذ جميع المتطلبات البرمجية والتصميمية حسب طلب العميل مع دعم التوسعة المستقبلية بسهولة.
