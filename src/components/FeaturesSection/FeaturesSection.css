@@ -1,0 +1,56 @@
+/* Features Section Styles */
+.feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.feature-icon {
+    width: 80px;
+    /* Size of the circle */
+    height: 80px;
+    /* Size of the circle */
+    background-color: #e0e0e0;
+    /* Grey background color */
+    border-radius: 50%;
+    /* Make it round */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 1rem;
+    /* Space between icon and title */
+}
+
+.feature-icon i {
+    font-size: 2.5rem;
+    /* Size of the icon */
+    color: #2c3e50;
+    /* Black icon color */
+}
+
+.feature-title {
+    font-size: 1.25rem;
+    /* Title font size */
+    font-weight: 700;
+    color: #2c3e50;
+    /* Dark text color */
+    margin-bottom: 0.5rem;
+    /* Space between title and subtitle */
+}
+
+.feature-subtitle {
+    font-size: 1rem;
+    /* Subtitle font size */
+    color: #555;
+    /* Slightly lighter text color */
+    font-weight: 400;
+}
+
+/* Responsive Adjustments (Optional - Bootstrap grid handles most layout) */
+@media (max-width: 767.98px) {
+    .feature-item {
+        margin-bottom: 2rem;
+        /* Add bottom margin on smaller screens */
+    }
+}

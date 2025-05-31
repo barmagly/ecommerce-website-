@@ -1,0 +1,261 @@
+/* Categories Card Styles */
+.categories-card {
+    background: white;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.08);
+    height: 100%;
+}
+
+.categories-title {
+    color: #2c3e50;
+    font-weight: 600;
+    position: relative;
+    padding-bottom: 0.5rem;
+}
+
+.categories-title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 50px;
+    height: 3px;
+    background: #3498db;
+    border-radius: 3px;
+}
+
+.categories-list {
+    margin-top: 1rem;
+}
+
+.category-item {
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    border-radius: 0.5rem !important;
+    margin-bottom: 0.5rem;
+}
+
+.category-item:hover {
+    background-color: #f8f9fa;
+    transform: translateX(-5px);
+}
+
+.category-link {
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.category-item:hover .category-link {
+    color: #3498db !important;
+}
+
+.category-icon {
+    color: #95a5a6;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+.category-item:hover .category-icon {
+    transform: translateX(-5px);
+    color: #3498db;
+}
+
+/* Carousel Styles */
+.main-carousel {
+    overflow: hidden;
+    border-radius: 1rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.main-carousel .carousel-inner {
+    border-radius: 1rem;
+}
+
+.carousel-content {
+    display: flex;
+    align-items: center;
+    padding: 3rem;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Remove previous gradient backgrounds */
+.bg-gradient-dark,
+.bg-gradient-primary {
+    background: none !important;
+}
+
+.bg-black {
+    background-color: black !important;
+}
+
+.text-white {
+    color: white !important;
+}
+
+.carousel-text {
+    flex: 1;
+    z-index: 2;
+    padding-left: 2rem;
+    padding-right: 0;
+    text-align: right;
+}
+
+.apple-logo {
+    width: 30px;
+    height: 30px;
+    fill: white;
+    /* Set SVG color to white */
+}
+
+.shop-now-link {
+    color: white;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    position: relative;
+    padding-bottom: 3px;
+    /* Space for the underline */
+    display: inline-block;
+    /* Required for ::after to work correctly */
+}
+
+.shop-now-link::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background-color: white;
+    transition: width 0.3s ease;
+}
+
+.shop-now-link:hover::after {
+    width: 100%;
+}
+
+.shop-now-link i {
+    margin-left: 0.5rem;
+    margin-right: 0;
+    transition: transform 0.3s ease;
+}
+
+.shop-now-link:hover i {
+    transform: translateX(-5px);
+}
+
+.carousel-image {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+.carousel-image img {
+    max-height: 300px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.4));
+    /* Darker shadow for black background */
+    transition: transform 0.3s ease;
+}
+
+.carousel-item:hover .carousel-image img {
+    transform: scale(1.02);
+}
+
+/* Carousel Controls */
+.main-carousel .carousel-control-prev,
+.main-carousel .carousel-control-next {
+    width: 50px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 1rem;
+    backdrop-filter: blur(5px);
+    opacity: 0.8;
+    /* Always visible but slightly transparent */
+    transition: opacity 0.3s ease;
+}
+
+
+
+.main-carousel .carousel-control-prev:hover,
+.main-carousel .carousel-control-next:hover {
+    opacity: 1;
+}
+
+
+
+.main-carousel .carousel-indicators {
+    margin-bottom: 1rem;
+}
+
+.main-carousel .carousel-indicators button {
+    width: 8px;
+    /* Smaller size */
+    height: 8px;
+    /* Smaller size */
+    border-radius: 50%;
+    margin: 0 4px;
+    /* Adjust margin */
+    background-color: rgba(255, 255, 255, 0.5);
+    /* Gray inactive */
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.main-carousel .carousel-indicators button.active {
+    background-color: red;
+    /* Red active */
+    transform: scale(1.2);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+    .carousel-content {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem;
+    }
+
+    .carousel-text {
+        padding-right: 0;
+        padding-left: 0;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .carousel-image img {
+        max-height: 200px;
+    }
+
+    .shop-now-link i {
+        margin-left: 0.5rem;
+        margin-right: 0;
+    }
+}
+
+/* Animation Classes (Keep these for Bootstrap transitions) */
+.carousel-item {
+    transition: transform 0.6s ease-in-out;
+}
+
+.carousel-item.active {
+    transform: translateX(0);
+}
+
+.carousel-item-next:not(.carousel-item-start),
+.active.carousel-item-end {
+    transform: translateX(100%);
+}
+
+.carousel-item-prev:not(.carousel-item-end),
+.active.carousel-item-start {
+    transform: translateX(-100%);
+}
