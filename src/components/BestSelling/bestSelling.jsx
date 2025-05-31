@@ -1,32 +1,4 @@
 import React from 'react';
-// import { bestSelling } from '../data/products';
-
-export default function BestSelling() {
-  return (
-    <div className="container py-5">
-      <div className="new-arrival-header mb-4">
-        <span className="featured-tag">هذا الشهر</span>
-        <h2 className="new-arrival-title">الأفضل مبيعًا</h2>
-      </div>
-      <div className="row">
-        {bestSelling.map((item) => (
-          <div className="col-md-3 mb-4" key={item.id}>
-            <div className="card h-100">
-              <img src={item.image} className="card-img-top" alt={item.name} />
-              <div className="card-body">
-                <h6 className="card-title">{item.name}</h6>
-                <p className="card-text">
-                  <strong>${item.price}</strong> <del>${item.oldPrice}</del>
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 
 const bestSelling = [
   {
@@ -58,3 +30,29 @@ const bestSelling = [
     oldPrice: 400,
   },
 ];
+
+export default function BestSelling() {
+  return (
+    <div className="container py-5">
+      <div className="new-arrival-header mb-4">
+        <span className="featured-tag">هذا الشهر</span>
+        <h2 className="new-arrival-title">الأفضل مبيعًا</h2>
+      </div>
+      <div className="row">
+        {bestSelling.map((item) => (
+          <div className="col-md-3 mb-4" key={item.id}>
+            <div className="card h-100">
+              <img src={item.image} className="card-img-top" alt={item.name} />
+              <div className="card-body">
+                <h6 className="card-title">{item.name}</h6>
+                <p className="card-text">
+                  <strong>${item.price}</strong> <del>${item.oldPrice}</del>
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
