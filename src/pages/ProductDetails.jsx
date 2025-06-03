@@ -39,8 +39,7 @@ export default function ProductDetails() {
   const { products, loading, error } = useSelector((state) => state.product);
   const product = products?.find(p => p._id === id);
 
-  const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedAttributes, setSelectedAttributes] = useState({});
   const [mainImg, setMainImg] = useState(null);
   const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
   const [reviews, setReviews] = useState([]);
@@ -52,12 +51,14 @@ export default function ProductDetails() {
   useEffect(() => {
     if (product) {
       setMainImg(product.images?.[0]?.url || product.imageCover || PLACEHOLDER_IMG);
-      if (product.options?.sizes?.length > 0) {
-        setSelectedSize(product.options.sizes[0]);
-      }
-      if (product.options?.colors?.length > 0) {
-        setSelectedColor(product.options.colors[0]);
-      }
+      // Initialize selected attributes
+      const initialAttributes = {};
+      product.attributes?.forEach(attr => {
+        if (attr.values.length > 0) {
+          initialAttributes[attr.name] = attr.values[0];
+        }
+      });
+      setSelectedAttributes(initialAttributes);
     }
   }, [product]);
 
@@ -144,7 +145,7 @@ export default function ProductDetails() {
   };
 
   const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
-  const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.title}${selectedSize ? ` (${selectedSize.name || selectedSize})` : ''} بسعر ${product.productVariants?.[0]?.price || product.basePrice} ج.م\nرابط المنتج: ${currentUrl}`;
+  const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.name} بسعر ${product.price} ج.م\nرابط المنتج: ${currentUrl}`;
   const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
 
   return (
@@ -156,7 +157,7 @@ export default function ProductDetails() {
             <div style={{ background: '#f6f6f6', borderRadius: 24, padding: 16, boxShadow: '0 4px 24px #0001', width: '100%', display: 'flex', justifyContent: 'center', minHeight: 320 }}>
               <img
                 src={mainImg}
-                alt={product.title}
+                alt={product.name}
                 style={{ maxWidth: 480, maxHeight: 420, borderRadius: 18, objectFit: 'contain', width: '100%', transition: '0.25s' }}
               />
             </div>
@@ -166,7 +167,7 @@ export default function ProductDetails() {
                   <img
                     key={idx}
                     src={img.url}
-                    alt={`${product.title}-img-${idx}`}
+                    alt={`${product.name}-img-${idx}`}
                     style={{
                       width: 64,
                       height: 64,
@@ -183,70 +184,51 @@ export default function ProductDetails() {
             )}
           </div>
           <div className="col-12 col-md-6">
-            <h2 className="fw-bold mb-2" style={{ fontSize: '2.1rem' }}>{product.title}</h2>
+            <h2 className="fw-bold mb-2" style={{ fontSize: '2.1rem' }}>{product.name}</h2>
             <div className="mb-2 text-muted" style={{ fontSize: '1.1rem' }}>{product.brand}</div>
             <div className="d-flex align-items-center gap-2 mb-2">
               <span className="badge bg-warning text-dark" style={{ fontSize: '1.1em' }}>
                 <StarRating rating={product.ratings?.average || 0} /> {product.ratings?.average || 0}
               </span>
               <span className="text-muted">({product.ratings?.count || 0} تقييم)</span>
-              <span className={`badge ${product.productVariants?.[0]?.inStock ? 'bg-success' : 'bg-danger'}`}>
-                {product.productVariants?.[0]?.inStock ? 'متوفر' : 'غير متوفر'}
+              <span className={`badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}`}>
+                {product.stock > 0 ? 'متوفر' : 'غير متوفر'}
               </span>
             </div>
             <div className="mb-3">
               <span className="text-danger fw-bold fs-3">
-                {product.productVariants?.[0]?.price || product.basePrice} ج.م
+                {product.price} ج.م
               </span>
-              {product.basePrice && product.productVariants?.[0]?.price && (
-                <span className="text-muted text-decoration-line-through ms-2">
-                  {product.basePrice} ج.م
-                </span>
-              )}
             </div>
             <p className="mb-3 text-muted" style={{ fontSize: '1.1rem' }}>{product.description}</p>
 
-            {product.options?.sizes?.length > 0 && (
-              <div className="mb-3">
-                <span className="fw-bold">المقاس:</span>
+            {product.attributes?.map((attr, idx) => (
+              <div key={idx} className="mb-3">
+                <span className="fw-bold">{attr.name}:</span>
                 <div className="d-flex gap-2 mt-2 flex-wrap">
-                  {product.options.sizes.map(size => (
+                  {attr.values.map((value, vIdx) => (
                     <button
-                      key={size.name || size}
-                      className={`btn btn-sm ${selectedSize === size ? 'btn-danger text-white' : 'btn-outline-dark'}`}
+                      key={vIdx}
+                      className={`btn btn-sm ${selectedAttributes[attr.name] === value ? 'btn-danger text-white' : 'btn-outline-dark'}`}
                       style={{ minWidth: 70, fontWeight: 700, fontSize: '1.1em' }}
-                      onClick={() => setSelectedSize(size)}
+                      onClick={() => setSelectedAttributes(prev => ({ ...prev, [attr.name]: value }))}
                     >
-                      {size.name || size}
+                      {value}
                     </button>
                   ))}
                 </div>
               </div>
-            )}
-
-            {product.options?.colors?.length > 0 && (
-              <div className="mb-3">
-                <span className="fw-bold">اللون:</span>
-                <div className="d-flex gap-2 mt-2 flex-wrap">
-                  {product.options.colors.map(color => (
-                    <button
-                      key={color.name || color}
-                      className={`btn btn-sm ${selectedColor === color ? 'btn-danger text-white' : 'btn-outline-dark'}`}
-                      style={{ minWidth: 70, fontWeight: 700, fontSize: '1.1em' }}
-                      onClick={() => setSelectedColor(color)}
-                    >
-                      {color.name || color}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+            ))}
 
             {product.features?.length > 0 && (
               <div className="mb-3">
                 <span className="fw-bold">المميزات:</span>
                 <ul className="mt-2">
-                  {product.features.map((f, i) => <li key={i} className="text-muted">{f}</li>)}
+                  {product.features.map((f, i) => (
+                    <li key={i} className="text-muted">
+                      <b>{f.name}:</b> {f.value}
+                    </li>
+                  ))}
                 </ul>
               </div>
             )}
@@ -254,13 +236,18 @@ export default function ProductDetails() {
             {product.specifications?.length > 0 && (
               <div className="mb-3">
                 <span className="fw-bold">المواصفات:</span>
-                <ul className="mt-2">
-                  {product.specifications.map((s, i) => (
-                    <li key={i} className="text-muted">
-                      <b>{s.label}:</b> {s.value}
-                    </li>
-                  ))}
-                </ul>
+                {product.specifications.map((spec, idx) => (
+                  <div key={idx} className="mt-3">
+                    <h6 className="fw-bold">{spec.group}</h6>
+                    <ul className="mt-2">
+                      {spec.items.map((item, i) => (
+                        <li key={i} className="text-muted">
+                          <b>{item.name}:</b> {item.value}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
               </div>
             )}
 
@@ -432,7 +419,7 @@ export default function ProductDetails() {
                       }}>
                         <img
                           src={item.images?.[0]?.url || item.imageCover || PLACEHOLDER_IMG}
-                          alt={item.title}
+                          alt={item.name}
                           style={{
                             height: 140,
                             objectFit: 'contain',
@@ -442,19 +429,14 @@ export default function ProductDetails() {
                       </div>
                       <div className="card-body text-center p-2">
                         <h6 className="fw-bold mb-1" style={{ fontSize: '1.08em', minHeight: 36 }}>
-                          {item.title}
+                          {item.name}
                         </h6>
                         <div className="mb-1">
                           <StarRating rating={item.ratings?.average || 0} />
                         </div>
                         <div className="text-danger fw-bold mb-1" style={{ fontSize: '1.1em' }}>
-                          {item.productVariants?.[0]?.price || item.basePrice} ج.م
+                          {item.price} ج.م
                         </div>
-                        {item.basePrice && item.productVariants?.[0]?.price && (
-                          <div className="text-muted text-decoration-line-through small mb-1">
-                            {item.basePrice} ج.م
-                          </div>
-                        )}
                         <div className="text-muted mb-1" style={{ fontSize: '0.98em' }}>
                           {item.brand}
                         </div>

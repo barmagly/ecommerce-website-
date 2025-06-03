@@ -23,13 +23,13 @@ const StarRating = ({ rating }) => {
   return <div className="d-flex gap-1">{stars}</div>;
 };
 
-const AvailabilityBadge = ({ inStock }) => {
+const AvailabilityBadge = ({ stock }) => {
   const statusConfig = {
     true: { label: "متوفر", className: "bg-success" },
     false: { label: "غير متوفر", className: "bg-danger" }
   };
 
-  const config = statusConfig[inStock] || statusConfig[false];
+  const config = statusConfig[stock > 0] || statusConfig[false];
 
   return (
     <span className={`badge ${config.className} position-absolute`} style={{ top: 10, right: 10 }}>
@@ -102,20 +102,16 @@ export default function ShopProducts() {
             <div className="product-img-wrapper mb-2 position-relative w-100 d-flex justify-content-center align-items-center" style={{ height: 180, overflow: 'hidden' }}>
               <img
                 src={item.images?.[0]?.url || item.imageCover || PLACEHOLDER_IMG}
-                alt={item.title}
+                alt={item.name}
                 className="product-img-main"
                 style={{ height: 170, objectFit: 'contain', borderRadius: 12, background: '#f6f6f6', width: '100%', transition: 'transform 0.3s' }}
                 onError={e => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMG; }}
               />
-              {item.basePrice && item.productVariants?.[0]?.price && (
-                <span className="badge bg-danger position-absolute" style={{ top: 10, left: 10 }}>
-                  {Math.round(((item.basePrice - item.productVariants[0].price) / item.basePrice) * 100)}% خصم
-                </span>
-              )}
+              <AvailabilityBadge stock={item.stock} />
             </div>
             <div className="flex-grow-1 d-flex flex-column align-items-center">
               <span className="text-muted small">{item.brand || 'بدون ماركة'}</span>
-              <h6 className="fw-bold text-center mb-1" style={{ minHeight: 32 }}>{item.title}</h6>
+              <h6 className="fw-bold text-center mb-1" style={{ minHeight: 32 }}>{item.name}</h6>
               <div className="mb-1">
                 <StarRating rating={item.ratings?.average || 0} />
                 {item.ratings?.count > 0 && (
@@ -124,23 +120,18 @@ export default function ShopProducts() {
               </div>
               <div className="mb-2">
                 <span className="text-danger fw-bold">
-                  {item.productVariants?.[0]?.price || item.basePrice} ج.م
+                  {item.price} ج.م
                 </span>
-                {item.basePrice && item.productVariants?.[0]?.price && (
-                  <span className="text-muted text-decoration-line-through ms-2">
-                    {item.basePrice} ج.م
-                  </span>
-                )}
               </div>
-              {item.options?.sizes?.length > 0 && (
-                <div className="d-flex gap-1 mb-2 flex-wrap">
-                  {item.options.sizes.map((size, idx) => (
-                    <span key={idx} className="badge bg-light text-dark border" style={{ fontSize: '0.85em', margin: 1 }}>
-                      {size.name || size}
+              {item.attributes?.map((attr, idx) => (
+                <div key={idx} className="d-flex gap-1 mb-2 flex-wrap">
+                  {attr.values.map((value, vIdx) => (
+                    <span key={vIdx} className="badge bg-light text-dark border" style={{ fontSize: '0.85em', margin: 1 }}>
+                      {value}
                     </span>
                   ))}
                 </div>
-              )}
+              ))}
               <div className={`product-actions mt-auto gap-2 ${hoveredProduct === item._id ? 'show' : ''}`} style={{ display: 'flex', opacity: hoveredProduct === item._id ? 1 : 0, pointerEvents: hoveredProduct === item._id ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
                 <button className="btn btn-sm btn-danger"><i className="fas fa-shopping-cart"></i></button>
                 <button className="btn btn-sm btn-outline-danger"><i className="fas fa-heart"></i></button>
