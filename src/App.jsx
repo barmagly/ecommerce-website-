@@ -1,14 +1,17 @@
 
+import { Provider } from 'react-redux'
 import './App.css'
 import RoutesPage from './routes/RoutesPage'
+import Store from './services/Slice/Store'
 
 function App() {
 
 
   return (
     <>
-      <RoutesPage />
-
+      <Provider store={Store}>
+        <RoutesPage />
+      </Provider>
     </>
   )
 }

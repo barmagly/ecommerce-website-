@@ -2,13 +2,16 @@ import React from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import markerIcon2x from 'leaflet/dist/images/marker-icon-2x.png';
+import markerIcon from 'leaflet/dist/images/marker-icon.png';
+import markerShadow from 'leaflet/dist/images/marker-shadow.png';
 
 // Custom marker icon (default Leaflet icon fix for React)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
-  iconUrl: require('leaflet/dist/images/marker-icon.png'),
-  shadowUrl: require('leaflet/dist/images/marker-shadow.png'),
+  iconRetinaUrl: markerIcon2x,
+  iconUrl: markerIcon,
+  shadowUrl: markerShadow,
 });
 
 const position = [26.062, 32.241]; // Nag Hammadi, Qena
@@ -32,7 +35,7 @@ export default function MapNagHamadi() {
           </MapContainer>
         </div>
       </div>
-      <div className="mt-3 text-center text-muted" style={{fontSize: '1rem'}}>
+      <div className="mt-3 text-center text-muted" style={{ fontSize: '1rem' }}>
         الموقع لمقرنا في نجع حمادي، محافظة قنا
       </div>
     </div>
