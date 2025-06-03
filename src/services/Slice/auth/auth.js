@@ -9,7 +9,9 @@ export const googleLoginThunk = createAsyncThunk(
             const { data } = await axios.post(`${API_KEY}/google-login`,
                 { idToken, email, name },
             );
+            console.log("data in slice", data);
             return {
+                status: data.status,
                 user: data.user,
                 token: data.token,
             };
@@ -25,6 +27,23 @@ export const loginThunk = createAsyncThunk(
 
         try {
             const { data } = await axios.post(`${API_KEY}/login`, { email, password });
+            console.log("data in slice", data);
+            return {
+                status: data.status,
+                user: data.data.user,
+                token: data.data.token,
+            };
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response.data || "error server");
+        }
+    }
+);
+export const registerThunk = createAsyncThunk(
+    "auth/register",
+    async ({ name, address, phone, email, password }, thunkAPI) => {
+        console.log(name, address, phone, email, password);
+        try {
+            const { data } = await axios.post(`${API_KEY}/register`, { name, address, phone, email, password });
             console.log("data in slice", data);
             return {
                 status: data.status,
@@ -81,6 +100,18 @@ const authSlice = createSlice({
             .addCase(loginThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || "Login failed";
+            }).addCase(registerThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(registerThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                localStorage.setItem("token", action.payload.token);
+            }).addCase(registerThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || "Register failed";
             })
     }
 });

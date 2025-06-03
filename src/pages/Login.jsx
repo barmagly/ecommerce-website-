@@ -64,7 +64,7 @@ export default function Login() {
         email: user?.email,
         name: user?.name
       }));
-
+      console.log(res);
       if (res.payload.status === "success") {
         toast.success("تم تسجيل الدخول بنجاح");
         navigate("/");

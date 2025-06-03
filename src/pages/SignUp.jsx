@@ -1,11 +1,84 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from 'react-toastify';
+import { registerThunk, googleLoginThunk } from "../services/Slice/auth/auth";
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function SignUp() {
+  const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((state) => state.userProfile?.profile) || [];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validate form fields
+    if (!name || !address || !phone || !email || !password) {
+      toast.error("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    try {
+      const res = await dispatch(registerThunk({ name, address, phone, email, password }));
+      console.log("Registration response:", res);
+
+      if (res.payload?.status === "success") {
+        toast.success("تم إنشاء الحساب بنجاح");
+        navigate("/");
+      } else {
+        toast.error(res.payload?.message || "حدث خطأ أثناء إنشاء الحساب");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(error?.response?.data?.message || "حدث خطأ أثناء إنشاء الحساب");
+    }
+  };
+
+  const handleGoogleLoginSuccess = async (credentialResponse) => {
+    try {
+      const idToken = credentialResponse.credential;
+      const res = await dispatch(googleLoginThunk({
+        idToken: idToken,
+        email: user?.email,
+        name: user?.name
+      }));
+
+      console.log("Google login response:", res);
+      if (res.payload?.status === "success") {
+        toast.success("تم تسجيل الدخول بنجاح");
+        navigate("/");
+      } else {
+        toast.error(res.payload?.message || "حدث خطأ أثناء تسجيل الدخول");
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      toast.error("حدث خطأ أثناء تسجيل الدخول");
+    }
+  };
+
+  const handleGoogleLoginFailure = (error) => {
+    console.log(`Google Login Failed ${error}`);
+    toast.error("فشل تسجيل الدخول باستخدام Google", {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      theme: "light",
+    });
+  };
+
   return (
-    <div className="bg-white" dir="rtl" style={{textAlign: 'right'}}>
+    <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
       <Header />
       <div className="container py-5">
         <div className="row align-items-center">
@@ -19,56 +92,99 @@ export default function SignUp() {
           <div className="col-md-6" data-aos="fade-up">
             <h2 className="fw-bold mb-3">إنشاء حساب جديد</h2>
             <p className="mb-4">أدخل بياناتك أدناه</p>
-            <form>
+            <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="form-label">الاسم <span style={{color: 'red'}}>*</span></label>
-                <input type="text" className="form-control border-0 border-bottom" />
+                <label className="form-label">
+                  الاسم <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-0 border-bottom"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
               </div>
               <div className="mb-4">
-                <label className="form-label">العنوان <span style={{color: 'red'}}>*</span></label>
-                <input type="text" className="form-control border-0 border-bottom" />
+                <label className="form-label">
+                  العنوان <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-0 border-bottom"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  required
+                />
               </div>
               <div className="mb-4">
-                <label className="form-label">رقم الهاتف <span style={{color: 'red'}}>*</span></label>
-                <input type="text" className="form-control border-0 border-bottom" />
+                <label className="form-label">
+                  رقم الهاتف <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  className="form-control border-0 border-bottom"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  required
+                />
               </div>
               <div className="mb-4">
-                <label className="form-label">البريد الإلكتروني <span style={{color: 'red'}}>*</span></label>
-                <input type="text" className="form-control border-0 border-bottom" />
+                <label className="form-label">
+                  البريد الإلكتروني <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  className="form-control border-0 border-bottom"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
               </div>
               <div className="mb-4">
-                <label className="form-label">كلمة المرور <span style={{color: 'red'}}>*</span></label>
-                <input type="password" className="form-control border-0 border-bottom" />
+                <label className="form-label">
+                  كلمة المرور <span style={{ color: "red" }}>*</span>
+                </label>
+                <input
+                  type="password"
+                  className="form-control border-0 border-bottom"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
               </div>
               <div className="d-flex flex-column gap-3 mb-4">
-                <button type="button" className="btn btn-danger py-2 fw-bold" style={{fontSize: '18px'}}>إنشاء حساب</button>
                 <button
-                  type="button"
-                  className="btn d-flex align-items-center justify-content-center w-100"
-                  style={{
-                    background: '#fff',
-                    color: '#444',
-                    fontWeight: 500,
-                    fontSize: '18px',
-                    border: '1px solid #dadce0',
-                    borderRadius: '24px',
-                    boxShadow: 'none',
-                    padding: '8px 0',
-                    transition: 'box-shadow 0.2s, border 0.2s'
-                  }}
+                  type="submit"
+                  className="btn btn-danger py-2 fw-bold"
+                  style={{ fontSize: "18px" }}
                 >
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png"
-                    alt="Google logo"
-                    style={{ width: '33px', height: '33px', marginLeft: '12px', background: '#fff' }}
-                  />
-                  <span style={{fontSize: '16px', fontWeight: 500}}>التسجيل بواسطة Google</span>
+                  إنشاء حساب
                 </button>
+                <div className="mt-4">
+                  <div className="w-100 d-flex justify-content-center">
+                    <GoogleLogin
+                      onSuccess={handleGoogleLoginSuccess}
+                      onError={handleGoogleLoginFailure}
+                      useOneTap
+                      theme="filled_blue"
+                      text="signup_with"
+                      shape="rectangular"
+                      locale="ar"
+                    />
+                  </div>
+                </div>
               </div>
             </form>
             <div className="d-flex align-items-center justify-content-center gap-2 mt-3">
-              <span style={{fontSize: '16px'}}>لديك حساب بالفعل؟</span>
-              <Link to="/login" className="fw-bold text-danger" style={{fontSize: '16px', textDecoration: 'none'}}>تسجيل الدخول</Link>
+              <span style={{ fontSize: "16px" }}>لديك حساب بالفعل؟</span>
+              <Link
+                to="/login"
+                className="fw-bold text-danger"
+                style={{ fontSize: "16px", textDecoration: "none" }}
+              >
+                تسجيل الدخول
+              </Link>
             </div>
           </div>
         </div>
@@ -76,4 +192,4 @@ export default function SignUp() {
       <Footer />
     </div>
   );
-} 
+}
