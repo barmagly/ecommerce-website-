@@ -1,0 +1,117 @@
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+
+// Create axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor for authentication
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('adminToken');
+      window.location.href = '/admin/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Auth services
+export const authService = {
+  login: (data) => api.post('/auth/login', data),
+  logout: () => {
+    localStorage.removeItem('adminToken');
+    window.location.href = '/admin/login';
+  },
+  // Remove or update getProfile if not implemented in backend
+  // getProfile: () => api.get('/users/me'),
+};
+
+// Products services
+export const productService = {
+  getAll: () => api.get('/products'),
+  getById: (id) => api.get(`/products/${id}`),
+  create: (data) => api.post('/products', data),
+  update: (id, data) => api.put(`/products/${id}`, data),
+  delete: (id) => api.delete(`/products/${id}`),
+  // Remove uploadImage or implement in backend if needed
+};
+
+// Categories services
+export const categoryService = {
+  getAll: () => api.get('/categories'),
+  getById: (id) => api.get(`/categories/${id}`),
+  create: (data) => api.post('/categories', data),
+  update: (id, data) => api.put(`/categories/${id}`, data),
+  delete: (id) => api.delete(`/categories/${id}`),
+};
+
+// Orders services
+export const orderService = {
+  getAll: () => api.get('/orders'),
+  getById: (id) => api.get(`/orders/${id}`),
+  updateStatus: (id, status) => api.put(`/orders/${id}`, { status }),
+  // getStats: () => api.get('/orders/stats'),
+};
+
+// Users services
+export const userService = {
+  getAll: () => api.get('/users'),
+  getById: (id) => api.get(`/users/${id}`),
+  create: (data) => api.post('/users', data),
+  update: (id, data) => api.put(`/users/${id}`, data),
+  delete: (id) => api.delete(`/users/${id}`),
+  updateStatus: (id, status) => api.put(`/users/${id}`, { status }),
+};
+
+// Dashboard services
+export const dashboardService = {
+  getStats: async () => ({
+    data: {
+      totalProducts: 12,
+      totalCategories: 4,
+      totalOrders: 8,
+      totalUsers: 3,
+      totalSales: 24500
+    }
+  }),
+  getRecentOrders: async () => ({
+    data: [
+      { id: 1, orderNumber: 'ORD-001', customerName: 'أحمد محمد', date: '2024-06-01', total: 1200, status: 'completed' },
+      { id: 2, orderNumber: 'ORD-002', customerName: 'سارة علي', date: '2024-06-02', total: 800, status: 'pending' }
+    ]
+  }),
+  getSalesChart: async (period) => ({
+    data: [
+      { date: '2024-06-01', sales: 1200 },
+      { date: '2024-06-02', sales: 800 },
+      { date: '2024-06-03', sales: 1500 },
+      { date: '2024-06-04', sales: 2000 },
+      { date: '2024-06-05', sales: 1800 },
+      { date: '2024-06-06', sales: 2200 },
+      { date: '2024-06-07', sales: 3000 }
+    ]
+  })
+};
+
+export default api; 

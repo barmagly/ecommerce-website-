@@ -21,6 +21,7 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderConfirmation from './pages/OrderConfirmation';
 import ProductDetails from './pages/ProductDetails';
+import AdminApp from './admin/App';
 
 function App() {
   useEffect(() => {
@@ -28,9 +29,8 @@ function App() {
   }, []);
 
   return (
-    <div dir="rtl">
-      <Router>
-        <WhatsAppFloat />
+    <Router>
+      <div dir="rtl">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
@@ -46,10 +46,19 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/order-confirmation" element={<OrderConfirmation />} />
           <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="*" element={<Error404 />} />
+          <Route path="/admin/*" element={<AdminApp />} />
+          <Route
+            path="*"
+            element={
+              <>
+                <WhatsAppFloat />
+                {/* هنا ضع باقي الراوتات الخارجية مثل الصفحة الرئيسية وغيرها */}
+              </>
+            }
+          />
         </Routes>
-      </Router>
-    </div>
+      </div>
+    </Router>
   );
 }
 
