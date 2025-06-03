@@ -81,10 +81,10 @@ export default function FlashSalesSection() {
   }, [endDate]);
 
   return (
-    <div className="flashsales-section-bg py-5" style={{minHeight: 400}} data-aos="fade-up">
+    <div className="flashsales-section-bg py-5" style={{ minHeight: 400 }} data-aos="fade-up">
       <div className="container">
         <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 ms-lg-5 gap-4 gap-md-5">
-          <div className="d-flex flex-column flex-shrink-0 align-items-center align-items-md-start me-0 me-md-5 gap-3 w-100 w-md-auto">
+          <div className="d-flex flex-column flex-shrink-0 align-items-center align-items-md-start me-0 me-md-5 gap-3  w-md-auto">
             <div className="d-flex align-items-center pe-1 gap-3">
               <div className="bg-danger rounded flashsales-bar"></div>
               <span className="text-danger fw-bold fs-6">عروض سريعة</span>
@@ -93,22 +93,22 @@ export default function FlashSalesSection() {
             {/* التايمر يظهر تحت العنوان على الموبايل */}
             <div className="flashsales-timer-row d-flex flex-row align-items-center gap-3 justify-content-center mt-3 d-md-none">
               <div className="text-center">
-                <span className="text-black small fw-bold">أيام</span><br/>
+                <span className="text-black small fw-bold">أيام</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.days).padStart(2, '0')}</span>
               </div>
               <span className="fw-bold fs-2">:</span>
               <div className="text-center">
-                <span className="text-black small fw-bold">ساعات</span><br/>
+                <span className="text-black small fw-bold">ساعات</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.hours).padStart(2, '0')}</span>
               </div>
               <span className="fw-bold fs-2">:</span>
               <div className="text-center">
-                <span className="text-black small fw-bold">دقائق</span><br/>
+                <span className="text-black small fw-bold">دقائق</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.minutes).padStart(2, '0')}</span>
               </div>
               <span className="fw-bold fs-2">:</span>
               <div className="text-center">
-                <span className="text-black small fw-bold">ثواني</span><br/>
+                <span className="text-black small fw-bold">ثواني</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.seconds).padStart(2, '0')}</span>
               </div>
             </div>
@@ -116,22 +116,22 @@ export default function FlashSalesSection() {
           {/* التايمر يظهر بجانب العنوان على الديسكتوب */}
           <div className="flashsales-timer-row d-none d-md-flex flex-row align-items-center gap-3 justify-content-center">
             <div className="text-center">
-              <span className="text-black small fw-bold">أيام</span><br/>
+              <span className="text-black small fw-bold">أيام</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.days).padStart(2, '0')}</span>
             </div>
             <span className="fw-bold fs-2">:</span>
             <div className="text-center">
-              <span className="text-black small fw-bold">ساعات</span><br/>
+              <span className="text-black small fw-bold">ساعات</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.hours).padStart(2, '0')}</span>
             </div>
             <span className="fw-bold fs-2">:</span>
             <div className="text-center">
-              <span className="text-black small fw-bold">دقائق</span><br/>
+              <span className="text-black small fw-bold">دقائق</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.minutes).padStart(2, '0')}</span>
             </div>
             <span className="fw-bold fs-2">:</span>
             <div className="text-center">
-              <span className="text-black small fw-bold">ثواني</span><br/>
+              <span className="text-black small fw-bold">ثواني</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.seconds).padStart(2, '0')}</span>
             </div>
           </div>
@@ -142,11 +142,11 @@ export default function FlashSalesSection() {
             <div key={product.id} className="col-12 col-md-3" data-aos="zoom-in-up">
               <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center position-relative">
                 <span className="badge bg-danger position-absolute top-0 start-0 m-2">-{product.discount}%</span>
-                <Link to={`/product/${product.id}`} style={{textDecoration: 'none', color: 'inherit'}}>
-                  <img src={product.image} alt={product.name} className="mb-3" style={{width: '100%', height: '180px', objectFit: 'contain', borderRadius: '12px', cursor: 'pointer'}} />
+                <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <img src={product.image} alt={product.name} className="mb-3" style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '12px', cursor: 'pointer' }} />
                 </Link>
-                <Link to={`/product/${product.id}`} style={{textDecoration: 'none', color: 'inherit'}}>
-                  <span className="fw-bold fs-5 mt-2" style={{cursor: 'pointer'}}>{product.name}</span>
+                <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <span className="fw-bold fs-5 mt-2" style={{ cursor: 'pointer' }}>{product.name}</span>
                 </Link>
                 <div className="d-flex align-items-center gap-3 mt-2">
                   <span className="text-danger fw-bold">{product.price} ر.س</span>
