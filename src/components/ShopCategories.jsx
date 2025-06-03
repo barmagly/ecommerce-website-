@@ -1,38 +1,73 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
 
-const categories = [
-  { id: "electronics", name: "إلكترونيات", color: "#DB4444", icon: "fas fa-tv" },
-  { id: "clothes", name: "ملابس", color: "#25D366", icon: "fas fa-tshirt" },
-  { id: "games", name: "ألعاب", color: "#FFC107", icon: "fas fa-gamepad" },
-  { id: "bags", name: "حقائب", color: "#007bff", icon: "fas fa-shopping-bag" },
-  { id: "shoes", name: "أحذية", color: "#6f42c1", icon: "fas fa-shoe-prints" },
-  { id: "watches", name: "ساعات", color: "#20c997", icon: "fas fa-clock" },
-  { id: "home", name: "أجهزة منزلية", color: "#fd7e14", icon: "fas fa-home" },
-  { id: "books", name: "كتب", color: "#28a745", icon: "fas fa-book" },
-  { id: "sports", name: "مستلزمات رياضية", color: "#17a2b8", icon: "fas fa-running" },
-  { id: "accessories", name: "إكسسوارات", color: "#e83e8c", icon: "fas fa-gem" }
+const fallbackCategories = [
+  { slug: "electronics", name: "إلكترونيات", icon: "fas fa-tv", color: "#DB4444" },
+  { slug: "clothes", name: "ملابس", icon: "fas fa-tshirt", color: "#25D366" },
+  { slug: "games", name: "ألعاب", icon: "fas fa-gamepad", color: "#FFC107" },
+  { slug: "bags", name: "حقائب", icon: "fas fa-shopping-bag", color: "#007bff" },
+  { slug: "shoes", name: "أحذية", icon: "fas fa-shoe-prints", color: "#6f42c1" },
+  { slug: "watches", name: "ساعات", icon: "fas fa-clock", color: "#20c997" },
+  { slug: "home", name: "أجهزة منزلية", icon: "fas fa-home", color: "#fd7e14" },
+  { slug: "books", name: "كتب", icon: "fas fa-book", color: "#28a745" },
+  { slug: "sports", name: "مستلزمات رياضية", icon: "fas fa-running", color: "#17a2b8" },
+  { slug: "accessories", name: "إكسسوارات", icon: "fas fa-gem", color: "#e83e8c" }
 ];
 
 export default function ShopCategories() {
   const [activeCategory, setActiveCategory] = useState(null);
+  const dispatch = useDispatch();
+  const { categories, loading, error } = useSelector((state) => state.categorie);
 
-  const handleCategoryClick = (categoryId) => {
-    setActiveCategory(categoryId);
+  useEffect(() => {
+    dispatch(getCategoriesThunk());
+  }, [dispatch]);
+
+  const handleCategoryClick = (categorySlug) => {
+    setActiveCategory(categorySlug);
     // هنا يمكن إضافة منطق تصفية المنتجات
   };
+
+  // Transform API categories to include colors and icons
+  const transformedCategories = categories?.length > 0
+    ? categories.map(cat => ({
+      ...cat,
+      color: fallbackCategories.find(fc => fc.slug === cat.slug)?.color || "#DB4444",
+      icon: fallbackCategories.find(fc => fc.slug === cat.slug)?.icon || "fas fa-tag"
+    }))
+    : fallbackCategories;
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center py-5">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">جاري التحميل...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="alert alert-danger text-center" role="alert">
+        {error}
+      </div>
+    );
+  }
 
   return (
     <div className="mb-4" data-aos="fade-left">
       <h5 className="fw-bold mb-3">الأقسام</h5>
       <div className="d-flex flex-wrap gap-3">
-        {categories.map(cat => (
+        {transformedCategories.map(cat => (
           <div
-            key={cat.id}
+            key={cat.slug}
             className="category-item"
-            onClick={() => handleCategoryClick(cat.id)}
+            onClick={() => handleCategoryClick(cat.slug)}
             style={{
               cursor: 'pointer',
-              transform: activeCategory === cat.id ? 'scale(1.1)' : 'scale(1)',
+              transform: activeCategory === cat.slug ? 'scale(1.1)' : 'scale(1)',
               transition: 'transform 0.2s ease-in-out'
             }}
           >
@@ -47,7 +82,7 @@ export default function ShopCategories() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: 8,
-                boxShadow: activeCategory === cat.id ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
+                boxShadow: activeCategory === cat.slug ? '0 4px 12px rgba(0,0,0,0.15)' : 'none'
               }}
             >
               <i className={`${cat.icon} text-white fa-2x`}></i>
@@ -56,7 +91,7 @@ export default function ShopCategories() {
               className="fw-bold"
               style={{
                 fontSize: '15px',
-                color: activeCategory === cat.id ? cat.color : 'inherit'
+                color: activeCategory === cat.slug ? cat.color : 'inherit'
               }}
             >
               {cat.name}
