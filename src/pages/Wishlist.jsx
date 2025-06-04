@@ -1,31 +1,107 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import { getUserWishlistThunk, removeWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { addToCartThunk } from "../services/Slice/cart/cart";
+import { getProductsThunk } from "../services/Slice/product/product";
+import { useNavigate } from "react-router-dom";
+import { toast } from 'react-toastify';
+
+const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
+
+function StarRating({ rating }) {
+  const stars = [];
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 !== 0;
+
+  for (let i = 0; i < 5; i++) {
+    if (i < fullStars) {
+      stars.push(<i key={i} className="fas fa-star text-warning"></i>);
+    } else if (i === fullStars && hasHalfStar) {
+      stars.push(<i key={i} className="fas fa-star-half-alt text-warning"></i>);
+    } else {
+      stars.push(<i key={i} className="far fa-star text-warning"></i>);
+    }
+  }
+
+  return <div className="d-flex gap-1">{stars}</div>;
+}
 
 export default function Wishlist() {
   const dispatch = useDispatch();
   const { wishlist, loading } = useSelector((state) => state.userWishlist);
+  const { products } = useSelector((state) => state.product);
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
+  const navigate = useNavigate();
+  const carouselRef = useRef();
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartX, setDragStartX] = useState(0);
+  const [scrollStart, setScrollStart] = useState(0);
 
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getUserWishlistThunk());
+      dispatch(getProductsThunk());
     }
   }, [dispatch, isAuthenticated]);
 
   const handleRemove = (productId) => {
-    dispatch(removeWishlistThunk({prdId:productId}));
-    console.log("Remove product from wishlist:", productId);
+    dispatch(removeWishlistThunk({ prdId: productId }));
   };
 
   const handleAddToCart = (productId) => {
-    // TODO: Implement add to cart functionality
-    console.log("Add to cart:", productId);
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCartThunk({ productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
   };
+
+  // Carousel drag handling
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    setDragStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
+    setScrollStart(carouselRef.current.scrollLeft);
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    const x = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const walk = dragStartX - x;
+    carouselRef.current.scrollLeft = scrollStart + walk;
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Get similar products (products not in wishlist)
+  const similarProducts = products?.filter(p =>
+    !wishlist?.some(w => w._id === p._id)
+  ) || [];
 
   return (
     <div className="bg-white" dir="rtl" style={{ textAlign: 'right' }}>
@@ -59,8 +135,9 @@ export default function Wishlist() {
                     style={{ height: 180, objectFit: 'contain' }}
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = "/images/placeholder.png";
+                      e.target.src = PLACEHOLDER_IMG;
                     }}
+                    onClick={() => navigate(`/product/${item._id}`)}
                   />
                   <div className="card-body d-flex flex-column align-items-center">
                     <h5 className="card-title fw-bold mb-2 text-center">{item.name}</h5>
@@ -88,68 +165,125 @@ export default function Wishlist() {
             ))
           )}
         </div>
-        {/* Recommendations Section */}
-        <div className="mt-5" data-aos="fade-up">
-          <h4 className="fw-bold mb-4">منتجات مقترحة لك</h4>
-          <div className="row g-4">
-            <div className="col-12 col-md-4 col-lg-3">
-              <div className="card h-100 border-0 shadow-sm">
-                <img
-                  src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/9ame2m8t_expires_30_days.png"
-                  alt="منتج مقترح"
-                  className="card-img-top p-3"
-                  style={{ height: 180, objectFit: 'contain' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/placeholder.png";
-                  }}
-                />
-                <div className="card-body text-center">
-                  <h6 className="fw-bold mb-2">لاب توب ألعاب ASUS FHD</h6>
-                  <span className="text-danger fw-bold">960 ج.م</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-12 col-md-4 col-lg-3">
-              <div className="card h-100 border-0 shadow-sm">
-                <img
-                  src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/jbwbttnu_expires_30_days.png"
-                  alt="منتج مقترح"
-                  className="card-img-top p-3"
-                  style={{ height: 180, objectFit: 'contain' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/placeholder.png";
-                  }}
-                />
-                <div className="card-body text-center">
-                  <h6 className="fw-bold mb-2">شاشة ألعاب IPS LCD</h6>
-                  <span className="text-danger fw-bold">1160 ج.م</span>
-                </div>
-              </div>
-            </div>
-            <div className="col-12 col-md-4 col-lg-3">
-              <div className="card h-100 border-0 shadow-sm">
-                <img
-                  src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/1k62ml59_expires_30_days.png"
-                  alt="منتج مقترح"
-                  className="card-img-top p-3"
-                  style={{ height: 180, objectFit: 'contain' }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "/images/placeholder.png";
-                  }}
-                />
-                <div className="card-body text-center">
-                  <h6 className="fw-bold mb-2">ذراع ألعاب HAVIT HV-G92</h6>
-                  <span className="text-danger fw-bold">560 ج.م</span>
+
+        {/* Similar Products Section */}
+        {similarProducts.length > 0 && (
+          <div className="row mt-5">
+            <div className="col-12">
+              <h4 className="fw-bold mb-4 text-center">منتجات مقترحة لك</h4>
+              <div
+                ref={carouselRef}
+                className={`similar-carousel position-relative d-flex justify-content-center ${isDragging ? 'dragging' : ''}`}
+                style={{
+                  overflowX: 'auto',
+                  whiteSpace: 'nowrap',
+                  paddingBottom: 8,
+                  cursor: isDragging ? 'grabbing' : 'grab',
+                  userSelect: 'none'
+                }}
+                onMouseDown={handleDragStart}
+                onMouseMove={handleDragMove}
+                onMouseUp={handleDragEnd}
+                onMouseLeave={handleDragEnd}
+                onTouchStart={handleDragStart}
+                onTouchMove={handleDragMove}
+                onTouchEnd={handleDragEnd}
+              >
+                <div style={{
+                  display: 'flex',
+                  gap: 24,
+                  minWidth: 320,
+                  justifyContent: 'center',
+                  width: '100%',
+                  transition: isDragging ? 'none' : 'transform 0.3s cubic-bezier(.4,1.3,.6,1)'
+                }}>
+                  {similarProducts.slice(0, 8).map(item => (
+                    <div
+                      key={item._id}
+                      className={`card shadow-sm border-0 d-inline-block product-similar-card${isDragging ? ' dragging-card' : ''}`}
+                      style={{
+                        width: 260,
+                        minWidth: 240,
+                        borderRadius: 16,
+                        cursor: 'pointer',
+                        transition: 'box-shadow 0.2s, transform 0.2s',
+                        verticalAlign: 'top',
+                        transform: isDragging ? 'scale(0.97)' : 'scale(1)'
+                      }}
+                      onClick={() => {
+                        if (!isDragging) {
+                          navigate(`/product/${item._id}`);
+                        }
+                      }}
+                    >
+                      <div style={{
+                        background: '#f6f6f6',
+                        borderRadius: 16,
+                        padding: 12,
+                        display: 'flex',
+                        justifyContent: 'center'
+                      }}>
+                        <img
+                          src={item.images?.[0]?.url || item.imageCover || PLACEHOLDER_IMG}
+                          alt={item.name}
+                          style={{
+                            height: 140,
+                            objectFit: 'contain',
+                            borderRadius: 12
+                          }}
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = PLACEHOLDER_IMG;
+                          }}
+                        />
+                      </div>
+                      <div className="card-body text-center p-2">
+                        <h6 className="fw-bold mb-1" style={{ fontSize: '1.08em', minHeight: 36 }}>
+                          {item.name}
+                        </h6>
+                        <div className="mb-1">
+                          <StarRating rating={item.ratings?.average || 0} />
+                        </div>
+                        <div className="text-danger fw-bold mb-1" style={{ fontSize: '1.1em' }}>
+                          {item.price} ج.م
+                        </div>
+                        <div className="text-muted mb-1" style={{ fontSize: '0.98em' }}>
+                          {item.brand}
+                        </div>
+                        <div className="text-muted mb-2" style={{
+                          fontSize: '0.97em',
+                          minHeight: 36,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}>
+                          {item.description}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
       <Footer />
+      <style>{`
+        .similar-carousel::-webkit-scrollbar {
+          display: none !important;
+        }
+        .similar-carousel {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .product-similar-card:hover {
+          box-shadow: 0 8px 32px #db444455 !important;
+          transform: scale(1.04) translateY(-4px);
+        }
+        .dragging .product-similar-card {
+          transition: none !important;
+        }
+      `}</style>
     </div>
   );
 } 

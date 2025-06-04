@@ -1,6 +1,7 @@
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { addToCartThunk } from "../services/Slice/cart/cart";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 
@@ -33,6 +34,35 @@ export default function HomeBestSellers() {
       })
       .catch((error) => {
         toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى المفضلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
+
+  const handleAddToCart = (e, productId) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCartThunk({ productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
           position: "top-center",
           rtl: true,
           autoClose: 3000
@@ -137,7 +167,7 @@ export default function HomeBestSellers() {
                 </div>
               </div>
               <div className="card-footer bg-white border-0">
-                <button className="btn btn-danger w-100">أضف إلى السلة</button>
+                <button className="btn btn-danger w-100" onClick={(e) => handleAddToCart(e, product.id)}>أضف إلى السلة</button>
               </div>
             </div>
           </div>

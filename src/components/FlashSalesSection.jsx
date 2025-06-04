@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCartThunk } from '../services/Slice/cart/cart';
+import { toast } from 'react-toastify';
 import './FlashSalesShowcase.css';
 
 const products = [
@@ -65,9 +68,12 @@ function getTimeLeft(endDate) {
 }
 
 export default function FlashSalesSection() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { token } = useSelector((state) => state.auth);
+  const isAuthenticated = !!token;
   const [endDate, setEndDate] = useState(getNext7Days());
   const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
-  const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -79,6 +85,34 @@ export default function FlashSalesSection() {
     }, 1000);
     return () => clearInterval(timer);
   }, [endDate]);
+
+  const handleAddToCart = (productId) => {
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCartThunk({ productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
 
   return (
     <div className="flashsales-section-bg py-5" style={{ minHeight: 400 }} data-aos="fade-up">
@@ -156,7 +190,7 @@ export default function FlashSalesSection() {
                   <span>{'⭐'.repeat(product.rating)}</span>
                   <span className="fw-bold">({product.reviews})</span>
                 </div>
-                <button className="btn btn-dark w-100 mt-3" onClick={() => alert('تمت الإضافة للسلة!')}>أضف إلى السلة</button>
+                <button className="btn btn-dark w-100 mt-3" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
               </div>
             </div>
           ))}
