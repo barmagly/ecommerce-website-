@@ -1,6 +1,45 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function HomeBestSellers() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { wishlist } = useSelector((state) => state.userWishlist);
+  const { token } = useSelector((state) => state.auth);
+  const isAuthenticated = !!token;
+
+  const handleWishlistClick = (e, productId) => {
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى المفضلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addUserWishlistThunk({ prdId: productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى المفضلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى المفضلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
+
   const products = [
     {
       name: 'سماعة بلوتوث لاسلكية',
@@ -37,14 +76,14 @@ export default function HomeBestSellers() {
   ];
 
   return (
-    <div className="container my-5" style={{direction: 'rtl'}}>
+    <div className="container my-5" style={{ direction: 'rtl' }}>
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div className="d-flex flex-column gap-3">
           <div className="d-flex align-items-center gap-3">
-            <div className="bg-danger" style={{width: '20px', height: '40px', borderRadius: '4px'}}></div>
+            <div className="bg-danger" style={{ width: '20px', height: '40px', borderRadius: '4px' }}></div>
             <span className="text-danger fw-bold">المنتجات الأكثر مبيعاً</span>
           </div>
-          <h2 className="fw-bold" style={{fontSize: '2.5rem'}}>أفضل المنتجات</h2>
+          <h2 className="fw-bold" style={{ fontSize: '2.5rem' }}>أفضل المنتجات</h2>
         </div>
         <div className="d-flex align-items-center gap-2">
           <button className="btn btn-light rounded-circle p-3">
@@ -64,15 +103,18 @@ export default function HomeBestSellers() {
                 <div className="position-absolute top-0 start-0 m-2">
                   <span className="badge bg-danger">-{product.discount}%</span>
                 </div>
-                <img 
+                <img
                   src={product.image}
                   alt={product.name}
                   className="card-img-top p-4"
-                  style={{height: '200px', objectFit: 'contain'}}
+                  style={{ height: '200px', objectFit: 'contain' }}
                 />
                 <div className="position-absolute top-0 end-0 m-2">
-                  <button className="btn btn-light rounded-circle p-2">
-                    <i className="far fa-heart"></i>
+                  <button
+                    className="btn btn-light rounded-circle p-2"
+                    onClick={(e) => handleWishlistClick(e, product.id)}
+                  >
+                    <i className={`${wishlist?.some(w => w._id === product.id) ? 'fas' : 'far'} fa-heart`}></i>
                   </button>
                 </div>
               </div>
@@ -81,7 +123,7 @@ export default function HomeBestSellers() {
                 <div className="d-flex align-items-center gap-2 mb-2">
                   <div className="text-warning">
                     {[...Array(5)].map((_, i) => (
-                      <i 
+                      <i
                         key={i}
                         className={`fas fa-star ${i < Math.floor(product.rating) ? 'text-warning' : 'text-muted'}`}
                       ></i>
