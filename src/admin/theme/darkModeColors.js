@@ -31,6 +31,10 @@ export const lightModeColors = {
     card4: '#e91e63',
     card5: '#9c27b0',
     card6: '#00bcd4',
+    card7: '#795548',
+    card8: '#607d8b',
+    card9: '#ff5722',
+    card10: '#3f51b5',
   },
   chart: {
     grid: '#dfe6e9',
@@ -72,6 +76,10 @@ export const darkModeColors = {
     card4: '#e53935',
     card5: '#8e24aa',
     card6: '#00acc1',
+    card7: '#795548',
+    card8: '#607d8b',
+    card9: '#ff5722',
+    card10: '#3f51b5',
   },
   chart: {
     grid: 'rgba(255, 255, 255, 0.1)',

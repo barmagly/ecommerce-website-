@@ -12,6 +12,7 @@ import { darkModeColors } from './theme/darkModeColors';
 // Components
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Pages
 import Login from './pages/Login';
@@ -143,38 +144,64 @@ function AppContent() {
     <CacheProvider value={cacheRtl}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          <UserProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/" element={
-                <PrivateRoute>
-                  <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-                </PrivateRoute>
-              }>
-                <Route index element={<Navigate to="/dashboard" replace />} />
-                <Route path="dashboard" element={<Dashboard darkMode={darkMode} />} />
-                <Route path="products" element={<Products darkMode={darkMode} />} />
-                <Route path="categories" element={<Categories darkMode={darkMode} />} />
-                <Route path="orders" element={<Orders darkMode={darkMode} />} />
-                <Route path="users" element={<Users darkMode={darkMode} />} />
-                <Route path="profile" element={<Profile darkMode={darkMode} />} />
-              </Route>
-            </Routes>
-            <ToastContainer
-              position="top-left"
-              rtl={true}
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop
-              closeOnClick
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme={darkMode ? 'dark' : 'light'}
-            />
-          </UserProvider>
-        </AuthProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <UserProvider>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={
+                  <PrivateRoute>
+                    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+                  </PrivateRoute>
+                }>
+                  <Route index element={<Navigate to="/dashboard" replace />} />
+                  <Route path="dashboard" element={
+                    <ErrorBoundary>
+                      <Dashboard darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="products" element={
+                    <ErrorBoundary>
+                      <Products darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="categories" element={
+                    <ErrorBoundary>
+                      <Categories darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="orders" element={
+                    <ErrorBoundary>
+                      <Orders darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="users" element={
+                    <ErrorBoundary>
+                      <Users darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                  <Route path="profile" element={
+                    <ErrorBoundary>
+                      <Profile darkMode={darkMode} />
+                    </ErrorBoundary>
+                  } />
+                </Route>
+              </Routes>
+              <ToastContainer
+                position="top-left"
+                rtl={true}
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop
+                closeOnClick
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme={darkMode ? 'dark' : 'light'}
+              />
+            </UserProvider>
+          </AuthProvider>
+        </ErrorBoundary>
       </ThemeProvider>
     </CacheProvider>
   );
@@ -183,7 +210,9 @@ function AppContent() {
 function App() {
   return (
     <DarkModeProvider>
-      <AppContent />
+      <ErrorBoundary>
+        <AppContent />
+      </ErrorBoundary>
     </DarkModeProvider>
   );
 }

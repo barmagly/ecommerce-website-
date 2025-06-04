@@ -367,7 +367,13 @@ function Dashboard() {
   const { darkMode, toggleDarkMode } = useDarkMode();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalCategories: 0,
+    totalOrders: 0,
+    totalUsers: 0,
+    totalSales: 0
+  });
   const [salesData, setSalesData] = useState([]);
   const [recentOrders, setRecentOrders] = useState([]);
   const [period, setPeriod] = useState('week');
@@ -390,12 +396,31 @@ function Dashboard() {
         dashboardService.getSalesChart(period),
         dashboardService.getRecentOrders(),
       ]);
-      setStats(statsResponse?.data || {});
-      setSalesData(salesResponse?.data || []);
-      setRecentOrders(ordersResponse?.data || []);
+      
+      // Ensure data is properly structured
+      setStats(statsResponse?.data || {
+        totalProducts: 0,
+        totalCategories: 0,
+        totalOrders: 0,
+        totalUsers: 0,
+        totalSales: 0
+      });
+      setSalesData(Array.isArray(salesResponse?.data) ? salesResponse.data : []);
+      setRecentOrders(Array.isArray(ordersResponse?.data) ? ordersResponse.data : []);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast.error('حدث خطأ أثناء تحميل البيانات');
+      
+      // Set fallback data on error
+      setStats({
+        totalProducts: 0,
+        totalCategories: 0,
+        totalOrders: 0,
+        totalUsers: 0,
+        totalSales: 0
+      });
+      setSalesData([]);
+      setRecentOrders([]);
     } finally {
       setLoading(false);
     }

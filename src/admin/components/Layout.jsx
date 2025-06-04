@@ -277,7 +277,7 @@ function Layout() {
       </Box>
       
       <List sx={{ p: 2 }}>
-        {menuItems.map((item) => (
+        {(menuItems || []).map((item) => (
           <React.Fragment key={item.text}>
             <ListItemButton
               onClick={() => handleItemClick(item)}
@@ -321,7 +321,7 @@ function Layout() {
             {item.subItems && (
               <Collapse in={expandedItem === item.text} timeout="auto" unmountOnExit>
                 <List component="div" disablePadding>
-                  {item.subItems.map((subItem) => (
+                  {(item.subItems || []).map((subItem) => (
                     <ListItemButton
                       key={subItem.text}
                       onClick={() => navigate(subItem.path)}
@@ -367,7 +367,7 @@ function Layout() {
         >
           التواصل
         </Typography>
-        {communicationItems.map((item) => (
+        {(communicationItems || []).map((item) => (
           <ListItemButton
             key={item.text}
             onClick={() => navigate(item.path)}

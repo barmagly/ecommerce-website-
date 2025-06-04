@@ -14,5 +14,10 @@ export function DarkModeProvider({ children }) {
 }
 
 export function useDarkMode() {
-  return useContext(DarkModeContext);
+  const context = useContext(DarkModeContext);
+  if (!context) {
+    // Return default values if context is not available
+    return { darkMode: false, toggleDarkMode: () => {} };
+  }
+  return context;
 } 
