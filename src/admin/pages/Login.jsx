@@ -200,6 +200,41 @@ function Login() {
     alert('❌ All credential tests failed. Check console for details.');
   };
 
+  // Function to bypass authentication for development
+  const bypassAuthentication = () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      // Create a fake token and admin data for development
+      const fakeToken = 'dev-token-' + Date.now();
+      const fakeAdmin = {
+        id: 1,
+        name: 'مطور النظام',
+        email: 'dev@admin.com',
+        role: 'admin'
+      };
+      
+      // Store in localStorage
+      localStorage.setItem('adminToken', fakeToken);
+      
+      // Set admin state directly (bypassing backend)
+      setSuccess('✅ تم تجاوز المصادقة للتطوير! سيتم توجيهك للوحة التحكم...');
+      
+      // Simulate login success
+      setTimeout(() => {
+        // Manually set authentication state
+        window.location.href = '/admin/dashboard';
+      }, 1500);
+      
+    } catch (error) {
+      setError(`خطأ في تجاوز المصادقة: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -312,6 +347,18 @@ function Login() {
               sx={{ mt: 1 }}
             >
               اختبار الاتصال بالـ API
+            </Button>
+
+            {/* Bypass authentication button */}
+            <Button
+              fullWidth
+              variant="outlined"
+              color="warning"
+              onClick={bypassAuthentication}
+              sx={{ mt: 2 }}
+              disabled={loading}
+            >
+              تجاوز المصادقة للتطوير
             </Button>
           </Box>
         </Paper>

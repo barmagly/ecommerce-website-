@@ -15,8 +15,19 @@ export const AuthProvider = ({ children }) => {
   const checkAuth = async () => {
     const token = localStorage.getItem('adminToken');
     if (token) {
-      // You can set a dummy admin object or fetch profile if you implement it later
-      setAdmin({ name: 'مدير', role: 'admin' });
+      // Check if it's a development token
+      if (token.startsWith('dev-token-')) {
+        // Development mode - bypass backend verification
+        setAdmin({ 
+          id: 1,
+          name: 'مطور النظام', 
+          email: 'dev@admin.com',
+          role: 'admin' 
+        });
+      } else {
+        // Production mode - you can implement profile fetching here later
+        setAdmin({ name: 'مدير', role: 'admin' });
+      }
     }
     setLoading(false);
   };
