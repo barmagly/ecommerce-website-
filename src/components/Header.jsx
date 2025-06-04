@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../services/Slice/auth/auth";
+import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 
 const navLinks = [
   { label: "الرئيسية", href: "/" },
   { label: "المتجر", href: "/shop" },
   { label: "تواصل معنا", href: "/contact" },
   { label: "من نحن", href: "/about" },
-  { label: "تسجيل", href: "/signup" },
+];
+
+const authLinks = [
+  { label: "الرئيسية", href: "/" },
+  { label: "المتجر", href: "/shop" },
+  { label: "طلباتي", href: "/orders" },
+  { label: "تواصل معنا", href: "/contact" },
+  { label: "من نحن", href: "/about" },
 ];
 
 function isActive(href) {
@@ -18,7 +28,24 @@ function isActive(href) {
 
 export default function Header() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [search, setSearch] = useState("");
+  const { user, token } = useSelector((state) => state.auth);
+  const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
+  const isAuthenticated = !!token;
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      console.log("Fetching user profile...");
+      dispatch(getUserProfileThunk());
+    }
+  }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    console.log("Profile user data:", profileUser);
+    console.log("Profile loading:", loading);
+    console.log("Profile error:", error);
+  }, [profileUser, loading, error]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -37,6 +64,11 @@ export default function Header() {
     }
   };
 
+  const handleLogout = () => {
+    dispatch(logout());
+    navigate('/');
+  };
+
   return (
     <>
       {/* شريط الإعلان العلوي */}
@@ -44,10 +76,10 @@ export default function Header() {
         <div className="container">
           <div className="row align-items-center">
             <div className="col-12">
-              <span className="text-white me-3" style={{marginLeft: '12px'}}>
+              <span className="text-white me-3" style={{ marginLeft: '12px' }}>
                 عروض حصرية على جميع المنتجات وتوصيل سريع مجاني - خصم حتى 50%!
               </span>
-              <a href="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2" style={{fontSize:'1rem'}}>
+              <a href="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2" style={{ fontSize: '1rem' }}>
                 تسوق الآن
               </a>
             </div>
@@ -59,14 +91,14 @@ export default function Header() {
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
           <a className="navbar-brand d-flex align-items-center" href="/">
-            <img src="/images/logo.png" alt="Logo" style={{height: '110px', width: '110px', marginLeft: '8px'}} />
+            <img src="/images/logo.png" alt="Logo" style={{ height: '110px', width: '110px', marginLeft: '8px' }} />
           </a>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className="collapse navbar-collapse d-none d-lg-flex justify-content-between" id="navbarNav">
             <ul className="navbar-nav mb-2 mb-lg-0 gap-4">
-              {navLinks.map(link => (
+              {(isAuthenticated ? authLinks : navLinks).map(link => (
                 <li key={link.href} className="nav-item">
                   <a
                     className={`nav-link fw-bold nav-link-hover${isActive(link.href) ? " active text-danger" : ""}`}
@@ -79,7 +111,7 @@ export default function Header() {
             </ul>
             {/* Enhanced Search and Action Buttons */}
             <div className="d-flex align-items-center gap-3 ms-3">
-              <form className="d-flex search-form position-relative" role="search" style={{minWidth: 260}} onSubmit={handleSearch}>
+              <form className="d-flex search-form position-relative" role="search" style={{ minWidth: 260 }} onSubmit={handleSearch}>
                 <input
                   className="form-control search-input"
                   type="search"
@@ -98,34 +130,94 @@ export default function Header() {
                 </button>
               </form>
               <div className="d-flex align-items-center gap-3">
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/notifications')}
-                  title="الإشعارات"
-                >
-                  <i className="fas fa-bell"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/cart')}
-                  title="سلة المشتريات"
-                >
-                  <i className="fas fa-shopping-cart"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/wishlist')}
-                  title="المفضلة"
-                >
-                  <i className="fas fa-heart"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/profile')}
-                  title="حسابي"
-                >
-                  <i className="fas fa-user"></i>
-                </button>
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/notifications')}
+                      title="الإشعارات"
+                    >
+                      <i className="fas fa-bell"></i>
+                    </button>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/cart')}
+                      title="سلة المشتريات"
+                    >
+                      <i className="fas fa-shopping-cart"></i>
+                    </button>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/wishlist')}
+                      title="المفضلة"
+                    >
+                      <i className="fas fa-heart"></i>
+                    </button>
+                    <div className="dropdown">
+                      <button
+                        className="btn btn-icon"
+                        type="button"
+                        id="userDropdown"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        title={profileUser?.name || "حسابي"}
+                      >
+                        {loading ? (
+                          <div className="spinner-border spinner-border-sm text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                          </div>
+                        ) : profileUser?.profileImg ? (
+                          <img
+                            src={profileUser.profileImg}
+                            alt={profileUser.name || "User"}
+                            className="rounded-circle"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover'
+                            }}
+                            onError={(e) => {
+                              console.error("Error loading profile image");
+                              e.target.onerror = null;
+                              e.target.src = "/images/default-avatar.png";
+                            }}
+                          />
+                        ) : (
+                          <i className="fas fa-user"></i>
+                        )}
+                      </button>
+                      <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                          <div className="dropdown-item-text">
+                            <small className="text-muted">مرحباً،</small>
+                            <div className="fw-bold">{profileUser?.name || "المستخدم"}</div>
+                          </div>
+                        </li>
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><a className="dropdown-item" href="/profile">حسابي</a></li>
+                        <li><a className="dropdown-item" href="/orders">طلباتي</a></li>
+                        <li><a className="dropdown-item" href="/wishlist">المفضلة</a></li>
+                        <li><hr className="dropdown-divider" /></li>
+                        <li><button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button></li>
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-outline-danger"
+                      onClick={() => navigate('/login')}
+                    >
+                      تسجيل الدخول
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => navigate('/signup')}
+                    >
+                      إنشاء حساب
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -134,11 +226,46 @@ export default function Header() {
           <div className="offcanvas offcanvas-end d-lg-none custom-sidebar" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div className="offcanvas-header border-bottom">
               <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                <img src="/images/logo.png" alt="Logo" style={{height: '90px', width: '90px'}} />
+                <img src="/images/logo.png" alt="Logo" style={{ height: '90px', width: '90px' }} />
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div className="offcanvas-body">
+              {isAuthenticated && (
+                <div className="mb-4 p-3 bg-light rounded">
+                  <div className="d-flex align-items-center gap-3">
+                    {loading ? (
+                      <div className="spinner-border spinner-border-sm text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    ) : profileUser?.profileImg ? (
+                      <img
+                        src={profileUser.profileImg}
+                        alt={profileUser.name || "User"}
+                        className="rounded-circle"
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          objectFit: 'cover'
+                        }}
+                        onError={(e) => {
+                          console.error("Error loading profile image");
+                          e.target.onerror = null;
+                          e.target.src = "/images/default-avatar.png";
+                        }}
+                      />
+                    ) : (
+                      <div className="btn-icon">
+                        <i className="fas fa-user"></i>
+                      </div>
+                    )}
+                    <div>
+                      <small className="text-muted d-block">مرحباً،</small>
+                      <div className="fw-bold">{profileUser?.name || "المستخدم"}</div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <form className="d-flex mb-3 position-relative" role="search" onSubmit={handleSearch}>
                 <input
                   className="form-control search-input"
@@ -158,7 +285,7 @@ export default function Header() {
                 </button>
               </form>
               <ul className="navbar-nav mb-4">
-                {navLinks.map(link => (
+                {(isAuthenticated ? authLinks : navLinks).map(link => (
                   <li key={link.href} className="nav-item">
                     <a
                       className={`nav-link fw-bold py-3 border-bottom${isActive(link.href) ? " active text-danger" : ""}`}
@@ -169,36 +296,53 @@ export default function Header() {
                   </li>
                 ))}
               </ul>
-              <div className="d-flex flex-wrap gap-2">
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/notifications')}
-                  title="الإشعارات"
-                >
-                  <i className="fas fa-bell"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/cart')}
-                  title="سلة المشتريات"
-                >
-                  <i className="fas fa-shopping-cart"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/wishlist')}
-                  title="المفضلة"
-                >
-                  <i className="fas fa-heart"></i>
-                </button>
-                <button
-                  className="btn btn-icon"
-                  onClick={() => navigate('/profile')}
-                  title="حسابي"
-                >
-                  <i className="fas fa-user"></i>
-                </button>
-              </div>
+              {isAuthenticated ? (
+                <div className="d-flex flex-column gap-2">
+                  <div className="d-flex flex-wrap gap-2">
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/notifications')}
+                      title="الإشعارات"
+                    >
+                      <i className="fas fa-bell"></i>
+                    </button>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/cart')}
+                      title="سلة المشتريات"
+                    >
+                      <i className="fas fa-shopping-cart"></i>
+                    </button>
+                    <button
+                      className="btn btn-icon"
+                      onClick={() => navigate('/wishlist')}
+                      title="المفضلة"
+                    >
+                      <i className="fas fa-heart"></i>
+                    </button>
+                  </div>
+                  <div className="d-flex flex-column gap-2 mt-2">
+                    <a href="/profile" className="btn btn-outline-dark">حسابي</a>
+                    <a href="/orders" className="btn btn-outline-dark">طلباتي</a>
+                    <button onClick={handleLogout} className="btn btn-danger">تسجيل الخروج</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-2">
+                  <button
+                    className="btn btn-outline-danger"
+                    onClick={() => navigate('/login')}
+                  >
+                    تسجيل الدخول
+                  </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => navigate('/signup')}
+                  >
+                    إنشاء حساب
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -296,6 +440,25 @@ export default function Header() {
         .custom-sidebar .nav-link:hover {
           background: #f8f9fa;
           padding-right: 1.5rem;
+        }
+        
+        .dropdown-menu {
+          border: none;
+          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+          border-radius: 0.5rem;
+        }
+        
+        .dropdown-item {
+          padding: 0.5rem 1rem;
+          transition: all 0.2s;
+        }
+        
+        .dropdown-item:hover {
+          background-color: #f8f9fa;
+        }
+        
+        .dropdown-item-text {
+          padding: 0.5rem 1rem;
         }
         
         @media (max-width: 991px) {
