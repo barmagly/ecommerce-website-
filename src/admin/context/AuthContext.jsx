@@ -26,6 +26,20 @@ export const AuthProvider = ({ children }) => {
       console.log('Attempting login with credentials:', credentials);
       console.log('API URL being used:', 'https://ecommerce-website-backend-nine.vercel.app/api/auth/login');
       
+      // Test if the API endpoint is reachable
+      console.log('Testing API endpoint accessibility...');
+      
+      // Simple connectivity test
+      try {
+        const testResponse = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
+          method: 'HEAD',
+          mode: 'cors'
+        });
+        console.log('API connectivity test result:', testResponse.status);
+      } catch (testError) {
+        console.error('API connectivity test failed:', testError);
+      }
+      
       const response = await authService.login(credentials);
       console.log('Login response:', response);
       
@@ -37,7 +51,18 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Login error:', error);
       console.error('Error response:', error.response);
-      toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
+      console.error('Error message:', error.message);
+      console.error('Error config:', error.config);
+      
+      if (error.code === 'ERR_NETWORK') {
+        console.error('Network error - API might be down or CORS issue');
+        toast.error('خطأ في الشبكة - تحقق من الاتصال بالإنترنت');
+      } else if (error.response?.status === 404) {
+        console.error('API endpoint not found');
+        toast.error('نقطة النهاية غير موجودة');
+      } else {
+        toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
+      }
       return false;
     }
   };

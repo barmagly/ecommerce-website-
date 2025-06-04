@@ -47,7 +47,6 @@ export default function ShopProducts() {
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector((state) => state.product);
   const { wishlist } = useSelector((state) => state.userWishlist);
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;

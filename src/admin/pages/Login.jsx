@@ -8,6 +8,7 @@ import {
   TextField,
   Button,
   CircularProgress,
+  Alert
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +20,7 @@ function Login() {
     username: '',
     password: '',
   });
+  const [error, setError] = useState('');
 
   // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
@@ -36,6 +38,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const success = await login(formData);
       if (success) {
@@ -43,6 +46,36 @@ function Login() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Debug function to test API connectivity
+  const testApiConnection = async () => {
+    console.log('Testing API connection...');
+    try {
+      const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify({
+          email: 'test@test.com',
+          password: 'test123',
+          debug: true
+        })
+      });
+      
+      console.log('Direct fetch response status:', response.status);
+      console.log('Direct fetch response headers:', response.headers);
+      
+      const data = await response.text();
+      console.log('Direct fetch response data:', data);
+      
+      alert(`API Test Result: Status ${response.status}\nCheck console for details`);
+    } catch (error) {
+      console.error('Direct fetch error:', error);
+      alert(`API Test Failed: ${error.message}`);
     }
   };
 
@@ -69,6 +102,11 @@ function Login() {
           <Typography component="h1" variant="h5" gutterBottom>
             تسجيل الدخول للوحة التحكم
           </Typography>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -108,6 +146,17 @@ function Login() {
               ) : (
                 'تسجيل الدخول'
               )}
+            </Button>
+
+            {/* Debug button */}
+            <Button
+              fullWidth
+              variant="outlined"
+              color="secondary"
+              onClick={testApiConnection}
+              sx={{ mt: 1 }}
+            >
+              اختبار الاتصال بالـ API
             </Button>
           </Box>
         </Paper>

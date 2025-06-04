@@ -1,14 +1,21 @@
 import axios from 'axios';
 
-const API_URL = 'https://ecommerce-website-backend-nine.vercel.app/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+
+console.log('API_URL configured as:', API_URL);
+console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
 
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
   },
 });
+
+console.log('Axios instance created with baseURL:', api.defaults.baseURL);
 
 // Add request interceptor for authentication
 api.interceptors.request.use(
@@ -38,7 +45,25 @@ api.interceptors.response.use(
 
 // Auth services
 export const authService = {
-  login: (data) => api.post('/auth/login', data),
+  login: (data) => {
+    console.log('authService.login called with data:', data);
+    console.log('Making request to:', `${API_URL}/auth/login`);
+    console.log('Full URL will be:', `${API_URL}/auth/login`);
+    
+    // Add timestamp to prevent caching
+    const requestData = {
+      ...data,
+      timestamp: Date.now()
+    };
+    
+    return api.post('/auth/login', requestData, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+  },
   logout: () => {
     localStorage.removeItem('adminToken');
     window.location.href = '/admin/login';
