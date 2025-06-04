@@ -124,57 +124,113 @@ function Login() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
       
-      // Prepare registration data
-      const registrationPayload = {
-        name: registerData.name,
-        email: registerData.email,
-        password: registerData.password,
-        role: 'admin' // Set as admin for admin panel
-      };
-
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Try different registration payload formats
+      const registrationAttempts = [
+        // Attempt 1: Standard format
+        {
+          name: registerData.name,
+          email: registerData.email,
+          password: registerData.password,
+          role: 'admin'
         },
-        body: JSON.stringify(registrationPayload),
-      });
+        // Attempt 2: With username field
+        {
+          name: registerData.name,
+          username: registerData.email,
+          email: registerData.email,
+          password: registerData.password,
+          role: 'admin'
+        },
+        // Attempt 3: firstName/lastName format
+        {
+          firstName: registerData.name.split(' ')[0] || registerData.name,
+          lastName: registerData.name.split(' ')[1] || '',
+          email: registerData.email,
+          password: registerData.password,
+          role: 'admin'
+        },
+        // Attempt 4: Without role
+        {
+          name: registerData.name,
+          email: registerData.email,
+          password: registerData.password
+        },
+        // Attempt 5: With confirmPassword
+        {
+          name: registerData.name,
+          email: registerData.email,
+          password: registerData.password,
+          confirmPassword: registerData.confirmPassword,
+          role: 'admin'
+        }
+      ];
 
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
-        
-        // Clear register form
-        setRegisterData({
-          name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-        });
-        
-        // Switch to login tab after 2 seconds
-        setTimeout(() => {
-          setTabValue(0);
-          setSuccess('');
-        }, 2000);
-      } else {
-        const errorData = await response.json();
-        
-        if (errorData.message) {
-          if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
-            setError('البريد الإلكتروني مستخدم بالفعل');
-          } else if (errorData.message.includes('required')) {
-            setError('جميع الحقول مطلوبة');
+      for (let i = 0; i < registrationAttempts.length; i++) {
+        const payload = registrationAttempts[i];
+        console.log(`Registration attempt ${i + 1}:`, payload);
+
+        try {
+          const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          console.log(`Attempt ${i + 1} - Status:`, response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Attempt ${i + 1} - Success:`, data);
+            setSuccess('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
+            
+            // Clear register form
+            setRegisterData({
+              name: '',
+              email: '',
+              password: '',
+              confirmPassword: '',
+            });
+            
+            // Switch to login tab after 2 seconds
+            setTimeout(() => {
+              setTabValue(0);
+              setSuccess('');
+            }, 2000);
+            setLoading(false);
+            return;
           } else {
-            setError(errorData.message);
+            const errorData = await response.json();
+            console.log(`Attempt ${i + 1} - Error:`, errorData);
+            
+            // If this is the last attempt, show the error
+            if (i === registrationAttempts.length - 1) {
+              if (errorData.message) {
+                if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
+                  setError('البريد الإلكتروني مستخدم بالفعل');
+                } else if (errorData.message.includes('required')) {
+                  setError('جميع الحقول مطلوبة - تحقق من تنسيق البيانات');
+                } else {
+                  setError(`خطأ في التسجيل: ${errorData.message}`);
+                }
+              } else {
+                setError('فشل في إنشاء الحساب - تحقق من البيانات المدخلة');
+              }
+            }
           }
-        } else {
-          setError('فشل في إنشاء الحساب');
+        } catch (fetchError) {
+          console.error(`Attempt ${i + 1} - Fetch error:`, fetchError);
+          
+          // If this is the last attempt, show the error
+          if (i === registrationAttempts.length - 1) {
+            setError('خطأ في الشبكة. تحقق من الاتصال بالإنترنت.');
+          }
         }
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError('خطأ في الشبكة. تحقق من الاتصال بالإنترنت.');
+      setError('خطأ غير متوقع في التسجيل');
     } finally {
       setLoading(false);
     }
@@ -251,6 +307,130 @@ function Login() {
       }, 1500);
     } catch (err) {
       setError('فشل في تجاوز المصادقة');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Test backend API endpoints
+  const testBackendEndpoints = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+    
+    console.log('Testing backend endpoints...');
+    
+    // Test different possible endpoints
+    const endpoints = [
+      '/auth/register',
+      '/users/register', 
+      '/register',
+      '/auth/signup',
+      '/users/signup',
+      '/signup',
+      '/auth',
+      '/users',
+      '/'
+    ];
+
+    const results = [];
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Testing: ${API_URL}${endpoint}`);
+        
+        // Test GET request first
+        const getResponse = await fetch(`${API_URL}${endpoint}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+        
+        console.log(`GET ${endpoint} - Status: ${getResponse.status}`);
+        
+        if (getResponse.status !== 404) {
+          const getResult = await getResponse.text();
+          console.log(`GET ${endpoint} - Response:`, getResult);
+          results.push(`✅ GET ${endpoint}: ${getResponse.status}`);
+        }
+
+        // Test POST request for registration endpoints
+        if (endpoint.includes('register') || endpoint.includes('signup')) {
+          const testPayload = {
+            name: 'Test User',
+            email: 'test@test.com',
+            password: 'test123'
+          };
+
+          const postResponse = await fetch(`${API_URL}${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(testPayload),
+          });
+
+          console.log(`POST ${endpoint} - Status: ${postResponse.status}`);
+          
+          if (postResponse.status !== 404) {
+            const postResult = await postResponse.text();
+            console.log(`POST ${endpoint} - Response:`, postResult);
+            results.push(`✅ POST ${endpoint}: ${postResponse.status}`);
+          }
+        }
+      } catch (error) {
+        console.log(`❌ ${endpoint} - Error:`, error.message);
+        results.push(`❌ ${endpoint}: ${error.message}`);
+      }
+    }
+
+    // Display results
+    const resultMessage = results.length > 0 
+      ? `نتائج اختبار الـ API:\n${results.join('\n')}`
+      : 'لم يتم العثور على أي endpoints متاحة';
+    
+    setSuccess(resultMessage);
+    setLoading(false);
+  };
+
+  // Check backend status
+  const checkBackendStatus = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+    const BASE_URL = API_URL.replace('/api', '');
+    
+    console.log('Checking backend status...');
+    console.log('API_URL:', API_URL);
+    console.log('BASE_URL:', BASE_URL);
+
+    try {
+      // Test base URL first
+      const baseResponse = await fetch(BASE_URL, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log('Base URL Status:', baseResponse.status);
+      
+      if (baseResponse.ok) {
+        const baseResult = await baseResponse.text();
+        console.log('Base URL Response:', baseResult);
+        
+        setSuccess(`✅ الخادم متاح!\nالحالة: ${baseResponse.status}\nالاستجابة: ${baseResult.substring(0, 200)}...`);
+      } else {
+        setError(`❌ الخادم غير متاح\nالحالة: ${baseResponse.status}`);
+      }
+    } catch (error) {
+      console.error('Backend status check error:', error);
+      setError(`❌ خطأ في الاتصال بالخادم: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -450,6 +630,28 @@ function Login() {
               sx={{ py: 1.2 }}
             >
               إنشاء حساب مدير سريع
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="primary"
+              onClick={checkBackendStatus}
+              disabled={loading}
+              sx={{ py: 1.2 }}
+            >
+              فحص حالة الخادم
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="info"
+              onClick={testBackendEndpoints}
+              disabled={loading}
+              sx={{ py: 1.2 }}
+            >
+              اختبار endpoints الخلفية
             </Button>
 
             <Button
