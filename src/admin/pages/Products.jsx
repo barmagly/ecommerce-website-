@@ -93,9 +93,12 @@ function Products() {
         productService.getAll(),
         categoryService.getAll(),
       ]);
-      setProducts(productsResponse.data);
-      setCategories(categoriesResponse.data);
+      
+      // Ensure data is properly structured with fallbacks
+      setProducts(Array.isArray(productsResponse?.data) ? productsResponse.data : []);
+      setCategories(Array.isArray(categoriesResponse?.data) ? categoriesResponse.data : []);
     } catch (error) {
+      console.error('Error fetching data:', error);
       setProducts([]);
       setCategories([]);
       toast.error('حدث خطأ أثناء تحميل البيانات');
@@ -161,7 +164,7 @@ function Products() {
     if (window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
       try {
         await productService.delete(id);
-        setProducts(products.filter((product) => product._id !== id));
+        setProducts((products || []).filter((product) => product._id !== id));
         toast.success('تم حذف المنتج بنجاح');
       } catch (error) {
         toast.error('حدث خطأ أثناء حذف المنتج');
@@ -233,11 +236,11 @@ function Products() {
 
       if (selectedProduct) {
         const response = await productService.update(selectedProduct._id, productData);
-        setProducts(products.map((product) => product._id === selectedProduct._id ? response.data : product));
+        setProducts((products || []).map((product) => product._id === selectedProduct._id ? response.data : product));
         toast.success('تم تحديث المنتج بنجاح');
       } else {
         const response = await productService.create(productData);
-        setProducts([...products, response.data]);
+        setProducts([...(products || []), response.data]);
         toast.success('تم إضافة المنتج بنجاح');
       }
       handleClose();
@@ -266,17 +269,17 @@ function Products() {
   };
 
   const handleBulkDelete = async () => {
-    if (selectedRows.length === 0) {
+    if ((selectedRows || []).length === 0) {
       toast.warning('يرجى اختيار منتجات للحذف');
       return;
     }
     
-    if (window.confirm(`هل أنت متأكد من حذف ${selectedRows.length} منتج؟`)) {
+          if (window.confirm(`هل أنت متأكد من حذف ${(selectedRows || []).length} منتج؟`)) {
       try {
-        await Promise.all(selectedRows.map(id => productService.delete(id)));
-        setProducts(products.filter(product => !selectedRows.includes(product._id)));
+        await Promise.all((selectedRows || []).map(id => productService.delete(id)));
+        setProducts((products || []).filter(product => !(selectedRows || []).includes(product._id)));
         setSelectedRows([]);
-        toast.success(`تم حذف ${selectedRows.length} منتج بنجاح`);
+                  toast.success(`تم حذف ${(selectedRows || []).length} منتج بنجاح`);
       } catch (error) {
         toast.error('حدث خطأ أثناء حذف المنتجات');
       }
@@ -292,7 +295,7 @@ function Products() {
     ) },
     { field: 'name', headerName: 'اسم المنتج', width: 180 },
     { field: 'brand', headerName: 'الماركة', width: 120 },
-    { field: 'category', headerName: 'التصنيف', width: 120, valueGetter: (params) => categories.find(cat => cat._id === params.value)?.name || '' },
+    { field: 'category', headerName: 'التصنيف', width: 120, valueGetter: (params) => (categories || []).find(cat => cat._id === params.value)?.name || '' },
     { field: 'price', headerName: 'السعر', width: 100, valueFormatter: (params) => params.value ? `₪ ${params.value}` : '-' },
     { field: 'stock', headerName: 'المخزون', width: 100 },
     { field: 'hasVariants', headerName: 'متغيرات', width: 100, renderCell: (params) => params.value ? <Chip label="نعم" color="primary" /> : <Chip label="لا" color="default" /> },
@@ -336,14 +339,14 @@ function Products() {
           المنتجات
         </Typography>
         <Box sx={{ display: 'flex', gap: 2 }}>
-          {selectedRows.length > 0 && (
+          {(selectedRows || []).length > 0 && (
             <Button
               variant="outlined"
               startIcon={<DeleteIcon />}
               onClick={handleBulkDelete}
               sx={{ color: '#ff1744', borderColor: '#ff1744', fontWeight: 700 }}
             >
-              حذف المحدد ({selectedRows.length})
+              حذف المحدد ({(selectedRows || []).length})
             </Button>
           )}
           <Button
@@ -359,7 +362,7 @@ function Products() {
       <Paper sx={{ p: 2, borderRadius: 4, boxShadow: '0 8px 32px 0 rgba(255,0,0,0.10)', background: 'linear-gradient(135deg, #fff 60%, #ffebee 100%)', mb: 2 }}>
         <div style={{ height: 600, width: '100%' }}>
           <DataGrid
-            rows={products}
+            rows={products || []}
             columns={columns}
             getRowId={row => row._id}
             pageSize={10}
@@ -367,9 +370,9 @@ function Products() {
             checkboxSelection
             disableRowSelectionOnClick={false}
             onRowSelectionModelChange={(newSelection) => {
-              setSelectedRows(newSelection);
+              setSelectedRows(newSelection || []);
             }}
-            rowSelectionModel={selectedRows}
+            rowSelectionModel={selectedRows || []}
             sx={{ 
               background: 'transparent', 
               borderRadius: 3, 
@@ -440,7 +443,7 @@ function Products() {
                     label="التصنيف"
                     sx={{ minWidth: 200 }}
                   >
-                    {categories.map((category) => (
+                    {(categories || []).map((category) => (
                       <MenuItem key={category._id} value={category._id}>{category.name}</MenuItem>
                     ))}
                   </Select>
@@ -520,7 +523,7 @@ function Products() {
               {/* الصف الرابع: صور المنتج */}
               <Grid item xs={12}>
                 <ImageList cols={4} rowHeight={100} sx={{ mb: 2 }}>
-                  {images.map((img, idx) => (
+                  {(images || []).map((img, idx) => (
                     <ImageListItem key={idx} sx={{ borderRadius: '50%', overflow: 'hidden', position: 'relative' }}>
                       <img src={img.url || img} alt="صورة المنتج" style={{ borderRadius: '50%', objectFit: 'cover', width: '100%', height: '100%' }} />
                       <ImageListItemBar
@@ -598,7 +601,7 @@ function Products() {
               <Typography variant="h6">{selectedProduct.name}</Typography>
               <Typography>الوصف: {selectedProduct.description}</Typography>
               <Typography>الماركة: {selectedProduct.brand}</Typography>
-              <Typography>التصنيف: {categories.find(cat => cat._id === selectedProduct.category)?.name || ''}</Typography>
+              <Typography>التصنيف: {(categories || []).find(cat => cat._id === selectedProduct.category)?.name || ''}</Typography>
               <Typography>السعر: {selectedProduct.price ? `₪ ${selectedProduct.price}` : '-'}</Typography>
               <Typography>المخزون: {selectedProduct.stock}</Typography>
               <Typography>SKU: {selectedProduct.sku}</Typography>
