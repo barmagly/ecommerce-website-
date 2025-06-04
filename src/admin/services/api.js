@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
 
 // Create axios instance with default config
 const api = axios.create({
@@ -38,13 +38,91 @@ api.interceptors.response.use(
 
 // Auth services
 export const authService = {
-  login: (data) => api.post('/auth/login', data),
+  login: async (data) => {
+    // Ensure compatibility with different backend field expectations
+    const loginData = {
+      ...data,
+      email: data.username || data.email, // Send both username as email
+    };
+    
+    try {
+      // Use the most basic fetch possible to avoid CORS preflight
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        body: JSON.stringify(loginData),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: await response.text() };
+        }
+        
+        // Create axios-like error
+        const error = new Error(errorData.message || `HTTP ${response.status}`);
+        error.response = {
+          status: response.status,
+          data: errorData
+        };
+        throw error;
+      }
+      
+      const result = await response.json();
+      
+      // Return in axios-like format for compatibility
+      return { data: result };
+    } catch (error) {
+      // If it's already formatted, re-throw
+      if (error.response) {
+        throw error;
+      }
+      
+      // Convert to axios-like error format
+      throw {
+        response: {
+          status: 500,
+          data: { message: error.message }
+        },
+        message: error.message,
+        code: 'ERR_NETWORK'
+      };
+    }
+  },
   logout: () => {
     localStorage.removeItem('adminToken');
     window.location.href = '/admin/login';
   },
   // Remove or update getProfile if not implemented in backend
   // getProfile: () => api.get('/users/me'),
+};
+
+// Upload services
+export const uploadService = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  uploadImages: (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('images', file);
+    });
+    return api.post('/upload/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
 };
 
 // Products services
@@ -54,7 +132,6 @@ export const productService = {
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
-  // Remove uploadImage or implement in backend if needed
 };
 
 // Categories services

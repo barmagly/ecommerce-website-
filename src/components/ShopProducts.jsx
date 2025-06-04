@@ -41,17 +41,53 @@ const AvailabilityBadge = ({ stock }) => {
 };
 
 export default function ShopProducts() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector((state) => state.product);
   const { wishlist } = useSelector((state) => state.userWishlist);
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
 
+  // تحديث تلقائي كل دقيقة
   useEffect(() => {
-    dispatch(getProductsThunk());
-  }, [dispatch]);
+    let isMounted = true;
+    const fetchProducts = () => {
+      setLoading(true);
+      fetch('https://ecommerce-website-backend-nine.vercel.app/api/products')
+        .then(res => res.json())
+        .then(data => {
+          if (isMounted) {
+            // تحقق من شكل البيانات المستلمة
+            let productsArray = [];
+            if (Array.isArray(data)) {
+              productsArray = data;
+            } else if (data && Array.isArray(data.products)) {
+              productsArray = data.products;
+            } else if (data && Array.isArray(data.data)) {
+              productsArray = data.data;
+            }
+            setProducts(productsArray);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          if (isMounted) {
+            console.error('Error fetching products:', err);
+            setError('حدث خطأ في جلب المنتجات');
+            setLoading(false);
+          }
+        });
+    };
+    fetchProducts();
+    const interval = setInterval(fetchProducts, 60000); // كل دقيقة
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
 
   const handleWishlistClick = (e, productId) => {
     e.stopPropagation(); // Prevent product card click
@@ -100,7 +136,7 @@ export default function ShopProducts() {
     );
   }
 
-  if (!products || products.length === 0) {
+  if (!Array.isArray(products) || products.length === 0) {
     return (
       <div className="alert alert-info text-center" role="alert">
         لا توجد منتجات متاحة حالياً

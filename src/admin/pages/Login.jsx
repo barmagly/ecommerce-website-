@@ -8,6 +8,8 @@ import {
   TextField,
   Button,
   CircularProgress,
+  Alert,
+  Divider
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,6 +21,8 @@ function Login() {
     username: '',
     password: '',
   });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
@@ -36,6 +40,8 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
+    setSuccess('');
     try {
       const success = await login(formData);
       if (success) {
@@ -44,6 +50,92 @@ function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Function to create admin user
+  const createAdminUser = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: 'admin@admin.com',
+          password: 'admin123',
+          name: 'Admin User',
+          username: 'admin',
+          role: 'admin'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess('✅ Admin user created successfully! You can now login with:\nEmail: admin@admin.com\nPassword: admin123');
+        console.log('Admin user created:', data);
+      } else {
+        const errorData = await response.json();
+        if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
+          setSuccess('ℹ️ Admin user already exists. Try logging in with:\nEmail: admin@admin.com\nPassword: admin123');
+        } else {
+          setError(`Failed to create admin user: ${errorData.message}`);
+        }
+      }
+    } catch (error) {
+      setError(`Error creating admin user: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manual test function for debugging (only runs when button is clicked)
+  const testApiConnection = async () => {
+    console.log('Testing API connection...');
+    
+    // Test different credential formats
+    const testCredentials = [
+      { email: 'admin@admin.com', password: 'admin123' },
+      { username: 'admin', password: 'admin123' },
+      { email: 'admin', password: 'admin' },
+      { username: 'admin', password: 'admin' },
+      { email: 'admin', password: 'password' },
+      { username: 'admin', password: 'password' }
+    ];
+    
+    for (let i = 0; i < testCredentials.length; i++) {
+      const creds = testCredentials[i];
+      console.log(`Testing credentials ${i + 1}:`, creds);
+      
+      try {
+        const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(creds)
+        });
+        
+        console.log(`Test ${i + 1} - Status:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Test ${i + 1} - Success! Response:`, data);
+          alert(`✅ Success with credentials: ${JSON.stringify(creds)}\nToken: ${data.token ? 'Present' : 'Missing'}`);
+          return;
+        } else {
+          const errorText = await response.text();
+          console.log(`Test ${i + 1} - Error response:`, errorText);
+        }
+      } catch (error) {
+        console.error(`Test ${i + 1} - Fetch error:`, error);
+      }
+    }
+    
+    alert('❌ All credential tests failed. Check console for details.');
   };
 
   return (
@@ -69,6 +161,19 @@ function Login() {
           <Typography component="h1" variant="h5" gutterBottom>
             تسجيل الدخول للوحة التحكم
           </Typography>
+          
+          {error && (
+            <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
+              {error}
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert severity="success" sx={{ mb: 2, width: '100%', whiteSpace: 'pre-line' }}>
+              {success}
+            </Alert>
+          )}
+          
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -108,6 +213,31 @@ function Login() {
               ) : (
                 'تسجيل الدخول'
               )}
+            </Button>
+
+            <Divider sx={{ my: 2 }}>أو</Divider>
+
+            {/* Admin user creation button */}
+            <Button
+              fullWidth
+              variant="contained"
+              color="success"
+              onClick={createAdminUser}
+              sx={{ mb: 2 }}
+              disabled={loading}
+            >
+              إنشاء مستخدم إداري جديد
+            </Button>
+
+            {/* Debug button - only for testing */}
+            <Button
+              fullWidth
+              variant="outlined"
+              color="secondary"
+              onClick={testApiConnection}
+              sx={{ mt: 1 }}
+            >
+              اختبار الاتصال بالـ API
             </Button>
           </Box>
         </Paper>

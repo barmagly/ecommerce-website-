@@ -7,13 +7,9 @@ export const getProductsThunk = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const { data } = await axios.get(`${API_KEY}`);
-            console.log("data in slice", data);
-            return {
-                status: data.status,
-                products: data.products,
-            };
+            return data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data || "error server");
+            return thunkAPI.rejectWithValue(error.response?.data || "error server");
         }
     }
 );
@@ -33,7 +29,7 @@ const productSlice = createSlice({
             })
             .addCase(getProductsThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.products = action.payload.products;
+                state.products = action.payload;
             })
             .addCase(getProductsThunk.rejected, (state, action) => {
                 state.loading = false;

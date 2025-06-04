@@ -58,6 +58,19 @@ export default function ShopCategories() {
 
   return (
     <div className="mb-4" data-aos="fade-left">
+      <style>
+        {`
+          .category-item {
+            transition: all 0.2s ease-in-out;
+          }
+          .category-item:hover {
+            transform: translateY(-4px);
+          }
+          .category-item:hover .category-icon {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          }
+        `}
+      </style>
       <h5 className="fw-bold mb-3">الأقسام</h5>
       <div className="d-flex flex-wrap gap-3">
         {transformedCategories.map(cat => (
@@ -99,17 +112,6 @@ export default function ShopCategories() {
           </div>
         ))}
       </div>
-      <style jsx>{`
-        .category-item {
-          transition: all 0.2s ease-in-out;
-        }
-        .category-item:hover {
-          transform: translateY(-4px);
-        }
-        .category-item:hover .category-icon {
-          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-      `}</style>
     </div>
   );
 } 

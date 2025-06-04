@@ -23,14 +23,51 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('Attempting login with credentials:', credentials);
+      console.log('API URL being used:', 'https://ecommerce-website-backend-nine.vercel.app/api/auth/login');
+      
+      // Test if the API endpoint is reachable
+      console.log('Testing API endpoint accessibility...');
+      
+      // Simple connectivity test
+      try {
+        const testResponse = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
+          method: 'HEAD',
+          mode: 'cors'
+        });
+        console.log('API connectivity test result:', testResponse.status);
+      } catch (testError) {
+        console.error('API connectivity test failed:', testError);
+      }
+      
       const response = await authService.login(credentials);
+      console.log('Login response:', response);
+      
       const { token, admin: adminData } = response.data;
-      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminToken', token);  
       setAdmin(adminData);
       toast.success('تم تسجيل الدخول بنجاح');
       return true;
     } catch (error) {
-      toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
+      console.error('Error message:', error.message);
+      console.error('Error config:', error.config);
+      
+      if (error.code === 'ERR_NETWORK') {
+        console.error('Network error - API might be down or CORS issue');
+        toast.error('خطأ في الشبكة - مشكلة CORS أو الخادم غير متاح');
+      } else if (error.response?.status === 404) {
+        console.error('API endpoint not found');
+        toast.error('نقطة النهاية غير موجودة');
+      } else if (error.response?.status === 401) {
+        console.error('Unauthorized - wrong credentials');
+        toast.error('بيانات الدخول غير صحيحة');
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('فشل تسجيل الدخول - تحقق من بيانات الدخول');
+      }
       return false;
     }
   };
