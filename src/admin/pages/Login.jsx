@@ -92,11 +92,21 @@ function Login() {
     setSuccess('');
 
     try {
+      console.log('Attempting login with:', loginData);
       const success = await login(loginData);
+      console.log('Login result:', success);
+      
       if (success) {
-        navigate('/admin/dashboard');
+        setSuccess('تم تسجيل الدخول بنجاح! جاري التوجيه...');
+        
+        // Small delay to ensure state is updated
+        setTimeout(() => {
+          console.log('Navigating to dashboard...');
+          navigate('/admin/dashboard', { replace: true });
+        }, 500);
       }
     } catch (err) {
+      console.error('Login error:', err);
       setError('فشل تسجيل الدخول. تحقق من بيانات الدخول.');
     } finally {
       setLoading(false);
@@ -265,11 +275,22 @@ function Login() {
     try {
       const devToken = 'dev-token-' + Date.now();
       localStorage.setItem('adminToken', devToken);
+      
+      // Manually trigger auth context update
+      const devAdmin = {
+        id: 1,
+        name: 'مطور النظام',
+        email: 'dev@admin.com',
+        role: 'admin'
+      };
+      
+      // Force update the auth context by calling checkAuth
       setSuccess('تم تجاوز المصادقة للتطوير! جاري التوجيه...');
       
       setTimeout(() => {
+        // Force page reload to trigger auth context update
         window.location.href = '/admin/dashboard';
-      }, 1500);
+      }, 1000);
     } catch (err) {
       setError('فشل في تجاوز المصادقة');
     } finally {

@@ -34,15 +34,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('AuthContext: Starting login process...');
       const response = await authService.login(credentials);
+      console.log('AuthContext: Login response received:', response);
       
       const { token, admin: adminData } = response.data;
-      localStorage.setItem('adminToken', token);  
-      setAdmin(adminData);
+      console.log('AuthContext: Extracted data:', { hasToken: !!token, adminData });
+      
+      if (token) {
+        localStorage.setItem('adminToken', token);
+        console.log('AuthContext: Token saved to localStorage');
+      }
+      
+      if (adminData) {
+        setAdmin(adminData);
+        console.log('AuthContext: Admin state updated:', adminData);
+      }
+      
       toast.success('تم تسجيل الدخول بنجاح');
+      console.log('AuthContext: Login completed successfully');
       return true;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('AuthContext: Login error:', error);
       
       // Handle different types of errors
       if (error.code === 'ERR_NETWORK') {
