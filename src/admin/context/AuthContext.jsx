@@ -23,13 +23,20 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
+      console.log('Attempting login with credentials:', credentials);
+      console.log('API URL being used:', 'https://ecommerce-website-backend-nine.vercel.app/api/auth/login');
+      
       const response = await authService.login(credentials);
+      console.log('Login response:', response);
+      
       const { token, admin: adminData } = response.data;
       localStorage.setItem('adminToken', token);
       setAdmin(adminData);
       toast.success('تم تسجيل الدخول بنجاح');
       return true;
     } catch (error) {
+      console.error('Login error:', error);
+      console.error('Error response:', error.response);
       toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
       return false;
     }
