@@ -54,6 +54,8 @@ function Login() {
     email: '',
     password: '',
     confirmPassword: '',
+    address: '',
+    phone: '',
   });
 
   // If already authenticated, redirect to dashboard
@@ -124,113 +126,66 @@ function Login() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
       
-      // Try different registration payload formats
-      const registrationAttempts = [
-        // Attempt 1: Standard format
-        {
-          name: registerData.name,
-          email: registerData.email,
-          password: registerData.password,
-          role: 'admin'
-        },
-        // Attempt 2: With username field
-        {
-          name: registerData.name,
-          username: registerData.email,
-          email: registerData.email,
-          password: registerData.password,
-          role: 'admin'
-        },
-        // Attempt 3: firstName/lastName format
-        {
-          firstName: registerData.name.split(' ')[0] || registerData.name,
-          lastName: registerData.name.split(' ')[1] || '',
-          email: registerData.email,
-          password: registerData.password,
-          role: 'admin'
-        },
-        // Attempt 4: Without role
-        {
-          name: registerData.name,
-          email: registerData.email,
-          password: registerData.password
-        },
-        // Attempt 5: With confirmPassword
-        {
-          name: registerData.name,
-          email: registerData.email,
-          password: registerData.password,
-          confirmPassword: registerData.confirmPassword,
-          role: 'admin'
-        }
-      ];
+      // Based on the Redux auth slice, the backend expects: name, address, phone, email, password
+      const registrationPayload = {
+        name: registerData.name,
+        address: registerData.address,
+        phone: registerData.phone,
+        email: registerData.email,
+        password: registerData.password
+      };
 
-      for (let i = 0; i < registrationAttempts.length; i++) {
-        const payload = registrationAttempts[i];
-        console.log(`Registration attempt ${i + 1}:`, payload);
+      console.log('Registration attempt with correct format:', registrationPayload);
 
-        try {
-          const response = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-          });
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationPayload),
+      });
 
-          console.log(`Attempt ${i + 1} - Status:`, response.status);
+      console.log('Registration response status:', response.status);
 
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`Attempt ${i + 1} - Success:`, data);
-            setSuccess('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
-            
-            // Clear register form
-            setRegisterData({
-              name: '',
-              email: '',
-              password: '',
-              confirmPassword: '',
-            });
-            
-            // Switch to login tab after 2 seconds
-            setTimeout(() => {
-              setTabValue(0);
-              setSuccess('');
-            }, 2000);
-            setLoading(false);
-            return;
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Registration success:', data);
+        setSuccess('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
+        
+        // Clear register form
+        setRegisterData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          address: '',
+          phone: '',
+        });
+        
+        // Switch to login tab after 2 seconds
+        setTimeout(() => {
+          setTabValue(0);
+          setSuccess('');
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        console.log('Registration error:', errorData);
+        
+        if (errorData.message) {
+          if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
+            setError('البريد الإلكتروني مستخدم بالفعل');
+          } else if (errorData.message.includes('required')) {
+            setError('جميع الحقول مطلوبة - تأكد من ملء جميع البيانات');
           } else {
-            const errorData = await response.json();
-            console.log(`Attempt ${i + 1} - Error:`, errorData);
-            
-            // If this is the last attempt, show the error
-            if (i === registrationAttempts.length - 1) {
-              if (errorData.message) {
-                if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
-                  setError('البريد الإلكتروني مستخدم بالفعل');
-                } else if (errorData.message.includes('required')) {
-                  setError('جميع الحقول مطلوبة - تحقق من تنسيق البيانات');
-                } else {
-                  setError(`خطأ في التسجيل: ${errorData.message}`);
-                }
-              } else {
-                setError('فشل في إنشاء الحساب - تحقق من البيانات المدخلة');
-              }
-            }
+            setError(`خطأ في التسجيل: ${errorData.message}`);
           }
-        } catch (fetchError) {
-          console.error(`Attempt ${i + 1} - Fetch error:`, fetchError);
-          
-          // If this is the last attempt, show the error
-          if (i === registrationAttempts.length - 1) {
-            setError('خطأ في الشبكة. تحقق من الاتصال بالإنترنت.');
-          }
+        } else {
+          setError('فشل في إنشاء الحساب - تحقق من البيانات المدخلة');
         }
       }
     } catch (err) {
       console.error('Registration error:', err);
-      setError('خطأ غير متوقع في التسجيل');
+      setError('خطأ في الشبكة. تحقق من الاتصال بالإنترنت.');
     } finally {
       setLoading(false);
     }
@@ -245,126 +200,55 @@ function Login() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
       
-      // Try different admin data formats based on common backend requirements
-      const adminAttempts = [
-        // Attempt 1: Complete admin data with all possible fields
-        {
-          name: 'مدير النظام',
-          firstName: 'مدير',
-          lastName: 'النظام',
-          username: 'admin',
-          email: 'admin@admin.com',
-          password: 'admin123',
-          confirmPassword: 'admin123',
-          role: 'admin',
-          isAdmin: true,
-          status: 'active'
+      // Use the correct format based on Redux auth slice discovery: name, address, phone, email, password
+      const adminData = {
+        name: 'مدير النظام',
+        address: 'عنوان المدير',
+        phone: '1234567890',
+        email: 'admin@admin.com',
+        password: 'admin123'
+      };
+
+      console.log('Creating admin with correct format:', adminData);
+
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        // Attempt 2: Standard format with username
-        {
-          name: 'مدير النظام',
-          username: 'admin',
-          email: 'admin@admin.com',
-          password: 'admin123',
-          role: 'admin'
-        },
-        // Attempt 3: firstName/lastName format
-        {
-          firstName: 'مدير',
-          lastName: 'النظام',
-          email: 'admin@admin.com',
-          password: 'admin123',
-          confirmPassword: 'admin123',
-          role: 'admin'
-        },
-        // Attempt 4: Basic format with phone number
-        {
-          name: 'مدير النظام',
-          email: 'admin@admin.com',
-          password: 'admin123',
-          phone: '1234567890',
-          role: 'admin'
-        },
-        // Attempt 5: All common e-commerce fields
-        {
-          name: 'مدير النظام',
-          email: 'admin@admin.com',
-          password: 'admin123',
-          confirmPassword: 'admin123',
-          phone: '1234567890',
-          address: 'Admin Address',
-          city: 'Admin City',
-          country: 'Admin Country',
-          role: 'admin',
-          isAdmin: true
-        },
-        // Attempt 6: Minimal required fields
-        {
-          name: 'مدير النظام',
-          email: 'admin@admin.com',
+        body: JSON.stringify(adminData),
+      });
+
+      console.log('Admin creation response status:', response.status);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Admin creation success:', data);
+        setSuccess('تم إنشاء حساب المدير بنجاح!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
+        
+        // Auto-fill login form
+        setLoginData({
+          username: 'admin@admin.com',
           password: 'admin123'
-        }
-      ];
-
-      for (let i = 0; i < adminAttempts.length; i++) {
-        const adminData = adminAttempts[i];
-        console.log(`Admin creation attempt ${i + 1}:`, adminData);
-
-        try {
-          const response = await fetch(`${API_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(adminData),
-          });
-
-          console.log(`Admin attempt ${i + 1} - Status:`, response.status);
-
-          if (response.ok) {
-            const data = await response.json();
-            console.log(`Admin attempt ${i + 1} - Success:`, data);
-            setSuccess('تم إنشاء حساب المدير بنجاح!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
-            
-            // Auto-fill login form
-            setLoginData({
-              username: 'admin@admin.com',
-              password: 'admin123'
-            });
-            
-            setTabValue(0); // Switch to login tab
-            setLoading(false);
-            return;
-          } else {
-            const errorData = await response.json();
-            console.log(`Admin attempt ${i + 1} - Error:`, errorData);
-            
-            if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
-              setSuccess('حساب المدير موجود بالفعل!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
-              
-              // Auto-fill login form
-              setLoginData({
-                username: 'admin@admin.com',
-                password: 'admin123'
-              });
-              
-              setTabValue(0); // Switch to login tab
-              setLoading(false);
-              return;
-            }
-            
-            // If this is the last attempt, show the error
-            if (i === adminAttempts.length - 1) {
-              setError('فشل في إنشاء حساب المدير: ' + (errorData.message || 'خطأ غير معروف'));
-            }
-          }
-        } catch (fetchError) {
-          console.error(`Admin attempt ${i + 1} - Fetch error:`, fetchError);
+        });
+        
+        setTabValue(0); // Switch to login tab
+      } else {
+        const errorData = await response.json();
+        console.log('Admin creation error:', errorData);
+        
+        if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
+          setSuccess('حساب المدير موجود بالفعل!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
           
-          // If this is the last attempt, show the error
-          if (i === adminAttempts.length - 1) {
-            setError('خطأ في الشبكة أثناء إنشاء حساب المدير');
-          }
+          // Auto-fill login form
+          setLoginData({
+            username: 'admin@admin.com',
+            password: 'admin123'
+          });
+          
+          setTabValue(0); // Switch to login tab
+        } else {
+          setError('فشل في إنشاء حساب المدير: ' + (errorData.message || 'خطأ غير معروف'));
         }
       }
     } catch (err) {
@@ -1041,6 +925,33 @@ function Login() {
                     type="password"
                     id="confirmPassword"
                     value={registerData.confirmPassword}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="address"
+                    label="العنوان"
+                    name="address"
+                    autoComplete="address"
+                    value={registerData.address}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="phone"
+                    label="رقم الهاتف"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={registerData.phone}
                     onChange={handleRegisterChange}
                     disabled={loading}
                   />
