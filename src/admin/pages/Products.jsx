@@ -17,6 +17,16 @@ import {
   MenuItem,
   Chip,
   Paper,
+  Tooltip,
+  Tabs,
+  Tab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Divider,
+  ImageList,
+  ImageListItem,
+  ImageListItemBar,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import {
@@ -24,57 +34,50 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Image as ImageIcon,
+  Visibility as VisibilityIcon,
+  ExpandMore as ExpandMoreIcon,
+  AddCircleOutline as AddCircleOutlineIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
 import { productService, categoryService } from '../services/api';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
-const mockProducts = [
-  {
-    id: 1,
-    name: 'سماعة بلوتوث لاسلكية',
-    description: 'سماعة عالية الجودة مع عزل ضوضاء.',
-    price: 100,
-    categoryId: 1,
-    stock: 15,
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/ov6dm6mj_expires_30_days.png',
-  },
-  {
-    id: 2,
-    name: 'لوحة مفاتيح ميكانيكية',
-    description: 'لوحة مفاتيح بإضاءة RGB.',
-    price: 250,
-    categoryId: 2,
-    stock: 8,
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/i9a16i3f_expires_30_days.png',
-  },
-  {
-    id: 3,
-    name: 'كرسي ألعاب مريح',
-    description: 'كرسي مريح مع دعم للظهر.',
-    price: 500,
-    categoryId: 3,
-    stock: 3,
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/ml7dbshd_expires_30_days.png',
-  },
-];
-
 function Products() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [openVariant, setOpenVariant] = useState(false);
+  const [openView, setOpenView] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    brand: '',
     price: '',
-    categoryId: '',
+    category: '',
     stock: '',
-    image: null,
+    sku: '',
+    hasVariants: false,
+    imageCover: '',
+    images: [],
+    features: [],
+    specifications: [],
+    attributes: [],
+  });
+  const [variantData, setVariantData] = useState({
+    sku: '',
+    attributes: {},
+    price: '',
+    quantity: '',
+    images: [],
   });
   const [imagePreview, setImagePreview] = useState(null);
+  const [tab, setTab] = useState(0);
+  const [expanded, setExpanded] = useState(false);
+  const [images, setImages] = useState([]);
 
   useEffect(() => {
     AOS.init({ duration: 900, once: true });
@@ -88,21 +91,12 @@ function Products() {
         productService.getAll(),
         categoryService.getAll(),
       ]);
-      setProducts(productsResponse.data.length ? productsResponse.data : mockProducts);
-      setCategories(categoriesResponse.data.length ? categoriesResponse.data : [
-        { id: 1, name: 'إلكترونيات' },
-        { id: 2, name: 'ملحقات' },
-        { id: 3, name: 'أثاث' },
-      ]);
+      setProducts(productsResponse.data);
+      setCategories(categoriesResponse.data);
     } catch (error) {
-      setProducts(mockProducts);
-      setCategories([
-        { id: 1, name: 'إلكترونيات' },
-        { id: 2, name: 'ملحقات' },
-        { id: 3, name: 'أثاث' },
-      ]);
-      console.error('Error fetching data:', error);
-      toast.error('حدث خطأ أثناء تحميل البيانات، تم عرض بيانات وهمية');
+      setProducts([]);
+      setCategories([]);
+      toast.error('حدث خطأ أثناء تحميل البيانات');
     } finally {
       setLoading(false);
     }
@@ -114,11 +108,19 @@ function Products() {
     setFormData({
       name: '',
       description: '',
+      brand: '',
       price: '',
-      categoryId: '',
+      category: '',
       stock: '',
-      image: null,
+      sku: '',
+      hasVariants: false,
+      imageCover: '',
+      images: [],
+      features: [],
+      specifications: [],
+      attributes: [],
     });
+    setImages([]);
     setImagePreview(null);
   };
 
@@ -133,12 +135,20 @@ function Products() {
     setFormData({
       name: product.name,
       description: product.description,
+      brand: product.brand,
       price: product.price,
-      categoryId: product.categoryId,
+      category: product.category?._id || product.category,
       stock: product.stock,
-      image: null,
+      sku: product.sku,
+      hasVariants: product.hasVariants,
+      imageCover: product.imageCover,
+      images: product.images || [],
+      features: product.features || [],
+      specifications: product.specifications || [],
+      attributes: product.attributes || [],
     });
-    setImagePreview(product.image);
+    setImages(product.images || []);
+    setImagePreview(product.imageCover);
     setOpen(true);
   };
 
@@ -146,47 +156,62 @@ function Products() {
     if (window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
       try {
         await productService.delete(id);
-        setProducts(products.filter((product) => product.id !== id));
+        setProducts(products.filter((product) => product._id !== id));
         toast.success('تم حذف المنتج بنجاح');
       } catch (error) {
-        console.error('Error deleting product:', error);
         toast.error('حدث خطأ أثناء حذف المنتج');
       }
     }
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, image: file }));
-      setImagePreview(URL.createObjectURL(file));
-    }
+  const handleView = (product) => {
+    setSelectedProduct(product);
+    setOpenView(true);
+  };
+
+  const handleCloseView = () => {
+    setOpenView(false);
+    setSelectedProduct(null);
+  };
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newImages = files.map(file => ({
+      file,
+      url: URL.createObjectURL(file)
+    }));
+    setImages(prev => [...prev, ...newImages]);
+  };
+
+  const handleRemoveImage = (idx) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      let imageUrl = selectedProduct?.image;
-
-      if (formData.image) {
-        // يمكنك إضافة رفع صورة حقيقي هنا إذا أردت
-        imageUrl = imagePreview;
+      let uploadedImages = [];
+      for (const img of images) {
+        if (img.file) {
+          // مثال: uploadImage API
+          // const res = await productService.uploadImage(img.file);
+          // uploadedImages.push({ url: res.data.url, alt: '', isPrimary: false });
+          // هنا سنستخدم الرابط المؤقت فقط كمثال
+          uploadedImages.push({ url: img.url, alt: '', isPrimary: false });
+        } else {
+          uploadedImages.push(img);
+        }
       }
-
       const productData = {
         ...formData,
-        image: imageUrl,
-        price: parseFloat(formData.price),
-        stock: parseInt(formData.stock),
+        images: uploadedImages,
+        price: formData.hasVariants ? undefined : parseFloat(formData.price),
+        stock: formData.hasVariants ? undefined : parseInt(formData.stock),
+        category: formData.category,
       };
-
       if (selectedProduct) {
-        const response = await productService.update(selectedProduct.id, productData);
-        setProducts(
-          products.map((product) =>
-            product.id === selectedProduct.id ? response.data : product
-          )
-        );
+        const response = await productService.update(selectedProduct._id, productData);
+        setProducts(products.map((product) => product._id === selectedProduct._id ? response.data : product));
         toast.success('تم تحديث المنتج بنجاح');
       } else {
         const response = await productService.create(productData);
@@ -195,84 +220,60 @@ function Products() {
       }
       handleClose();
     } catch (error) {
-      console.error('Error saving product:', error);
       toast.error('حدث خطأ أثناء حفظ المنتج');
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+  // Variant management
+  const handleOpenVariant = (product) => {
+    setSelectedProduct(product);
+    setOpenVariant(true);
+    setSelectedVariant(null);
+    setVariantData({
+      sku: '',
+      attributes: {},
+      price: '',
+      quantity: '',
+      images: [],
+    });
   };
+  const handleCloseVariant = () => {
+    setOpenVariant(false);
+    setSelectedVariant(null);
+  };
+  // ... Add variant CRUD logic here (API calls, forms, etc.)
 
+  // DataGrid columns
   const columns = [
-    { field: 'id', headerName: 'الرقم', width: 90 },
-    {
-      field: 'image',
-      headerName: 'الصورة',
-      width: 100,
-      renderCell: (params) => (
-        <img
-          src={params.value}
-          alt={params.row.name}
-          style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12, boxShadow: '0 2px 8px #ff174455' }}
-          data-aos="zoom-in"
-        />
-      ),
-    },
-    { field: 'name', headerName: 'اسم المنتج', width: 200 },
-    { field: 'description', headerName: 'الوصف', width: 300 },
-    {
-      field: 'price',
-      headerName: 'السعر',
-      width: 130,
-      valueFormatter: (params) => `₪ ${params.value}`,
-    },
-    {
-      field: 'categoryId',
-      headerName: 'التصنيف',
-      width: 150,
-      valueGetter: (params) =>
-        categories.find((cat) => cat.id === params.value)?.name || '',
-    },
-    {
-      field: 'stock',
-      headerName: 'المخزون',
-      width: 130,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={params.value > 0 ? 'success' : 'error'}
-          size="small"
-          sx={{ fontWeight: 700 }}
-        />
-      ),
-    },
+    { field: 'imageCover', headerName: 'الصورة', width: 100, renderCell: (params) => (
+      <img src={params.value} alt={params.row.name} style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 12 }} />
+    ) },
+    { field: 'name', headerName: 'اسم المنتج', width: 180 },
+    { field: 'brand', headerName: 'الماركة', width: 120 },
+    { field: 'category', headerName: 'التصنيف', width: 120, valueGetter: (params) => categories.find(cat => cat._id === params.value)?.name || '' },
+    { field: 'price', headerName: 'السعر', width: 100, valueFormatter: (params) => params.value ? `₪ ${params.value}` : '-' },
+    { field: 'stock', headerName: 'المخزون', width: 100 },
+    { field: 'hasVariants', headerName: 'متغيرات', width: 100, renderCell: (params) => params.value ? <Chip label="نعم" color="primary" /> : <Chip label="لا" color="default" /> },
     {
       field: 'actions',
       headerName: 'الإجراءات',
-      width: 150,
+      width: 200,
       renderCell: (params) => (
         <Box>
-          <IconButton
-            color="primary"
-            onClick={() => handleEdit(params.row)}
-            size="small"
-            data-aos="fade-left"
-          >
-            <EditIcon />
-          </IconButton>
-          <IconButton
-            color="error"
-            onClick={() => handleDelete(params.row.id)}
-            size="small"
-            data-aos="fade-left"
-          >
-            <DeleteIcon />
-          </IconButton>
+          <Tooltip title="عرض التفاصيل">
+            <IconButton color="info" onClick={() => handleView(params.row)}><VisibilityIcon /></IconButton>
+          </Tooltip>
+          <Tooltip title="تعديل المنتج">
+            <IconButton color="primary" onClick={() => handleEdit(params.row)}><EditIcon /></IconButton>
+          </Tooltip>
+          <Tooltip title="حذف المنتج">
+            <IconButton color="error" onClick={() => handleDelete(params.row._id)}><DeleteIcon /></IconButton>
+          </Tooltip>
+          {params.row.hasVariants && (
+            <Tooltip title="إدارة المتغيرات">
+              <IconButton color="secondary" onClick={() => handleOpenVariant(params.row)}><AddCircleOutlineIcon /></IconButton>
+            </Tooltip>
+          )}
         </Box>
       ),
     },
@@ -280,14 +281,7 @@ function Products() {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-        }}
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
         <CircularProgress color="error" />
       </Box>
     );
@@ -303,171 +297,242 @@ function Products() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={handleClickOpen}
-          sx={{
-            background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)',
-            color: '#fff',
-            fontWeight: 700,
-            borderRadius: 3,
-            boxShadow: '0 4px 16px 0 rgba(255,0,0,0.15)',
-            '&:hover': { background: '#ff1744' },
-          }}
-          data-aos="fade-left"
+          sx={{ background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)', color: '#fff', fontWeight: 700, borderRadius: 3, boxShadow: '0 4px 16px 0 rgba(255,0,0,0.15)', '&:hover': { background: '#ff1744' } }}
         >
           إضافة منتج
         </Button>
       </Box>
-
-      <Paper
-        data-aos="zoom-in-up"
-        sx={{
-          p: 2,
-          borderRadius: 4,
-          boxShadow: '0 8px 32px 0 rgba(255,0,0,0.10)',
-          background: 'linear-gradient(135deg, #fff 60%, #ffebee 100%)',
-          mb: 2,
-        }}
-      >
+      <Paper sx={{ p: 2, borderRadius: 4, boxShadow: '0 8px 32px 0 rgba(255,0,0,0.10)', background: 'linear-gradient(135deg, #fff 60%, #ffebee 100%)', mb: 2 }}>
         <div style={{ height: 600, width: '100%' }}>
           <DataGrid
             rows={products}
             columns={columns}
+            getRowId={row => row._id}
             pageSize={10}
             rowsPerPageOptions={[10]}
             disableSelectionOnClick
-            sx={{
-              background: 'transparent',
-              borderRadius: 3,
-              fontWeight: 600,
-              boxShadow: 'none',
-              '& .MuiDataGrid-columnHeaders': {
-                background: '#ffebee',
-                color: '#ff1744',
-                fontWeight: 900,
-                fontSize: 18,
-              },
-              '& .MuiDataGrid-row:hover': {
-                background: '#ffebee',
-                transition: 'background 0.3s',
-              },
-            }}
+            sx={{ background: 'transparent', borderRadius: 3, fontWeight: 600, boxShadow: 'none', '& .MuiDataGrid-columnHeaders': { background: '#ffebee', color: '#ff1744', fontWeight: 900, fontSize: 18 }, '& .MuiDataGrid-row:hover': { background: '#ffebee', transition: 'background 0.3s' } }}
           />
         </div>
       </Paper>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ color: '#ff1744', fontWeight: 900, letterSpacing: 1 }}>
+      {/* Product Add/Edit Dialog */}
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth dir="rtl">
+        <DialogTitle sx={{ color: '#ff1744', fontWeight: 900, letterSpacing: 1, textAlign: 'center', fontSize: 26 }}>
           {selectedProduct ? 'تعديل منتج' : 'إضافة منتج جديد'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+          <DialogContent sx={{ p: 4, background: '#fff', borderRadius: 3, boxShadow: '0 8px 32px 0 rgba(255,0,0,0.10)' }}>
+         
+            <Grid container spacing={3}>
+              {/* الصف الأول: الاسم - الماركة - التصنيف */}
+              <Grid item xs={12} md={4}>
                 <TextField
                   autoFocus
                   name="name"
-                  label="اسم المنتج"
+                  label={<span>اسم المنتج <span style={{color:'red'}}>*</span></span>}
                   fullWidth
                   value={formData.name}
-                  onChange={handleChange}
+                  onChange={e => setFormData({ ...formData, name: e.target.value })}
                   required
+                  helperText="أدخل اسم المنتج بشكل واضح"
+                  sx={{ height: 56 }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <TextField
-                  name="price"
-                  label="السعر"
-                  type="number"
+                  name="brand"
+                  label={<span>الماركة <span style={{color:'red'}}>*</span></span>}
                   fullWidth
-                  value={formData.price}
-                  onChange={handleChange}
+                  value={formData.brand}
+                  onChange={e => setFormData({ ...formData, brand: e.target.value })}
                   required
+                  helperText="مثال: سامسونج، أبل ..."
+                  sx={{ height: 56 }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  name="stock"
-                  label="المخزون"
-                  type="number"
-                  fullWidth
-                  value={formData.stock}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>التصنيف</InputLabel>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required sx={{ height: 56, minWidth: 200 }}>
+                  <InputLabel><span>التصنيف <span style={{color:'red'}}>*</span></span></InputLabel>
                   <Select
-                    name="categoryId"
-                    value={formData.categoryId}
-                    onChange={handleChange}
+                    name="category"
+                    value={formData.category}
+                    onChange={e => setFormData({ ...formData, category: e.target.value })}
                     label="التصنيف"
-                    required
+                    sx={{ minWidth: 200 }}
                   >
                     {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
+                      <MenuItem key={category._id} value={category._id}>{category.name}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              {/* الصف الثاني: الوصف */}
+              <Grid item xs={12} md={12}>
                 <TextField
                   name="description"
-                  label="الوصف"
+                  label={<span>الوصف <span style={{color:'red'}}>*</span></span>}
                   fullWidth
                   multiline
-                  rows={3}
+                  rows={2}
                   value={formData.description}
-                  onChange={handleChange}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   required
+                  helperText="صف المنتج بشكل مختصر وجذاب"
+                  sx={{ height: 56 }}
                 />
               </Grid>
-              <Grid item xs={12}>
-                <input
-                  accept="image/*"
-                  type="file"
-                  id="image-upload"
-                  style={{ display: 'none' }}
-                  onChange={handleImageChange}
+              <Divider sx={{ width: '100%', my: 2 }} />
+              {/* الصف الثالث: صورة الغلاف - زر الصور - هل متغيرات */}
+              <Grid item xs={12} md={4}>
+                <TextField
+                  name="imageCover"
+                  label={<span>رابط صورة الغلاف <span style={{color:'red'}}>*</span></span>}
+                  fullWidth
+                  value={formData.imageCover}
+                  onChange={e => setFormData({ ...formData, imageCover: e.target.value })}
+                  required
+                  helperText="رابط صورة رئيسية للمنتج (تظهر في القائمة)"
+                  sx={{ height: 56 }}
                 />
-                <label htmlFor="image-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<ImageIcon />}
-                    sx={{ color: '#ff1744', borderColor: '#ff1744', fontWeight: 700 }}
-                  >
-                    {imagePreview ? 'تغيير الصورة' : 'إضافة صورة'}
-                  </Button>
-                </label>
-                {imagePreview && (
-                  <Box
-                    component="img"
-                    src={imagePreview}
-                    alt="Preview"
-                    sx={{
-                      width: 100,
-                      height: 100,
-                      objectFit: 'cover',
-                      ml: 2,
-                      border: '2px solid #ff1744',
-                      borderRadius: 2,
-                      boxShadow: '0 2px 8px #ff174455',
-                    }}
+              </Grid>
+              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<ImageIcon sx={{ fontSize: 28 }} />}
+                  sx={{ color: '#ff1744', borderColor: '#ff1744', fontWeight: 700, fontSize: 18, px: 3, py: 1.5, width: '100%', height: 56 }}
+                >
+                  إضافة صور متعددة
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    hidden
+                    onChange={handleImagesChange}
                   />
-                )}
+                </Button>
               </Grid>
+             
+              {/* الصف الرابع: صور المنتج */}
+              <Grid item xs={12}>
+                <ImageList cols={4} rowHeight={100} sx={{ mb: 2 }}>
+                  {images.map((img, idx) => (
+                    <ImageListItem key={idx} sx={{ borderRadius: '50%', overflow: 'hidden', position: 'relative' }}>
+                      <img src={img.url || img} alt="صورة المنتج" style={{ borderRadius: '50%', objectFit: 'cover', width: '100%', height: '100%' }} />
+                      <ImageListItemBar
+                        sx={{ background: 'rgba(0,0,0,0.3)', borderRadius: '0 0 50% 50%' }}
+                        actionIcon={
+                          <IconButton sx={{ color: 'white', background: '#ff1744', m: 0.5 }} onClick={() => handleRemoveImage(idx)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        }
+                      />
+                    </ImageListItem>
+                  ))}
+                </ImageList>
+              </Grid>
+              <Divider sx={{ width: '100%', my: 2 }} />
+              {/* الصف الخامس: السعر - المخزون - SKU */}
+              {!formData.hasVariants && (
+                <>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      name="price"
+                      label={<span>السعر <span style={{color:'red'}}>*</span></span>}
+                      type="number"
+                      fullWidth
+                      value={formData.price}
+                      onChange={e => setFormData({ ...formData, price: e.target.value })}
+                      required
+                      helperText="سعر المنتج بالشيكل"
+                      sx={{ height: 56 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      name="stock"
+                      label={<span>المخزون <span style={{color:'red'}}>*</span></span>}
+                      type="number"
+                      fullWidth
+                      value={formData.stock}
+                      onChange={e => setFormData({ ...formData, stock: e.target.value })}
+                      required
+                      helperText="عدد القطع المتوفرة في المخزون"
+                      sx={{ height: 56 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      name="sku"
+                      label={<span>SKU <span style={{color:'red'}}>*</span></span>}
+                      fullWidth
+                      value={formData.sku}
+                      onChange={e => setFormData({ ...formData, sku: e.target.value })}
+                      required
+                      helperText="رمز المنتج SKU (فريد)"
+                      sx={{ height: 56 }}
+                    />
+                  </Grid>
+                </>
+              )}
             </Grid>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose} sx={{ color: '#ff1744', fontWeight: 700 }}>إلغاء</Button>
-            <Button type="submit" variant="contained" sx={{ background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)', color: '#fff', fontWeight: 700 }}>
+          <DialogActions sx={{ justifyContent: 'center', pb: 3 }}>
+            <Button onClick={handleClose} sx={{ color: '#ff1744', fontWeight: 700, fontSize: 18, px: 4 }}>إلغاء</Button>
+            <Button type="submit" variant="contained" sx={{ background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)', color: '#fff', fontWeight: 900, px: 6, borderRadius: 2, fontSize: 20, boxShadow: '0 4px 16px 0 rgba(255,0,0,0.15)' }}>
               {selectedProduct ? 'تحديث' : 'إضافة'}
             </Button>
           </DialogActions>
         </form>
+      </Dialog>
+      {/* Product View Dialog */}
+      <Dialog open={openView} onClose={handleCloseView} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ color: '#ff1744', fontWeight: 900, letterSpacing: 1 }}>تفاصيل المنتج</DialogTitle>
+        <DialogContent>
+          {selectedProduct && (
+            <Box>
+              <Typography variant="h6">{selectedProduct.name}</Typography>
+              <Typography>الوصف: {selectedProduct.description}</Typography>
+              <Typography>الماركة: {selectedProduct.brand}</Typography>
+              <Typography>التصنيف: {categories.find(cat => cat._id === selectedProduct.category)?.name || ''}</Typography>
+              <Typography>السعر: {selectedProduct.price ? `₪ ${selectedProduct.price}` : '-'}</Typography>
+              <Typography>المخزون: {selectedProduct.stock}</Typography>
+              <Typography>SKU: {selectedProduct.sku}</Typography>
+              <img src={selectedProduct.imageCover} alt={selectedProduct.name} style={{ width: 120, marginTop: 10, borderRadius: 8 }} />
+              {selectedProduct.hasVariants && (
+                <Accordion expanded={expanded} onChange={() => setExpanded(!expanded)}>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />}>المتغيرات</AccordionSummary>
+                  <AccordionDetails>
+                    {/* TODO: List variants here */}
+                    <Typography>قريباً: عرض المتغيرات</Typography>
+                  </AccordionDetails>
+                </Accordion>
+              )}
+              <Typography variant="subtitle1" sx={{ mt: 2, mb: 1, fontWeight: 700 }}>صور المنتج:</Typography>
+              <ImageList cols={4} rowHeight={100}>
+                {(selectedProduct.images || []).map((img, idx) => (
+                  <ImageListItem key={idx}>
+                    <img src={img.url || img} alt="صورة المنتج" style={{ borderRadius: 8, objectFit: 'cover', width: '100%', height: '100%' }} />
+                  </ImageListItem>
+                ))}
+              </ImageList>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseView} sx={{ color: '#ff1744', fontWeight: 700 }}>إغلاق</Button>
+        </DialogActions>
+      </Dialog>
+      {/* Variant Management Dialog (Modal) */}
+      <Dialog open={openVariant} onClose={handleCloseVariant} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ color: '#ff1744', fontWeight: 900, letterSpacing: 1 }}>إدارة متغيرات المنتج</DialogTitle>
+        <DialogContent>
+          {/* TODO: Add variant CRUD UI here */}
+          <Typography>قريباً: إدارة المتغيرات</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseVariant} sx={{ color: '#ff1744', fontWeight: 700 }}>إغلاق</Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

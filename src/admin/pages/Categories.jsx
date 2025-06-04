@@ -41,6 +41,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import api from '../services/api';
 
 // Mock data for demonstration
 const mockCategories = [
@@ -87,8 +88,10 @@ function Categories() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
-    description: '',
+    image: '',
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
 
   useEffect(() => {
     AOS.init({ duration: 900, once: true });
@@ -99,12 +102,10 @@ function Categories() {
     try {
       setLoading(true);
       const response = await categoryService.getAll();
-      // Use mock data if no data is returned
-      setCategories(response.data.length ? response.data : mockCategories);
+      setCategories(response.data);
     } catch (error) {
-      console.error('Error fetching categories:', error);
-      setCategories(mockCategories);
-      toast.error('حدث خطأ أثناء تحميل التصنيفات، تم عرض بيانات وهمية');
+      setCategories([]);
+      toast.error('حدث خطأ أثناء تحميل التصنيفات');
     } finally {
       setLoading(false);
     }
@@ -115,8 +116,10 @@ function Categories() {
     setSelectedCategory(null);
     setFormData({
       name: '',
-      description: '',
+      image: '',
     });
+    setImageFile(null);
+    setImagePreview('');
   };
 
   const handleClose = () => {
@@ -128,8 +131,10 @@ function Categories() {
     setSelectedCategory(category);
     setFormData({
       name: category.name,
-      description: category.description,
+      image: category.image || '',
     });
+    setImageFile(null);
+    setImagePreview(category.image || '');
     setOpen(true);
   };
 
@@ -137,34 +142,46 @@ function Categories() {
     if (window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
       try {
         await categoryService.delete(id);
-        setCategories(categories.filter((category) => category.id !== id));
+        setCategories(categories.filter((category) => category._id !== id));
         toast.success('تم حذف التصنيف بنجاح');
       } catch (error) {
-        console.error('Error deleting category:', error);
         toast.error('حدث خطأ أثناء حذف التصنيف');
       }
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let imageUrl = formData.image;
+      if (imageFile) {
+        const formDataImg = new FormData();
+        formDataImg.append('image', imageFile);
+        const uploadRes = await api.post('/upload', formDataImg, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        imageUrl = uploadRes.data.url;
+      }
+      const categoryData = { name: formData.name, image: imageUrl };
       if (selectedCategory) {
-        const response = await categoryService.update(selectedCategory.id, formData);
-        setCategories(
-          categories.map((category) =>
-            category.id === selectedCategory.id ? response.data : category
-          )
-        );
+        const response = await categoryService.update(selectedCategory._id, categoryData);
+        setCategories(categories.map((category) => category._id === selectedCategory._id ? response.data : category));
         toast.success('تم تحديث التصنيف بنجاح');
       } else {
-        const response = await categoryService.create(formData);
+        const response = await categoryService.create(categoryData);
         setCategories([...categories, response.data]);
         toast.success('تم إضافة التصنيف بنجاح');
       }
       handleClose();
     } catch (error) {
-      console.error('Error saving category:', error);
       toast.error('حدث خطأ أثناء حفظ التصنيف');
     }
   };
@@ -178,57 +195,15 @@ function Categories() {
   };
 
   const columns = [
-    { field: 'id', headerName: 'الرقم', width: 90 },
     { field: 'name', headerName: 'اسم التصنيف', width: 200 },
-    { field: 'description', headerName: 'الوصف', width: 300 },
+    { field: 'slug', headerName: 'Slug', width: 200 },
     {
-      field: 'productsCount',
-      headerName: 'عدد المنتجات',
-      width: 150,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color="primary"
-          size="small"
-          sx={{
-            bgcolor: 'rgba(33,147,176,0.1)',
-            color: '#2193b0',
-            fontWeight: 700,
-          }}
-        />
-      ),
-    },
-    {
-      field: 'totalSales',
-      headerName: 'إجمالي المبيعات',
-      width: 150,
-      renderCell: (params) => (
-        <Typography sx={{ color: '#2193b0', fontWeight: 700 }}>
-          ₪ {params.value.toLocaleString()}
-        </Typography>
-      ),
-    },
-    {
-      field: 'growth',
-      headerName: 'النمو',
+      field: 'image',
+      headerName: 'الصورة',
       width: 120,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {params.value > 0 ? (
-            <TrendingUpIcon sx={{ color: '#00b09b', mr: 1 }} />
-          ) : (
-            <TrendingUpIcon sx={{ color: '#ff1744', mr: 1, transform: 'rotate(180deg)' }} />
-          )}
-          <Typography
-            sx={{
-              color: params.value > 0 ? '#00b09b' : '#ff1744',
-              fontWeight: 700,
-            }}
-          >
-            {params.value}%
-          </Typography>
-        </Box>
-      ),
+      renderCell: (params) => params.value ? (
+        <img src={params.value} alt="تصنيف" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px #2193b055' }} />
+      ) : '-',
     },
     {
       field: 'actions',
@@ -236,20 +211,10 @@ function Categories() {
       width: 150,
       renderCell: (params) => (
         <Box>
-          <IconButton
-            color="primary"
-            onClick={() => handleEdit(params.row)}
-            size="small"
-            sx={{ color: '#2193b0' }}
-          >
+          <IconButton color="primary" onClick={() => handleEdit(params.row)} size="small" sx={{ color: '#2193b0' }}>
             <EditIcon />
           </IconButton>
-          <IconButton
-            color="error"
-            onClick={() => handleDelete(params.row.id)}
-            size="small"
-            sx={{ color: '#ff1744' }}
-          >
+          <IconButton color="error" onClick={() => handleDelete(params.row._id)} size="small" sx={{ color: '#ff1744' }}>
             <DeleteIcon />
           </IconButton>
         </Box>
@@ -306,178 +271,141 @@ function Categories() {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3, mb: 3 }}>
         {/* Summary Cards */}
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              bgcolor: 'rgba(33,147,176,0.1)',
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-            }}
-            data-aos="fade-up"
-          >
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <CategoryIcon sx={{ color: '#2193b0', mr: 1 }} />
-                <Typography variant="h6" sx={{ color: '#2193b0' }}>
-                  إجمالي التصنيفات
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ color: '#2193b0', fontWeight: 900 }}>
-                {categories.length}
+        <Card sx={{ bgcolor: 'rgba(33,147,176,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)' }} data-aos="fade-up">
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <CategoryIcon sx={{ color: '#2193b0', mr: 1 }} />
+              <Typography variant="h6" sx={{ color: '#2193b0' }}>
+                إجمالي التصنيفات
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              bgcolor: 'rgba(0,176,155,0.1)',
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(0,176,155,0.1)',
-            }}
-            data-aos="fade-up"
-            data-aos-delay="100"
-          >
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <ProductIcon sx={{ color: '#00b09b', mr: 1 }} />
-                <Typography variant="h6" sx={{ color: '#00b09b' }}>
-                  إجمالي المنتجات
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ color: '#00b09b', fontWeight: 900 }}>
-                {categories.reduce((sum, cat) => sum + cat.productsCount, 0)}
+            </Box>
+            <Typography variant="h3" sx={{ color: '#2193b0', fontWeight: 900 }}>
+              {categories.length}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card sx={{ bgcolor: 'rgba(0,176,155,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(0,176,155,0.1)' }} data-aos="fade-up" data-aos-delay="100">
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <ProductIcon sx={{ color: '#00b09b', mr: 1 }} />
+              <Typography variant="h6" sx={{ color: '#00b09b' }}>
+                إجمالي المنتجات
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <Card
-            sx={{
-              bgcolor: 'rgba(150,201,61,0.1)',
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(150,201,61,0.1)',
-            }}
-            data-aos="fade-up"
-            data-aos-delay="200"
-          >
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                <TrendingUpIcon sx={{ color: '#96c93d', mr: 1 }} />
-                <Typography variant="h6" sx={{ color: '#96c93d' }}>
-                  متوسط النمو
-                </Typography>
-              </Box>
-              <Typography variant="h3" sx={{ color: '#96c93d', fontWeight: 900 }}>
-                {Math.round(
-                  categories.reduce((sum, cat) => sum + cat.growth, 0) / categories.length
-                )}%
+            </Box>
+            <Typography variant="h3" sx={{ color: '#00b09b', fontWeight: 900 }}>
+              {categories.reduce((sum, cat) => sum + cat.productsCount, 0)}
+            </Typography>
+          </CardContent>
+        </Card>
+        <Card sx={{ bgcolor: 'rgba(150,201,61,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(150,201,61,0.1)' }} data-aos="fade-up" data-aos-delay="200">
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <TrendingUpIcon sx={{ color: '#96c93d', mr: 1 }} />
+              <Typography variant="h6" sx={{ color: '#96c93d' }}>
+                متوسط النمو
               </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Box>
+            <Typography variant="h3" sx={{ color: '#96c93d', fontWeight: 900 }}>
+              {categories.length > 0 ? Math.round(categories.reduce((sum, cat) => sum + cat.growth, 0) / categories.length) : 0}%
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
 
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
         {/* Charts */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-            }}
-            data-aos="zoom-in-up"
-          >
-            <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
-              توزيع المبيعات حسب التصنيف
-            </Typography>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <PieChart>
-                  <Pie
-                    data={salesData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  >
-                    {salesData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </Paper>
-        </Grid>
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
+          }}
+          data-aos="zoom-in-up"
+        >
+          <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
+            توزيع المبيعات حسب التصنيف
+          </Typography>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie
+                  data={salesData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  paddingAngle={5}
+                  dataKey="value"
+                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                >
+                  {salesData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </Paper>
 
-        <Grid item xs={12} md={6}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-            }}
-            data-aos="zoom-in-up"
-          >
-            <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
-              عدد المنتجات في كل تصنيف
-            </Typography>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <BarChart data={productsData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="products" fill="#2193b0" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Paper>
-        </Grid>
+        <Paper
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
+          }}
+          data-aos="zoom-in-up"
+        >
+          <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
+            عدد المنتجات في كل تصنيف
+          </Typography>
+          <div style={{ width: '100%', height: 300 }}>
+            <ResponsiveContainer>
+              <BarChart data={productsData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="products" fill="#2193b0" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Paper>
+      </Box>
 
-        {/* DataGrid */}
-        <Grid item xs={12}>
-          <Paper
+      {/* DataGrid */}
+      <Paper
+        sx={{
+          p: 3,
+          borderRadius: 4,
+          boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
+        }}
+        data-aos="fade-up"
+      >
+        <div style={{ height: 400, width: '100%' }}>
+          <DataGrid
+            rows={categories}
+            columns={columns}
+            pageSize={5}
+            rowsPerPageOptions={[5]}
+            disableSelectionOnClick
             sx={{
-              p: 3,
-              borderRadius: 4,
-              boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': {
+                bgcolor: 'rgba(33,147,176,0.1)',
+                color: '#2193b0',
+                fontWeight: 700,
+              },
+              '& .MuiDataGrid-row:hover': {
+                bgcolor: 'rgba(33,147,176,0.05)',
+              },
             }}
-            data-aos="fade-up"
-          >
-            <div style={{ height: 400, width: '100%' }}>
-              <DataGrid
-                rows={categories}
-                columns={columns}
-                pageSize={5}
-                rowsPerPageOptions={[5]}
-                disableSelectionOnClick
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: 'rgba(33,147,176,0.1)',
-                    color: '#2193b0',
-                    fontWeight: 700,
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(33,147,176,0.05)',
-                  },
-                }}
-              />
-            </div>
-          </Paper>
-        </Grid>
-      </Grid>
+          />
+        </div>
+      </Paper>
 
       {/* Add/Edit Dialog */}
       <Dialog
@@ -491,77 +419,43 @@ function Categories() {
           },
         }}
       >
-        <DialogTitle sx={{ color: '#2193b0', fontWeight: 700 }}>
+        <DialogTitle sx={{ color: '#2193b0', fontWeight: 900, letterSpacing: 1, textAlign: 'center' }}>
           {selectedCategory ? 'تعديل تصنيف' : 'إضافة تصنيف جديد'}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
               autoFocus
-              margin="dense"
               name="name"
-              label="اسم التصنيف"
-              type="text"
+              label={<span>اسم التصنيف <span style={{color:'red'}}>*</span></span>}
               fullWidth
               value={formData.name}
-              onChange={handleChange}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               required
-              sx={{
-                '& label.Mui-focused': {
-                  color: '#2193b0',
-                },
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2193b0',
-                  },
-                },
-              }}
+              sx={{ mb: 3 }}
             />
-            <TextField
-              margin="dense"
-              name="description"
-              label="الوصف"
-              type="text"
-              fullWidth
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={handleChange}
-              required
-              sx={{
-                '& label.Mui-focused': {
-                  color: '#2193b0',
-                },
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#2193b0',
-                  },
-                },
-              }}
-            />
-          </DialogContent>
-          <DialogActions sx={{ p: 2 }}>
             <Button
-              onClick={handleClose}
-              sx={{
-                color: '#2193b0',
-                '&:hover': {
-                  bgcolor: 'rgba(33,147,176,0.1)',
-                },
-              }}
+              variant="outlined"
+              component="label"
+              sx={{ color: '#2193b0', borderColor: '#2193b0', fontWeight: 700, mb: 2 }}
             >
-              إلغاء
+              اختر صورة
+              <input
+                type="file"
+                accept="image/*"
+                hidden
+                onChange={handleImageChange}
+              />
             </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #1c7a94 0%, #5ab8d9 100%)',
-                },
-              }}
-            >
+            {imagePreview && (
+              <Box sx={{ mt: 2, textAlign: 'center' }}>
+                <img src={imagePreview} alt="تصنيف" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px #2193b055' }} />
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
+            <Button onClick={handleClose} sx={{ color: '#2193b0', fontWeight: 700 }}>إلغاء</Button>
+            <Button type="submit" variant="contained" sx={{ background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)', color: '#fff', fontWeight: 900, px: 5, borderRadius: 2, fontSize: 18 }}>
               {selectedCategory ? 'تحديث' : 'إضافة'}
             </Button>
           </DialogActions>

@@ -67,11 +67,7 @@ const menuItems = [
     icon: <ProductsIcon />, 
     path: '/admin/products',
     color: '#43a047',
-    subItems: [
-      { text: 'قائمة المنتجات', path: '/admin/products' },
-      { text: 'إضافة منتج', path: '/admin/products/add' },
-      { text: 'المنتجات المميزة', path: '/admin/products/featured' },
-    ]
+   
   },
   { 
     text: 'التصنيفات', 
@@ -92,12 +88,7 @@ const menuItems = [
     path: '/admin/users',
     color: '#8e24aa'
   },
-  { 
-    text: 'المخزون', 
-    icon: <InventoryIcon />, 
-    path: '/admin/inventory',
-    color: '#00897b'
-  },
+ 
   { 
     text: 'الكوبونات', 
     icon: <CouponsIcon />, 
@@ -398,73 +389,10 @@ function Layout() {
         ))}
       </List>
 
-      <Divider sx={{ my: 2, opacity: darkMode ? 0.1 : 0.08 }} />
+      
+     
 
-      <List sx={{ p: 2 }}>
-        <Typography
-          variant="overline"
-          sx={{
-            px: 2,
-            color: darkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary',
-            fontWeight: 700,
-          }}
-        >
-          الإعدادات
-        </Typography>
-        {settingsItems.map((item) => (
-          <ListItemButton
-            key={item.text}
-            onClick={() => navigate(item.path)}
-            sx={{
-              mb: 1,
-              borderRadius: 2,
-              '&:hover': {
-                background: darkMode ? 'rgba(255,255,255,0.05)' : item.color + '11',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40, color: darkMode ? '#fff' : item.color }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItemButton>
-        ))}
-      </List>
-
-      <Divider sx={{ my: 2, opacity: darkMode ? 0.1 : 0.08 }} />
-
-      <List sx={{ p: 2 }}>
-        <Typography
-          variant="overline"
-          sx={{
-            px: 2,
-            color: darkMode ? 'rgba(255,255,255,0.7)' : 'text.secondary',
-            fontWeight: 700,
-          }}
-        >
-          المساعدة والدعم
-        </Typography>
-        {helpItems.map((item) => (
-          <ListItemButton
-            key={item.text}
-            onClick={() => navigate(item.path)}
-            sx={{
-              mb: 1,
-              borderRadius: 2,
-              '&:hover': {
-                background: darkMode ? 'rgba(255,255,255,0.05)' : item.color + '11',
-              },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40, color: darkMode ? '#fff' : item.color }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItemButton>
-        ))}
-      </List>
-
-      <Divider sx={{ my: 2, opacity: darkMode ? 0.1 : 0.08 }} />
+      <Divider sx={{ my: 0.004, opacity: darkMode ? 0.1 : 0.08 }} />
 
       <List sx={{ p: 2 }}>
         <ListItemButton
