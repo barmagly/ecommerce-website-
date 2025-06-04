@@ -10,8 +10,6 @@ const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
-    'Cache-Control': 'no-cache',
-    'Pragma': 'no-cache',
   },
 });
 
@@ -50,19 +48,15 @@ export const authService = {
     console.log('Making request to:', `${API_URL}/auth/login`);
     console.log('Full URL will be:', `${API_URL}/auth/login`);
     
-    // Add timestamp to prevent caching
-    const requestData = {
+    // Ensure compatibility with different backend field expectations
+    const loginData = {
       ...data,
-      timestamp: Date.now()
+      email: data.username || data.email, // Send both username as email
     };
     
-    return api.post('/auth/login', requestData, {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
-    });
+    console.log('Sending login data:', loginData);
+    
+    return api.post('/auth/login', loginData);
   },
   logout: () => {
     localStorage.removeItem('adminToken');

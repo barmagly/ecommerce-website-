@@ -56,12 +56,17 @@ export const AuthProvider = ({ children }) => {
       
       if (error.code === 'ERR_NETWORK') {
         console.error('Network error - API might be down or CORS issue');
-        toast.error('خطأ في الشبكة - تحقق من الاتصال بالإنترنت');
+        toast.error('خطأ في الشبكة - مشكلة CORS أو الخادم غير متاح');
       } else if (error.response?.status === 404) {
         console.error('API endpoint not found');
         toast.error('نقطة النهاية غير موجودة');
+      } else if (error.response?.status === 401) {
+        console.error('Unauthorized - wrong credentials');
+        toast.error('بيانات الدخول غير صحيحة');
+      } else if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
       } else {
-        toast.error(error.response?.data?.message || 'فشل تسجيل الدخول');
+        toast.error('فشل تسجيل الدخول - تحقق من بيانات الدخول');
       }
       return false;
     }

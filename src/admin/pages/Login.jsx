@@ -52,31 +52,45 @@ function Login() {
   // Debug function to test API connectivity
   const testApiConnection = async () => {
     console.log('Testing API connection...');
-    try {
-      const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache'
-        },
-        body: JSON.stringify({
-          email: 'test@test.com',
-          password: 'test123',
-          debug: true
-        })
-      });
+    
+    // Test different credential formats
+    const testCredentials = [
+      { email: 'admin@admin.com', password: 'admin123' },
+      { username: 'admin', password: 'admin123' },
+      { email: 'admin', password: 'admin' },
+      { username: 'admin', password: 'admin' }
+    ];
+    
+    for (let i = 0; i < testCredentials.length; i++) {
+      const creds = testCredentials[i];
+      console.log(`Testing credentials ${i + 1}:`, creds);
       
-      console.log('Direct fetch response status:', response.status);
-      console.log('Direct fetch response headers:', response.headers);
-      
-      const data = await response.text();
-      console.log('Direct fetch response data:', data);
-      
-      alert(`API Test Result: Status ${response.status}\nCheck console for details`);
-    } catch (error) {
-      console.error('Direct fetch error:', error);
-      alert(`API Test Failed: ${error.message}`);
+      try {
+        const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(creds)
+        });
+        
+        console.log(`Test ${i + 1} - Status:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`Test ${i + 1} - Success! Response:`, data);
+          alert(`Success with credentials: ${JSON.stringify(creds)}`);
+          return;
+        } else {
+          const errorText = await response.text();
+          console.log(`Test ${i + 1} - Error response:`, errorText);
+        }
+      } catch (error) {
+        console.error(`Test ${i + 1} - Fetch error:`, error);
+      }
     }
+    
+    alert('All credential tests failed. Check console for details.');
   };
 
   return (
