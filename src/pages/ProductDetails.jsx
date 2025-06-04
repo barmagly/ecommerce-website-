@@ -226,12 +226,12 @@ export default function ProductDetails() {
               </span>
               <span className="text-muted">({product.ratings?.count || 0} تقييم)</span>
               <span className={`badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}`}>
-                {product.stock > 0 ? 'متوفر' : 'غير متوفر'}
+                {product?.stock > 0 ? 'متوفر' : 'غير متوفر'}
               </span>
             </div>
             <div className="mb-3">
               <span className="text-danger fw-bold fs-3">
-                {product.price} ج.م
+                {product?.price} ج.م
               </span>
             </div>
             <p className="mb-3 text-muted" style={{ fontSize: '1.1rem' }}>{product.description}</p>
