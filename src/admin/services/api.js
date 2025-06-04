@@ -2,9 +2,6 @@ import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
 
-console.log('API_URL configured as:', API_URL);
-console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
-
 // Create axios instance with default config
 const api = axios.create({
   baseURL: API_URL,
@@ -12,8 +9,6 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
-
-console.log('Axios instance created with baseURL:', api.defaults.baseURL);
 
 // Add request interceptor for authentication
 api.interceptors.request.use(
@@ -44,16 +39,11 @@ api.interceptors.response.use(
 // Auth services
 export const authService = {
   login: async (data) => {
-    console.log('authService.login called with data:', data);
-    console.log('Making request to:', `${API_URL}/auth/login`);
-    
     // Ensure compatibility with different backend field expectations
     const loginData = {
       ...data,
       email: data.username || data.email, // Send both username as email
     };
-    
-    console.log('Sending login data:', loginData);
     
     try {
       // Use the most basic fetch possible to avoid CORS preflight
@@ -65,9 +55,6 @@ export const authService = {
         }
       });
       
-      console.log('Fetch response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
       if (!response.ok) {
         let errorData;
         try {
@@ -75,7 +62,6 @@ export const authService = {
         } catch {
           errorData = { message: await response.text() };
         }
-        console.log('Error response:', errorData);
         
         // Create axios-like error
         const error = new Error(errorData.message || `HTTP ${response.status}`);
@@ -87,13 +73,10 @@ export const authService = {
       }
       
       const result = await response.json();
-      console.log('Login successful:', result);
       
       // Return in axios-like format for compatibility
       return { data: result };
     } catch (error) {
-      console.error('Fetch login error:', error);
-      
       // If it's already formatted, re-throw
       if (error.response) {
         throw error;

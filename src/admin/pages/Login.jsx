@@ -8,7 +8,8 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  Divider
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 
@@ -21,6 +22,7 @@ function Login() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
@@ -39,6 +41,7 @@ function Login() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
     try {
       const success = await login(formData);
       if (success) {
@@ -49,7 +52,47 @@ function Login() {
     }
   };
 
-  // Debug function to test API connectivity
+  // Function to create admin user
+  const createAdminUser = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    try {
+      const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email: 'admin@admin.com',
+          password: 'admin123',
+          name: 'Admin User',
+          username: 'admin',
+          role: 'admin'
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess('✅ Admin user created successfully! You can now login with:\nEmail: admin@admin.com\nPassword: admin123');
+        console.log('Admin user created:', data);
+      } else {
+        const errorData = await response.json();
+        if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
+          setSuccess('ℹ️ Admin user already exists. Try logging in with:\nEmail: admin@admin.com\nPassword: admin123');
+        } else {
+          setError(`Failed to create admin user: ${errorData.message}`);
+        }
+      }
+    } catch (error) {
+      setError(`Error creating admin user: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Manual test function for debugging (only runs when button is clicked)
   const testApiConnection = async () => {
     console.log('Testing API connection...');
     
@@ -68,7 +111,6 @@ function Login() {
       console.log(`Testing credentials ${i + 1}:`, creds);
       
       try {
-        // Simple fetch without any extra headers to avoid CORS preflight
         const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
           method: 'POST',
           headers: {
@@ -78,7 +120,6 @@ function Login() {
         });
         
         console.log(`Test ${i + 1} - Status:`, response.status);
-        console.log(`Test ${i + 1} - Headers:`, [...response.headers.entries()]);
         
         if (response.ok) {
           const data = await response.json();
@@ -88,86 +129,13 @@ function Login() {
         } else {
           const errorText = await response.text();
           console.log(`Test ${i + 1} - Error response:`, errorText);
-          
-          if (response.status === 401) {
-            console.log(`Test ${i + 1} - Unauthorized (wrong credentials)`);
-          } else if (response.status === 404) {
-            console.log(`Test ${i + 1} - Endpoint not found`);
-          }
         }
       } catch (error) {
         console.error(`Test ${i + 1} - Fetch error:`, error);
-        if (error.message.includes('CORS')) {
-          console.log(`Test ${i + 1} - CORS error detected`);
-        }
       }
     }
     
     alert('❌ All credential tests failed. Check console for details.');
-  };
-
-  // Alternative login method using form submission to bypass CORS
-  const loginWithForm = async (credentials) => {
-    return new Promise((resolve, reject) => {
-      // Create a hidden iframe to handle the response
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.name = 'login-frame';
-      document.body.appendChild(iframe);
-
-      // Create a form
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = 'https://ecommerce-website-backend-nine.vercel.app/api/auth/login';
-      form.target = 'login-frame';
-      form.style.display = 'none';
-
-      // Add form fields
-      const emailField = document.createElement('input');
-      emailField.type = 'hidden';
-      emailField.name = 'email';
-      emailField.value = credentials.username;
-      form.appendChild(emailField);
-
-      const usernameField = document.createElement('input');
-      usernameField.type = 'hidden';
-      usernameField.name = 'username';
-      usernameField.value = credentials.username;
-      form.appendChild(usernameField);
-
-      const passwordField = document.createElement('input');
-      passwordField.type = 'hidden';
-      passwordField.name = 'password';
-      passwordField.value = credentials.password;
-      form.appendChild(passwordField);
-
-      // Handle iframe load
-      iframe.onload = () => {
-        try {
-          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-          const responseText = iframeDoc.body.textContent;
-          console.log('Form response:', responseText);
-          
-          try {
-            const result = JSON.parse(responseText);
-            resolve({ data: result });
-          } catch {
-            reject(new Error('Invalid response format'));
-          }
-        } catch (error) {
-          console.error('Form submission error:', error);
-          reject(error);
-        } finally {
-          // Cleanup
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }
-      };
-
-      // Submit form
-      document.body.appendChild(form);
-      form.submit();
-    });
   };
 
   return (
@@ -193,11 +161,19 @@ function Login() {
           <Typography component="h1" variant="h5" gutterBottom>
             تسجيل الدخول للوحة التحكم
           </Typography>
+          
           {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
+            <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
               {error}
             </Alert>
           )}
+          
+          {success && (
+            <Alert severity="success" sx={{ mb: 2, width: '100%', whiteSpace: 'pre-line' }}>
+              {success}
+            </Alert>
+          )}
+          
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
             <TextField
               margin="normal"
@@ -239,7 +215,21 @@ function Login() {
               )}
             </Button>
 
-            {/* Debug buttons */}
+            <Divider sx={{ my: 2 }}>أو</Divider>
+
+            {/* Admin user creation button */}
+            <Button
+              fullWidth
+              variant="contained"
+              color="success"
+              onClick={createAdminUser}
+              sx={{ mb: 2 }}
+              disabled={loading}
+            >
+              إنشاء مستخدم إداري جديد
+            </Button>
+
+            {/* Debug button - only for testing */}
             <Button
               fullWidth
               variant="outlined"
@@ -248,29 +238,6 @@ function Login() {
               sx={{ mt: 1 }}
             >
               اختبار الاتصال بالـ API
-            </Button>
-
-            <Button
-              fullWidth
-              variant="outlined"
-              color="info"
-              onClick={async () => {
-                try {
-                  setLoading(true);
-                  const result = await loginWithForm(formData);
-                  console.log('Form login result:', result);
-                  alert('Form login successful! Check console for details.');
-                } catch (error) {
-                  console.error('Form login error:', error);
-                  alert('Form login failed: ' + error.message);
-                } finally {
-                  setLoading(false);
-                }
-              }}
-              sx={{ mt: 1 }}
-              disabled={loading}
-            >
-              تجربة تسجيل الدخول بالنموذج
             </Button>
           </Box>
         </Paper>
