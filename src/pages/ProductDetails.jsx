@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
+import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { toast } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -37,6 +39,9 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.product);
+  const { wishlist } = useSelector((state) => state.userWishlist);
+  const { token } = useSelector((state) => state.auth);
+  const isAuthenticated = !!token;
   const product = products?.find(p => p._id === id);
 
   const [selectedAttributes, setSelectedAttributes] = useState({});
@@ -148,6 +153,35 @@ export default function ProductDetails() {
   const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.name} بسعر ${product.price} ج.م\nرابط المنتج: ${currentUrl}`;
   const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
 
+  const handleWishlistClick = (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى المفضلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addUserWishlistThunk({ prdId: id }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى المفضلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى المفضلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
+
   return (
     <>
       <Header />
@@ -253,7 +287,13 @@ export default function ProductDetails() {
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
               <button className="btn btn-danger px-4">أضف للسلة</button>
-              <button className="btn btn-outline-danger px-4">أضف للمفضلة</button>
+              <button
+                className="btn btn-outline-danger px-4"
+                onClick={handleWishlistClick}
+              >
+                <i className={`${wishlist?.some(w => w._id === id) ? 'fas' : 'far'} fa-heart ms-2`}></i>
+                {wishlist?.some(w => w._id === id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}
+              </button>
               <a
                 href={whatsappUrl}
                 target="_blank"

@@ -24,6 +24,31 @@ export const getUserWishlistThunk = createAsyncThunk(
         }
     }
 );
+export const addUserWishlistThunk = createAsyncThunk(
+    "userWishlist/addUserWishlist",
+    async ({ prdId }, thunkAPI) => {
+        try {
+            const token = localStorage.getItem("token");
+            if (!token) throw new Error("No token found");
+
+            const { data } = await axios.post(
+                `${API_URL}/${prdId}`,
+                {}, 
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+
+            return data;
+        } catch (error) {
+            return thunkAPI.rejectWithValue(
+                error.response?.data?.message || "فشل في إضافة المنتج للمفضلة"
+            );
+        }
+    }
+);
 
 export const removeWishlistThunk = createAsyncThunk(
     "userWishlist/removeUserWishlist",

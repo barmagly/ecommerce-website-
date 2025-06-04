@@ -20,7 +20,6 @@ function App() {
           draggable
           pauseOnHover
           theme="light"
-          limit={3}
         />
         <RoutesPage />
       </Provider>
