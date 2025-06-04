@@ -39,28 +39,36 @@ api.interceptors.response.use(
 // Auth services
 export const authService = {
   login: async (data) => {
-    // Ensure compatibility with different backend field expectations
+    // Prepare login data with multiple field formats for backend compatibility
     const loginData = {
-      ...data,
-      email: data.username || data.email, // Send both username as email
+      email: data.username || data.email,
+      password: data.password,
+      // Also send username field in case backend expects it
+      ...(data.username && { username: data.username })
     };
     
     try {
-      // Use the most basic fetch possible to avoid CORS preflight
+      console.log('Attempting login with:', { email: loginData.email, username: loginData.username });
+      
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         body: JSON.stringify(loginData),
         headers: {
-          'content-type': 'application/json'
+          'Content-Type': 'application/json'
         }
       });
+      
+      console.log('Login response status:', response.status);
       
       if (!response.ok) {
         let errorData;
         try {
           errorData = await response.json();
+          console.log('Login error data:', errorData);
         } catch {
-          errorData = { message: await response.text() };
+          const errorText = await response.text();
+          console.log('Login error text:', errorText);
+          errorData = { message: errorText || `HTTP ${response.status}` };
         }
         
         // Create axios-like error
@@ -73,10 +81,23 @@ export const authService = {
       }
       
       const result = await response.json();
+      console.log('Login successful:', { hasToken: !!result.token, hasUser: !!result.user || !!result.admin });
+      
+      // Normalize response format
+      const normalizedResult = {
+        token: result.token,
+        admin: result.user || result.admin || result.data || { 
+          name: result.name || 'مدير', 
+          email: loginData.email,
+          role: 'admin' 
+        }
+      };
       
       // Return in axios-like format for compatibility
-      return { data: result };
+      return { data: normalizedResult };
     } catch (error) {
+      console.error('Login fetch error:', error);
+      
       // If it's already formatted, re-throw
       if (error.response) {
         throw error;
@@ -89,7 +110,7 @@ export const authService = {
           data: { message: error.message }
         },
         message: error.message,
-        code: 'ERR_NETWORK'
+        code: error.name === 'TypeError' ? 'ERR_NETWORK' : 'ERR_UNKNOWN'
       };
     }
   },

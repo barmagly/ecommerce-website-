@@ -42,18 +42,29 @@ export const AuthProvider = ({ children }) => {
       toast.success('تم تسجيل الدخول بنجاح');
       return true;
     } catch (error) {
+      console.error('Login error:', error);
+      
+      // Handle different types of errors
       if (error.code === 'ERR_NETWORK') {
-        toast.error('خطأ في الشبكة - مشكلة CORS أو الخادم غير متاح');
+        toast.error('خطأ في الشبكة - تحقق من الاتصال بالإنترنت');
+        throw new Error('خطأ في الشبكة');
       } else if (error.response?.status === 404) {
-        toast.error('نقطة النهاية غير موجودة');
+        toast.error('نقطة النهاية غير موجودة - تحقق من عنوان الخادم');
+        throw new Error('نقطة النهاية غير موجودة');
       } else if (error.response?.status === 401) {
         toast.error('بيانات الدخول غير صحيحة');
+        throw new Error('بيانات الدخول غير صحيحة');
+      } else if (error.response?.status === 400) {
+        const message = error.response?.data?.message || 'بيانات غير صحيحة';
+        toast.error(message);
+        throw new Error(message);
       } else if (error.response?.data?.message) {
         toast.error(error.response.data.message);
+        throw new Error(error.response.data.message);
       } else {
         toast.error('فشل تسجيل الدخول - تحقق من بيانات الدخول');
+        throw new Error('فشل تسجيل الدخول');
       }
-      return false;
     }
   };
 

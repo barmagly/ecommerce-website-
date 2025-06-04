@@ -9,237 +9,258 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Divider
+  Divider,
+  Tab,
+  Tabs,
+  Grid
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+
+function TabPanel({ children, value, index, ...other }) {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`auth-tabpanel-${index}`}
+      aria-labelledby={`auth-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
 
 function Login() {
   const navigate = useNavigate();
   const { login, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [tabValue, setTabValue] = useState(0);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Login form data
+  const [loginData, setLoginData] = useState({
     username: '',
     password: '',
   });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+
+  // Register form data
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
 
   // If already authenticated, redirect to dashboard
   if (isAuthenticated) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  const handleChange = (e) => {
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    setError('');
+    setSuccess('');
+  };
+
+  const handleLoginChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setLoginData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleRegisterChange = (e) => {
+    const { name, value } = e.target;
+    setRegisterData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
+
     try {
-      const success = await login(formData);
+      const success = await login(loginData);
       if (success) {
         navigate('/admin/dashboard');
       }
+    } catch (err) {
+      setError('فشل تسجيل الدخول. تحقق من بيانات الدخول.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Function to create admin user
-  const createAdminUser = async () => {
+  const handleRegisterSubmit = async (e) => {
+    e.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
-    
-    // Try different registration payloads
-    const registrationAttempts = [
-      {
-        email: 'admin@admin.com',
-        password: 'admin123',
-        name: 'Admin User',
-        username: 'admin',
-        role: 'admin'
-      },
-      {
-        email: 'admin@admin.com',
-        password: 'admin123',
-        name: 'Admin User'
-      },
-      {
-        email: 'admin@admin.com',
-        password: 'admin123',
-        firstName: 'Admin',
-        lastName: 'User'
-      }
-    ];
-    
-    for (let i = 0; i < registrationAttempts.length; i++) {
-      try {
-        console.log(`Attempting registration ${i + 1}:`, registrationAttempts[i]);
-        
-        const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(registrationAttempts[i])
-        });
-        
-        console.log(`Registration attempt ${i + 1} status:`, response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          setSuccess('✅ Admin user created successfully! You can now login with:\nEmail: admin@admin.com\nPassword: admin123');
-          console.log('Admin user created:', data);
-          setLoading(false);
-          return;
-        } else {
-          const errorData = await response.json();
-          console.log(`Registration attempt ${i + 1} error:`, errorData);
-          
-          if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
-            setSuccess('ℹ️ Admin user already exists. Try logging in with:\nEmail: admin@admin.com\nPassword: admin123');
-            setLoading(false);
-            return;
-          }
-        }
-      } catch (error) {
-        console.log(`Registration attempt ${i + 1} failed:`, error.message);
-      }
-    }
-    
-    setError('❌ Could not create admin user. The backend might not support registration or requires different fields. Please contact the backend developer.');
-    setLoading(false);
-  };
 
-  // Function to try common admin credentials
-  const tryCommonCredentials = async () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    
-    const commonCredentials = [
-      { username: 'admin@admin.com', password: 'admin123' },
-      { username: 'admin', password: 'admin123' },
-      { username: 'admin@admin.com', password: 'admin' },
-      { username: 'admin', password: 'admin' },
-      { username: 'admin', password: 'password' },
-      { username: 'admin@example.com', password: 'admin123' },
-      { username: 'test@admin.com', password: 'admin' },
-      { username: 'administrator', password: 'admin123' }
-    ];
-    
-    for (let i = 0; i < commonCredentials.length; i++) {
-      try {
-        console.log(`Trying credentials ${i + 1}:`, commonCredentials[i]);
-        const success = await login(commonCredentials[i]);
-        if (success) {
-          setSuccess(`✅ Login successful with:\nUsername: ${commonCredentials[i].username}\nPassword: ${commonCredentials[i].password}`);
-          setLoading(false);
-          return;
-        }
-      } catch (error) {
-        console.log(`Credentials ${i + 1} failed:`, error.message);
-      }
+    // Validate passwords match
+    if (registerData.password !== registerData.confirmPassword) {
+      setError('كلمات المرور غير متطابقة');
+      setLoading(false);
+      return;
     }
-    
-    setError('❌ None of the common credentials worked. Please try creating an admin user or contact the backend developer.');
-    setLoading(false);
-  };
 
-  // Manual test function for debugging (only runs when button is clicked)
-  const testApiConnection = async () => {
-    console.log('Testing API connection...');
-    
-    // Test different credential formats
-    const testCredentials = [
-      { email: 'admin@admin.com', password: 'admin123' },
-      { username: 'admin', password: 'admin123' },
-      { email: 'admin', password: 'admin' },
-      { username: 'admin', password: 'admin' },
-      { email: 'admin', password: 'password' },
-      { username: 'admin', password: 'password' }
-    ];
-    
-    for (let i = 0; i < testCredentials.length; i++) {
-      const creds = testCredentials[i];
-      console.log(`Testing credentials ${i + 1}:`, creds);
-      
-      try {
-        const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(creds)
-        });
-        
-        console.log(`Test ${i + 1} - Status:`, response.status);
-        
-        if (response.ok) {
-          const data = await response.json();
-          console.log(`Test ${i + 1} - Success! Response:`, data);
-          alert(`✅ Success with credentials: ${JSON.stringify(creds)}\nToken: ${data.token ? 'Present' : 'Missing'}`);
-          return;
-        } else {
-          const errorText = await response.text();
-          console.log(`Test ${i + 1} - Error response:`, errorText);
-        }
-      } catch (error) {
-        console.error(`Test ${i + 1} - Fetch error:`, error);
-      }
+    // Validate password length
+    if (registerData.password.length < 6) {
+      setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      setLoading(false);
+      return;
     }
-    
-    alert('❌ All credential tests failed. Check console for details.');
-  };
 
-  // Function to bypass authentication for development
-  const bypassAuthentication = () => {
-    setLoading(true);
-    setError('');
-    setSuccess('');
-    
     try {
-      // Create a fake token and admin data for development
-      const fakeToken = 'dev-token-' + Date.now();
-      const fakeAdmin = {
-        id: 1,
-        name: 'مطور النظام',
-        email: 'dev@admin.com',
+      const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+      
+      // Prepare registration data
+      const registrationPayload = {
+        name: registerData.name,
+        email: registerData.email,
+        password: registerData.password,
+        role: 'admin' // Set as admin for admin panel
+      };
+
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(registrationPayload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSuccess('تم إنشاء الحساب بنجاح! يمكنك الآن تسجيل الدخول.');
+        
+        // Clear register form
+        setRegisterData({
+          name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+        });
+        
+        // Switch to login tab after 2 seconds
+        setTimeout(() => {
+          setTabValue(0);
+          setSuccess('');
+        }, 2000);
+      } else {
+        const errorData = await response.json();
+        
+        if (errorData.message) {
+          if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
+            setError('البريد الإلكتروني مستخدم بالفعل');
+          } else if (errorData.message.includes('required')) {
+            setError('جميع الحقول مطلوبة');
+          } else {
+            setError(errorData.message);
+          }
+        } else {
+          setError('فشل في إنشاء الحساب');
+        }
+      }
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError('خطأ في الشبكة. تحقق من الاتصال بالإنترنت.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Quick admin creation function
+  const createQuickAdmin = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+      
+      const adminData = {
+        name: 'مدير النظام',
+        email: 'admin@admin.com',
+        password: 'admin123',
         role: 'admin'
       };
+
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(adminData),
+      });
+
+      if (response.ok) {
+        setSuccess('تم إنشاء حساب المدير بنجاح!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
+        
+        // Auto-fill login form
+        setLoginData({
+          username: 'admin@admin.com',
+          password: 'admin123'
+        });
+        
+        setTabValue(0); // Switch to login tab
+      } else {
+        const errorData = await response.json();
+        if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
+          setSuccess('حساب المدير موجود بالفعل!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
+          
+          // Auto-fill login form
+          setLoginData({
+            username: 'admin@admin.com',
+            password: 'admin123'
+          });
+          
+          setTabValue(0); // Switch to login tab
+        } else {
+          setError('فشل في إنشاء حساب المدير: ' + (errorData.message || 'خطأ غير معروف'));
+        }
+      }
+    } catch (err) {
+      console.error('Quick admin creation error:', err);
+      setError('خطأ في الشبكة أثناء إنشاء حساب المدير');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Development bypass function
+  const bypassAuth = () => {
+    setLoading(true);
+    try {
+      const devToken = 'dev-token-' + Date.now();
+      localStorage.setItem('adminToken', devToken);
+      setSuccess('تم تجاوز المصادقة للتطوير! جاري التوجيه...');
       
-      // Store in localStorage
-      localStorage.setItem('adminToken', fakeToken);
-      
-      // Set admin state directly (bypassing backend)
-      setSuccess('✅ تم تجاوز المصادقة للتطوير! سيتم توجيهك للوحة التحكم...');
-      
-      // Simulate login success
       setTimeout(() => {
-        // Manually set authentication state
         window.location.href = '/admin/dashboard';
       }, 1500);
-      
-    } catch (error) {
-      setError(`خطأ في تجاوز المصادقة: ${error.message}`);
+    } catch (err) {
+      setError('فشل في تجاوز المصادقة');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Container component="main" maxWidth="xs">
+    <Container component="main" maxWidth="sm">
       <Box
         sx={{
-          marginTop: 8,
+          marginTop: 4,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
@@ -255,10 +276,29 @@ function Login() {
             width: '100%',
           }}
         >
-          <Typography component="h1" variant="h5" gutterBottom>
-            تسجيل الدخول للوحة التحكم
+          <Typography component="h1" variant="h4" gutterBottom sx={{ mb: 3 }}>
+            لوحة التحكم الإدارية
           </Typography>
-          
+
+          {/* Tabs for Login/Register */}
+          <Box sx={{ width: '100%', mb: 2 }}>
+            <Tabs 
+              value={tabValue} 
+              onChange={handleTabChange} 
+              centered
+              sx={{
+                '& .MuiTab-root': {
+                  fontSize: '1.1rem',
+                  fontWeight: 'bold'
+                }
+              }}
+            >
+              <Tab label="تسجيل الدخول" />
+              <Tab label="إنشاء حساب" />
+            </Tabs>
+          </Box>
+
+          {/* Error/Success Messages */}
           {error && (
             <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
               {error}
@@ -270,95 +310,157 @@ function Login() {
               {success}
             </Alert>
           )}
-          
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 1, width: '100%' }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="username"
-              label="اسم المستخدم"
-              name="username"
-              autoComplete="username"
-              autoFocus
-              value={formData.username}
-              onChange={handleChange}
-              disabled={loading}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="كلمة المرور"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-              value={formData.password}
-              onChange={handleChange}
-              disabled={loading}
-            />
-            <Button
-              type="submit"
-              fullWidth
-              variant="contained"
-              sx={{ mt: 3, mb: 2 }}
-              disabled={loading}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'تسجيل الدخول'
-              )}
-            </Button>
 
-            <Divider sx={{ my: 2 }}>أو</Divider>
+          {/* Login Tab */}
+          <TabPanel value={tabValue} index={0}>
+            <Box component="form" onSubmit={handleLoginSubmit} sx={{ width: '100%' }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="البريد الإلكتروني أو اسم المستخدم"
+                name="username"
+                autoComplete="username"
+                autoFocus
+                value={loginData.username}
+                onChange={handleLoginChange}
+                disabled={loading}
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="كلمة المرور"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                value={loginData.password}
+                onChange={handleLoginChange}
+                disabled={loading}
+                sx={{ mb: 3 }}
+              />
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                sx={{ mb: 2, py: 1.5 }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'تسجيل الدخول'
+                )}
+              </Button>
+            </Box>
+          </TabPanel>
 
-            {/* Admin user creation button */}
+          {/* Register Tab */}
+          <TabPanel value={tabValue} index={1}>
+            <Box component="form" onSubmit={handleRegisterSubmit} sx={{ width: '100%' }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="name"
+                    label="الاسم الكامل"
+                    name="name"
+                    autoComplete="name"
+                    value={registerData.name}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    id="email"
+                    label="البريد الإلكتروني"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    value={registerData.email}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    name="password"
+                    label="كلمة المرور"
+                    type="password"
+                    id="password"
+                    autoComplete="new-password"
+                    value={registerData.password}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                    helperText="6 أحرف على الأقل"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    name="confirmPassword"
+                    label="تأكيد كلمة المرور"
+                    type="password"
+                    id="confirmPassword"
+                    value={registerData.confirmPassword}
+                    onChange={handleRegisterChange}
+                    disabled={loading}
+                  />
+                </Grid>
+              </Grid>
+              
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                sx={{ mt: 3, mb: 2, py: 1.5 }}
+                disabled={loading}
+              >
+                {loading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'إنشاء حساب'
+                )}
+              </Button>
+            </Box>
+          </TabPanel>
+
+          {/* Quick Actions */}
+          <Divider sx={{ width: '100%', my: 3 }}>أو</Divider>
+
+          <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Button
               fullWidth
               variant="contained"
               color="success"
-              onClick={createAdminUser}
-              sx={{ mb: 1 }}
+              onClick={createQuickAdmin}
               disabled={loading}
+              sx={{ py: 1.2 }}
             >
-              إنشاء مستخدم إداري جديد
+              إنشاء حساب مدير سريع
             </Button>
 
-            {/* Try common credentials button */}
-            <Button
-              fullWidth
-              variant="contained"
-              color="info"
-              onClick={tryCommonCredentials}
-              sx={{ mb: 2 }}
-              disabled={loading}
-            >
-              تجربة بيانات الدخول الشائعة
-            </Button>
-
-            {/* Debug button - only for testing */}
-            <Button
-              fullWidth
-              variant="outlined"
-              color="secondary"
-              onClick={testApiConnection}
-              sx={{ mt: 1 }}
-            >
-              اختبار الاتصال بالـ API
-            </Button>
-
-            {/* Bypass authentication button */}
             <Button
               fullWidth
               variant="outlined"
               color="warning"
-              onClick={bypassAuthentication}
-              sx={{ mt: 2 }}
+              onClick={bypassAuth}
               disabled={loading}
+              sx={{ py: 1.2 }}
             >
-              تجاوز المصادقة للتطوير
+              تجاوز المصادقة (للتطوير)
             </Button>
           </Box>
         </Paper>
