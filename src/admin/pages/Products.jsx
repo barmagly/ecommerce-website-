@@ -204,10 +204,10 @@ function Products() {
       }
       const productData = {
         ...formData,
+        category: formData.category,
         images: uploadedImages,
         price: formData.hasVariants ? undefined : parseFloat(formData.price),
         stock: formData.hasVariants ? undefined : parseInt(formData.stock),
-        category: formData.category,
       };
       if (selectedProduct) {
         const response = await productService.update(selectedProduct._id, productData);
