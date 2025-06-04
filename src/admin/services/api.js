@@ -43,10 +43,9 @@ api.interceptors.response.use(
 
 // Auth services
 export const authService = {
-  login: (data) => {
+  login: async (data) => {
     console.log('authService.login called with data:', data);
     console.log('Making request to:', `${API_URL}/auth/login`);
-    console.log('Full URL will be:', `${API_URL}/auth/login`);
     
     // Ensure compatibility with different backend field expectations
     const loginData = {
@@ -56,7 +55,60 @@ export const authService = {
     
     console.log('Sending login data:', loginData);
     
-    return api.post('/auth/login', loginData);
+    try {
+      // Use the most basic fetch possible to avoid CORS preflight
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        body: JSON.stringify(loginData),
+        headers: {
+          'content-type': 'application/json'
+        }
+      });
+      
+      console.log('Fetch response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: await response.text() };
+        }
+        console.log('Error response:', errorData);
+        
+        // Create axios-like error
+        const error = new Error(errorData.message || `HTTP ${response.status}`);
+        error.response = {
+          status: response.status,
+          data: errorData
+        };
+        throw error;
+      }
+      
+      const result = await response.json();
+      console.log('Login successful:', result);
+      
+      // Return in axios-like format for compatibility
+      return { data: result };
+    } catch (error) {
+      console.error('Fetch login error:', error);
+      
+      // If it's already formatted, re-throw
+      if (error.response) {
+        throw error;
+      }
+      
+      // Convert to axios-like error format
+      throw {
+        response: {
+          status: 500,
+          data: { message: error.message }
+        },
+        message: error.message,
+        code: 'ERR_NETWORK'
+      };
+    }
   },
   logout: () => {
     localStorage.removeItem('adminToken');

@@ -58,7 +58,9 @@ function Login() {
       { email: 'admin@admin.com', password: 'admin123' },
       { username: 'admin', password: 'admin123' },
       { email: 'admin', password: 'admin' },
-      { username: 'admin', password: 'admin' }
+      { username: 'admin', password: 'admin' },
+      { email: 'admin', password: 'password' },
+      { username: 'admin', password: 'password' }
     ];
     
     for (let i = 0; i < testCredentials.length; i++) {
@@ -66,6 +68,7 @@ function Login() {
       console.log(`Testing credentials ${i + 1}:`, creds);
       
       try {
+        // Simple fetch without any extra headers to avoid CORS preflight
         const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/login', {
           method: 'POST',
           headers: {
@@ -75,22 +78,96 @@ function Login() {
         });
         
         console.log(`Test ${i + 1} - Status:`, response.status);
+        console.log(`Test ${i + 1} - Headers:`, [...response.headers.entries()]);
         
         if (response.ok) {
           const data = await response.json();
           console.log(`Test ${i + 1} - Success! Response:`, data);
-          alert(`Success with credentials: ${JSON.stringify(creds)}`);
+          alert(`✅ Success with credentials: ${JSON.stringify(creds)}\nToken: ${data.token ? 'Present' : 'Missing'}`);
           return;
         } else {
           const errorText = await response.text();
           console.log(`Test ${i + 1} - Error response:`, errorText);
+          
+          if (response.status === 401) {
+            console.log(`Test ${i + 1} - Unauthorized (wrong credentials)`);
+          } else if (response.status === 404) {
+            console.log(`Test ${i + 1} - Endpoint not found`);
+          }
         }
       } catch (error) {
         console.error(`Test ${i + 1} - Fetch error:`, error);
+        if (error.message.includes('CORS')) {
+          console.log(`Test ${i + 1} - CORS error detected`);
+        }
       }
     }
     
-    alert('All credential tests failed. Check console for details.');
+    alert('❌ All credential tests failed. Check console for details.');
+  };
+
+  // Alternative login method using form submission to bypass CORS
+  const loginWithForm = async (credentials) => {
+    return new Promise((resolve, reject) => {
+      // Create a hidden iframe to handle the response
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.name = 'login-frame';
+      document.body.appendChild(iframe);
+
+      // Create a form
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://ecommerce-website-backend-nine.vercel.app/api/auth/login';
+      form.target = 'login-frame';
+      form.style.display = 'none';
+
+      // Add form fields
+      const emailField = document.createElement('input');
+      emailField.type = 'hidden';
+      emailField.name = 'email';
+      emailField.value = credentials.username;
+      form.appendChild(emailField);
+
+      const usernameField = document.createElement('input');
+      usernameField.type = 'hidden';
+      usernameField.name = 'username';
+      usernameField.value = credentials.username;
+      form.appendChild(usernameField);
+
+      const passwordField = document.createElement('input');
+      passwordField.type = 'hidden';
+      passwordField.name = 'password';
+      passwordField.value = credentials.password;
+      form.appendChild(passwordField);
+
+      // Handle iframe load
+      iframe.onload = () => {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+          const responseText = iframeDoc.body.textContent;
+          console.log('Form response:', responseText);
+          
+          try {
+            const result = JSON.parse(responseText);
+            resolve({ data: result });
+          } catch {
+            reject(new Error('Invalid response format'));
+          }
+        } catch (error) {
+          console.error('Form submission error:', error);
+          reject(error);
+        } finally {
+          // Cleanup
+          document.body.removeChild(form);
+          document.body.removeChild(iframe);
+        }
+      };
+
+      // Submit form
+      document.body.appendChild(form);
+      form.submit();
+    });
   };
 
   return (
@@ -162,7 +239,7 @@ function Login() {
               )}
             </Button>
 
-            {/* Debug button */}
+            {/* Debug buttons */}
             <Button
               fullWidth
               variant="outlined"
@@ -171,6 +248,29 @@ function Login() {
               sx={{ mt: 1 }}
             >
               اختبار الاتصال بالـ API
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="info"
+              onClick={async () => {
+                try {
+                  setLoading(true);
+                  const result = await loginWithForm(formData);
+                  console.log('Form login result:', result);
+                  alert('Form login successful! Check console for details.');
+                } catch (error) {
+                  console.error('Form login error:', error);
+                  alert('Form login failed: ' + error.message);
+                } finally {
+                  setLoading(false);
+                }
+              }}
+              sx={{ mt: 1 }}
+              disabled={loading}
+            >
+              تجربة تسجيل الدخول بالنموذج
             </Button>
           </Box>
         </Paper>
