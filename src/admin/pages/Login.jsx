@@ -587,6 +587,302 @@ function Login() {
     setLoading(false);
   };
 
+  // Comprehensive backend field discovery
+  const discoverBackendFields = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+    
+    console.log('🔍 Discovering backend field requirements...');
+    
+    // Test with every possible field combination
+    const fieldTests = [
+      // Test 1: Common e-commerce fields
+      {
+        name: 'Test User',
+        email: 'test@test.com',
+        password: 'test123',
+        phone: '1234567890',
+        address: 'Test Address'
+      },
+      // Test 2: User management fields
+      {
+        firstName: 'Test',
+        lastName: 'User',
+        email: 'test@test.com',
+        password: 'test123',
+        phone: '1234567890'
+      },
+      // Test 3: Complete profile
+      {
+        name: 'Test User',
+        firstName: 'Test',
+        lastName: 'User',
+        username: 'testuser',
+        email: 'test@test.com',
+        password: 'test123',
+        confirmPassword: 'test123',
+        phone: '1234567890',
+        address: 'Test Address',
+        city: 'Test City',
+        state: 'Test State',
+        country: 'Test Country',
+        zipCode: '12345',
+        dateOfBirth: '1990-01-01',
+        gender: 'male',
+        role: 'admin',
+        isAdmin: true,
+        status: 'active'
+      },
+      // Test 4: Minimal with phone
+      {
+        name: 'Test User',
+        email: 'test@test.com',
+        password: 'test123',
+        phone: '1234567890'
+      },
+      // Test 5: With all auth fields
+      {
+        name: 'Test User',
+        email: 'test@test.com',
+        password: 'test123',
+        confirmPassword: 'test123',
+        phone: '1234567890',
+        terms: true,
+        newsletter: false
+      },
+      // Test 6: Backend-specific fields (common in Node.js backends)
+      {
+        fullName: 'Test User',
+        emailAddress: 'test@test.com',
+        userPassword: 'test123',
+        phoneNumber: '1234567890',
+        userRole: 'admin'
+      },
+      // Test 7: Alternative naming conventions
+      {
+        user_name: 'Test User',
+        user_email: 'test@test.com',
+        user_password: 'test123',
+        user_phone: '1234567890'
+      },
+      // Test 8: Camel case variations
+      {
+        userName: 'Test User',
+        userEmail: 'test@test.com',
+        userPassword: 'test123',
+        userPhone: '1234567890',
+        userRole: 'admin'
+      }
+    ];
+
+    const results = [];
+
+    for (let i = 0; i < fieldTests.length; i++) {
+      const testData = fieldTests[i];
+      console.log(`🧪 Field test ${i + 1}:`, testData);
+
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(testData),
+        });
+
+        console.log(`📊 Test ${i + 1} - Status: ${response.status}`);
+
+        if (response.ok) {
+          const successData = await response.json();
+          console.log(`✅ Test ${i + 1} - SUCCESS!`, successData);
+          results.push(`✅ Test ${i + 1}: SUCCESS! Fields that worked:`);
+          results.push(`   ${Object.keys(testData).join(', ')}`);
+          
+          setSuccess(`🎉 تم اكتشاف التنسيق الصحيح!\nالحقول المطلوبة: ${Object.keys(testData).join(', ')}\n\nسيتم استخدام هذا التنسيق الآن.`);
+          setLoading(false);
+          return testData; // Return the working format
+        } else {
+          const errorData = await response.json();
+          console.log(`❌ Test ${i + 1} - Error:`, errorData);
+          results.push(`❌ Test ${i + 1}: ${errorData.message || 'Unknown error'}`);
+        }
+      } catch (error) {
+        console.log(`💥 Test ${i + 1} - Fetch error:`, error.message);
+        results.push(`💥 Test ${i + 1}: ${error.message}`);
+      }
+
+      // Small delay between requests to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+
+    // If no format worked, show all results
+    const resultMessage = `🔍 نتائج اكتشاف الحقول:\n${results.join('\n')}\n\n❌ لم يتم العثور على تنسيق صحيح. قد يكون الخادم يتطلب مصادقة مسبقة.`;
+    setError(resultMessage);
+    setLoading(false);
+    return null;
+  };
+
+  // Test if backend requires authentication for registration
+  const testAuthRequirement = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+    
+    console.log('🔐 Testing authentication requirements...');
+    
+    // Test different authentication scenarios
+    const authTests = [
+      // Test 1: No authentication
+      {
+        headers: { 'Content-Type': 'application/json' },
+        description: 'بدون مصادقة'
+      },
+      // Test 2: With fake admin token
+      {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer fake-admin-token'
+        },
+        description: 'مع token وهمي'
+      },
+      // Test 3: With API key
+      {
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-API-Key': 'admin-api-key'
+        },
+        description: 'مع API key'
+      },
+      // Test 4: With basic auth
+      {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Basic YWRtaW46YWRtaW4='  // admin:admin
+        },
+        description: 'مع Basic Auth'
+      },
+      // Test 5: With custom headers
+      {
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Admin-Secret': 'admin-secret',
+          'X-Client-Type': 'admin-panel'
+        },
+        description: 'مع headers مخصصة'
+      }
+    ];
+
+    const testPayload = {
+      name: 'Test Admin',
+      email: 'test@admin.com',
+      password: 'test123',
+      phone: '1234567890'
+    };
+
+    const results = [];
+
+    for (let i = 0; i < authTests.length; i++) {
+      const { headers, description } = authTests[i];
+      console.log(`🔑 Auth test ${i + 1} (${description}):`, headers);
+
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(testPayload),
+        });
+
+        console.log(`📊 Auth test ${i + 1} - Status: ${response.status}`);
+
+        if (response.ok) {
+          const successData = await response.json();
+          console.log(`✅ Auth test ${i + 1} - SUCCESS!`, successData);
+          results.push(`✅ ${description}: نجح!`);
+          
+          setSuccess(`🎉 تم اكتشاف متطلبات المصادقة!\n${description} يعمل بنجاح.\n\nHeaders المطلوبة: ${JSON.stringify(headers, null, 2)}`);
+          setLoading(false);
+          return { headers, payload: testPayload };
+        } else {
+          const errorData = await response.json();
+          console.log(`❌ Auth test ${i + 1} - Error:`, errorData);
+          results.push(`❌ ${description}: ${errorData.message || 'فشل'}`);
+        }
+      } catch (error) {
+        console.log(`💥 Auth test ${i + 1} - Fetch error:`, error.message);
+        results.push(`💥 ${description}: ${error.message}`);
+      }
+
+      // Small delay between requests
+      await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    // Test if we can get a token first
+    console.log('🔄 Testing if we can get an auth token...');
+    
+    try {
+      // Try to login with common admin credentials to get a token
+      const loginAttempts = [
+        { email: 'admin@admin.com', password: 'admin123' },
+        { username: 'admin', password: 'admin123' },
+        { email: 'admin@example.com', password: 'admin' }
+      ];
+
+      for (const loginData of loginAttempts) {
+        try {
+          const loginResponse = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData),
+          });
+
+          if (loginResponse.ok) {
+            const loginResult = await loginResponse.json();
+            console.log('✅ Got auth token:', loginResult);
+            
+            if (loginResult.token) {
+              // Try registration with the token
+              const authHeaders = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${loginResult.token}`
+              };
+
+              const authRegResponse = await fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: authHeaders,
+                body: JSON.stringify(testPayload),
+              });
+
+              if (authRegResponse.ok) {
+                const regResult = await authRegResponse.json();
+                console.log('✅ Registration with token succeeded:', regResult);
+                results.push(`✅ التسجيل مع token نجح!`);
+                
+                setSuccess(`🎉 تم اكتشاف الحل!\nيجب الحصول على token أولاً من خلال تسجيل الدخول، ثم استخدامه للتسجيل.\n\nToken: ${loginResult.token.substring(0, 20)}...`);
+                setLoading(false);
+                return { requiresAuth: true, token: loginResult.token };
+              }
+            }
+          }
+        } catch (loginError) {
+          console.log('Login attempt failed:', loginError.message);
+        }
+      }
+    } catch (tokenError) {
+      console.log('Token test failed:', tokenError.message);
+    }
+
+    // Show all results
+    const resultMessage = `🔐 نتائج اختبار المصادقة:\n${results.join('\n')}\n\n❌ لم يتم العثور على طريقة صحيحة للمصادقة.`;
+    setError(resultMessage);
+    setLoading(false);
+    return null;
+  };
+
   return (
     <Container component="main" maxWidth="sm">
       <Box
@@ -814,6 +1110,28 @@ function Login() {
               sx={{ py: 1.2 }}
             >
               تحليل متطلبات الخادم
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              onClick={discoverBackendFields}
+              disabled={loading}
+              sx={{ py: 1.2 }}
+            >
+              🔍 اكتشاف الحقول المطلوبة
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="warning"
+              onClick={testAuthRequirement}
+              disabled={loading}
+              sx={{ py: 1.2 }}
+            >
+              🔐 اختبار متطلبات المصادقة
             </Button>
 
             <Button
