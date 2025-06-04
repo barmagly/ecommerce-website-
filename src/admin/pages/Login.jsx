@@ -58,38 +58,100 @@ function Login() {
     setError('');
     setSuccess('');
     
-    try {
-      const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: 'admin@admin.com',
-          password: 'admin123',
-          name: 'Admin User',
-          username: 'admin',
-          role: 'admin'
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setSuccess('✅ Admin user created successfully! You can now login with:\nEmail: admin@admin.com\nPassword: admin123');
-        console.log('Admin user created:', data);
-      } else {
-        const errorData = await response.json();
-        if (errorData.message.includes('already exists') || errorData.message.includes('duplicate')) {
-          setSuccess('ℹ️ Admin user already exists. Try logging in with:\nEmail: admin@admin.com\nPassword: admin123');
-        } else {
-          setError(`Failed to create admin user: ${errorData.message}`);
-        }
+    // Try different registration payloads
+    const registrationAttempts = [
+      {
+        email: 'admin@admin.com',
+        password: 'admin123',
+        name: 'Admin User',
+        username: 'admin',
+        role: 'admin'
+      },
+      {
+        email: 'admin@admin.com',
+        password: 'admin123',
+        name: 'Admin User'
+      },
+      {
+        email: 'admin@admin.com',
+        password: 'admin123',
+        firstName: 'Admin',
+        lastName: 'User'
       }
-    } catch (error) {
-      setError(`Error creating admin user: ${error.message}`);
-    } finally {
-      setLoading(false);
+    ];
+    
+    for (let i = 0; i < registrationAttempts.length; i++) {
+      try {
+        console.log(`Attempting registration ${i + 1}:`, registrationAttempts[i]);
+        
+        const response = await fetch('https://ecommerce-website-backend-nine.vercel.app/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(registrationAttempts[i])
+        });
+        
+        console.log(`Registration attempt ${i + 1} status:`, response.status);
+        
+        if (response.ok) {
+          const data = await response.json();
+          setSuccess('✅ Admin user created successfully! You can now login with:\nEmail: admin@admin.com\nPassword: admin123');
+          console.log('Admin user created:', data);
+          setLoading(false);
+          return;
+        } else {
+          const errorData = await response.json();
+          console.log(`Registration attempt ${i + 1} error:`, errorData);
+          
+          if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
+            setSuccess('ℹ️ Admin user already exists. Try logging in with:\nEmail: admin@admin.com\nPassword: admin123');
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.log(`Registration attempt ${i + 1} failed:`, error.message);
+      }
     }
+    
+    setError('❌ Could not create admin user. The backend might not support registration or requires different fields. Please contact the backend developer.');
+    setLoading(false);
+  };
+
+  // Function to try common admin credentials
+  const tryCommonCredentials = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    
+    const commonCredentials = [
+      { username: 'admin@admin.com', password: 'admin123' },
+      { username: 'admin', password: 'admin123' },
+      { username: 'admin@admin.com', password: 'admin' },
+      { username: 'admin', password: 'admin' },
+      { username: 'admin', password: 'password' },
+      { username: 'admin@example.com', password: 'admin123' },
+      { username: 'test@admin.com', password: 'admin' },
+      { username: 'administrator', password: 'admin123' }
+    ];
+    
+    for (let i = 0; i < commonCredentials.length; i++) {
+      try {
+        console.log(`Trying credentials ${i + 1}:`, commonCredentials[i]);
+        const success = await login(commonCredentials[i]);
+        if (success) {
+          setSuccess(`✅ Login successful with:\nUsername: ${commonCredentials[i].username}\nPassword: ${commonCredentials[i].password}`);
+          setLoading(false);
+          return;
+        }
+      } catch (error) {
+        console.log(`Credentials ${i + 1} failed:`, error.message);
+      }
+    }
+    
+    setError('❌ None of the common credentials worked. Please try creating an admin user or contact the backend developer.');
+    setLoading(false);
   };
 
   // Manual test function for debugging (only runs when button is clicked)
@@ -223,10 +285,22 @@ function Login() {
               variant="contained"
               color="success"
               onClick={createAdminUser}
-              sx={{ mb: 2 }}
+              sx={{ mb: 1 }}
               disabled={loading}
             >
               إنشاء مستخدم إداري جديد
+            </Button>
+
+            {/* Try common credentials button */}
+            <Button
+              fullWidth
+              variant="contained"
+              color="info"
+              onClick={tryCommonCredentials}
+              sx={{ mb: 2 }}
+              disabled={loading}
+            >
+              تجربة بيانات الدخول الشائعة
             </Button>
 
             {/* Debug button - only for testing */}
