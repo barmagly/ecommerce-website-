@@ -695,9 +695,9 @@ function Dashboard() {
         />
       </Box>
 
-      <Grid container spacing={3}>
-        {/* Stats Cards */}
-        <Grid item xs={12} sm={6} md={3}>
+      {/* Stats Cards Row */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6} md={3} sx={{ height: '100%' }}>
           <StatCard
             title="إجمالي المبيعات"
             value={`₪ ${stats?.totalSales || 0}`}
@@ -706,9 +706,10 @@ function Dashboard() {
             trend="up"
             percentage="12"
             darkMode={darkMode}
+            sx={{ height: '100%' }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ height: '100%' }}>
           <StatCard
             title="الطلبات"
             value={stats?.totalOrders || 0}
@@ -717,9 +718,10 @@ function Dashboard() {
             trend="up"
             percentage="8"
             darkMode={darkMode}
+            sx={{ height: '100%' }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ height: '100%' }}>
           <StatCard
             title="المستخدمين"
             value={stats?.totalUsers || 0}
@@ -728,9 +730,10 @@ function Dashboard() {
             trend="up"
             percentage="15"
             darkMode={darkMode}
+            sx={{ height: '100%' }}
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} sx={{ height: '100%' }}>
           <StatCard
             title="المنتجات"
             value={stats?.totalProducts || 0}
@@ -739,316 +742,13 @@ function Dashboard() {
             trend="down"
             percentage="5"
             darkMode={darkMode}
-          />
-        </Grid>
-
-        {/* Main Chart */}
-        <Grid item xs={12}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-              '& .recharts-cartesian-grid-horizontal line, & .recharts-cartesian-grid-vertical line': {
-                stroke: colors.chart.grid,
-              },
-              '& .recharts-text': {
-                fill: colors.chart.text,
-              },
-            }}
-            data-aos="fade-up"
-          >
-            <Typography variant="h6" gutterBottom sx={{ color: '#ff1744', fontWeight: 700, mb: 3 }}>
-              تحليل المبيعات والعائدات
-            </Typography>
-            <div style={{ width: '100%', height: 400 }}>
-              <ResponsiveContainer>
-                <ComposedChart data={monthlyStats}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#ff174422" />
-                  <XAxis dataKey="month" stroke="#ff1744" />
-                  <YAxis stroke="#ff1744" />
-                  <RechartsTooltip
-                    contentStyle={{
-                      background: '#fff',
-                      border: '1px solid #ff1744',
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="مبيعات"
-                    fill="#ff174422"
-                    stroke="#ff1744"
-                    strokeWidth={2}
-                  />
-                  <Bar dataKey="طلبات" fill="#ff1744" />
-                  <Line
-                    type="monotone"
-                    dataKey="عائد"
-                    stroke="#F5515F"
-                    strokeWidth={2}
-                    dot={{ fill: '#F5515F', strokeWidth: 2 }}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </Paper>
-        </Grid>
-
-        {/* Performance Radar Chart */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-            }}
-            data-aos="fade-up"
-          >
-            <Typography variant="h6" gutterBottom sx={{ color: '#ff1744', fontWeight: 700, mb: 3 }}>
-              مؤشرات الأداء
-            </Typography>
-            <div style={{ width: '100%', height: 300 }}>
-              <ResponsiveContainer>
-                <RadarChart data={performanceMetrics}>
-                  <PolarGrid stroke="#ff174422" />
-                  <PolarAngleAxis dataKey="subject" stroke="#ff1744" />
-                  <PolarRadiusAxis stroke="#ff1744" />
-                  <Radar
-                    name="الأداء"
-                    dataKey="A"
-                    stroke="#ff1744"
-                    fill="#ff174422"
-                    fillOpacity={0.6}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </div>
-          </Paper>
-        </Grid>
-
-        {/* Recent Orders */}
-        <Grid item xs={12} md={6}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-              height: '100%',
-            }}
-            data-aos="fade-up"
-          >
-            <Typography variant="h6" gutterBottom sx={{ color: '#ff1744', fontWeight: 700, mb: 3 }}>
-              آخر الطلبات
-            </Typography>
-            <List>
-              {recentOrders.map((order, idx) => (
-                <React.Fragment key={order.id}>
-                  <ListItem
-                    sx={{
-                      borderRadius: 2,
-                      mb: 1,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        bgcolor: '#ff174410',
-                        transform: 'translateX(-5px)',
-                      },
-                    }}
-                    data-aos="fade-left"
-                    data-aos-delay={idx * 100}
-                  >
-                    <ListItemIcon>
-                      <Avatar sx={{ bgcolor: '#ff1744' }}>
-                        {order.customerName.charAt(0)}
-                      </Avatar>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={order.customerName}
-                      secondary={`طلب رقم: ${order.orderNumber}`}
-                      primaryTypographyProps={{ fontWeight: 700 }}
-                    />
-                    <Typography variant="body1" sx={{ color: '#ff1744', fontWeight: 700 }}>
-                      ₪ {order.total}
-                    </Typography>
-                  </ListItem>
-                  {idx < recentOrders.length - 1 && (
-                    <Divider variant="inset" component="li" sx={{ borderColor: '#ff174422' }} />
-                  )}
-                </React.Fragment>
-              ))}
-            </List>
-          </Paper>
-        </Grid>
-
-        {/* Charts */}
-        <Grid item xs={12} md={8}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-              '& .recharts-cartesian-grid-horizontal line, & .recharts-cartesian-grid-vertical line': {
-                stroke: colors.chart.grid,
-              },
-              '& .recharts-text': {
-                fill: colors.chart.text,
-              },
-            }}
-            data-aos="fade-up"
-            data-aos-delay={700}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                تحليل المبيعات والزيارات
-              </Typography>
-              <IconButton size="small">
-                <MoreVertIcon />
-              </IconButton>
-            </Box>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <RechartsTooltip />
-                <Legend />
-                <Line type="monotone" dataKey="sales" stroke="#1e88e5" strokeWidth={2} />
-                <Line type="monotone" dataKey="visits" stroke="#43a047" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-        <Grid item xs={12} md={4}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-            }}
-            data-aos="fade-up"
-            data-aos-delay={800}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                توزيع التصنيفات
-              </Typography>
-              <IconButton size="small">
-                <MoreVertIcon />
-              </IconButton>
-            </Box>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-        <Grid item xs={12}>
-          <Paper
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              background: colors.background.paper,
-              color: colors.text.primary,
-              border: `1px solid ${colors.border.light}`,
-              '& .recharts-cartesian-grid-horizontal line, & .recharts-cartesian-grid-vertical line': {
-                stroke: colors.chart.grid,
-              },
-              '& .recharts-text': {
-                fill: colors.chart.text,
-              },
-            }}
-            data-aos="fade-up"
-            data-aos-delay={900}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 700 }}>
-                الإيرادات الأسبوعية
-              </Typography>
-              <IconButton size="small">
-                <MoreVertIcon />
-              </IconButton>
-            </Box>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={monthlyStats}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <RechartsTooltip />
-                <Legend />
-                <Bar dataKey="مبيعات" fill="#1e88e5" />
-                <Bar dataKey="عائد" fill="#43a047" />
-              </BarChart>
-            </ResponsiveContainer>
-          </Paper>
-        </Grid>
-
-        {/* Progress Cards */}
-        <Grid item xs={12} sm={6} md={3}>
-          <ProgressCard
-            title="نسبة اكتمال الطلبات"
-            value={85}
-            max={100}
-            color="#1e88e5"
-            aos="fade-up"
-            delay={1000}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ProgressCard
-            title="رضا العملاء"
-            value={92}
-            max={100}
-            color="#43a047"
-            aos="fade-up"
-            delay={1100}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ProgressCard
-            title="المخزون المتاح"
-            value={750}
-            max={1000}
-            color="#fb8c00"
-            aos="fade-up"
-            delay={1200}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <ProgressCard
-            title="معدل التحويل"
-            value={65}
-            max={100}
-            color="#e53935"
-            aos="fade-up"
-            delay={1300}
+            sx={{ height: '100%' }}
           />
         </Grid>
       </Grid>
+
+    
+     
     </Box>
   );
 }
