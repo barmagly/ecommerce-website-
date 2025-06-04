@@ -7,7 +7,8 @@ export const getProductsThunk = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const { data } = await axios.get(`${API_KEY}`);
-            return data;
+            
+            return data.products;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || "error server");
         }

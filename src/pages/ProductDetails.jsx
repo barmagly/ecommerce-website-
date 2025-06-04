@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -51,6 +51,8 @@ export default function ProductDetails() {
 
   useEffect(() => {
     dispatch(getProductsThunk());
+    console.log(1);
+    toast.success("hjhk")
   }, [dispatch]);
 
   useEffect(() => {
