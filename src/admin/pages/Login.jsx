@@ -245,45 +245,126 @@ function Login() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
       
-      const adminData = {
-        name: 'مدير النظام',
-        email: 'admin@admin.com',
-        password: 'admin123',
-        role: 'admin'
-      };
-
-      const response = await fetch(`${API_URL}/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      // Try different admin data formats based on common backend requirements
+      const adminAttempts = [
+        // Attempt 1: Complete admin data with all possible fields
+        {
+          name: 'مدير النظام',
+          firstName: 'مدير',
+          lastName: 'النظام',
+          username: 'admin',
+          email: 'admin@admin.com',
+          password: 'admin123',
+          confirmPassword: 'admin123',
+          role: 'admin',
+          isAdmin: true,
+          status: 'active'
         },
-        body: JSON.stringify(adminData),
-      });
-
-      if (response.ok) {
-        setSuccess('تم إنشاء حساب المدير بنجاح!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
-        
-        // Auto-fill login form
-        setLoginData({
-          username: 'admin@admin.com',
+        // Attempt 2: Standard format with username
+        {
+          name: 'مدير النظام',
+          username: 'admin',
+          email: 'admin@admin.com',
+          password: 'admin123',
+          role: 'admin'
+        },
+        // Attempt 3: firstName/lastName format
+        {
+          firstName: 'مدير',
+          lastName: 'النظام',
+          email: 'admin@admin.com',
+          password: 'admin123',
+          confirmPassword: 'admin123',
+          role: 'admin'
+        },
+        // Attempt 4: Basic format with phone number
+        {
+          name: 'مدير النظام',
+          email: 'admin@admin.com',
+          password: 'admin123',
+          phone: '1234567890',
+          role: 'admin'
+        },
+        // Attempt 5: All common e-commerce fields
+        {
+          name: 'مدير النظام',
+          email: 'admin@admin.com',
+          password: 'admin123',
+          confirmPassword: 'admin123',
+          phone: '1234567890',
+          address: 'Admin Address',
+          city: 'Admin City',
+          country: 'Admin Country',
+          role: 'admin',
+          isAdmin: true
+        },
+        // Attempt 6: Minimal required fields
+        {
+          name: 'مدير النظام',
+          email: 'admin@admin.com',
           password: 'admin123'
-        });
-        
-        setTabValue(0); // Switch to login tab
-      } else {
-        const errorData = await response.json();
-        if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
-          setSuccess('حساب المدير موجود بالفعل!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
-          
-          // Auto-fill login form
-          setLoginData({
-            username: 'admin@admin.com',
-            password: 'admin123'
+        }
+      ];
+
+      for (let i = 0; i < adminAttempts.length; i++) {
+        const adminData = adminAttempts[i];
+        console.log(`Admin creation attempt ${i + 1}:`, adminData);
+
+        try {
+          const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(adminData),
           });
+
+          console.log(`Admin attempt ${i + 1} - Status:`, response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log(`Admin attempt ${i + 1} - Success:`, data);
+            setSuccess('تم إنشاء حساب المدير بنجاح!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
+            
+            // Auto-fill login form
+            setLoginData({
+              username: 'admin@admin.com',
+              password: 'admin123'
+            });
+            
+            setTabValue(0); // Switch to login tab
+            setLoading(false);
+            return;
+          } else {
+            const errorData = await response.json();
+            console.log(`Admin attempt ${i + 1} - Error:`, errorData);
+            
+            if (errorData.message && (errorData.message.includes('already exists') || errorData.message.includes('duplicate'))) {
+              setSuccess('حساب المدير موجود بالفعل!\nالبريد: admin@admin.com\nكلمة المرور: admin123');
+              
+              // Auto-fill login form
+              setLoginData({
+                username: 'admin@admin.com',
+                password: 'admin123'
+              });
+              
+              setTabValue(0); // Switch to login tab
+              setLoading(false);
+              return;
+            }
+            
+            // If this is the last attempt, show the error
+            if (i === adminAttempts.length - 1) {
+              setError('فشل في إنشاء حساب المدير: ' + (errorData.message || 'خطأ غير معروف'));
+            }
+          }
+        } catch (fetchError) {
+          console.error(`Admin attempt ${i + 1} - Fetch error:`, fetchError);
           
-          setTabValue(0); // Switch to login tab
-        } else {
-          setError('فشل في إنشاء حساب المدير: ' + (errorData.message || 'خطأ غير معروف'));
+          // If this is the last attempt, show the error
+          if (i === adminAttempts.length - 1) {
+            setError('خطأ في الشبكة أثناء إنشاء حساب المدير');
+          }
         }
       }
     } catch (err) {
@@ -434,6 +515,76 @@ function Login() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Analyze backend schema to discover required fields
+  const analyzeBackendSchema = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
+    
+    console.log('Analyzing backend schema...');
+    
+    // Send minimal data to get detailed error response
+    const testPayloads = [
+      {},  // Empty object
+      { email: 'test@test.com' },  // Only email
+      { password: 'test123' },  // Only password
+      { name: 'Test' },  // Only name
+      { email: 'test@test.com', password: 'test123' },  // Email + password
+    ];
+
+    const results = [];
+
+    for (let i = 0; i < testPayloads.length; i++) {
+      const payload = testPayloads[i];
+      console.log(`Schema test ${i + 1}:`, payload);
+
+      try {
+        const response = await fetch(`${API_URL}/auth/register`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        console.log(`Schema test ${i + 1} - Status:`, response.status);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.log(`Schema test ${i + 1} - Error:`, errorData);
+          
+          // Analyze error message for field requirements
+          if (errorData.message) {
+            results.push(`Test ${i + 1}: ${errorData.message}`);
+            
+            // Look for specific field mentions
+            const message = errorData.message.toLowerCase();
+            if (message.includes('name')) results.push('- يتطلب حقل name');
+            if (message.includes('email')) results.push('- يتطلب حقل email');
+            if (message.includes('password')) results.push('- يتطلب حقل password');
+            if (message.includes('phone')) results.push('- يتطلب حقل phone');
+            if (message.includes('username')) results.push('- يتطلب حقل username');
+            if (message.includes('firstname')) results.push('- يتطلب حقل firstName');
+            if (message.includes('lastname')) results.push('- يتطلب حقل lastName');
+          }
+        }
+      } catch (error) {
+        console.log(`Schema test ${i + 1} - Error:`, error.message);
+        results.push(`Test ${i + 1}: ${error.message}`);
+      }
+    }
+
+    // Display analysis results
+    const analysisResult = results.length > 0 
+      ? `تحليل متطلبات الخادم:\n${results.join('\n')}`
+      : 'لم يتم العثور على معلومات حول المتطلبات';
+    
+    setSuccess(analysisResult);
+    setLoading(false);
   };
 
   return (
@@ -652,6 +803,17 @@ function Login() {
               sx={{ py: 1.2 }}
             >
               اختبار endpoints الخلفية
+            </Button>
+
+            <Button
+              fullWidth
+              variant="outlined"
+              color="secondary"
+              onClick={analyzeBackendSchema}
+              disabled={loading}
+              sx={{ py: 1.2 }}
+            >
+              تحليل متطلبات الخادم
             </Button>
 
             <Button
