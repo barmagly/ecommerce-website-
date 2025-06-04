@@ -30,7 +30,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Login response:', response);
       
       const { token, admin: adminData } = response.data;
-      localStorage.setItem('adminToken', token);
+      localStorage.setItem('adminToken', token);  
       setAdmin(adminData);
       toast.success('تم تسجيل الدخول بنجاح');
       return true;
