@@ -39,7 +39,7 @@ import {
   AddCircleOutline as AddCircleOutlineIcon,
 } from '@mui/icons-material';
 import { toast } from 'react-toastify';
-import { productService, categoryService } from '../services/api';
+import { productService, categoryService, uploadService } from '../services/api';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 
@@ -67,6 +67,7 @@ function Products() {
     specifications: [],
     attributes: [],
   });
+  const [coverImageFile, setCoverImageFile] = useState(null);
   const [variantData, setVariantData] = useState({
     sku: '',
     attributes: {},
@@ -78,6 +79,7 @@ function Products() {
   const [tab, setTab] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const [images, setImages] = useState([]);
+  const [selectedRows, setSelectedRows] = useState([]);
 
   useEffect(() => {
     AOS.init({ duration: 900, once: true });
@@ -122,12 +124,14 @@ function Products() {
     });
     setImages([]);
     setImagePreview(null);
+    setCoverImageFile(null);
   };
 
   const handleClose = () => {
     setOpen(false);
     setSelectedProduct(null);
     setImagePreview(null);
+    setCoverImageFile(null);
   };
 
   const handleEdit = (product) => {
@@ -149,6 +153,7 @@ function Products() {
     });
     setImages(product.images || []);
     setImagePreview(product.imageCover);
+    setCoverImageFile(null);
     setOpen(true);
   };
 
@@ -174,6 +179,14 @@ function Products() {
     setSelectedProduct(null);
   };
 
+  const handleCoverImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCoverImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
     const newImages = files.map(file => ({
@@ -190,25 +203,34 @@ function Products() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      let coverImageUrl = formData.imageCover;
+      
+      // Upload cover image if a new file is selected
+      if (coverImageFile) {
+        const coverResponse = await uploadService.uploadImage(coverImageFile);
+        coverImageUrl = coverResponse.data.url;
+      }
+
+      // Upload additional images
       let uploadedImages = [];
       for (const img of images) {
         if (img.file) {
-          // مثال: uploadImage API
-          // const res = await productService.uploadImage(img.file);
-          // uploadedImages.push({ url: res.data.url, alt: '', isPrimary: false });
-          // هنا سنستخدم الرابط المؤقت فقط كمثال
-          uploadedImages.push({ url: img.url, alt: '', isPrimary: false });
+          const response = await uploadService.uploadImage(img.file);
+          uploadedImages.push({ url: response.data.url, alt: '', isPrimary: false });
         } else {
           uploadedImages.push(img);
         }
       }
+
       const productData = {
         ...formData,
         category: formData.category,
+        imageCover: coverImageUrl,
         images: uploadedImages,
         price: formData.hasVariants ? undefined : parseFloat(formData.price),
         stock: formData.hasVariants ? undefined : parseInt(formData.stock),
       };
+
       if (selectedProduct) {
         const response = await productService.update(selectedProduct._id, productData);
         setProducts(products.map((product) => product._id === selectedProduct._id ? response.data : product));
@@ -220,6 +242,7 @@ function Products() {
       }
       handleClose();
     } catch (error) {
+      console.error('Error saving product:', error);
       toast.error('حدث خطأ أثناء حفظ المنتج');
     }
   };
@@ -241,6 +264,25 @@ function Products() {
     setOpenVariant(false);
     setSelectedVariant(null);
   };
+
+  const handleBulkDelete = async () => {
+    if (selectedRows.length === 0) {
+      toast.warning('يرجى اختيار منتجات للحذف');
+      return;
+    }
+    
+    if (window.confirm(`هل أنت متأكد من حذف ${selectedRows.length} منتج؟`)) {
+      try {
+        await Promise.all(selectedRows.map(id => productService.delete(id)));
+        setProducts(products.filter(product => !selectedRows.includes(product._id)));
+        setSelectedRows([]);
+        toast.success(`تم حذف ${selectedRows.length} منتج بنجاح`);
+      } catch (error) {
+        toast.error('حدث خطأ أثناء حذف المنتجات');
+      }
+    }
+  };
+
   // ... Add variant CRUD logic here (API calls, forms, etc.)
 
   // DataGrid columns
@@ -293,14 +335,26 @@ function Products() {
         <Typography variant="h4" sx={{ color: '#ff1744', fontWeight: 900, letterSpacing: 1 }}>
           المنتجات
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleClickOpen}
-          sx={{ background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)', color: '#fff', fontWeight: 700, borderRadius: 3, boxShadow: '0 4px 16px 0 rgba(255,0,0,0.15)', '&:hover': { background: '#ff1744' } }}
-        >
-          إضافة منتج
-        </Button>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {selectedRows.length > 0 && (
+            <Button
+              variant="outlined"
+              startIcon={<DeleteIcon />}
+              onClick={handleBulkDelete}
+              sx={{ color: '#ff1744', borderColor: '#ff1744', fontWeight: 700 }}
+            >
+              حذف المحدد ({selectedRows.length})
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleClickOpen}
+            sx={{ background: 'linear-gradient(135deg, #ff1744 0%, #ff616f 100%)', color: '#fff', fontWeight: 700, borderRadius: 3, boxShadow: '0 4px 16px 0 rgba(255,0,0,0.15)', '&:hover': { background: '#ff1744' } }}
+          >
+            إضافة منتج
+          </Button>
+        </Box>
       </Box>
       <Paper sx={{ p: 2, borderRadius: 4, boxShadow: '0 8px 32px 0 rgba(255,0,0,0.10)', background: 'linear-gradient(135deg, #fff 60%, #ffebee 100%)', mb: 2 }}>
         <div style={{ height: 600, width: '100%' }}>
@@ -310,8 +364,34 @@ function Products() {
             getRowId={row => row._id}
             pageSize={10}
             rowsPerPageOptions={[10]}
-            disableSelectionOnClick
-            sx={{ background: 'transparent', borderRadius: 3, fontWeight: 600, boxShadow: 'none', '& .MuiDataGrid-columnHeaders': { background: '#ffebee', color: '#ff1744', fontWeight: 900, fontSize: 18 }, '& .MuiDataGrid-row:hover': { background: '#ffebee', transition: 'background 0.3s' } }}
+            checkboxSelection
+            disableRowSelectionOnClick={false}
+            onRowSelectionModelChange={(newSelection) => {
+              setSelectedRows(newSelection);
+            }}
+            rowSelectionModel={selectedRows}
+            sx={{ 
+              background: 'transparent', 
+              borderRadius: 3, 
+              fontWeight: 600, 
+              boxShadow: 'none', 
+              '& .MuiDataGrid-columnHeaders': { 
+                background: '#ffebee', 
+                color: '#ff1744', 
+                fontWeight: 900, 
+                fontSize: 18 
+              }, 
+              '& .MuiDataGrid-row:hover': { 
+                background: '#ffebee', 
+                transition: 'background 0.3s' 
+              },
+              '& .MuiDataGrid-row.Mui-selected': {
+                background: '#ffebee !important',
+              },
+              '& .MuiDataGrid-row.Mui-selected:hover': {
+                background: '#ffcdd2 !important',
+              }
+            }}
           />
         </div>
       </Paper>
@@ -382,18 +462,22 @@ function Products() {
                 />
               </Grid>
               <Divider sx={{ width: '100%', my: 2 }} />
-              {/* الصف الثالث: صورة الغلاف - زر الصور - هل متغيرات */}
-              <Grid item xs={12} md={4}>
-                <TextField
-                  name="imageCover"
-                  label={<span>رابط صورة الغلاف <span style={{color:'red'}}>*</span></span>}
-                  fullWidth
-                  value={formData.imageCover}
-                  onChange={e => setFormData({ ...formData, imageCover: e.target.value })}
-                  required
-                  helperText="رابط صورة رئيسية للمنتج (تظهر في القائمة)"
-                  sx={{ height: 56 }}
-                />
+              {/* الصف الثالث: صورة الغلاف - زر الصور */}
+              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<ImageIcon sx={{ fontSize: 28 }} />}
+                  sx={{ color: '#ff1744', borderColor: '#ff1744', fontWeight: 700, fontSize: 18, px: 3, py: 1.5, width: '100%', height: 56 }}
+                >
+                  اختر صورة الغلاف
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleCoverImageChange}
+                  />
+                </Button>
               </Grid>
               <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center' }}>
                 <Button
@@ -411,6 +495,26 @@ function Products() {
                     onChange={handleImagesChange}
                   />
                 </Button>
+              </Grid>
+              <Grid item xs={12} md={4} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {imagePreview && (
+                  <Box sx={{ textAlign: 'center' }}>
+                    <Typography variant="caption" sx={{ display: 'block', mb: 1, color: '#ff1744', fontWeight: 600 }}>
+                      معاينة صورة الغلاف
+                    </Typography>
+                    <img 
+                      src={imagePreview} 
+                      alt="معاينة صورة الغلاف" 
+                      style={{ 
+                        width: 80, 
+                        height: 80, 
+                        objectFit: 'cover', 
+                        borderRadius: 8,
+                        border: '2px solid #ff1744'
+                      }} 
+                    />
+                  </Box>
+                )}
               </Grid>
              
               {/* الصف الرابع: صور المنتج */}

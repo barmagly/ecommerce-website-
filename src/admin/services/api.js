@@ -47,6 +47,30 @@ export const authService = {
   // getProfile: () => api.get('/users/me'),
 };
 
+// Upload services
+export const uploadService = {
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api.post('/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  uploadImages: (files) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('images', file);
+    });
+    return api.post('/upload/multiple', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+};
+
 // Products services
 export const productService = {
   getAll: () => api.get('/products'),
@@ -54,7 +78,6 @@ export const productService = {
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
-  // Remove uploadImage or implement in backend if needed
 };
 
 // Categories services
