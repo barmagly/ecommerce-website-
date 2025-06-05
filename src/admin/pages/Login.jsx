@@ -307,41 +307,37 @@ function Login() {
     const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
     const token = localStorage.getItem('adminToken');
     console.log('Testing backend endpoints...');
-    // Only test valid endpoints from backend root
     const endpoints = [
-      '/auth',
-      '/products',
-      '/categories',
-      '/cart',
-      '/orders',
-      '/reviews',
-      '/coupons',
-      '/dashboard'
+      { path: '/auth', protected: true },
+      { path: '/products', protected: false },
+      { path: '/categories', protected: false },
+      { path: '/cart', protected: true },
+      { path: '/orders', protected: true },
+      { path: '/reviews', protected: false },
+      { path: '/coupons', protected: true },
+      { path: '/dashboard', protected: false }
     ];
 
     const results = [];
 
     for (const endpoint of endpoints) {
       try {
-        console.log(`Testing: ${API_URL}${endpoint}`);
-        // Send token for protected endpoints
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (endpoint !== '/auth' && token) {
+        const headers = { 'Content-Type': 'application/json' };
+        if (endpoint.protected && token) {
           headers['Authorization'] = `Bearer ${token}`;
         }
-        // Test GET request
-        const getResponse = await fetch(`${API_URL}${endpoint}`, {
+        const getResponse = await fetch(`${API_URL}${endpoint.path}`, {
           method: 'GET',
           headers,
         });
-        console.log(`GET ${endpoint} - Status: ${getResponse.status}`);
         const getResult = await getResponse.text();
-        results.push(`GET ${endpoint}: ${getResponse.status} - ${getResult.substring(0, 100)}`);
+        let statusMsg = `GET ${endpoint.path}: ${getResponse.status} - ${getResult.substring(0, 100)}`;
+        if (getResponse.status === 401 && endpoint.protected) {
+          statusMsg += ' (🔒 Requires login)';
+        }
+        results.push(statusMsg);
       } catch (error) {
-        console.log(`❌ ${endpoint} - Error:`, error.message);
-        results.push(`❌ ${endpoint}: ${error.message}`);
+        results.push(`❌ ${endpoint.path}: ${error.message}`);
       }
     }
 
@@ -409,10 +405,11 @@ function Login() {
     const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
     const endpoint = '/auth/register';
     console.log('🔍 Discovering backend field requirements...');
-    // Only test with all required fields
+    // Use a unique email for each test
+    const uniqueEmail = `test+${Date.now()}@test.com`;
     const payload = {
       name: 'Test User',
-      email: 'test@test.com',
+      email: uniqueEmail,
       password: 'test123',
       phone: '1234567890',
       address: 'Test Address',
@@ -426,7 +423,11 @@ function Login() {
         body: JSON.stringify(payload),
       });
       const respText = await response.text();
-      setSuccess(`نتيجة اختبار الحقول المطلوبة:\n${response.status} - ${respText}`);
+      if (response.status === 500) {
+        setError(`❌ الخادم أعاد خطأ 500 (Internal Server Error). تحقق من سجل الخادم لمعرفة التفاصيل.\n${respText}`);
+      } else {
+        setSuccess(`نتيجة اختبار الحقول المطلوبة:\n${response.status} - ${respText}`);
+      }
     } catch (error) {
       setError(`❌ اكتشاف الحقول المطلوبة فشل: ${error.message}`);
     } finally {
