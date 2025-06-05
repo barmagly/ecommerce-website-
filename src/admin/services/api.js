@@ -81,16 +81,15 @@ export const authService = {
       }
       
       const result = await response.json();
-      console.log('Login successful:', { hasToken: !!result.token, hasUser: !!result.user || !!result.admin });
+      // Extract from backend structure
+      const token = result.data?.token || result.token;
+      const adminData = result.data?.adminData || result.data?.user || result.user || result.admin || result.data;
+      console.log('Login successful:', { hasToken: !!token, hasUser: !!adminData });
       
       // Normalize response format
       const normalizedResult = {
-        token: result.token,
-        admin: result.user || result.admin || result.data || { 
-          name: result.name || 'مدير', 
-          email: loginData.email,
-          role: 'admin' 
-        }
+        token,
+        admin: adminData
       };
       
       // Return in axios-like format for compatibility

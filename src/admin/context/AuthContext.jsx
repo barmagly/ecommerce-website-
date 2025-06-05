@@ -30,7 +30,10 @@ export const AuthProvider = ({ children }) => {
       console.log('AuthContext: Login response received:', response);
       
       const { token, admin: adminData } = response.data;
-      console.log('AuthContext: Extracted data:', { hasToken: !!token, adminData });
+      // Extract hasToken and hasUser from backend response if available
+      const hasToken = response.data.hasToken ?? !!token;
+      const hasUser = response.data.hasUser ?? !!adminData;
+      console.log('AuthContext: Extracted data:', { hasToken, adminData });
       
       if (token) {
         localStorage.setItem('adminToken', token);
@@ -39,8 +42,8 @@ export const AuthProvider = ({ children }) => {
       }
       
       if (adminData) {
-        setAdmin({ user: adminData, token });
-        console.log('AuthContext: Admin state updated:', { user: adminData, token });
+        setAdmin({ user: adminData, token, hasToken, hasUser });
+        console.log('AuthContext: Admin state updated:', { user: adminData, token, hasToken, hasUser });
       }
       
       toast.success('تم تسجيل الدخول بنجاح');
