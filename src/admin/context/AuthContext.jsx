@@ -14,21 +14,9 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     const token = localStorage.getItem('adminToken');
+    const adminInfo = localStorage.getItem('adminInfo');
     if (token) {
-      // Check if it's a development token
-      if (token.startsWith('dev-token-')) {
-        // Development mode - bypass backend verification
-        setAdmin({ 
-          id: 1,
-          name: 'مطور النظام', 
-          email: 'dev@admin.com',
-          role: 'admin',
-          token,
-        });
-      } else {
-        // Production mode - set admin with token (optionally fetch profile here)
-        setAdmin({ token, role: 'admin' });
-      }
+      setAdmin({ user: adminInfo ? JSON.parse(adminInfo) : null, token });
     } else {
       setAdmin(null);
     }
@@ -46,12 +34,13 @@ export const AuthProvider = ({ children }) => {
       
       if (token) {
         localStorage.setItem('adminToken', token);
-        console.log('AuthContext: Token saved to localStorage');
+        localStorage.setItem('adminInfo', JSON.stringify(adminData));
+        console.log('AuthContext: Token and admin info saved to localStorage');
       }
       
       if (adminData) {
-        setAdmin(adminData);
-        console.log('AuthContext: Admin state updated:', adminData);
+        setAdmin({ user: adminData, token });
+        console.log('AuthContext: Admin state updated:', { user: adminData, token });
       }
       
       toast.success('تم تسجيل الدخول بنجاح');
@@ -87,6 +76,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     authService.logout();
     setAdmin(null);
+    localStorage.removeItem('adminInfo');
     toast.success('تم تسجيل الخروج بنجاح');
   };
 
