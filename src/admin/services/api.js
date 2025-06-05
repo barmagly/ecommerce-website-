@@ -13,7 +13,7 @@ const api = axios.create({
 // Create a custom fetch wrapper that mimics axios interceptors
 const createFetchWithInterceptors = () => {
   const originalFetch = window.fetch;
-  
+   
   return async (url, options = {}) => {
     // Clone options to avoid mutating the original
     const newOptions = { ...options };
