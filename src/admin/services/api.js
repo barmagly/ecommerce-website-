@@ -89,18 +89,19 @@ export const authService = {
       const result = await response.json();
       console.log('Raw login response:', result);
       
-      // Extract from backend structure
-      const token = result.data?.token;
-      const adminData = result.data?.adminData || result.data?.user;
+      // Extract from backend structure - using exact response format
+      const { data: responseData } = result;
+      const { user, token, hasToken, hasUser, adminData } = responseData;
       
       if (!token) {
         throw new Error('No token received from server');
       }
       
       console.log('Login successful:', { 
-        hasToken: !!token, 
-        hasUser: !!adminData,
+        hasToken: hasToken ?? true, 
+        hasUser: hasUser ?? true,
         token: token ? 'present' : 'missing',
+        user: user ? 'present' : 'missing',
         adminData: adminData ? 'present' : 'missing'
       });
       
@@ -108,18 +109,29 @@ export const authService = {
       localStorage.setItem('adminToken', token);
       localStorage.setItem('token', token);
       
+      // Store admin info
+      const adminInfo = adminData || user;
+      localStorage.setItem('adminInfo', JSON.stringify(adminInfo));
+      
       // Normalize response format
       const normalizedResult = {
         token,
-        admin: adminData,
-        hasToken: true,
-        hasUser: !!adminData
+        admin: adminInfo,
+        hasToken: hasToken ?? true,
+        hasUser: hasUser ?? true,
+        user: user,
+        adminData: adminData
       };
       
       // Return in axios-like format for compatibility
       return { data: normalizedResult };
     } catch (error) {
       console.error('Login fetch error:', error);
+      
+      // Clear any stale data
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('adminInfo');
       
       // If it's already formatted, re-throw
       if (error.response) {

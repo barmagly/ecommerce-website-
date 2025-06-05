@@ -47,30 +47,41 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('AuthContext: Login response received:', response);
       
-      const { token, admin: adminData, hasToken, hasUser } = response.data;
+      const { 
+        token, 
+        admin: adminInfo, 
+        hasToken, 
+        hasUser,
+        user,
+        adminData 
+      } = response.data;
       
       if (!token) {
         throw new Error('No token received from server');
       }
       
-      console.log('AuthContext: Extracted data:', { hasToken, hasUser, adminData });
+      console.log('AuthContext: Extracted data:', { 
+        hasToken, 
+        hasUser, 
+        user: user ? 'present' : 'missing',
+        adminData: adminData ? 'present' : 'missing'
+      });
       
-      // Store admin info
-      localStorage.setItem('adminInfo', JSON.stringify(adminData));
-      
-      // Update state
+      // Update state with all available data
       setAdmin({ 
-        user: adminData, 
+        user: adminInfo,
         token,
-        hasToken: true,
-        hasUser: true
+        hasToken: hasToken ?? true,
+        hasUser: hasUser ?? true,
+        rawUser: user,
+        rawAdminData: adminData
       });
       
       console.log('AuthContext: Admin state updated:', { 
-        user: adminData, 
+        user: adminInfo ? 'present' : 'missing',
         token: token ? 'present' : 'missing',
-        hasToken: true,
-        hasUser: true
+        hasToken: hasToken ?? true,
+        hasUser: hasUser ?? true
       });
       
       toast.success('تم تسجيل الدخول بنجاح');
