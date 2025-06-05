@@ -42,6 +42,32 @@ import { toast } from 'react-toastify';
 import { productService, categoryService, uploadService } from '../services/api';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+
+function GlobalErrorBoundary({ children }) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (hasError) {
+      logout();
+      navigate('/admin/login');
+    }
+  }, [hasError, logout, navigate]);
+
+  return (
+    <React.ErrorBoundary
+      fallbackRender={({ error }) => {
+        setHasError(true);
+        return null;
+      }}
+    >
+      {children}
+    </React.ErrorBoundary>
+  );
+}
 
 function Products() {
   const [products, setProducts] = useState([]);
@@ -645,4 +671,10 @@ function Products() {
   );
 }
 
-export default Products; 
+export default function ProductsWithBoundary() {
+  return (
+    <GlobalErrorBoundary>
+      <Products />
+    </GlobalErrorBoundary>
+  );
+} 
