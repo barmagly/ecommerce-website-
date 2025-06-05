@@ -20,9 +20,18 @@ export default function Cart() {
     dispatch(decreaseQ(id))
   };
 
-  const increaseQuantity=(id)=>{
+  const increaseQuantity = (id) => {
     dispatch(increaseQ(id))
   }
+
+  const handleCheckout = () => {
+    if (products.length === 0) {
+      alert('سلة المشتريات فارغة');
+      return;
+    }
+    navigate('/checkout', { state: { cartItems: products.cartItems, total: products.total } });
+  };
+
   useEffect(() => {
     dispatch(getCartThunk());
   }, [dispatch])
@@ -60,9 +69,9 @@ export default function Cart() {
                       <td>{item?.price} ج.م</td>
                       <td>
                         <div className="d-flex align-items-center justify-content-center gap-2">
-                          <button className="btn btn-light px-2 py-1" onClick={() => decreaseQuantity(item.id)} disabled={item.quantity==1}>-</button>
+                          <button className="btn btn-light px-2 py-1" onClick={() => decreaseQuantity(item.id)} disabled={item.quantity == 1}>-</button>
                           <span className="mx-2">{item.quantity}</span>
-                          <button className="btn btn-light px-2 py-1" onClick={() => increaseQuantity(item.id)} disabled={item.quantity>=item.stock}>+</button>
+                          <button className="btn btn-light px-2 py-1" onClick={() => increaseQuantity(item.id)} disabled={item.quantity >= item.stock}>+</button>
                         </div>
                       </td>
                       <td>{item?.price * item?.quantity} ج.م</td>
@@ -93,7 +102,7 @@ export default function Cart() {
                 <span className="fw-bold">الإجمالي الكلي:</span>
                 <span className="fw-bold text-danger">{products.total} ج.م</span>
               </div>
-              <button className="btn btn-danger w-100 py-2 fw-bold" onClick={() => navigate('/checkout')}>إتمام الشراء</button>
+              <button className="btn btn-danger w-100 py-2 fw-bold" onClick={handleCheckout}>إتمام الشراء</button>
             </div>
           </div>
         </div>
