@@ -79,6 +79,7 @@ import 'aos/dist/aos.css';
 import { darkModeColors, lightModeColors } from '../theme/darkModeColors';
 import { useDarkMode } from '../context/DarkModeContext';
 import { useNavigate } from 'react-router-dom';
+import TestEndpointsButton from '../components/TestEndpointsButton';
 
 // Add new mock data for additional charts
 const performanceMetrics = [
@@ -391,6 +392,11 @@ function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      if (!token) {
+        alert('يجب تسجيل الدخول أولاً لاختبار نقاط النهاية');
+        return;
+      }
       const [statsResponse, salesResponse, ordersResponse] = await Promise.all([
         dashboardService.getStats(),
         dashboardService.getSalesChart(period),
@@ -451,6 +457,8 @@ function Dashboard() {
       maxWidth: 'none',
       mx: 0,
     }}>
+      {/* Insert the TestEndpointsButton at the top */}
+      <TestEndpointsButton />
       {/* Header Section */}
       <Box sx={{ mb: 4 }}>
         <Grid container spacing={3} alignItems="center">
