@@ -7,7 +7,7 @@ export const getCategoriesThunk = createAsyncThunk(
     async (_, thunkAPI) => {
         try {
             const { data } = await axios.get(`${API_KEY}`);
-            console.log("data in slice", data);
+            // console.log("data in slice", data);
             return {
                 status: data.status,
                 categories: data.categories,

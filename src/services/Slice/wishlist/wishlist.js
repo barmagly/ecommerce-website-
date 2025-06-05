@@ -15,7 +15,6 @@ export const getUserWishlistThunk = createAsyncThunk(
                     Authorization: `Bearer ${token}`,
                 },
             });
-
             return data;
         } catch (error) {
             return thunkAPI.rejectWithValue(
@@ -57,7 +56,7 @@ export const removeWishlistThunk = createAsyncThunk(
             const token = localStorage.getItem("token");
             if (!token) throw new Error("No token found");
 
-            const { data } = await axios.delete(`${API_URL}/${prdId}`, {
+            await axios.delete(`${API_URL}/${prdId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

@@ -3,9 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { addToCartThunk } from "../services/Slice/cart/cart";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -141,6 +142,9 @@ export default function ProductDetails() {
     setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
   };
 
+  const handleAddToCart=()=>{
+    dispatch(addToCartThunk({productId:id}))
+  }  
   const handleReviewSubmit = e => {
     e.preventDefault();
     if (reviewForm.name && reviewForm.comment) {
@@ -286,7 +290,7 @@ export default function ProductDetails() {
             )}
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
-              <button className="btn btn-danger px-4">أضف للسلة</button>
+              <button className="btn btn-danger px-4" onClick={handleAddToCart}>أضف للسلة</button>
               <button
                 className="btn btn-outline-danger px-4"
                 onClick={handleWishlistClick}

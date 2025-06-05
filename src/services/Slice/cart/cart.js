@@ -1,22 +1,35 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api/cart";
-
+// const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api/cart";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.get(`${API_KEY}/showMyCart`, {
+            const { data } = await axios.get(`http://localhost:5000/api/cart/showMyCart`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
-            console.log("data in slice", data);
-            return {
-                status: data.status,
-                products: data.products,
-            };
+            // console.log("data in slice", data);
+            const productsRequests = data[0].cartItems.map((item) =>
+                axios.get(`http://localhost:5000/api/products/${item.prdID}`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }).then(res => res.data)
+            );
+
+            const products = await Promise.all(productsRequests);
+            
+            data[0].cartItems.forEach(item => {
+                const product = products.find(product => product._id === item.prdID);
+                if (product) {
+                    product.quantity = item.quantity;
+                }
+            });            
+            return { ...data[0], cartItems: products };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
         }
@@ -28,8 +41,8 @@ export const addToCartThunk = createAsyncThunk(
     async ({ productId, quantity = 1 }, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.post(
-                `${API_KEY}/addToCart`,
+            const { data } = await axios.patch(
+                `http://localhost:5000/api/cart/cartOP`,
                 {
                     prdID: productId,
                     quantity
@@ -50,6 +63,22 @@ export const addToCartThunk = createAsyncThunk(
     }
 );
 
+function authFetch(url, options = {}) {
+    return fetch(url, {
+        ...options,
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            ...(options.headers || {})
+        }
+    });
+}
+
+function calculateTotal(cartItems) {
+    const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    return total;
+}
+
 const cartSlice = createSlice({
     name: "product",
     initialState: {
@@ -60,7 +89,59 @@ const cartSlice = createSlice({
     reducers: {
         clearCartError: (state) => {
             state.error = null;
-        }
+        },
+        decreaseQ(state, action) {
+            const item = state.products.cartItems.find(item => item._id === action.payload)
+            item.quantity -= 1
+            authFetch(`http://localhost:5000/api/cart/cartOP`, {
+              method: "PATCH",
+              body: JSON.stringify({
+                prdID: item._id,
+                quantity: -1,
+              }),
+            });
+            state.products.total = calculateTotal(state.products.cartItems);
+        },
+        increaseQ(state, action) {
+            const item = state.products.cartItems.find(item => item._id === action.payload)
+            item.quantity += 1
+            authFetch(`http://localhost:5000/api/cart/cartOP`, {
+              method: "PATCH",
+              body: JSON.stringify({
+                prdID: item._id,
+                quantity: 1,
+              }),
+            });
+            state.products.total = calculateTotal(state.products.cartItems);
+        },
+        deleteItem(state, action) {
+            console.log("len: ",state.products.cartItems.length);
+            
+            if (state.products.cartItems.length > 1) {
+                const item = state.products.cartItems.find(item => item._id === action.payload)
+                authFetch(
+                  `http://localhost:5000/api/cart/cartOP`,
+                  {
+                    method: "PATCH",
+                    body: JSON.stringify({ prdID: item._id, quantity: 0 }),
+                  }
+                );
+                state.products.cartItems = state.products.cartItems.filter(item => item._id !== action.payload)
+                state.products.total = calculateTotal(state.products.cartItems);
+            }
+            else {
+                authFetch(`http://localhost:5000/api/cart/${state.products._id}`, {
+                  method: "DELETE",
+                });
+                state.products = [];
+            }
+        },
+        deleteAllCart(state, action) {
+            authFetch(`http://localhost:5000/api/cart/${state.products._id}`, {
+              method: "DELETE",
+            });
+            state.items = [];
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -71,7 +152,7 @@ const cartSlice = createSlice({
             })
             .addCase(getCartThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.products = action.payload.products;
+                state.products = action.payload;
             })
             .addCase(getCartThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -82,15 +163,17 @@ const cartSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            .addCase(addToCartThunk.fulfilled, (state, action) => {
-                state.loading = false;
-                const existingProduct = state.products.find(p => p.product._id === action.payload.product._id);
-                if (existingProduct) {
-                    existingProduct.quantity += 1;
-                } else {
-                    state.products.push({ product: action.payload.product, quantity: 1 });
-                }
-            })
+            // .addCase(addToCartThunk.fulfilled, (state, action) => {
+            //     state.loading = false;
+            //     console.log(state.products);
+
+            //     const existingProduct = state.products.find(p => p.product._id === action.payload.product._id);
+            //     if (existingProduct) {
+            //         existingProduct.quantity += 1;
+            //     } else {
+            //         state.products.push({ product: action.payload.product, quantity: 1 });
+            //     }
+            // })
             .addCase(addToCartThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || "Failed to add product to cart";
@@ -98,5 +181,5 @@ const cartSlice = createSlice({
     }
 });
 
-export const { clearCartError } = cartSlice.actions;
+export const { clearCartError,decreaseQ,deleteAllCart,deleteItem,increaseQ } = cartSlice.actions;
 export default cartSlice;
