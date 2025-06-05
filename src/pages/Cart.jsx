@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
@@ -6,28 +6,10 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { decreaseQ, deleteItem, getCartThunk, increaseQ } from "../services/Slice/cart/cart";
 
-const initialCart = [
-  {
-    id: 1,
-    name: "شاشة LCD",
-    price: 650,
-    quantity: 1,
-    image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/h9xc0rsa_expires_30_days.png"
-  },
-  {
-    id: 2,
-    name: "يد تحكم H1",
-    price: 550,
-    quantity: 2,
-    image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/qut3q8on_expires_30_days.png"
-  }
-];
-
 export default function Cart() {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.userCart);
 
-  const [cart, setCart] = useState(initialCart);
   const navigate = useNavigate();
 
   const handleRemove = (id) => {
@@ -43,9 +25,7 @@ export default function Cart() {
   }
   useEffect(() => {
     dispatch(getCartThunk());
-  }, [])
-  console.log(products);
-  // const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }, [dispatch])
 
   return (
     <div className="bg-white" dir="rtl" style={{ textAlign: 'right' }}>
