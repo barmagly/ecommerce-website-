@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function OrderConfirmation() {
   const navigate = useNavigate();
@@ -32,18 +33,20 @@ export default function OrderConfirmation() {
   }, [navigate]);
 
   return (
-    <div className="d-flex flex-column justify-content-center align-items-center vh-100 bg-light" dir="rtl">
-      <div className="card p-5 shadow-lg text-center">
-        <h2 className="mb-4 fw-bold">{confirmed ? "تم الشراء بنجاح!" : "جارٍ تأكيد الطلب..."}</h2>
-        <div className="mb-3">
-          {confirmed ? (
-            <span className="text-success display-4">✔️</span>
-          ) : (
-            <span className="spinner-border text-primary" style={{width:48, height:48}}></span>
-          )}
+    <ProtectedRoute>
+      <div className="d-flex flex-column justify-content-center align-items-center vh-100 bg-light" dir="rtl">
+        <div className="card p-5 shadow-lg text-center">
+          <h2 className="mb-4 fw-bold">{confirmed ? "تم الشراء بنجاح!" : "جارٍ تأكيد الطلب..."}</h2>
+          <div className="mb-3">
+            {confirmed ? (
+              <span className="text-success display-4">✔️</span>
+            ) : (
+              <span className="spinner-border text-primary" style={{ width: 48, height: 48 }}></span>
+            )}
+          </div>
+          <p className="lead">{confirmed ? "تم إضافة طلبك إلى قسم طلباتي." : "يرجى الانتظار قليلاً..."}</p>
         </div>
-        <p className="lead">{confirmed ? "تم إضافة طلبك إلى قسم طلباتي." : "يرجى الانتظار قليلاً..."}</p>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 } 

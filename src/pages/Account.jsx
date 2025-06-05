@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import ProtectedRoute from '../components/ProtectedRoute';
 
 export default function Account() {
 	// الملف الشخصي
@@ -218,13 +219,13 @@ export default function Account() {
 								<div className="border rounded p-4 bg-light">
 									<h5 className="fw-bold mb-3">الدفع عبر Instapay</h5>
 									<div className="mb-2">رقم Instapay لتحويل المبلغ:</div>
-									<div className="alert alert-info fw-bold mb-3" dir="ltr" style={{direction:'ltr',textAlign:'left'}}>{instapayNumber}</div>
+									<div className="alert alert-info fw-bold mb-3" dir="ltr" style={{ direction: 'ltr', textAlign: 'left' }}>{instapayNumber}</div>
 									<div className="mb-3">يرجى تحويل المبلغ إلى رقم Instapay أعلاه من خلال تطبيق Instapay على هاتفك، ثم رفع صورة (Screenshot) لإثبات التحويل.</div>
 									<input type="file" accept="image/*" className="form-control mb-2" onChange={handleInstapayImage} />
 									{instapayImage && (
 										<div className="mb-2">
 											<span className="text-success">تم رفع الصورة بنجاح!</span>
-											<div className="mt-2"><img src={URL.createObjectURL(instapayImage)} alt="إثبات التحويل" style={{maxWidth:200, borderRadius:8}} /></div>
+											<div className="mt-2"><img src={URL.createObjectURL(instapayImage)} alt="إثبات التحويل" style={{ maxWidth: 200, borderRadius: 8 }} /></div>
 										</div>
 									)}
 									{instapayStatus && <div className="alert alert-warning mt-3">{instapayStatus}</div>}
@@ -270,7 +271,7 @@ export default function Account() {
 								{wishlist.map(item => (
 									<div className="col-12 col-md-6 col-lg-4" key={item.id}>
 										<div className="card h-100 border-0 shadow-sm">
-											<img src={item.image} alt={item.name} className="card-img-top p-3" style={{height: 120, objectFit: 'contain'}} />
+											<img src={item.image} alt={item.name} className="card-img-top p-3" style={{ height: 120, objectFit: 'contain' }} />
 											<div className="card-body text-center">
 												<h6 className="fw-bold mb-2">{item.name}</h6>
 												<span className="text-danger fw-bold mb-2 d-block">{item.price} ج.م</span>
@@ -294,31 +295,33 @@ export default function Account() {
 	};
 
 	return (
-		<div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
-			<Header />
-			<div className="container py-5">
-				<div className="row g-4">
-					{/* Sidebar */}
-					<div className="col-lg-3">
-						<div className="list-group mb-4 shadow-sm">
-							<div className="list-group-item fw-bold bg-light">إدارة حسابي</div>
-							<button className={`list-group-item list-group-item-action${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}>الملف الشخصي</button>
-							<button className={`list-group-item list-group-item-action${activeSection === "address" ? " active" : ""}`} onClick={() => setActiveSection("address")}>دفتر العناوين</button>
-							<button className={`list-group-item list-group-item-action${activeSection === "payment" ? " active" : ""}`} onClick={() => setActiveSection("payment")}>خيارات الدفع</button>
-							<div className="list-group-item fw-bold bg-light mt-3">طلباتي</div>
-							<button className={`list-group-item list-group-item-action${activeSection === "returns" ? " active" : ""}`} onClick={() => setActiveSection("returns")}>المرتجعات</button>
-							<button className={`list-group-item list-group-item-action${activeSection === "cancellations" ? " active" : ""}`} onClick={() => setActiveSection("cancellations")}>الإلغاءات</button>
-							<div className="list-group-item fw-bold bg-light mt-3">المفضلة</div>
-							<button className={`list-group-item list-group-item-action${activeSection === "wishlist" ? " active" : ""}`} onClick={() => setActiveSection("wishlist")}>المفضلة</button>
+		<ProtectedRoute>
+			<div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
+				<Header />
+				<div className="container py-5">
+					<div className="row g-4">
+						{/* Sidebar */}
+						<div className="col-lg-3">
+							<div className="list-group mb-4 shadow-sm">
+								<div className="list-group-item fw-bold bg-light">إدارة حسابي</div>
+								<button className={`list-group-item list-group-item-action${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}>الملف الشخصي</button>
+								<button className={`list-group-item list-group-item-action${activeSection === "address" ? " active" : ""}`} onClick={() => setActiveSection("address")}>دفتر العناوين</button>
+								<button className={`list-group-item list-group-item-action${activeSection === "payment" ? " active" : ""}`} onClick={() => setActiveSection("payment")}>خيارات الدفع</button>
+								<div className="list-group-item fw-bold bg-light mt-3">طلباتي</div>
+								<button className={`list-group-item list-group-item-action${activeSection === "returns" ? " active" : ""}`} onClick={() => setActiveSection("returns")}>المرتجعات</button>
+								<button className={`list-group-item list-group-item-action${activeSection === "cancellations" ? " active" : ""}`} onClick={() => setActiveSection("cancellations")}>الإلغاءات</button>
+								<div className="list-group-item fw-bold bg-light mt-3">المفضلة</div>
+								<button className={`list-group-item list-group-item-action${activeSection === "wishlist" ? " active" : ""}`} onClick={() => setActiveSection("wishlist")}>المفضلة</button>
+							</div>
+						</div>
+						{/* Main Section */}
+						<div className="col-lg-9">
+							{renderSection()}
 						</div>
 					</div>
-					{/* Main Section */}
-					<div className="col-lg-9">
-						{renderSection()}
-					</div>
 				</div>
+				<Footer />
 			</div>
-			<Footer />
-		</div>
+		</ProtectedRoute>
 	);
 } 
