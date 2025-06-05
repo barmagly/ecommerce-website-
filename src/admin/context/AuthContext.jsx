@@ -67,9 +67,17 @@ export const AuthProvider = ({ children }) => {
         adminData: adminData ? 'present' : 'missing'
       });
       
+      // Store token in both keys for compatibility
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('token', token);
+      
+      // Store admin info
+      const adminInfoToStore = adminInfo || user || adminData;
+      localStorage.setItem('adminInfo', JSON.stringify(adminInfoToStore));
+      
       // Update state with all available data
       setAdmin({ 
-        user: adminInfo,
+        user: adminInfoToStore,
         token,
         hasToken: hasToken ?? true,
         hasUser: hasUser ?? true,
@@ -78,7 +86,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       console.log('AuthContext: Admin state updated:', { 
-        user: adminInfo ? 'present' : 'missing',
+        user: adminInfoToStore ? 'present' : 'missing',
         token: token ? 'present' : 'missing',
         hasToken: hasToken ?? true,
         hasUser: hasUser ?? true

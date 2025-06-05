@@ -13,17 +13,17 @@ const api = axios.create({
 // Create a custom fetch wrapper that mimics axios interceptors
 const createFetchWithInterceptors = () => {
   const originalFetch = window.fetch;
-   
+  
   return async (url, options = {}) => {
     // Clone options to avoid mutating the original
     const newOptions = { ...options };
     
     // Get token from either key
     const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
-    console.log('API Interceptor: Token present?', !!token);
+    console.log('API Interceptor: Token present?', !!token, 'URL:', url);
     
-    // Add auth header if token exists
-    if (token) {
+    // Add auth header if token exists and URL is not login/register
+    if (token && !url.includes('/auth/login') && !url.includes('/auth/register')) {
       newOptions.headers = {
         ...newOptions.headers,
         'Authorization': `Bearer ${token}`,
@@ -221,6 +221,25 @@ export const authService = {
       return { data: result };
     } catch (error) {
       console.error('Register error:', error);
+      throw error;
+    }
+  },
+  getAllUsers: async () => {
+    try {
+      const response = await fetch(`${API_URL}/auth`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+      }
+      const result = await response.json();
+      return { data: result };
+    } catch (error) {
+      console.error('Get all users error:', error);
       throw error;
     }
   },
