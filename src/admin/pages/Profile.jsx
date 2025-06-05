@@ -54,16 +54,15 @@ const darkModeStyles = {
 
 export default function Profile() {
   const { admin } = useAuth();
-  const { userData, updateUserData } = useUser();
   const [isEditing, setIsEditing] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [formData, setFormData] = useState({
-    name: userData.name,
-    email: userData.email,
-    phone: '+20 123 456 7890',
-    location: 'القاهرة، مصر',
-    role: userData.role,
-    joinDate: '2023/01/01',
+    name: admin?.user?.name || '',
+    email: admin?.user?.email || '',
+    phone: admin?.user?.phone || '',
+    location: admin?.user?.location || '',
+    role: admin?.user?.role || 'مدير',
+    joinDate: admin?.user?.joinDate || '',
   });
 
   const handleImageChange = (event) => {
@@ -71,7 +70,7 @@ export default function Profile() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        updateUserData({ avatar: reader.result });
+        // updateUserData({ avatar: reader.result }); // Remove userData for admin profile
       };
       reader.readAsDataURL(file);
     }
@@ -85,11 +84,11 @@ export default function Profile() {
   };
 
   const handleSave = () => {
-    updateUserData({
-      name: formData.name,
-      email: formData.email,
-      role: formData.role
-    });
+    // updateUserData({
+    //   name: formData.name,
+    //   email: formData.email,
+    //   role: formData.role
+    // }); // Remove userData for admin profile
     setIsEditing(false);
   };
 
@@ -186,16 +185,11 @@ export default function Profile() {
                 }
               >
                 <Avatar
-                  src={userData.avatar}
-                  sx={{
-                    width: 150,
-                    height: 150,
-                    mx: 'auto',
-                    mb: 2,
-                    border: '4px solid white',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                  }}
-                />
+                  src={admin?.user?.avatar || ''}
+                  sx={{ width: 120, height: 120, mb: 2 }}
+                >
+                  {!admin?.user?.avatar && formData.name?.charAt(0)}
+                </Avatar>
               </Badge>
               <Typography variant="h5" sx={{ 
                 fontWeight: 700, 

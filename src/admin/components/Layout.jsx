@@ -256,7 +256,7 @@ function Layout() {
           {drawerOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
         </IconButton>
         <Avatar 
-          src={userData.avatar}
+          src={admin?.user?.avatar || ''}
           sx={{ 
             width: 80, 
             height: 80,
@@ -266,13 +266,13 @@ function Layout() {
             border: '3px solid #fff'
           }}
         >
-          {!userData.avatar && userData.name?.charAt(0)}
+          {!admin?.user?.avatar && admin?.user?.name?.charAt(0)}
         </Avatar>
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, color: '#1e88e5' }}>
-          {userData.name}
+          {admin?.user?.name || 'مدير'}
         </Typography>
         <Typography variant="body2" sx={{ color: '#43a047' }}>
-          {userData.role}
+          {admin?.user?.role || 'مدير'}
         </Typography>
       </Box>
       
@@ -457,8 +457,8 @@ function Layout() {
                 }
               }}
             >
-              <Avatar sx={{ width: 32, height: 32 }} src={userData.avatar}>
-                {!userData.avatar && userData.name?.charAt(0)}
+              <Avatar sx={{ width: 32, height: 32 }} src={admin?.user?.avatar || ''}>
+                {!admin?.user?.avatar && admin?.user?.name?.charAt(0)}
               </Avatar>
             </IconButton>
           </Tooltip>
