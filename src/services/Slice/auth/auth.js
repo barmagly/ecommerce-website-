@@ -9,11 +9,10 @@ export const googleLoginThunk = createAsyncThunk(
             const { data } = await axios.post(`${API_KEY}/google-login`,
                 { idToken, email, name },
             );
-            // console.log("data in slice", data);
             return {
                 status: data.status,
-                user: data.user,
-                token: data.token,
+                user: data.data?.user || data.user,
+                token: data.data?.token || data.token,
             };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
@@ -23,15 +22,12 @@ export const googleLoginThunk = createAsyncThunk(
 export const loginThunk = createAsyncThunk(
     "auth/login",
     async ({ email, password }, thunkAPI) => {
-        console.log(email, password);
-
         try {
             const { data } = await axios.post(`${API_KEY}/login`, { email, password });
-            // console.log("data in slice", data);
             return {
                 status: data.status,
-                user: data.data.user,
-                token: data.data.token,
+                user: data.data?.user || data.user,
+                token: data.data?.token || data.token,
             };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
@@ -41,14 +37,12 @@ export const loginThunk = createAsyncThunk(
 export const registerThunk = createAsyncThunk(
     "auth/register",
     async ({ name, address, phone, email, password }, thunkAPI) => {
-        console.log(name, address, phone, email, password);
         try {
             const { data } = await axios.post(`${API_KEY}/register`, { name, address, phone, email, password });
-            // console.log("data in slice", data);
             return {
                 status: data.status,
-                user: data.data.user,
-                token: data.data.token,
+                user: data.data?.user || data.user,
+                token: data.data?.token || data.token,
             };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
