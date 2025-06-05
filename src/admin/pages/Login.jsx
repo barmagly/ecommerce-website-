@@ -730,16 +730,7 @@ function Login() {
               🔐 اختبار تسجيل الدخول
             </Button>
 
-            <Button
-              fullWidth
-              variant="outlined"
-              color="warning"
-              onClick={bypassAuth}
-              disabled={loading}
-              sx={{ py: 1.2 }}
-            >
-              تجاوز المصادقة (للتطوير)
-            </Button>
+           
           </Box>
         </Paper>
       </Box>
