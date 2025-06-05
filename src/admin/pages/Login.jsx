@@ -305,20 +305,18 @@ function Login() {
     setSuccess('');
 
     const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
-    
+    const token = localStorage.getItem('adminToken');
     console.log('Testing backend endpoints...');
-    
-    // Test different possible endpoints
+    // Only test valid endpoints from backend root
     const endpoints = [
-      '/auth/register',
-      '/users/register', 
-      '/register',
-      '/auth/signup',
-      '/users/signup',
-      '/signup',
       '/auth',
-      '/users',
-      '/'
+      '/products',
+      '/categories',
+      '/cart',
+      '/orders',
+      '/reviews',
+      '/coupons',
+      '/dashboard'
     ];
 
     const results = [];
@@ -326,47 +324,21 @@ function Login() {
     for (const endpoint of endpoints) {
       try {
         console.log(`Testing: ${API_URL}${endpoint}`);
-        
-        // Test GET request first
+        // Send token for protected endpoints
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (endpoint !== '/auth' && token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+        // Test GET request
         const getResponse = await fetch(`${API_URL}${endpoint}`, {
           method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
         });
-        
         console.log(`GET ${endpoint} - Status: ${getResponse.status}`);
-        
-        if (getResponse.status !== 404) {
-          const getResult = await getResponse.text();
-          console.log(`GET ${endpoint} - Response:`, getResult);
-          results.push(`✅ GET ${endpoint}: ${getResponse.status}`);
-        }
-
-        // Test POST request for registration endpoints
-        if (endpoint.includes('register') || endpoint.includes('signup')) {
-          const testPayload = {
-            name: 'Test User',
-            email: 'test@test.com',
-            password: 'test123'
-          };
-
-          const postResponse = await fetch(`${API_URL}${endpoint}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(testPayload),
-          });
-
-          console.log(`POST ${endpoint} - Status: ${postResponse.status}`);
-          
-          if (postResponse.status !== 404) {
-            const postResult = await postResponse.text();
-            console.log(`POST ${endpoint} - Response:`, postResult);
-            results.push(`✅ POST ${endpoint}: ${postResponse.status}`);
-          }
-        }
+        const getResult = await getResponse.text();
+        results.push(`GET ${endpoint}: ${getResponse.status} - ${getResult.substring(0, 100)}`);
       } catch (error) {
         console.log(`❌ ${endpoint} - Error:`, error.message);
         results.push(`❌ ${endpoint}: ${error.message}`);
@@ -377,7 +349,6 @@ function Login() {
     const resultMessage = results.length > 0 
       ? `نتائج اختبار الـ API:\n${results.join('\n')}`
       : 'لم يتم العثور على أي endpoints متاحة';
-    
     setSuccess(resultMessage);
     setLoading(false);
   };
