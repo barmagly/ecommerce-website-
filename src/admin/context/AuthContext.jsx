@@ -13,14 +13,32 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const checkAuth = async () => {
-    const token = localStorage.getItem('adminToken');
-    const adminInfo = localStorage.getItem('adminInfo');
-    if (token) {
-      setAdmin({ user: adminInfo ? JSON.parse(adminInfo) : null, token });
-    } else {
+    try {
+      // Try both token keys
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const adminInfo = localStorage.getItem('adminInfo');
+      
+      if (token && adminInfo) {
+        const parsedInfo = JSON.parse(adminInfo);
+        setAdmin({ 
+          user: parsedInfo, 
+          token,
+          hasToken: true,
+          hasUser: true
+        });
+      } else {
+        setAdmin(null);
+        // Clear any stale data
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminInfo');
+      }
+    } catch (error) {
+      console.error('AuthContext: Error checking auth:', error);
       setAdmin(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const login = async (credentials) => {
@@ -29,28 +47,43 @@ export const AuthProvider = ({ children }) => {
       const response = await authService.login(credentials);
       console.log('AuthContext: Login response received:', response);
       
-      const { token, admin: adminData } = response.data;
-      // Extract hasToken and hasUser from backend response if available
-      const hasToken = response.data.hasToken ?? !!token;
-      const hasUser = response.data.hasUser ?? !!adminData;
-      console.log('AuthContext: Extracted data:', { hasToken, adminData });
+      const { token, admin: adminData, hasToken, hasUser } = response.data;
       
-      if (token) {
-        localStorage.setItem('adminToken', token);
-        localStorage.setItem('adminInfo', JSON.stringify(adminData));
-        console.log('AuthContext: Token and admin info saved to localStorage');
+      if (!token) {
+        throw new Error('No token received from server');
       }
       
-      if (adminData) {
-        setAdmin({ user: adminData, token, hasToken, hasUser });
-        console.log('AuthContext: Admin state updated:', { user: adminData, token, hasToken, hasUser });
-      }
+      console.log('AuthContext: Extracted data:', { hasToken, hasUser, adminData });
+      
+      // Store admin info
+      localStorage.setItem('adminInfo', JSON.stringify(adminData));
+      
+      // Update state
+      setAdmin({ 
+        user: adminData, 
+        token,
+        hasToken: true,
+        hasUser: true
+      });
+      
+      console.log('AuthContext: Admin state updated:', { 
+        user: adminData, 
+        token: token ? 'present' : 'missing',
+        hasToken: true,
+        hasUser: true
+      });
       
       toast.success('تم تسجيل الدخول بنجاح');
       console.log('AuthContext: Login completed successfully');
       return true;
     } catch (error) {
       console.error('AuthContext: Login error:', error);
+      
+      // Clear any stale data
+      localStorage.removeItem('adminToken');
+      localStorage.removeItem('token');
+      localStorage.removeItem('adminInfo');
+      setAdmin(null);
       
       // Handle different types of errors
       if (error.code === 'ERR_NETWORK') {
@@ -77,9 +110,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    authService.logout();
-    setAdmin(null);
+    // Clear all auth data
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
     localStorage.removeItem('adminInfo');
+    setAdmin(null);
     toast.success('تم تسجيل الخروج بنجاح');
   };
 
@@ -88,7 +123,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    isAuthenticated: !!admin,
+    isAuthenticated: !!admin?.token && !!admin?.user,
   };
 
   return (

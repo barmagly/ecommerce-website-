@@ -13,7 +13,8 @@ const api = axios.create({
 // Add request interceptor for authentication
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('adminToken');
+    // Try both token keys
+    const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,8 +30,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      // Clear both token keys
       localStorage.removeItem('adminToken');
-      window.location.href = '/admin/login';
+      localStorage.removeItem('token');
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/admin/login';
+      }
     }
     return Promise.reject(error);
   }
@@ -81,15 +87,33 @@ export const authService = {
       }
       
       const result = await response.json();
+      console.log('Raw login response:', result);
+      
       // Extract from backend structure
-      const token = result.data?.token || result.token;
-      const adminData = result.data?.adminData || result.data?.user || result.user || result.admin || result.data;
-      console.log('Login successful:', { hasToken: !!token, hasUser: !!adminData });
+      const token = result.data?.token;
+      const adminData = result.data?.adminData || result.data?.user;
+      
+      if (!token) {
+        throw new Error('No token received from server');
+      }
+      
+      console.log('Login successful:', { 
+        hasToken: !!token, 
+        hasUser: !!adminData,
+        token: token ? 'present' : 'missing',
+        adminData: adminData ? 'present' : 'missing'
+      });
+      
+      // Store token in both keys for compatibility
+      localStorage.setItem('adminToken', token);
+      localStorage.setItem('token', token);
       
       // Normalize response format
       const normalizedResult = {
         token,
-        admin: adminData
+        admin: adminData,
+        hasToken: true,
+        hasUser: !!adminData
       };
       
       // Return in axios-like format for compatibility
@@ -115,6 +139,7 @@ export const authService = {
   },
   logout: () => {
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('token');
     window.location.href = '/admin/login';
   },
   // Remove or update getProfile if not implemented in backend
