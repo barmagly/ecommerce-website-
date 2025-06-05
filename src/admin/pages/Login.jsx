@@ -400,205 +400,78 @@ function Login() {
     setSuccess('');
 
     const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
-    
+    const endpoint = '/auth/register';
     console.log('Analyzing backend schema...');
-    
-    // Send minimal data to get detailed error response
+    // Test with missing fields one by one
     const testPayloads = [
-      {},  // Empty object
-      { email: 'test@test.com' },  // Only email
-      { password: 'test123' },  // Only password
-      { name: 'Test' },  // Only name
-      { email: 'test@test.com', password: 'test123' },  // Email + password
+      {},
+      { email: 'test@test.com', password: 'test123', phone: '1234567890', address: 'Test Address' }, // missing name
+      { name: 'Test User', password: 'test123', phone: '1234567890', address: 'Test Address' }, // missing email
+      { name: 'Test User', email: 'test@test.com', phone: '1234567890', address: 'Test Address' }, // missing password
+      { name: 'Test User', email: 'test@test.com', password: 'test123', address: 'Test Address' }, // missing phone
+      { name: 'Test User', email: 'test@test.com', password: 'test123', phone: '1234567890' }, // missing address
+      // All fields present
+      { name: 'Test User', email: 'test@test.com', password: 'test123', phone: '1234567890', address: 'Test Address' },
     ];
-
     const results = [];
-
     for (let i = 0; i < testPayloads.length; i++) {
       const payload = testPayloads[i];
       console.log(`Schema test ${i + 1}:`, payload);
-
       try {
-        const response = await fetch(`${API_URL}/auth/register`, {
+        const response = await fetch(`${API_URL}${endpoint}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
         });
-
         console.log(`Schema test ${i + 1} - Status:`, response.status);
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          console.log(`Schema test ${i + 1} - Error:`, errorData);
-          
-          // Analyze error message for field requirements
-          if (errorData.message) {
-            results.push(`Test ${i + 1}: ${errorData.message}`);
-            
-            // Look for specific field mentions
-            const message = errorData.message.toLowerCase();
-            if (message.includes('name')) results.push('- يتطلب حقل name');
-            if (message.includes('email')) results.push('- يتطلب حقل email');
-            if (message.includes('password')) results.push('- يتطلب حقل password');
-            if (message.includes('phone')) results.push('- يتطلب حقل phone');
-            if (message.includes('username')) results.push('- يتطلب حقل username');
-            if (message.includes('firstname')) results.push('- يتطلب حقل firstName');
-            if (message.includes('lastname')) results.push('- يتطلب حقل lastName');
-          }
-        }
+        const respText = await response.text();
+        results.push(`Test ${i + 1} (${JSON.stringify(payload)}): ${response.status} - ${respText}`);
       } catch (error) {
         console.log(`Schema test ${i + 1} - Error:`, error.message);
         results.push(`Test ${i + 1}: ${error.message}`);
       }
     }
-
     // Display analysis results
     const analysisResult = results.length > 0 
       ? `تحليل متطلبات الخادم:\n${results.join('\n')}`
       : 'لم يتم العثور على معلومات حول المتطلبات';
-    
     setSuccess(analysisResult);
     setLoading(false);
   };
 
-  // Comprehensive backend field discovery
+  // Comprehensive backend field discovery (now simplified to only test /auth/register with all required fields)
   const discoverBackendFields = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
-
     const API_URL = import.meta.env.VITE_API_URL || 'https://ecommerce-website-backend-nine.vercel.app/api';
-    
+    const endpoint = '/auth/register';
     console.log('🔍 Discovering backend field requirements...');
-    
-    // Test with every possible field combination
-    const fieldTests = [
-      // Test 1: Common e-commerce fields
-      {
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'test123',
-        phone: '1234567890',
-        address: 'Test Address'
-      },
-      // Test 2: User management fields
-      {
-        firstName: 'Test',
-        lastName: 'User',
-        email: 'test@test.com',
-        password: 'test123',
-        phone: '1234567890'
-      },
-      // Test 3: Complete profile
-      {
-        name: 'Test User',
-        firstName: 'Test',
-        lastName: 'User',
-        username: 'testuser',
-        email: 'test@test.com',
-        password: 'test123',
-        confirmPassword: 'test123',
-        phone: '1234567890',
-        address: 'Test Address',
-        city: 'Test City',
-        state: 'Test State',
-        country: 'Test Country',
-        zipCode: '12345',
-        dateOfBirth: '1990-01-01',
-        gender: 'male',
-        role: 'admin',
-        isAdmin: true,
-        status: 'active'
-      },
-      // Test 4: Minimal with phone
-      {
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'test123',
-        phone: '1234567890'
-      },
-      // Test 5: With all auth fields
-      {
-        name: 'Test User',
-        email: 'test@test.com',
-        password: 'test123',
-        confirmPassword: 'test123',
-        phone: '1234567890',
-        terms: true,
-        newsletter: false
-      },
-      // Test 6: Backend-specific fields (common in Node.js backends)
-      {
-        fullName: 'Test User',
-        emailAddress: 'test@test.com',
-        userPassword: 'test123',
-        phoneNumber: '1234567890',
-        userRole: 'admin'
-      },
-      // Test 7: Alternative naming conventions
-      {
-        user_name: 'Test User',
-        user_email: 'test@test.com',
-        user_password: 'test123',
-        user_phone: '1234567890'
-      },
-      // Test 8: Camel case variations
-      {
-        userName: 'Test User',
-        userEmail: 'test@test.com',
-        userPassword: 'test123',
-        userPhone: '1234567890',
-        userRole: 'admin'
-      }
-    ];
-
-    const results = [];
-
-    for (let i = 0; i < fieldTests.length; i++) {
-      const testData = fieldTests[i];
-      console.log(`🧪 Field test ${i + 1}:`, testData);
-
-      try {
-        const response = await fetch(`${API_URL}/auth/register`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(testData),
-        });
-
-        console.log(`📊 Test ${i + 1} - Status: ${response.status}`);
-
-        if (response.ok) {
-          const successData = await response.json();
-          console.log(`✅ Test ${i + 1} - SUCCESS!`, successData);
-          results.push(`✅ Test ${i + 1}: SUCCESS! Fields that worked:`);
-          results.push(`   ${Object.keys(testData).join(', ')}`);
-          
-          setSuccess(`🎉 تم اكتشاف التنسيق الصحيح!\nالحقول المطلوبة: ${Object.keys(testData).join(', ')}\n\nسيتم استخدام هذا التنسيق الآن.`);
-          setLoading(false);
-          return testData; // Return the working format
-        } else {
-          const errorData = await response.json();
-          console.log(`❌ Test ${i + 1} - Error:`, errorData);
-          results.push(`❌ Test ${i + 1}: ${errorData.message || 'Unknown error'}`);
-        }
-      } catch (error) {
-        console.log(`💥 Test ${i + 1} - Fetch error:`, error.message);
-        results.push(`💥 Test ${i + 1}: ${error.message}`);
-      }
-
-      // Small delay between requests to avoid rate limiting
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Only test with all required fields
+    const payload = {
+      name: 'Test User',
+      email: 'test@test.com',
+      password: 'test123',
+      phone: '1234567890',
+      address: 'Test Address',
+    };
+    try {
+      const response = await fetch(`${API_URL}${endpoint}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const respText = await response.text();
+      setSuccess(`نتيجة اختبار الحقول المطلوبة:\n${response.status} - ${respText}`);
+    } catch (error) {
+      setError(`❌ اكتشاف الحقول المطلوبة فشل: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
-
-    // If no format worked, show all results
-    const resultMessage = `🔍 نتائج اكتشاف الحقول:\n${results.join('\n')}\n\n❌ لم يتم العثور على تنسيق صحيح. قد يكون الخادم يتطلب مصادقة مسبقة.`;
-    setError(resultMessage);
-    setLoading(false);
-    return null;
   };
 
   // Test if backend requires authentication for registration
