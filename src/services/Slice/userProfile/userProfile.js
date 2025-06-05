@@ -18,7 +18,7 @@ export const getUserProfileThunk = createAsyncThunk(
                 },
             });
 
-            console.log("Profile data received:", data);
+            // console.log("Profile data received:", data);
             return data;
         } catch (error) {
             console.error("Error fetching profile:", error);
@@ -43,12 +43,12 @@ const userProfileSlice = createSlice({
             .addCase(getUserProfileThunk.fulfilled, (state, action) => {
                 state.loading = false;
                 state.user = action.payload.data;
-                console.log("Profile state updated:", state.user);
+                // console.log("Profile state updated:", state.user);
             })
             .addCase(getUserProfileThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || "Failed to fetch profile";
-                console.error("Profile fetch failed:", state.error);
+                // console.error("Profile fetch failed:", state.error);
             });
     }
 });

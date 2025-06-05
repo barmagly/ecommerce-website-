@@ -9,7 +9,7 @@ export const googleLoginThunk = createAsyncThunk(
             const { data } = await axios.post(`${API_KEY}/google-login`,
                 { idToken, email, name },
             );
-            console.log("data in slice", data);
+            // console.log("data in slice", data);
             return {
                 status: data.status,
                 user: data.user,
@@ -27,7 +27,7 @@ export const loginThunk = createAsyncThunk(
 
         try {
             const { data } = await axios.post(`${API_KEY}/login`, { email, password });
-            console.log("data in slice", data);
+            // console.log("data in slice", data);
             return {
                 status: data.status,
                 user: data.data.user,
@@ -44,7 +44,7 @@ export const registerThunk = createAsyncThunk(
         console.log(name, address, phone, email, password);
         try {
             const { data } = await axios.post(`${API_KEY}/register`, { name, address, phone, email, password });
-            console.log("data in slice", data);
+            // console.log("data in slice", data);
             return {
                 status: data.status,
                 user: data.data.user,

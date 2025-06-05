@@ -6,6 +6,7 @@ import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast, ToastContainer } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { addToCartThunk } from "../services/Slice/cart/cart";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -51,8 +52,6 @@ export default function ProductDetails() {
 
   useEffect(() => {
     dispatch(getProductsThunk());
-    console.log(1);
-    toast.success("hjhk")
   }, [dispatch]);
 
   useEffect(() => {
@@ -143,6 +142,9 @@ export default function ProductDetails() {
     setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
   };
 
+  const handleAddToCart=()=>{
+    dispatch(addToCartThunk({productId:id}))
+  }  
   const handleReviewSubmit = e => {
     e.preventDefault();
     if (reviewForm.name && reviewForm.comment) {
@@ -288,7 +290,7 @@ export default function ProductDetails() {
             )}
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
-              <button className="btn btn-danger px-4">أضف للسلة</button>
+              <button className="btn btn-danger px-4" onClick={handleAddToCart}>أضف للسلة</button>
               <button
                 className="btn btn-outline-danger px-4"
                 onClick={handleWishlistClick}
