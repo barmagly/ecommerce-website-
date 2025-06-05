@@ -22,12 +22,15 @@ export const AuthProvider = ({ children }) => {
           id: 1,
           name: 'مطور النظام', 
           email: 'dev@admin.com',
-          role: 'admin' 
+          role: 'admin',
+          token,
         });
       } else {
-        // Production mode - you can implement profile fetching here later
-        setAdmin({ name: 'مدير', role: 'admin' });
+        // Production mode - set admin with token (optionally fetch profile here)
+        setAdmin({ token, role: 'admin' });
       }
+    } else {
+      setAdmin(null);
     }
     setLoading(false);
   };
