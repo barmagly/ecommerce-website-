@@ -10,37 +10,66 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor for authentication
-api.interceptors.request.use(
-  (config) => {
-    // Try both token keys
+// Create a custom fetch wrapper that mimics axios interceptors
+const createFetchWithInterceptors = () => {
+  const originalFetch = window.fetch;
+  
+  return async (url, options = {}) => {
+    // Clone options to avoid mutating the original
+    const newOptions = { ...options };
+    
+    // Get token from either key
     const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+    console.log('API Interceptor: Token present?', !!token);
+    
+    // Add auth header if token exists
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      newOptions.headers = {
+        ...newOptions.headers,
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      };
+      console.log('API Interceptor: Added Authorization header');
+    } else {
+      // Still set Content-Type even without token
+      newOptions.headers = {
+        ...newOptions.headers,
+        'Content-Type': 'application/json'
+      };
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Add response interceptor for error handling
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      // Clear both token keys
-      localStorage.removeItem('adminToken');
-      localStorage.removeItem('token');
-      // Only redirect if not already on login page
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/admin/login';
+    
+    // Convert body to JSON if it's an object
+    if (newOptions.body && typeof newOptions.body === 'object') {
+      newOptions.body = JSON.stringify(newOptions.body);
+    }
+    
+    try {
+      console.log(`API Interceptor: ${newOptions.method || 'GET'} ${url}`);
+      const response = await originalFetch(url, newOptions);
+      
+      // Handle 401 Unauthorized
+      if (response.status === 401) {
+        console.log('API Interceptor: 401 Unauthorized - clearing auth data');
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('token');
+        localStorage.removeItem('adminInfo');
+        
+        // Only redirect if not already on login page
+        if (!window.location.pathname.includes('/admin/login')) {
+          window.location.href = '/admin/login';
+        }
       }
+      
+      return response;
+    } catch (error) {
+      console.error('API Interceptor error:', error);
+      throw error;
     }
-    return Promise.reject(error);
-  }
-);
+  };
+};
+
+// Replace global fetch with our interceptor version
+window.fetch = createFetchWithInterceptors();
 
 // Auth services
 export const authService = {
@@ -156,6 +185,45 @@ export const authService = {
   },
   // Remove or update getProfile if not implemented in backend
   // getProfile: () => api.get('/users/me'),
+  register: async (data) => {
+    try {
+      // Format data according to backend schema
+      const registerData = {
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+        // Send address as addresses array if provided
+        ...(data.address && { addresses: [{ address: data.address }] })
+      };
+      
+      console.log('Registering with data:', registerData);
+      
+      const response = await fetch(`${API_URL}/auth/register`, {
+        method: 'POST',
+        body: JSON.stringify(registerData),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw {
+          response: {
+            status: response.status,
+            data: errorData
+          }
+        };
+      }
+      
+      const result = await response.json();
+      return { data: result };
+    } catch (error) {
+      console.error('Register error:', error);
+      throw error;
+    }
+  },
 };
 
 // Upload services
