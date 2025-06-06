@@ -39,7 +39,7 @@ import {
 } from '@mui/material';
 import { useReactToPrint } from 'react-to-print';
 import InvoicePrint from '../components/InvoicePrint';
-import { exportInvoiceAsPDF, exportInvoiceAsImage, printInvoice } from '../components/InvoiceExporter';
+import { exportInvoiceAsPDF, printInvoice } from '../components/InvoiceExporter';
 import {
   Search as SearchIcon,
   Visibility as ViewIcon,
@@ -58,8 +58,9 @@ import {
   Delete as DeleteIcon,
   Assignment as InvoiceIcon,
   PictureAsPdf as PdfIcon,
-  Image as ImageIcon,
+
   Download as DownloadIcon,
+  TableChart as ExportIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 
@@ -505,16 +506,296 @@ const Orders = () => {
     }, 100);
   };
 
-  const handleExportImage = (order, format = 'png') => {
-    setOrderToPrint(order);
-    setTimeout(() => {
-      exportInvoiceAsImage(printRef, order.orderNumber, format);
-    }, 100);
-  };
+
 
   const handleSendEmail = (order) => {
     // في تطبيق حقيقي، سيتم إرسال إيميل للعميل
     alert(`سيتم إرسال إيميل للعميل ${order.customer.name} على ${order.customer.email}`);
+  };
+
+  const handlePrintReport = () => {
+    try {
+      const reportWindow = window.open('', '_blank', 'width=1200,height=800');
+      const currentDate = new Date().toLocaleDateString('ar-EG', { calendar: 'gregory' });
+      const currentTime = new Date().toLocaleTimeString('ar-SA');
+      
+      if (!reportWindow) {
+        alert('يرجى السماح بفتح النوافذ المنبثقة لطباعة التقرير');
+        return;
+      }
+    
+    reportWindow.document.write(`
+      <!DOCTYPE html>
+      <html dir="rtl" lang="ar">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>تقرير الطلبات</title>
+        <style>
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: 'Arial', 'Tahoma', sans-serif;
+            direction: rtl;
+            background: white;
+            padding: 30px;
+            line-height: 1.6;
+            color: #333;
+          }
+          
+          @media print {
+            body { padding: 15px; }
+            .no-print { display: none; }
+          }
+          
+          .report-header {
+            text-align: center;
+            margin-bottom: 40px;
+            border-bottom: 3px solid #1976d2;
+            padding-bottom: 20px;
+          }
+          
+          .company-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 10px;
+          }
+          
+          .report-title {
+            font-size: 24px;
+            color: #666;
+            margin-bottom: 10px;
+          }
+          
+          .report-date {
+            font-size: 14px;
+            color: #888;
+          }
+          
+          .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+          }
+          
+          .stat-card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+          }
+          
+          .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 5px;
+          }
+          
+          .stat-label {
+            color: #666;
+            font-size: 14px;
+          }
+          
+          .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+          }
+          
+          .orders-table th,
+          .orders-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+            font-size: 13px;
+          }
+          
+          .orders-table th {
+            background-color: #1976d2;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+          }
+          
+          .orders-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+          }
+          
+          .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+          }
+          
+          .status-pending { background-color: #ff9800; }
+          .status-processing { background-color: #2196f3; }
+          .status-shipped { background-color: #4caf50; }
+          .status-completed { background-color: #8bc34a; }
+          .status-cancelled { background-color: #f44336; }
+          
+          .payment-paid { color: #4caf50; font-weight: bold; }
+          .payment-pending { color: #ff9800; font-weight: bold; }
+          
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            color: #666;
+            font-size: 12px;
+          }
+          
+          @page {
+            margin: 1cm;
+            size: A4 landscape;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="report-header">
+          <div class="company-title">🛍️ المتجر الإلكتروني</div>
+          <div class="report-title">تقرير شامل للطلبات</div>
+          <div class="report-date">تاريخ التقرير: ${currentDate} - ${currentTime}</div>
+        </div>
+        
+        <div class="stats-section">
+          <div class="stat-card">
+            <div class="stat-value">${stats.total}</div>
+            <div class="stat-label">إجمالي الطلبات</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.completed}</div>
+            <div class="stat-label">طلبات مكتملة</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">${stats.pending}</div>
+            <div class="stat-label">طلبات معلقة</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">$${stats.totalRevenue.toFixed(2)}</div>
+            <div class="stat-label">إجمالي المبيعات</div>
+          </div>
+        </div>
+        
+        <table class="orders-table">
+          <thead>
+            <tr>
+              <th>رقم الطلب</th>
+              <th>العميل</th>
+              <th>البريد الإلكتروني</th>
+              <th>الهاتف</th>
+              <th>عدد المنتجات</th>
+              <th>الإجمالي</th>
+              <th>حالة الطلب</th>
+              <th>حالة الدفع</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredOrders.map(order => `
+              <tr>
+                <td style="font-weight: bold;">${order.orderNumber}</td>
+                <td>${order.customer.name}</td>
+                <td>${order.customer.email}</td>
+                <td>${order.customer.phone}</td>
+                <td style="text-align: center;">${order.items.length}</td>
+                <td style="text-align: center; font-weight: bold;">$${order.total.toFixed(2)}</td>
+                <td style="text-align: center;">
+                  <span class="status-badge status-${order.status}">
+                    ${order.status === 'pending' ? 'معلق' : 
+                      order.status === 'processing' ? 'قيد المعالجة' :
+                      order.status === 'shipped' ? 'مشحون' :
+                      order.status === 'completed' ? 'مكتمل' : 'ملغي'}
+                  </span>
+                </td>
+                <td style="text-align: center;">
+                  <span class="payment-${order.paymentStatus}">
+                    ${order.paymentStatus === 'paid' ? 'مدفوع' : 'معلق'}
+                  </span>
+                </td>
+                <td style="text-align: center;">${new Date(order.createdAt).toLocaleDateString('ar-EG', { calendar: 'gregory' })}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>تم إنشاء هذا التقرير في ${currentDate} الساعة ${currentTime}</p>
+          <p>المتجر الإلكتروني - نظام إدارة الطلبات</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            setTimeout(() => {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              };
+            }, 1000);
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    
+         reportWindow.document.close();
+    } catch (error) {
+      console.error('Error printing report:', error);
+      alert('حدث خطأ أثناء إنشاء التقرير. يرجى المحاولة مرة أخرى.');
+    }
+  };
+
+  const handleExportCSV = () => {
+    try {
+      const headers = ['رقم الطلب', 'العميل', 'البريد الإلكتروني', 'الهاتف', 'عدد المنتجات', 'الإجمالي', 'حالة الطلب', 'حالة الدفع', 'التاريخ'];
+      
+      const csvData = filteredOrders.map(order => [
+        order.orderNumber,
+        order.customer.name,
+        order.customer.email,
+        order.customer.phone,
+        order.items.length,
+        `$${order.total.toFixed(2)}`,
+        order.status === 'pending' ? 'معلق' : 
+        order.status === 'processing' ? 'قيد المعالجة' :
+        order.status === 'shipped' ? 'مشحون' :
+        order.status === 'completed' ? 'مكتمل' : 'ملغي',
+        order.paymentStatus === 'paid' ? 'مدفوع' : 'معلق',
+                  new Date(order.createdAt).toLocaleDateString('ar-EG', { calendar: 'gregory' })
+      ]);
+      
+      const csvContent = [headers, ...csvData]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n');
+      
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `تقرير-الطلبات-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      alert('تم تصدير التقرير بنجاح!');
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('حدث خطأ أثناء تصدير التقرير. يرجى المحاولة مرة أخرى.');
+    }
   };
 
   return (
@@ -574,9 +855,33 @@ const Orders = () => {
                   <Button 
                     variant="outlined" 
                     startIcon={<PrintIcon />}
-                    fullWidth
+                    onClick={handlePrintReport}
+                    sx={{
+                      flex: 1,
+                      '&:hover': {
+                        backgroundColor: 'primary.main',
+                        color: 'white',
+                        transform: 'translateY(-1px)'
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
                   >
-                    طباعة التقرير
+                    طباعة
+                  </Button>
+                  <Button 
+                    variant="contained" 
+                    startIcon={<ExportIcon />}
+                    onClick={handleExportCSV}
+                    color="success"
+                    sx={{
+                      flex: 1,
+                      '&:hover': {
+                        transform: 'translateY(-1px)'
+                      },
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                  >
+                    تصدير
                   </Button>
                 </Box>
               </Grid>
@@ -776,7 +1081,7 @@ const Orders = () => {
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                                                        {new Date(order.createdAt).toLocaleDateString('ar-EG', { calendar: 'gregory' })}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
                           {new Date(order.createdAt).toLocaleTimeString('ar-SA', { 
@@ -892,26 +1197,7 @@ const Orders = () => {
             </ListItemIcon>
             <ListItemText>تصدير كـ PDF</ListItemText>
           </MenuItem>
-          <MenuItem onClick={() => {
-            const order = orders.find(o => o._id === selectedOrderId);
-            if (order) handleExportImage(order, 'png');
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <ImageIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>تصدير كصورة PNG</ListItemText>
-          </MenuItem>
-          <MenuItem onClick={() => {
-            const order = orders.find(o => o._id === selectedOrderId);
-            if (order) handleExportImage(order, 'jpeg');
-            handleMenuClose();
-          }}>
-            <ListItemIcon>
-              <DownloadIcon fontSize="small" />
-            </ListItemIcon>
-            <ListItemText>تصدير كصورة JPG</ListItemText>
-          </MenuItem>
+
           <MenuItem onClick={() => {
             const order = orders.find(o => o._id === selectedOrderId);
             if (order) handleSendEmail(order);
@@ -1006,7 +1292,7 @@ const Orders = () => {
                         {selectedOrder.estimatedDelivery && (
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                             <Typography>تاريخ التسليم المتوقع:</Typography>
-                            <Typography>{new Date(selectedOrder.estimatedDelivery).toLocaleDateString('ar-SA')}</Typography>
+                            <Typography>{new Date(selectedOrder.estimatedDelivery).toLocaleDateString('ar-EG', { calendar: 'gregory' })}</Typography>
                           </Box>
                         )}
                       </Stack>
@@ -1129,22 +1415,7 @@ const Orders = () => {
                   >
                     PDF
                   </Button>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<ImageIcon />}
-                    onClick={() => handleExportImage(selectedOrder, 'png')}
-                    size="small"  
-                  >
-                    PNG
-                  </Button>
-                  <Button 
-                    variant="outlined" 
-                    startIcon={<DownloadIcon />}
-                    onClick={() => handleExportImage(selectedOrder, 'jpeg')}
-                    size="small"
-                  >
-                    JPG
-                  </Button>
+
                   <Button 
                     variant="outlined" 
                     startIcon={<EmailIcon />}

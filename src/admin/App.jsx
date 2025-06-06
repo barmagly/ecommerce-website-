@@ -15,6 +15,7 @@ import Coupons from './pages/Coupons';
 import Reviews from './pages/Reviews';
 import Carts from './pages/Carts';
 import Variants from './pages/Variants';
+import Settings from './pages/Settings';
 import AdminLogin from './pages/AdminLogin';
 
 // Import layout and auth
@@ -180,6 +181,13 @@ function AdminApp() {
               <ProtectedRoute>
                 <AdminLayout>
                   <Variants />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Settings />
                 </AdminLayout>
               </ProtectedRoute>
             } />

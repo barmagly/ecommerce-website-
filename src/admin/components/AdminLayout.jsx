@@ -122,6 +122,13 @@ const menuItems = [
     color: '#7b1fa2',
     gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
   },
+  {
+    text: 'الإعدادات',
+    icon: <SettingsIcon />,
+    path: '/admin/settings',
+    color: '#5d4037',
+    gradient: 'linear-gradient(135deg, #5d4037 0%, #4e342e 100%)'
+  },
 ];
 
 // Animated Menu Item Component

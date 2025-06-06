@@ -44,6 +44,7 @@
     "yup": "^1.6.1"
   },
   "scripts": {
+    "start": "vite",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
