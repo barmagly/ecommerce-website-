@@ -1,291 +1,186 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
+  Card,
+  CardContent,
   Typography,
-  Paper,
-  Chip,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Button,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
+  IconButton,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
   Grid,
-  Divider,
-  CircularProgress,
+  TextField,
+  InputAdornment,
+  Chip,
+  Avatar,
+  useTheme,
+  alpha,
 } from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import { Visibility as VisibilityIcon } from '@mui/icons-material';
-import { toast } from 'react-toastify';
-import { orderService } from '../services/api';
+import {
+  Search as SearchIcon,
+  Visibility as ViewIcon,
+  Edit as EditIcon,
+  ShoppingCart as OrdersIcon,
+  CheckCircle,
+  Schedule,
+  LocalShipping,
+  Cancel,
+} from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-// Mock data for demonstration
-const initialOrders = [
-  {
-    id: 1,
-    orderNumber: 'ORD-001',
-    customerName: 'أحمد محمد',
-    date: '2024-02-20',
-    total: 1500,
-    status: 'pending',
-    items: [
-      { name: 'منتج 1', quantity: 2, price: 500 },
-      { name: 'منتج 2', quantity: 1, price: 500 },
-    ],
-  },
-  {
-    id: 2,
-    orderNumber: 'ORD-002',
-    customerName: 'سارة أحمد',
-    date: '2024-02-19',
-    total: 2300,
-    status: 'completed',
-    items: [
-      { name: 'منتج 3', quantity: 3, price: 500 },
-      { name: 'منتج 4', quantity: 2, price: 400 },
-    ],
-  },
-  {
-    id: 3,
-    orderNumber: 'ORD-003',
-    customerName: 'محمد علي',
-    date: '2024-02-18',
-    total: 1800,
-    status: 'shipped',
-    items: [
-      { name: 'منتج 5', quantity: 1, price: 800 },
-      { name: 'منتج 6', quantity: 2, price: 500 },
-    ],
-  },
-];
+const Orders = () => {
+  const theme = useTheme();
+  const [searchTerm, setSearchTerm] = useState('');
 
-const statusColors = {
-  pending: 'warning',
-  processing: 'info',
-  shipped: 'primary',
-  completed: 'success',
-  cancelled: 'error',
-};
-
-const statusLabels = {
-  pending: 'قيد الانتظار',
-  processing: 'قيد المعالجة',
-  shipped: 'تم الشحن',
-  completed: 'مكتمل',
-  cancelled: 'ملغي',
-};
-
-function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [open, setOpen] = useState(false);
-
-  const columns = [
-    { field: 'orderNumber', headerName: 'رقم الطلب', width: 130 },
-    { field: 'customerName', headerName: 'اسم العميل', width: 200 },
-    { field: 'date', headerName: 'التاريخ', width: 130 },
-    {
-      field: 'total',
-      headerName: 'المبلغ',
-      width: 130,
-      valueFormatter: (params) => `₪ ${params.value}`,
-    },
-    {
-      field: 'status',
-      headerName: 'الحالة',
-      width: 150,
-      renderCell: (params) => (
-        <Chip
-          label={statusLabels[params.value]}
-          color={statusColors[params.value]}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'actions',
-      headerName: 'الإجراءات',
-      width: 100,
-      renderCell: (params) => (
-        <IconButton
-          color="primary"
-          onClick={() => handleViewOrder(params.row)}
-          size="small"
-        >
-          <VisibilityIcon />
-        </IconButton>
-      ),
-    },
+  const mockOrders = [
+    { _id: '1', user: 'أحمد محمد', total: 299.99, status: 'pending', createdAt: '2024-01-15', items: [] },
+    { _id: '2', user: 'فاطمة علي', total: 159.50, status: 'completed', createdAt: '2024-01-14', items: [] },
+    { _id: '3', user: 'محمد حسن', total: 449.99, status: 'shipped', createdAt: '2024-01-13', items: [] },
   ];
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const response = await orderService.getAll();
-      setOrders(response.data);
-    } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast.error('حدث خطأ أثناء تحميل الطلبات');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedOrder(null);
-  };
-
-  const handleStatusChange = async (event) => {
-    const newStatus = event.target.value;
-    try {
-      await orderService.updateStatus(selectedOrder.id, newStatus);
-      setOrders(
-        orders.map((order) =>
-          order.id === selectedOrder.id
-            ? { ...order, status: newStatus }
-            : order
-        )
-      );
-      toast.success('تم تحديث حالة الطلب بنجاح');
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      toast.error('حدث خطأ أثناء تحديث حالة الطلب');
-    }
-  };
-
-  if (loading) {
+  const getStatusBadge = (status) => {
+    const statusConfig = {
+      pending: { label: 'معلق', color: 'warning', icon: <Schedule sx={{ fontSize: 14 }} /> },
+      completed: { label: 'مكتمل', color: 'success', icon: <CheckCircle sx={{ fontSize: 14 }} /> },
+      shipped: { label: 'مشحون', color: 'info', icon: <LocalShipping sx={{ fontSize: 14 }} /> },
+      cancelled: { label: 'ملغي', color: 'error', icon: <Cancel sx={{ fontSize: 14 }} /> },
+    };
+    
+    const config = statusConfig[status] || statusConfig.pending;
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-        }}
-      >
-        <CircularProgress />
-      </Box>
+      <Chip
+        label={config.label}
+        color={config.color}
+        variant="filled"
+        size="small"
+        icon={config.icon}
+      />
     );
-  }
+  };
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        الطلبات
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            إدارة الطلبات
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            متابعة وإدارة طلبات العملاء
+          </Typography>
+        </Box>
 
-      <div style={{ height: 600, width: '100%' }}>
-        <DataGrid
-          rows={orders}
-          columns={columns}
-          pageSize={10}
-          rowsPerPageOptions={[10]}
-          disableSelectionOnClick
-        />
-      </div>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        {selectedOrder && (
-          <>
-            <DialogTitle>
-              تفاصيل الطلب - {selectedOrder.orderNumber}
-            </DialogTitle>
-            <DialogContent>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    معلومات العميل
-                  </Typography>
-                  <Typography>
-                    الاسم: {selectedOrder.customerName}
-                  </Typography>
-                  <Typography>
-                    البريد الإلكتروني: {selectedOrder.customerEmail}
-                  </Typography>
-                  <Typography>
-                    رقم الهاتف: {selectedOrder.customerPhone}
-                  </Typography>
-                  <Typography>
-                    العنوان: {selectedOrder.shippingAddress}
-                  </Typography>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography variant="subtitle1" gutterBottom>
-                    المنتجات
-                  </Typography>
-                  {selectedOrder.items.map((item, index) => (
-                    <Box
-                      key={index}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography>
-                        {item.name} × {item.quantity}
-                      </Typography>
-                      <Typography>₪ {item.price * item.quantity}</Typography>
-                    </Box>
-                  ))}
-                  <Divider sx={{ my: 1 }} />
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mt: 1,
-                    }}
-                  >
-                    <Typography variant="subtitle1">المجموع</Typography>
-                    <Typography variant="subtitle1">
-                      ₪ {selectedOrder.total}
-                    </Typography>
-                  </Box>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <FormControl fullWidth sx={{ mt: 2 }}>
-                    <InputLabel>حالة الطلب</InputLabel>
-                    <Select
-                      value={selectedOrder.status}
-                      onChange={handleStatusChange}
-                      label="حالة الطلب"
-                    >
-                      {Object.entries(statusLabels).map(([value, label]) => (
-                        <MenuItem key={value} value={value}>
-                          {label}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  placeholder="البحث في الطلبات..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
               </Grid>
-            </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>إغلاق</Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
+            </Grid>
+          </CardContent>
+        </Card>
+
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ bgcolor: alpha('#1976d2', 0.1) }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="#1976d2">
+                      8,934
+                    </Typography>
+                    <Typography variant="h6">إجمالي الطلبات</Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: alpha('#1976d2', 0.1), color: '#1976d2' }}>
+                    <OrdersIcon />
+                  </Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Card>
+          <CardContent sx={{ p: 0 }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                    <TableCell sx={{ fontWeight: 600 }}>رقم الطلب</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>العميل</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>الإجمالي</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>الحالة</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>التاريخ</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>الإجراءات</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {mockOrders.map((order) => (
+                    <TableRow key={order._id}>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          #{order._id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ width: 32, height: 32, mr: 2, fontSize: 14 }}>
+                            {order.user.split(' ').map(n => n[0]).join('')}
+                          </Avatar>
+                          <Typography variant="body2">{order.user}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight={600}>
+                          ${order.total}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(order.status)}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="body2">
+                          {new Date(order.createdAt).toLocaleDateString('ar-SA')}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <IconButton size="small">
+                          <ViewIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton size="small">
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
     </Box>
   );
-}
+};
 
 export default Orders; 

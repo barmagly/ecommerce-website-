@@ -1,468 +1,85 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Typography,
-  IconButton,
-  CircularProgress,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-} from '@mui/material';
-import { DataGrid } from '@mui/x-data-grid';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Category as CategoryIcon,
-  ShoppingCart as ProductIcon,
-  TrendingUp as TrendingUpIcon,
-} from '@mui/icons-material';
-import { toast } from 'react-toastify';
-import { categoryService } from '../services/api';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import api from '../services/api';
+import React, { useState } from 'react';
+import { Box, Card, CardContent, Typography, Button, IconButton, Table, TableHead, TableBody, TableRow, TableCell, TableContainer, Grid, TextField, InputAdornment, Chip, Avatar, useTheme, alpha } from '@mui/material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Search as SearchIcon, Category as CategoryIcon } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 
-// Mock data for demonstration
-const mockCategories = [
-  {
-    id: 1,
-    name: 'إلكترونيات',
-    description: 'الهواتف الذكية والأجهزة اللوحية والحواسيب',
-    productsCount: 25,
-    totalSales: 45000,
-    growth: 15,
-  },
-  {
-    id: 2,
-    name: 'ملابس',
-    description: 'ملابس رجالية ونسائية وأطفال',
-    productsCount: 40,
-    totalSales: 35000,
-    growth: 8,
-  },
-  {
-    id: 3,
-    name: 'أثاث',
-    description: 'أثاث منزلي ومكتبي',
-    productsCount: 15,
-    totalSales: 28000,
-    growth: 12,
-  },
-  {
-    id: 4,
-    name: 'مستلزمات',
-    description: 'مستلزمات منزلية متنوعة',
-    productsCount: 30,
-    totalSales: 22000,
-    growth: -5,
-  },
-];
-
-const COLORS = ['#2193b0', '#6dd5ed', '#00b09b', '#96c93d'];
-
-function Categories() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [open, setOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    image: '',
-  });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState('');
-
-  useEffect(() => {
-    AOS.init({ duration: 900, once: true });
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await categoryService.getAll();
-      setCategories(response.data);
-    } catch (error) {
-      setCategories([]);
-      toast.error('حدث خطأ أثناء تحميل التصنيفات');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClickOpen = () => {
-    setOpen(true);
-    setSelectedCategory(null);
-    setFormData({
-      name: '',
-      image: '',
-    });
-    setImageFile(null);
-    setImagePreview('');
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-    setSelectedCategory(null);
-  };
-
-  const handleEdit = (category) => {
-    setSelectedCategory(category);
-    setFormData({
-      name: category.name,
-      image: category.image || '',
-    });
-    setImageFile(null);
-    setImagePreview(category.image || '');
-    setOpen(true);
-  };
-
-  const handleDelete = async (id) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا التصنيف؟')) {
-      try {
-        await categoryService.delete(id);
-        setCategories(categories.filter((category) => category._id !== id));
-        toast.success('تم حذف التصنيف بنجاح');
-      } catch (error) {
-        toast.error('حدث خطأ أثناء حذف التصنيف');
-      }
-    }
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      let imageUrl = formData.image;
-      if (imageFile) {
-        const formDataImg = new FormData();
-        formDataImg.append('image', imageFile);
-        const uploadRes = await api.post('/upload', formDataImg, {
-          headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        imageUrl = uploadRes.data.url;
-      }
-      const categoryData = { name: formData.name, image: imageUrl };
-      if (selectedCategory) {
-        const response = await categoryService.update(selectedCategory._id, categoryData);
-        setCategories(categories.map((category) => category._id === selectedCategory._id ? response.data : category));
-        toast.success('تم تحديث التصنيف بنجاح');
-      } else {
-        const response = await categoryService.create(categoryData);
-        setCategories([...categories, response.data]);
-        toast.success('تم إضافة التصنيف بنجاح');
-      }
-      handleClose();
-    } catch (error) {
-      toast.error('حدث خطأ أثناء حفظ التصنيف');
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const columns = [
-    { field: 'name', headerName: 'اسم التصنيف', width: 200 },
-    { field: 'slug', headerName: 'Slug', width: 200 },
-    {
-      field: 'image',
-      headerName: 'الصورة',
-      width: 120,
-      renderCell: (params) => params.value ? (
-        <img src={params.value} alt="تصنيف" style={{ width: 50, height: 50, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px #2193b055' }} />
-      ) : '-',
-    },
-    {
-      field: 'actions',
-      headerName: 'الإجراءات',
-      width: 150,
-      renderCell: (params) => (
-        <Box>
-          <IconButton color="primary" onClick={() => handleEdit(params.row)} size="small" sx={{ color: '#2193b0' }}>
-            <EditIcon />
-          </IconButton>
-          <IconButton color="error" onClick={() => handleDelete(params.row._id)} size="small" sx={{ color: '#ff1744' }}>
-            <DeleteIcon />
-          </IconButton>
-        </Box>
-      ),
-    },
+const Categories = () => {
+  const theme = useTheme();
+  const [searchTerm, setSearchTerm] = useState('');
+  const mockCategories = [
+    { _id: '1', name: 'إلكترونيات', description: 'أجهزة إلكترونية متنوعة' },
+    { _id: '2', name: 'ملابس', description: 'ملابس رجالية ونسائية' },
   ];
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          minHeight: '400px',
-        }}
-      >
-        <CircularProgress sx={{ color: '#2193b0' }} />
-      </Box>
-    );
-  }
-
-  // Prepare data for charts
-  const salesData = categories.map(cat => ({
-    name: cat.name,
-    value: cat.totalSales
-  }));
-
-  const productsData = categories.map(cat => ({
-    name: cat.name,
-    products: cat.productsCount
-  }));
-
   return (
-    <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 3 }}>
-        <Typography variant="h4" sx={{ color: '#2193b0', fontWeight: 900, letterSpacing: 1 }}>
-          التصنيفات
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleClickOpen}
-          sx={{
-            background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)',
-            borderRadius: 2,
-            boxShadow: '0 4px 16px 0 rgba(33,147,176,0.2)',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #1c7a94 0%, #5ab8d9 100%)',
-            },
-          }}
-        >
-          إضافة تصنيف
-        </Button>
-      </Box>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 3, mb: 3 }}>
-        {/* Summary Cards */}
-        <Card sx={{ bgcolor: 'rgba(33,147,176,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)' }} data-aos="fade-up">
+    <Box sx={{ p: 3 }}>
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>إدارة الفئات</Typography>
+          <Typography variant="body1" color="text.secondary">تصنيف وتنظيم المنتجات</Typography>
+        </Box>
+        <Card sx={{ mb: 3 }}>
           <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <CategoryIcon sx={{ color: '#2193b0', mr: 1 }} />
-              <Typography variant="h6" sx={{ color: '#2193b0' }}>
-                إجمالي التصنيفات
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ color: '#2193b0', fontWeight: 900 }}>
-              {categories.length}
-            </Typography>
+            <Grid container spacing={3} alignItems="center">
+              <Grid item xs={12} md={6}>
+                <TextField fullWidth placeholder="البحث في الفئات..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} InputProps={{ startAdornment: (<InputAdornment position="start"><SearchIcon /></InputAdornment>) }} />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Button variant="contained" startIcon={<AddIcon />} sx={{ float: 'left' }}>إضافة فئة جديدة</Button>
+              </Grid>
+            </Grid>
           </CardContent>
         </Card>
-        <Card sx={{ bgcolor: 'rgba(0,176,155,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(0,176,155,0.1)' }} data-aos="fade-up" data-aos-delay="100">
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <ProductIcon sx={{ color: '#00b09b', mr: 1 }} />
-              <Typography variant="h6" sx={{ color: '#00b09b' }}>
-                إجمالي المنتجات
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ color: '#00b09b', fontWeight: 900 }}>
-              {categories.reduce((sum, cat) => sum + cat.productsCount, 0)}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card sx={{ bgcolor: 'rgba(150,201,61,0.1)', borderRadius: 4, boxShadow: '0 4px 16px 0 rgba(150,201,61,0.1)' }} data-aos="fade-up" data-aos-delay="200">
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-              <TrendingUpIcon sx={{ color: '#96c93d', mr: 1 }} />
-              <Typography variant="h6" sx={{ color: '#96c93d' }}>
-                متوسط النمو
-              </Typography>
-            </Box>
-            <Typography variant="h3" sx={{ color: '#96c93d', fontWeight: 900 }}>
-              {categories.length > 0 ? Math.round(categories.reduce((sum, cat) => sum + cat.growth, 0) / categories.length) : 0}%
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 3 }}>
-        {/* Charts */}
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-          }}
-          data-aos="zoom-in-up"
-        >
-          <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
-            توزيع المبيعات حسب التصنيف
-          </Typography>
-          <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <PieChart>
-                <Pie
-                  data={salesData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  paddingAngle={5}
-                  dataKey="value"
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                >
-                  {salesData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+        <Grid container spacing={3} sx={{ mb: 3 }}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card sx={{ bgcolor: alpha('#1976d2', 0.1) }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box>
+                    <Typography variant="h4" fontWeight="bold" color="#1976d2">24</Typography>
+                    <Typography variant="h6">إجمالي الفئات</Typography>
+                  </Box>
+                  <Avatar sx={{ bgcolor: alpha('#1976d2', 0.1), color: '#1976d2' }}><CategoryIcon /></Avatar>
+                </Box>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+        <Card>
+          <CardContent sx={{ p: 0 }}>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                    <TableCell sx={{ fontWeight: 600 }}>الفئة</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>الوصف</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>الإجراءات</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {mockCategories.map((category) => (
+                    <TableRow key={category._id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Avatar sx={{ width: 40, height: 40, mr: 2 }}>{category.name[0]}</Avatar>
+                          <Typography variant="subtitle2" fontWeight={600}>{category.name}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>{category.description}</TableCell>
+                      <TableCell>
+                        <IconButton size="small"><EditIcon fontSize="small" /></IconButton>
+                        <IconButton size="small" color="error"><DeleteIcon fontSize="small" /></IconButton>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </Paper>
-
-        <Paper
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-          }}
-          data-aos="zoom-in-up"
-        >
-          <Typography variant="h6" sx={{ color: '#2193b0', mb: 2 }}>
-            عدد المنتجات في كل تصنيف
-          </Typography>
-          <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart data={productsData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="products" fill="#2193b0" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Paper>
-      </Box>
-
-      {/* DataGrid */}
-      <Paper
-        sx={{
-          p: 3,
-          borderRadius: 4,
-          boxShadow: '0 4px 16px 0 rgba(33,147,176,0.1)',
-        }}
-        data-aos="fade-up"
-      >
-        <div style={{ height: 400, width: '100%' }}>
-          <DataGrid
-            rows={categories}
-            columns={columns}
-            pageSize={5}
-            rowsPerPageOptions={[5]}
-            disableSelectionOnClick
-            sx={{
-              border: 'none',
-              '& .MuiDataGrid-columnHeaders': {
-                bgcolor: 'rgba(33,147,176,0.1)',
-                color: '#2193b0',
-                fontWeight: 700,
-              },
-              '& .MuiDataGrid-row:hover': {
-                bgcolor: 'rgba(33,147,176,0.05)',
-              },
-            }}
-          />
-        </div>
-      </Paper>
-
-      {/* Add/Edit Dialog */}
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: 4,
-          },
-        }}
-      >
-        <DialogTitle sx={{ color: '#2193b0', fontWeight: 900, letterSpacing: 1, textAlign: 'center' }}>
-          {selectedCategory ? 'تعديل تصنيف' : 'إضافة تصنيف جديد'}
-        </DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <TextField
-              autoFocus
-              name="name"
-              label={<span>اسم التصنيف <span style={{color:'red'}}>*</span></span>}
-              fullWidth
-              value={formData.name}
-              onChange={e => setFormData({ ...formData, name: e.target.value })}
-              required
-              sx={{ mb: 3 }}
-            />
-            <Button
-              variant="outlined"
-              component="label"
-              sx={{ color: '#2193b0', borderColor: '#2193b0', fontWeight: 700, mb: 2 }}
-            >
-              اختر صورة
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                onChange={handleImageChange}
-              />
-            </Button>
-            {imagePreview && (
-              <Box sx={{ mt: 2, textAlign: 'center' }}>
-                <img src={imagePreview} alt="تصنيف" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px #2193b055' }} />
-              </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ justifyContent: 'center', pb: 2 }}>
-            <Button onClick={handleClose} sx={{ color: '#2193b0', fontWeight: 700 }}>إلغاء</Button>
-            <Button type="submit" variant="contained" sx={{ background: 'linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%)', color: '#fff', fontWeight: 900, px: 5, borderRadius: 2, fontSize: 18 }}>
-              {selectedCategory ? 'تحديث' : 'إضافة'}
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </motion.div>
     </Box>
   );
-}
+};
 
 export default Categories; 

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "https://ecommerce-website-backend-nine.vercel.app/api/auth/profile";
+const API_URL = "http://localhost:5000/api/auth/profile";
 
 export const getUserProfileThunk = createAsyncThunk(
     "userProfile/getUserProfile",

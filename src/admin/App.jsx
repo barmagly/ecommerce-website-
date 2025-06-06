@@ -1,220 +1,141 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { Box, CssBaseline } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import rtlPlugin from 'stylis-plugin-rtl';
-import { CacheProvider } from '@emotion/react';
-import createCache from '@emotion/cache';
-import { prefixer } from 'stylis';
-import { darkModeColors } from './theme/darkModeColors';
 
-// Components
-import Layout from './components/Layout';
-import PrivateRoute from './components/PrivateRoute';
-import ErrorBoundary from './components/ErrorBoundary';
-
-// Pages
-import Login from './pages/Login';
+// Import pages
 import Dashboard from './pages/Dashboard';
-import Products from './pages/Products';
-import Categories from './pages/Categories';
-import Orders from './pages/Orders';
 import Users from './pages/Users';
-import Profile from './pages/Profile';
+import Products from './pages/Products';
+import Orders from './pages/Orders';
+import Categories from './pages/Categories';
+import Coupons from './pages/Coupons';
+import Reviews from './pages/Reviews';
+import Carts from './pages/Carts';
+import Variants from './pages/Variants';
 
-// Context
-import { AuthProvider } from './context/AuthContext';
-import { UserProvider } from './context/UserContext';
-import { DarkModeProvider, useDarkMode } from './context/DarkModeContext';
+// Import layout
+import AdminLayout from './components/AdminLayout';
 
-// Create RTL cache
-const cacheRtl = createCache({
-  key: 'muirtl',
-  stylisPlugins: [prefixer, rtlPlugin],
+// Arabic RTL theme
+const theme = createTheme({
+  direction: 'rtl',
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#1976d2',
+      light: '#42a5f5',
+      dark: '#1565c0',
+    },
+    secondary: {
+      main: '#dc004e',
+    },
+    background: {
+      default: '#f8fafc',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: [
+      'Cairo',
+      'Tajawal',
+      'Noto Sans Arabic',
+      'Arial',
+      'sans-serif'
+    ].join(','),
+    h1: {
+      fontWeight: 700,
+    },
+    h2: {
+      fontWeight: 700,
+    },
+    h3: {
+      fontWeight: 600,
+    },
+    h4: {
+      fontWeight: 600,
+    },
+    h5: {
+      fontWeight: 600,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          direction: 'rtl',
+          fontFamily: 'Cairo, Tajawal, sans-serif',
+        },
+        '*': {
+          boxSizing: 'border-box',
+        },
+        html: {
+          direction: 'rtl',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 12,
+          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          textTransform: 'none',
+          fontWeight: 600,
+        },
+      },
+    },
+  },
 });
 
-function AppContent() {
-  const { darkMode, toggleDarkMode } = useDarkMode();
-
-  // Create theme with RTL support and dynamic dark mode
-  const theme = React.useMemo(
-    () =>
-      createTheme({
-        direction: 'rtl',
-        typography: {
-          fontFamily: 'Cairo, sans-serif',
-        },
-        palette: {
-          mode: darkMode ? 'dark' : 'light',
-          background: {
-            default: darkMode ? darkModeColors.background.default : '#f8f9fa',
-            paper: darkMode ? darkModeColors.background.paper : '#ffffff',
-          },
-          text: {
-            primary: darkMode ? darkModeColors.text.primary : '#000000',
-            secondary: darkMode ? darkModeColors.text.secondary : 'rgba(0, 0, 0, 0.6)',
-          },
-          primary: {
-            main: darkMode ? '#1e88e5' : '#1976d2',
-          },
-          secondary: {
-            main: darkMode ? '#ff1744' : '#dc004e',
-          },
-          divider: darkMode ? darkModeColors.divider : 'rgba(0, 0, 0, 0.12)',
-        },
-        components: {
-          MuiCssBaseline: {
-            styleOverrides: {
-              body: {
-                backgroundColor: darkMode ? darkModeColors.background.default : '#f8f9fa',
-                color: darkMode ? darkModeColors.text.primary : '#000000',
-              },
-            },
-          },
-          MuiPaper: {
-            styleOverrides: {
-              root: {
-                backgroundColor: darkMode ? darkModeColors.background.paper : '#ffffff',
-                backgroundImage: 'none',
-              },
-            },
-          },
-          MuiAppBar: {
-            styleOverrides: {
-              root: {
-                backgroundColor: darkMode ? darkModeColors.background.header : '#ffffff',
-                color: darkMode ? darkModeColors.text.primary : '#000000',
-              },
-            },
-          },
-          MuiDrawer: {
-            styleOverrides: {
-              paper: {
-                backgroundColor: darkMode ? darkModeColors.background.sidebar : '#ffffff',
-                backgroundImage: 'none',
-              },
-            },
-          },
-          MuiTextField: {
-            defaultProps: {
-              dir: 'rtl',
-            },
-            styleOverrides: {
-              root: {
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: darkMode ? darkModeColors.border.light : 'rgba(0, 0, 0, 0.23)',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: darkMode ? darkModeColors.border.medium : 'rgba(0, 0, 0, 0.23)',
-                  },
-                },
-              },
-            },
-          },
-          MuiInputLabel: {
-            defaultProps: {
-              dir: 'rtl',
-            },
-          },
-          MuiCard: {
-            styleOverrides: {
-              root: {
-                backgroundColor: darkMode ? darkModeColors.background.card : '#ffffff',
-                backgroundImage: 'none',
-              },
-            },
-          },
-          MuiButton: {
-            styleOverrides: {
-              root: {
-                '&:hover': {
-                  backgroundColor: darkMode ? darkModeColors.action.hover : undefined,
-                },
-              },
-            },
-          },
-        },
-      }),
-    [darkMode]
-  );
-
+function AdminApp() {
   return (
-    <CacheProvider value={cacheRtl}>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        <ErrorBoundary>
-          <AuthProvider>
-            <UserProvider>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                <Route path="/" element={
-                  <PrivateRoute>
-                    <Layout darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-                  </PrivateRoute>
-                }>
-                  <Route index element={<Navigate to="/dashboard" replace />} />
-                  <Route path="dashboard" element={
-                    <ErrorBoundary>
-                      <Dashboard darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                  <Route path="products" element={
-                    <ErrorBoundary>
-                      <Products darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                  <Route path="categories" element={
-                    <ErrorBoundary>
-                      <Categories darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                  <Route path="orders" element={
-                    <ErrorBoundary>
-                      <Orders darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                  <Route path="users" element={
-                    <ErrorBoundary>
-                      <Users darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                  <Route path="profile" element={
-                    <ErrorBoundary>
-                      <Profile darkMode={darkMode} />
-                    </ErrorBoundary>
-                  } />
-                </Route>
-              </Routes>
-              <ToastContainer
-                position="top-left"
-                rtl={true}
-                autoClose={3000}
-                hideProgressBar={false}
-                newestOnTop
-                closeOnClick
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme={darkMode ? 'dark' : 'light'}
-              />
-            </UserProvider>
-          </AuthProvider>
-        </ErrorBoundary>
-      </ThemeProvider>
-    </CacheProvider>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ direction: 'rtl' }}>
+        <Router>
+          <AdminLayout>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/users" element={<Users />} />
+              <Route path="/products" element={<Products />} />
+              <Route path="/orders" element={<Orders />} />
+              <Route path="/categories" element={<Categories />} />
+              <Route path="/coupons" element={<Coupons />} />
+              <Route path="/reviews" element={<Reviews />} />
+              <Route path="/carts" element={<Carts />} />
+              <Route path="/variants" element={<Variants />} />
+            </Routes>
+          </AdminLayout>
+        </Router>
+        
+        <ToastContainer
+          position="top-left"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={true}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
+      </Box>
+    </ThemeProvider>
   );
 }
 
-function App() {
-  return (
-    <DarkModeProvider>
-      <ErrorBoundary>
-        <AppContent />
-      </ErrorBoundary>
-    </DarkModeProvider>
-  );
-}
-
-export default App; 
+export default AdminApp; 
