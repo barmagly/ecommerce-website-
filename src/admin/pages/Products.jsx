@@ -62,74 +62,184 @@ const categories = [
   { id: 8, name: 'مجوهرات' },
 ];
 
-// Initial sample products
+// Enhanced sample products with more variety
 const initialProducts = [
   {
     id: 1,
-    name: 'iPhone 15 Pro',
-    description: 'أحدث هاتف من آبل مع تقنيات متطورة',
-    price: 999.99,
-    salePrice: 899.99,
+    name: 'iPhone 15 Pro Max',
+    description: 'أحدث هاتف من آبل مع تقنيات متطورة وكاميرا Pro وشاشة Super Retina XDR',
+    price: 1199.99,
+    salePrice: 1099.99,
     category: 'إلكترونيات',
     categoryId: 1,
-    stock: 50,
-    sku: 'IP15P-001',
-    images: ['https://via.placeholder.com/150x150?text=iPhone'],
+    stock: 45,
+    sku: 'IP15PM-001',
+    images: ['https://via.placeholder.com/150x150?text=iPhone+15'],
     status: 'نشط',
     featured: true,
-    rating: 4.8,
-    reviews: 245,
-    tags: ['هاتف', 'آبل', 'جديد'],
-    weight: 0.2,
-    dimensions: '15.5 x 7.5 x 0.8 cm',
+    rating: 4.9,
+    reviews: 345,
+    tags: ['هاتف', 'آبل', 'جديد', 'برو'],
+    weight: 0.22,
+    dimensions: '16.0 x 7.7 x 0.83 cm',
     brand: 'Apple',
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
   },
   {
     id: 2,
-    name: 'Samsung Galaxy S24',
-    description: 'هاتف ذكي متطور من سامسونج',
-    price: 799.99,
+    name: 'Samsung Galaxy S24 Ultra',
+    description: 'هاتف ذكي متطور من سامسونج مع قلم S Pen وكاميرا 200 ميجابكسل',
+    price: 1299.99,
     salePrice: null,
     category: 'إلكترونيات',
     categoryId: 1,
-    stock: 30,
-    sku: 'SGS24-002',
-    images: ['https://via.placeholder.com/150x150?text=Samsung'],
+    stock: 28,
+    sku: 'SGS24U-002',
+    images: ['https://via.placeholder.com/150x150?text=Samsung+S24'],
     status: 'نشط',
-    featured: false,
-    rating: 4.6,
-    reviews: 189,
-    tags: ['هاتف', 'سامسونج', 'أندرويد'],
-    weight: 0.22,
-    dimensions: '16 x 7.8 x 0.85 cm',
+    featured: true,
+    rating: 4.7,
+    reviews: 289,
+    tags: ['هاتف', 'سامسونج', 'أندرويد', 'قلم'],
+    weight: 0.23,
+    dimensions: '16.3 x 7.9 x 0.86 cm',
     brand: 'Samsung',
-    createdAt: new Date().toISOString(),
+    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
   },
   {
     id: 3,
-    name: 'قميص قطني أزرق',
-    description: 'قميص قطني عالي الجودة للرجال',
-    price: 49.99,
-    salePrice: 39.99,
-    category: 'ملابس',
-    categoryId: 2,
-    stock: 100,
-    sku: 'SHIRT-003',
-    images: ['https://via.placeholder.com/150x150?text=Shirt'],
+    name: 'MacBook Pro 16 بوصة',
+    description: 'لابتوب قوي للمحترفين مع معالج M3 Pro وذاكرة 32GB',
+    price: 2999.99,
+    salePrice: 2799.99,
+    category: 'إلكترونيات',
+    categoryId: 1,
+    stock: 12,
+    sku: 'MBP16-003',
+    images: ['https://via.placeholder.com/150x150?text=MacBook'],
     status: 'نشط',
     featured: true,
-    rating: 4.3,
-    reviews: 67,
-    tags: ['قميص', 'رجالي', 'قطن'],
-    weight: 0.3,
-    dimensions: 'L x XL',
-    brand: 'Fashion Brand',
-    createdAt: new Date().toISOString(),
+    rating: 4.8,
+    reviews: 156,
+    tags: ['لابتوب', 'آبل', 'محترف', 'M3'],
+    weight: 2.1,
+    dimensions: '35.5 x 24.8 x 1.6 cm',
+    brand: 'Apple',
+    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
     updatedAt: new Date().toISOString(),
   },
+  {
+    id: 4,
+    name: 'قميص بولو كلاسيكي',
+    description: 'قميص بولو قطني عالي الجودة متوفر بألوان متعددة',
+    price: 89.99,
+    salePrice: 69.99,
+    category: 'ملابس',
+    categoryId: 2,
+    stock: 85,
+    sku: 'POLO-004',
+    images: ['https://via.placeholder.com/150x150?text=Polo+Shirt'],
+    status: 'نشط',
+    featured: false,
+    rating: 4.4,
+    reviews: 123,
+    tags: ['قميص', 'بولو', 'قطن', 'كلاسيكي'],
+    weight: 0.25,
+    dimensions: 'S, M, L, XL',
+    brand: 'Classic Wear',
+    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 5,
+    name: 'سماعات AirPods Pro 2',
+    description: 'سماعات لاسلكية مع إلغاء الضوضاء النشط وجودة صوت فائقة',
+    price: 249.99,
+    salePrice: null,
+    category: 'إلكترونيات',
+    categoryId: 1,
+    stock: 67,
+    sku: 'APP2-005',
+    images: ['https://via.placeholder.com/150x150?text=AirPods'],
+    status: 'نشط',
+    featured: true,
+    rating: 4.6,
+    reviews: 892,
+    tags: ['سماعات', 'لاسلكي', 'آبل', 'إلغاء ضوضاء'],
+    weight: 0.05,
+    dimensions: '3.1 x 2.1 x 2.4 cm',
+    brand: 'Apple',
+    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 6,
+    name: 'كتاب البرمجة المتقدمة',
+    description: 'دليل شامل لتعلم البرمجة المتقدمة بلغات متعددة',
+    price: 45.99,
+    salePrice: null,
+    category: 'كتب',
+    categoryId: 3,
+    stock: 156,
+    sku: 'BOOK-006',
+    images: ['https://via.placeholder.com/150x150?text=Programming+Book'],
+    status: 'نشط',
+    featured: false,
+    rating: 4.7,
+    reviews: 78,
+    tags: ['كتاب', 'برمجة', 'تعليم', 'تقنية'],
+    weight: 0.8,
+    dimensions: '24 x 17 x 3 cm',
+    brand: 'Tech Publications',
+    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 7,
+    name: 'طاولة مكتب خشبية',
+    description: 'طاولة مكتب عملية من الخشب الطبيعي مع أدراج للتخزين',
+    price: 299.99,
+    salePrice: 249.99,
+    category: 'منزل وحديقة',
+    categoryId: 4,
+    stock: 8,
+    sku: 'DESK-007',
+    images: ['https://via.placeholder.com/150x150?text=Wooden+Desk'],
+    status: 'نشط',
+    featured: false,
+    rating: 4.5,
+    reviews: 45,
+    tags: ['أثاث', 'مكتب', 'خشب', 'تخزين'],
+    weight: 35.5,
+    dimensions: '120 x 60 x 75 cm',
+    brand: 'Home Furniture',
+    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  },
+  {
+    id: 8,
+    name: 'حذاء رياضي للجري',
+    description: 'حذاء رياضي مريح ومبطن خصيصاً للجري والأنشطة الرياضية',
+    price: 129.99,
+    salePrice: 99.99,
+    category: 'رياضة',
+    categoryId: 5,
+    stock: 0,
+    sku: 'SHOE-008',
+    images: ['https://via.placeholder.com/150x150?text=Running+Shoes'],
+    status: 'نشط',
+    featured: false,
+    rating: 4.3,
+    reviews: 234,
+    tags: ['حذاء', 'رياضة', 'جري', 'مريح'],
+    weight: 0.6,
+    dimensions: '42, 43, 44, 45',
+    brand: 'SportMax',
+    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
+    updatedAt: new Date().toISOString(),
+  }
 ];
 
 const Products = () => {
@@ -172,6 +282,22 @@ const Products = () => {
     loadProducts();
   }, []);
 
+  // Check for low stock products and show alerts
+  useEffect(() => {
+    if (products.length > 0) {
+      const lowStockProducts = products.filter(p => p.stock <= 5 && p.stock > 0);
+      const outOfStockProducts = products.filter(p => p.stock === 0);
+      
+      if (outOfStockProducts.length > 0) {
+        toast.warning(`تحذير: ${outOfStockProducts.length} منتج نفد مخزونه`);
+      }
+      
+      if (lowStockProducts.length > 0) {
+        toast.info(`تنبيه: ${lowStockProducts.length} منتج مخزونه منخفض`);
+      }
+    }
+  }, [products]);
+
   const loadProducts = () => {
     setLoading(true);
     try {
@@ -201,14 +327,31 @@ const Products = () => {
     }
   };
 
-  // Filter products based on search and filters
+  // Enhanced filter products based on search and filters
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+                         product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (product.brand && product.brand.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                         (product.tags && product.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
     
-    const matchesCategory = !filterCategory || product.categoryId.toString() === filterCategory;
-    const matchesStatus = !filterStatus || product.status === filterStatus;
+    const matchesCategory = !filterCategory || product.category === filterCategory;
+    let matchesStatus = true;
+    if (filterStatus) {
+      switch (filterStatus) {
+        case 'نشط':
+          matchesStatus = product.status === 'نشط';
+          break;
+        case 'غير نشط':
+          matchesStatus = product.status === 'غير نشط';
+          break;
+        case 'نفد المخزون':
+          matchesStatus = product.stock === 0;
+          break;
+        default:
+          matchesStatus = true;
+      }
+    }
     
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -401,21 +544,48 @@ const Products = () => {
         transition={{ duration: 0.5 }}
       >
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            إدارة المنتجات
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            إدارة وتحرير منتجات المتجر
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                إدارة المنتجات
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                إدارة وتحرير منتجات المتجر بكفاءة عالية
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="outlined"
+                startIcon={<RefreshIcon />}
+                onClick={loadProducts}
+              >
+                تحديث
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenDialog('add')}
+                sx={{ 
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  }
+                }}
+              >
+                إضافة منتج جديد
+              </Button>
+            </Box>
+          </Box>
         </Box>
 
+        {/* Enhanced Search and Filters */}
         <Card sx={{ mb: 3 }}>
           <CardContent>
             <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="البحث في المنتجات..."
+                  placeholder="البحث في المنتجات والأكواد..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
@@ -427,59 +597,254 @@ const Products = () => {
                   }}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel>تصفية حسب الفئة</InputLabel>
+                  <Select
+                    value={filterCategory}
+                    label="تصفية حسب الفئة"
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    startAdornment={<CategoryIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+                  >
+                    <MenuItem value="">جميع الفئات</MenuItem>
+                    {categories.map((category) => (
+                      <MenuItem key={category.id} value={category.name}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel>تصفية حسب الحالة</InputLabel>
+                  <Select
+                    value={filterStatus}
+                    label="تصفية حسب الحالة"
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    startAdornment={<FilterIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+                  >
+                    <MenuItem value="">جميع الحالات</MenuItem>
+                    <MenuItem value="نشط">نشط</MenuItem>
+                    <MenuItem value="غير نشط">غير نشط</MenuItem>
+                    <MenuItem value="نفد المخزون">نفد المخزون</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={2}>
                 <Button
-                  variant="contained"
-                  startIcon={<AddIcon />}
-                  onClick={() => handleOpenDialog('add')}
-                  sx={{ 
-                    float: 'left',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                    }
+                  fullWidth
+                  variant="outlined"
+                  startIcon={<FilterIcon />}
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterCategory('');
+                    setFilterStatus('');
+                    toast.info('تم مسح جميع المرشحات');
                   }}
                 >
-                  إضافة منتج جديد
+                  مسح المرشحات
                 </Button>
               </Grid>
             </Grid>
           </CardContent>
         </Card>
 
+        {/* Enhanced Statistics Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ bgcolor: alpha('#1976d2', 0.1) }}>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <Box>
-                    <Typography variant="h4" fontWeight="bold" color="#1976d2">
-                      1,256
-                    </Typography>
-                    <Typography variant="h6">إجمالي المنتجات</Typography>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+            >
+              <Card sx={{ 
+                bgcolor: alpha('#1976d2', 0.1),
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold" color="#1976d2">
+                        {products.length}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">إجمالي المنتجات</Typography>
+                      <Typography variant="caption" color="success.main">
+                        +{products.filter(p => p.featured).length} منتج مميز
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48 }}>
+                      <InventoryIcon />
+                    </Avatar>
                   </Box>
-                  <Avatar sx={{ bgcolor: alpha('#1976d2', 0.1), color: '#1976d2' }}>
-                    <InventoryIcon />
-                  </Avatar>
-                </Box>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <Card sx={{ 
+                bgcolor: alpha('#2e7d32', 0.1),
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold" color="#2e7d32">
+                        {products.filter(p => p.status === 'نشط').length}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">منتجات نشطة</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        من أصل {products.length} منتج
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#2e7d32', color: 'white', width: 48, height: 48 }}>
+                      <StarIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.3 }}
+            >
+              <Card sx={{ 
+                bgcolor: alpha('#ed6c02', 0.1),
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold" color="#ed6c02">
+                        {products.filter(p => p.stock <= 10).length}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">مخزون منخفض</Typography>
+                      <Typography variant="caption" color="error.main">
+                        {products.filter(p => p.stock === 0).length} نفد المخزون
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#ed6c02', color: 'white', width: 48, height: 48 }}>
+                      <Alert />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </Grid>
+
+          <Grid item xs={12} sm={6} md={3}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3, delay: 0.4 }}
+            >
+              <Card sx={{ 
+                bgcolor: alpha('#9c27b0', 0.1),
+                transition: 'transform 0.2s ease-in-out',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                      <Typography variant="h4" fontWeight="bold" color="#9c27b0">
+                        ${products.reduce((total, p) => total + (p.price * p.stock), 0).toFixed(0)}
+                      </Typography>
+                      <Typography variant="body1" color="text.secondary">قيمة المخزون</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        متوسط السعر: ${products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed(2) : '0.00'}
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48 }}>
+                      <PriceIcon />
+                    </Avatar>
+                  </Box>
+                </CardContent>
+              </Card>
+            </motion.div>
           </Grid>
         </Grid>
 
-        <Card>
+        {/* Enhanced Products Table */}
+        <Card elevation={3}>
           <CardContent sx={{ p: 0 }}>
+            {/* Table Header with Actions */}
+            <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant="h6" fontWeight="bold">
+                  قائمة المنتجات ({filteredProducts.length})
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    startIcon={<RefreshIcon />}
+                    onClick={loadProducts}
+                  >
+                    تحديث
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => {
+                      const data = products.map(p => ({
+                        Name: p.name,
+                        SKU: p.sku,
+                        Price: p.price,
+                        Stock: p.stock,
+                        Category: p.category,
+                        Status: p.status
+                      }));
+                      const csv = [
+                        Object.keys(data[0]).join(','),
+                        ...data.map(row => Object.values(row).join(','))
+                      ].join('\n');
+                      const blob = new Blob([csv], { type: 'text/csv' });
+                      const url = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = url;
+                      link.download = 'products.csv';
+                      link.click();
+                      toast.success('تم تصدير البيانات بنجاح');
+                    }}
+                  >
+                    تصدير CSV
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                    <TableCell sx={{ fontWeight: 600 }}>المنتج</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>السعر</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الفئة</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>المخزون</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الحالة</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>التقييم</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الإجراءات</TableCell>
+                  <TableRow sx={{ 
+                    bgcolor: alpha(theme.palette.primary.main, 0.08),
+                    '& .MuiTableCell-head': {
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      color: theme.palette.primary.dark
+                    }
+                  }}>
+                    <TableCell sx={{ width: '25%' }}>المنتج</TableCell>
+                    <TableCell sx={{ width: '15%' }}>السعر والخصم</TableCell>
+                    <TableCell sx={{ width: '12%' }}>الفئة</TableCell>
+                    <TableCell sx={{ width: '10%' }}>المخزون</TableCell>
+                    <TableCell sx={{ width: '10%' }}>الحالة</TableCell>
+                    <TableCell sx={{ width: '12%' }}>التقييم والمراجعات</TableCell>
+                    <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
+                    <TableCell sx={{ width: '16%' }}>الإجراءات</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -500,110 +865,218 @@ const Products = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar
                                 src={product.images?.[0]}
-                                sx={{ width: 50, height: 50, borderRadius: 2 }}
+                                sx={{ 
+                                  width: 60, 
+                                  height: 60, 
+                                  borderRadius: 3,
+                                  border: 2,
+                                  borderColor: 'primary.light'
+                                }}
                               >
                                 <ImageIcon />
-                          </Avatar>
-                              <Box>
-                                <Typography variant="subtitle2" fontWeight="bold">
+                              </Avatar>
+                              <Box sx={{ flex: 1 }}>
+                                <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
                                   {product.name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" display="block">
                                   SKU: {product.sku}
-                          </Typography>
-                                {product.featured && (
-                                  <Chip
-                                    label="مميز"
-                                    size="small"
-                                    color="warning"
-                                    sx={{ ml: 1, fontSize: '0.7rem' }}
-                                  />
-                                )}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary" display="block">
+                                  العلامة: {product.brand}
+                                </Typography>
+                                <Box sx={{ display: 'flex', gap: 0.5, mt: 0.5 }}>
+                                  {product.featured && (
+                                    <Chip
+                                      label="مميز"
+                                      size="small"
+                                      color="warning"
+                                      sx={{ fontSize: '0.65rem', height: 20 }}
+                                    />
+                                  )}
+                                  {product.salePrice && (
+                                    <Chip
+                                      label="خصم"
+                                      size="small"
+                                      color="error"
+                                      sx={{ fontSize: '0.65rem', height: 20 }}
+                                    />
+                                  )}
+                                </Box>
                               </Box>
                         </Box>
                       </TableCell>
                           
+                          <TableCell>
+                            <Box>
+                              <Typography variant="h6" fontWeight="bold" color="primary.main">
+                                ${product.price}
+                              </Typography>
+                              {product.salePrice && (
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    sx={{ textDecoration: 'line-through' }}
+                                  >
+                                    ${product.salePrice}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="success.main"
+                                    fontWeight="bold"
+                                  >
+                                    وفر ${(product.price - product.salePrice).toFixed(2)}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </TableCell>
+
                           <TableCell>
                             <Chip
                               label={product.category}
                               variant="outlined"
                               size="small"
                               color="primary"
+                              icon={<CategoryIcon sx={{ fontSize: 14 }} />}
                             />
                           </TableCell>
                           
                       <TableCell>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight="bold">
-                                ${product.price}
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Chip
+                                label={product.stock}
+                                color={product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'error'}
+                                size="small"
+                                sx={{ fontWeight: 'bold', minWidth: 50 }}
+                              />
+                              <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                                {product.stock > 10 ? 'متوفر' : product.stock > 0 ? 'محدود' : 'نفد'}
                               </Typography>
-                              {product.salePrice && (
-                                <Typography
-                                  variant="caption"
-                                  color="error"
-                                  sx={{ textDecoration: 'line-through' }}
-                                >
-                                  ${product.salePrice}
+                            </Box>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Chip
+                                label={product.status}
+                                color={product.status === 'نشط' ? 'success' : 'default'}
+                                size="small"
+                                variant="filled"
+                              />
+                            </Box>
+                          </TableCell>
+                          
+                          <TableCell>
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
+                                <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
+                                <Typography variant="subtitle2" fontWeight="bold">
+                                  {product.rating}
                                 </Typography>
-                              )}
+                              </Box>
+                              <Typography variant="caption" color="text.secondary">
+                                {product.reviews} مراجعة
+                              </Typography>
                             </Box>
-                      </TableCell>
-                          
-                      <TableCell>
-                        <Chip
-                          label={product.stock}
-                              color={product.stock > 10 ? 'success' : product.stock > 0 ? 'warning' : 'error'}
-                              size="small"
-                            />
                           </TableCell>
-                          
+
                           <TableCell>
-                            <Chip
-                              label={product.status}
-                              color={product.status === 'نشط' ? 'success' : 'default'}
-                          size="small"
-                        />
-                      </TableCell>
-                          
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                              <StarIcon sx={{ color: '#ffc107', fontSize: 16 }} />
-                              <Typography variant="caption">
-                                {product.rating} ({product.reviews})
+                            <Box sx={{ textAlign: 'center' }}>
+                              <Typography variant="body2" fontWeight="500">
+                                {new Date(product.createdAt).toLocaleDateString('ar-SA')}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {new Date(product.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
                               </Typography>
                             </Box>
                           </TableCell>
                           
                       <TableCell>
-                            <Box sx={{ display: 'flex', gap: 0.5 }}>
-                              <Tooltip title="عرض">
+                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+                              <Tooltip title="عرض التفاصيل" arrow>
                                 <IconButton
                                   size="small"
                                   color="info"
                                   onClick={() => handleOpenDialog('view', product)}
+                                  sx={{ 
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      backgroundColor: alpha('#1976d2', 0.1),
+                                      transform: 'scale(1.1)'
+                                    }
+                                  }}
                                 >
-                          <ViewIcon fontSize="small" />
-                        </IconButton>
+                                  <ViewIcon fontSize="small" />
+                                </IconButton>
                               </Tooltip>
                               
-                              <Tooltip title="تعديل">
+                              <Tooltip title="تعديل المنتج" arrow>
                                 <IconButton
                                   size="small"
                                   color="primary"
                                   onClick={() => handleOpenDialog('edit', product)}
+                                  sx={{ 
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      backgroundColor: alpha('#2e7d32', 0.1),
+                                      transform: 'scale(1.1)'
+                                    }
+                                  }}
                                 >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
                               </Tooltip>
                               
-                              <Tooltip title="حذف">
+                              <Tooltip title="نسخ المنتج" arrow>
+                                <IconButton
+                                  size="small"
+                                  color="secondary"
+                                  onClick={() => {
+                                    const duplicatedProduct = {
+                                      ...product,
+                                      id: products.length + 1,
+                                      name: `${product.name} - نسخة`,
+                                      sku: `${product.sku}-COPY`,
+                                      createdAt: new Date().toISOString(),
+                                      updatedAt: new Date().toISOString()
+                                    };
+                                    const updatedProducts = [...products, duplicatedProduct];
+                                    saveProducts(updatedProducts);
+                                    toast.success('تم نسخ المنتج بنجاح');
+                                  }}
+                                  sx={{ 
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      backgroundColor: alpha('#9c27b0', 0.1),
+                                      transform: 'scale(1.1)'
+                                    }
+                                  }}
+                                >
+                                  <InventoryIcon />
+                                </IconButton>
+                              </Tooltip>
+                              
+                              <Tooltip title="حذف المنتج" arrow>
                                 <IconButton
                                   size="small"
                                   color="error"
-                                  onClick={() => handleDeleteProduct(product.id)}
+                                  onClick={() => {
+                                    if (window.confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+                                      handleDeleteProduct(product.id);
+                                    }
+                                  }}
+                                  sx={{ 
+                                    borderRadius: 2,
+                                    '&:hover': {
+                                      backgroundColor: alpha('#d32f2f', 0.1),
+                                      transform: 'scale(1.1)'
+                                    }
+                                  }}
                                 >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
                               </Tooltip>
                             </Box>
                       </TableCell>

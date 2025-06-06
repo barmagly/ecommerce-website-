@@ -467,13 +467,33 @@ const Dashboard = () => {
               <Button
                 variant="outlined"
                 startIcon={<DateRange />}
+                onClick={() => toast.info('سيتم إضافة تصفية التاريخ قريباً')}
               >
                 هذا الشهر
               </Button>
               <Button
+                variant="outlined"
+                startIcon={<Analytics />}
+                onClick={() => {
+                  const dataStr = JSON.stringify(dashboardData, null, 2);
+                  const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                  const url = URL.createObjectURL(dataBlob);
+                  const link = document.createElement('a');
+                  link.href = url;
+                  link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
+                  link.click();
+                  toast.success('تم تصدير البيانات بنجاح');
+                }}
+              >
+                تصدير البيانات
+              </Button>
+              <Button
                 variant="contained"
                 startIcon={<Refresh />}
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                  window.location.reload();
+                  toast.success('جاري تحديث البيانات...');
+                }}
               >
                 تحديث
               </Button>
