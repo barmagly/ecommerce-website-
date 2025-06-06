@@ -148,14 +148,14 @@ export default function Login() {
                 >
                   تسجيل الدخول
                 </button>
-                <a
+                <Link
                   href="#"
                   className="text-danger text-decoration-none"
                   style={{ paddingRight: "20px" }}
                   onClick={handleForgot}
                 >
                   نسيت كلمة المرور؟
-                </a>
+                </Link>
               </div>
             </form>
             <div className="d-flex align-items-center justify-content-center gap-2 mt-3">

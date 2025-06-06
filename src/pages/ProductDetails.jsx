@@ -42,8 +42,6 @@ export default function ProductDetails() {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.product);
   const { wishlist } = useSelector((state) => state.userWishlist);
-  const { token } = useSelector((state) => state.auth);
-  const isAuthenticated = !!token;
   const product = products?.find(p => p._id === id);
 
   const [selectedAttributes, setSelectedAttributes] = useState({});

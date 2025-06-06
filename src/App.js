@@ -22,6 +22,9 @@ import Orders from './pages/Orders';
 import OrderConfirmation from './pages/OrderConfirmation';
 import ProductDetails from './pages/ProductDetails';
 import AdminApp from './admin/App';
+import { Provider } from 'react-redux';
+import Store from './services/Slice/Store'
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   useEffect(() => {
@@ -29,36 +32,39 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <div dir="rtl">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<SignUp />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/wishlist" element={<Wishlist />} />
-          <Route path="/search" element={<SearchResults />} />
-          <Route path="/shop" element={<Shop />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/checkout" element={<Checkout />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/order-confirmation" element={<OrderConfirmation />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/admin/*" element={<AdminApp />} />
-          <Route
-            path="*"
-            element={
-              <>
-                <WhatsAppFloat />
-                {/* هنا ضع باقي الراوتات الخارجية مثل الصفحة الرئيسية وغيرها */}
-              </>
-            }
-          />
-        </Routes>
-      </div>
-    </Router>
+    <Provider store={Store}>
+      <ToastContainer />
+      <Router>
+        <div dir="rtl">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/wishlist" element={<Wishlist />} />
+            <Route path="/search" element={<SearchResults />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/order-confirmation" element={<OrderConfirmation />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/admin/*" element={<AdminApp />} />
+            <Route
+              path="*"
+              element={
+                <>
+                  <WhatsAppFloat />
+                  {/* هنا ضع باقي الراوتات الخارجية مثل الصفحة الرئيسية وغيرها */}
+                </>
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </Provider>
   );
 }
 

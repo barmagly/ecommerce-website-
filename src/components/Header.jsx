@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
@@ -36,15 +36,11 @@ export default function Header() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("Fetching user profile...");
       dispatch(getUserProfileThunk());
     }
   }, [dispatch, isAuthenticated]);
 
   useEffect(() => {
-    console.log("Profile user data:", profileUser);
-    console.log("Profile loading:", loading);
-    console.log("Profile error:", error);
   }, [profileUser, loading, error]);
 
   const handleSearch = (e) => {
@@ -79,9 +75,9 @@ export default function Header() {
               <span className="text-white me-3" style={{ marginLeft: '12px' }}>
                 عروض حصرية على جميع المنتجات وتوصيل سريع مجاني - خصم حتى 50%!
               </span>
-              <a href="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2" style={{ fontSize: '1rem' }}>
+              <Link to="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2" style={{ fontSize: '1rem' }}>
                 تسوق الآن
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -90,9 +86,9 @@ export default function Header() {
       {/* شريط التنقل */}
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
-          <a className="navbar-brand d-flex align-items-center" href="/">
+          <Link className="navbar-brand d-flex align-items-center" to="/">
             <img src="/images/logo.png" alt="Logo" style={{ height: '110px', width: '110px', marginLeft: '8px' }} />
-          </a>
+          </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
           </button>
@@ -100,12 +96,12 @@ export default function Header() {
             <ul className="navbar-nav mb-2 mb-lg-0 gap-4">
               {(isAuthenticated ? authLinks : navLinks).map(link => (
                 <li key={link.href} className="nav-item">
-                  <a
+                  <Link
                     className={`nav-link fw-bold nav-link-hover${isActive(link.href) ? " active text-danger" : ""}`}
-                    href={link.href}
+                    to={link.href}
                   >
                     {link.label}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -194,9 +190,9 @@ export default function Header() {
                           </div>
                         </li>
                         <li><hr className="dropdown-divider" /></li>
-                        <li><a className="dropdown-item" href="/profile">حسابي</a></li>
-                        <li><a className="dropdown-item" href="/orders">طلباتي</a></li>
-                        <li><a className="dropdown-item" href="/wishlist">المفضلة</a></li>
+                        <li><Link className="dropdown-item" to="/profile">حسابي</Link></li>
+                        <li><Link className="dropdown-item" to="/orders">طلباتي</Link></li>
+                        <li><Link className="dropdown-item" to="/wishlist">المفضلة</Link></li>
                         <li><hr className="dropdown-divider" /></li>
                         <li><button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button></li>
                       </ul>
@@ -287,12 +283,12 @@ export default function Header() {
               <ul className="navbar-nav mb-4">
                 {(isAuthenticated ? authLinks : navLinks).map(link => (
                   <li key={link.href} className="nav-item">
-                    <a
+                    <Link
                       className={`nav-link fw-bold py-3 border-bottom${isActive(link.href) ? " active text-danger" : ""}`}
-                      href={link.href}
+                      to={link.href}
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -322,8 +318,8 @@ export default function Header() {
                     </button>
                   </div>
                   <div className="d-flex flex-column gap-2 mt-2">
-                    <a href="/profile" className="btn btn-outline-dark">حسابي</a>
-                    <a href="/orders" className="btn btn-outline-dark">طلباتي</a>
+                    <Link to="/profile" className="btn btn-outline-dark">حسابي</Link>
+                    <Link to="/orders" className="btn btn-outline-dark">طلباتي</Link>
                     <button onClick={handleLogout} className="btn btn-danger">تسجيل الخروج</button>
                   </div>
                 </div>

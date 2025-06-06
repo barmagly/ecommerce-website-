@@ -10,7 +10,8 @@ import ProtectedRoute from "../components/ProtectedRoute";
 export default function Cart() {
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.userCart);
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  // const { isAuthenticated } = useSelector((state) => state.auth);
+  const token= localStorage.getItem('token')
   const navigate = useNavigate();
 
   const handleRemove = (id) => {
@@ -34,10 +35,10 @@ export default function Cart() {
   };
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (token) {
       dispatch(getCartThunk());
     }
-  }, [dispatch, isAuthenticated])
+  }, [dispatch,token])
 
   return (
     <ProtectedRoute>
@@ -113,6 +114,6 @@ export default function Cart() {
         </div>
         <Footer />
       </div>
-    </ProtectedRoute>
+   </ProtectedRoute>
   );
 } 

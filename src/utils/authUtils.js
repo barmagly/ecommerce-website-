@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom';
 
 export const checkAuthAndRedirect = (navigate) => {
     const state = Store.getState();
-    const { isAuthenticated } = state.auth;
-
-    if (!isAuthenticated) {
+    const token = localStorage.getItem('token');
+    if (!token) {
         toast.info('يرجى تسجيل الدخول أولاً', {
             position: "top-center",
             rtl: true,
