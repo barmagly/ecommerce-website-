@@ -409,7 +409,7 @@ const Dashboard = () => {
           totalVariants: 892,
         });
         
-        toast.success('تم تحميل بيانات لوحة التحكم بنجاح!');
+        // Dashboard loaded successfully - no need for toast notification
       } catch (error) {
         toast.error('فشل في تحميل بيانات لوحة التحكم');
         console.error('Dashboard error:', error);
@@ -581,198 +581,23 @@ const Dashboard = () => {
          </Box> 
 
                  {/* Sales Trend Chart - Full Width */}
-         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-          <Grid item xs={12}>
-            <ChartCard
-              title="اتجاه المبيعات والإيرادات"
-              height={450}
-              actions={[
-                <Tooltip title="التحليلات">
-                  <IconButton size="small">
-                    <Analytics />
-                  </IconButton>
-                </Tooltip>
-              ]}
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={salesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.primary, 0.1)} />
-                  <XAxis dataKey="month" stroke={theme.palette.text.secondary} />
-                  <YAxis stroke={theme.palette.text.secondary} />
-                  <RechartsTooltip 
-                    contentStyle={{
-                      backgroundColor: theme.palette.background.paper,
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="orders" fill="#667eea" name="الطلبات" radius={[4, 4, 0, 0]} />
-                  <Area 
-                    type="monotone" 
-                    dataKey="sales" 
-                    fill="url(#salesGradient)" 
-                    stroke="#4facfe" 
-                    name="المبيعات"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="revenue" 
-                    stroke="#fa709a" 
-                    strokeWidth={3}
-                    name="الإيرادات"
-                    dot={{ fill: '#fa709a', strokeWidth: 2, r: 6 }}
-                  />
-                  <defs>
-                    <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4facfe" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#4facfe" stopOpacity={0.05}/>
-                    </linearGradient>
-                  </defs>
-                </ComposedChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </Grid>
-        </Grid>
+        
 
         {/* Charts Row - Side by Side */}
                  <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
                    {/* Category Distribution Chart */}
                    <Grid item xs={12} md={6}>
-                     <ChartCard title="توزيع الفئات" height={400}>
-                       <ResponsiveContainer width="100%" height="100%">
-                         <PieChart>
-                           <Pie
-                             data={categoryData}
-                             cx="50%"
-                             cy="50%"
-                             innerRadius={60}
-                             outerRadius={120}
-                             paddingAngle={5}
-                             dataKey="value"
-                           >
-                             {categoryData.map((entry, index) => (
-                               <Cell key={`cell-${index}`} fill={entry.color} />
-                             ))}
-                           </Pie>
-                           <RechartsTooltip 
-                             contentStyle={{
-                               backgroundColor: theme.palette.background.paper,
-                               border: `1px solid ${theme.palette.divider}`,
-                               borderRadius: 8,
-                             }}
-                           />
-                           <Legend />
-                         </PieChart>
-                       </ResponsiveContainer>
-                     </ChartCard>
+                    
                    </Grid>
                    
                    {/* Performance Metrics Chart */}
                    <Grid item xs={12} md={6}>
-                     <ChartCard title="مقاييس الأداء" height={400}>
-                       <ResponsiveContainer width="100%" height="100%">
-                         <RadarChart data={performanceMetrics} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
-                           <PolarGrid stroke={alpha(theme.palette.text.primary, 0.1)} />
-                           <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                           <PolarRadiusAxis 
-                             angle={90} 
-                             domain={[0, 100]} 
-                             tick={{ fontSize: 10 }}
-                           />
-                           <Radar
-                             name="الأداء"
-                             dataKey="A"
-                             stroke="#667eea"
-                             fill="#667eea"
-                             fillOpacity={0.2}
-                             strokeWidth={2}
-                           />
-                           <RechartsTooltip 
-                             contentStyle={{
-                               backgroundColor: theme.palette.background.paper,
-                               border: `1px solid ${theme.palette.divider}`,
-                               borderRadius: 8,
-                             }}
-                           />
-                         </RadarChart>
-                       </ResponsiveContainer>
-                     </ChartCard>
+                     
                    </Grid>
                  </Grid>
 
                  {/* Top Products - Full Width */}
-         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-          <Grid item xs={12}>
-            <ChartCard title="المنتجات الأكثر مبيعاً" height={400}>
-              <Box sx={{ 
-                display: 'flex', 
-                flexWrap: 'wrap', 
-                gap: 2,
-                '& > *': { 
-                  flex: '1 1 auto',
-                  minWidth: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10.67px)', lg: 'calc(20% - 12.8px)' }
-                }
-              }}>
-                {topProducts.map((product, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    style={{ flex: '1 1 auto', minWidth: 'inherit' }}
-                  >
-                    <Card sx={{ 
-                      height: '100%', 
-                      borderRadius: 3,
-                      border: '1px solid',
-                      borderColor: alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.2),
-                      background: `linear-gradient(135deg, ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.05)} 0%, transparent 100%)`,
-                      '&:hover': {
-                        boxShadow: `0 8px 25px ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.15)}`,
-                        transform: 'translateY(-2px)',
-                      },
-                      transition: 'all 0.3s ease'
-                    }}>
-                      <CardContent sx={{ p: 2.5, textAlign: 'center' }}>
-                        <Avatar
-                          sx={{
-                            width: 50,
-                            height: 50,
-                            bgcolor: categoryData[index % categoryData.length]?.color || '#667eea',
-                            fontWeight: 'bold',
-                            mx: 'auto',
-                            mb: 2,
-                            fontSize: '1.2rem'
-                          }}
-                        >
-                          #{index + 1}
-                        </Avatar>
-                        <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
-                          {product.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          المبيعات: {product.sales.toLocaleString()}
-                        </Typography>
-                        <Typography variant="subtitle2" color="primary" fontWeight={600} sx={{ mb: 1 }}>
-                          ${product.revenue.toLocaleString()}
-                        </Typography>
-                        <Chip
-                          label={`مخزون: ${product.stock}`}
-                          size="small"
-                          color={product.stock > 50 ? 'success' : product.stock > 20 ? 'warning' : 'error'}
-                          variant="outlined"
-                          sx={{ fontSize: '0.75rem' }}
-                        />
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </Box>
-            </ChartCard>
-          </Grid>
-        </Grid>
+        
 
         {/* Recent Orders Table - Full Width */}
         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>

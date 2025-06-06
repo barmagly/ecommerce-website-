@@ -80,19 +80,20 @@ const menuItems = [
     gradient: 'linear-gradient(135deg, #ed6c02 0%, #e65100 100%)'
   },
   {
-    text: 'الطلبات',
-    icon: <ShoppingCartIcon />,
-    path: '/admin/orders',
-    color: '#9c27b0',
-    gradient: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)'
-  },
-  {
     text: 'الفئات',
     icon: <CategoryIcon />,
     path: '/admin/categories',
     color: '#d32f2f',
     gradient: 'linear-gradient(135deg, #d32f2f 0%, #c62828 100%)'
   },
+  {
+    text: 'الطلبات',
+    icon: <ShoppingCartIcon />,
+    path: '/admin/orders',
+    color: '#9c27b0',
+    gradient: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)'
+  },
+
   {
     text: 'الكوبونات',
     icon: <CouponIcon />,
@@ -267,13 +268,13 @@ function AdminLayout({ children }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, type: "spring" }}
       >
-        <Box
-          sx={{
+      <Box
+        sx={{
             p: 4,
             position: 'relative',
             zIndex: 1,
             textAlign: 'center',
-            color: 'white',
+          color: 'white',
           }}
         >
           <motion.div
@@ -281,14 +282,14 @@ function AdminLayout({ children }) {
               scale: 1.1,
               rotate: 360,
               transition: { duration: 0.6 }
-            }}
-          >
-            <Avatar
-              sx={{
+        }}
+      >
+        <Avatar
+          sx={{
                 width: 80,
                 height: 80,
-                mx: 'auto',
-                mb: 2,
+            mx: 'auto',
+            mb: 2,
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
                 border: '3px solid rgba(255,255,255,0.3)',
                 backdropFilter: 'blur(10px)',
@@ -296,24 +297,24 @@ function AdminLayout({ children }) {
               }}
             >
               <AnalyticsIcon sx={{ fontSize: 40, color: 'white' }} />
-            </Avatar>
+        </Avatar>
           </motion.div>
           <Typography variant="h5" fontWeight="bold" sx={{ mb: 0.5 }}>
-            لوحة التحكم
-          </Typography>
+          لوحة التحكم
+        </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            نظام إدارة المتجر 
-          </Typography>
+          نظام إدارة المتجر
+        </Typography>
          
-        </Box>
+      </Box>
       </motion.div>
 
       {/* Navigation Menu */}
       <Box sx={{ flex: 1, px: 2.5, mt: 2 }}>
         <List>
-          {menuItems.map((item, index) => {
-            const isActive = location.pathname === item.path;
-            return (
+        {menuItems.map((item, index) => {
+          const isActive = location.pathname === item.path;
+          return (
               <AnimatedMenuItem
                 key={item.text}
                 item={item}
@@ -321,9 +322,9 @@ function AdminLayout({ children }) {
                 onClick={() => navigate(item.path)}
                 index={index}
               />
-            );
-          })}
-        </List>
+          );
+        })}
+      </List>
       </Box>
 
       {/* Enhanced Footer */}
@@ -392,8 +393,8 @@ function AdminLayout({ children }) {
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
-                مرحباً بك في لوحة التحكم 
-              </Typography>
+            مرحباً بك في لوحة التحكم
+          </Typography>
             </motion.div>
           </Box>
 
@@ -409,16 +410,16 @@ function AdminLayout({ children }) {
                   }}
                 >
                   <HomeIcon sx={{ color: theme.palette.success.main }} />
-                </IconButton>
+            </IconButton>
               </Tooltip>
             </motion.div>
 
-         
+
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Tooltip title="الملف الشخصي">
-                <IconButton
-                  onClick={handleProfileMenuOpen}
+            <IconButton
+              onClick={handleProfileMenuOpen}
                   sx={{ 
                     background: alpha(theme.palette.primary.main, 0.1),
                     '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
@@ -430,9 +431,9 @@ function AdminLayout({ children }) {
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   }}>
-                    <AccountCircleIcon />
-                  </Avatar>
-                </IconButton>
+                <AccountCircleIcon />
+              </Avatar>
+            </IconButton>
               </Tooltip>
             </motion.div>
           </Box>
@@ -593,7 +594,7 @@ function AdminLayout({ children }) {
             height: '100%',
           }}
         >
-          {children}
+        {children}
         </motion.div>
       </Box>
     </Box>
