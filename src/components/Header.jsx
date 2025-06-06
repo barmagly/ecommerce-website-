@@ -43,6 +43,7 @@ export default function Header() {
   useEffect(() => {
   }, [profileUser, loading, error]);
 
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
