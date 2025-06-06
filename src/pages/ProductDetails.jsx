@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
-import { toast, ToastContainer } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { addToCartThunk } from "../services/Slice/cart/cart";

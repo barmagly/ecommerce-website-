@@ -9,15 +9,15 @@ import ProtectedRoute from "../components/ProtectedRoute";
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { token } = useSelector((state) => state.auth);
   const { cartItems = [], total = 0 } = location.state || {};
 
   useEffect(() => {
     // If no cart data is present or user is not authenticated, redirect to cart
-    if (!cartItems.length || !isAuthenticated) {
+    if (!cartItems.length || !token) {
       navigate('/cart');
     }
-  }, [cartItems, isAuthenticated, navigate]);
+  }, [cartItems, navigate]);
 
   const [form, setForm] = useState({
     firstName: "",
