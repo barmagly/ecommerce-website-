@@ -1,206 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  IconButton,
-  Chip,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Grid,
-  InputAdornment,
-  Tooltip,
-  useTheme,
-  alpha,
-  CircularProgress,
-  Avatar,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Divider,
-  Badge,
-  LinearProgress,
+  Box, Card, CardContent, Typography, Button, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow, TablePagination, IconButton, Chip,
+  TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl,
+  InputLabel, Select, MenuItem, Grid, InputAdornment, Tooltip, useTheme,
+  alpha, CircularProgress, Avatar, List, ListItem, ListItemText,
+  ListItemAvatar, Divider,
 } from '@mui/material';
 import {
-  Visibility as ViewIcon,
-  Search as SearchIcon,
-  ShoppingCart as CartIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  FilterAlt as FilterIcon,
-  TrendingUp as TrendingIcon,
-  AttachMoney as MoneyIcon,
-  Person as PersonIcon,
-  Clear as ClearIcon,
-  Schedule as ScheduleIcon,
-  ShoppingBag as BagIcon,
+  Visibility as ViewIcon, Search as SearchIcon, ShoppingCart as CartIcon,
+  Delete as DeleteIcon, Refresh as RefreshIcon, FilterAlt as FilterIcon,
+  TrendingUp as TrendingIcon, AttachMoney as MoneyIcon, Person as PersonIcon,
+  Clear as ClearIcon, Schedule as ScheduleIcon, ShoppingBag as BagIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 
-// Initial sample cart data
 const initialCarts = [
   {
-    id: 1,
-    userId: 1,
-    userName: 'أحمد محمد',
-    userEmail: 'ahmed@example.com',
+    id: 1, userId: 1, userName: 'أحمد محمد', userEmail: 'ahmed@example.com',
     userAvatar: 'https://via.placeholder.com/40x40?text=أ',
-    items: [
-      {
-        id: 1,
-        productId: 1,
-        productName: 'iPhone 15 Pro',
-        productImage: 'https://via.placeholder.com/60x60?text=iPhone',
-        price: 1200,
-        quantity: 1,
-        variant: 'أزرق - 256GB',
-        addedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: 2,
-        productId: 3,
-        productName: 'قميص قطني أنيق',
-        productImage: 'https://via.placeholder.com/60x60?text=Shirt',
-        price: 120,
-        quantity: 2,
-        variant: 'أبيض - Large',
-        addedAt: new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()
-      }
-    ],
-    totalAmount: 1440,
-    status: 'active', // active, abandoned, converted
+    items: [{
+      id: 1, productId: 1, productName: 'iPhone 15 Pro',
+      productImage: 'https://via.placeholder.com/60x60?text=iPhone',
+      price: 1200, quantity: 1, variant: 'أزرق - 256GB',
+      addedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()
+    }],
+    totalAmount: 1200, status: 'active',
     lastActivity: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    abandonedAt: null,
-    convertedAt: null,
-    sessionDuration: 45, // minutes
-    pageViews: 12,
+    sessionDuration: 45, pageViews: 12,
   },
   {
-    id: 2,
-    userId: 2,
-    userName: 'فاطمة علي',
-    userEmail: 'fatima@example.com',
+    id: 2, userId: 2, userName: 'فاطمة علي', userEmail: 'fatima@example.com',
     userAvatar: 'https://via.placeholder.com/40x40?text=ف',
-    items: [
-      {
-        id: 3,
-        productId: 2,
-        productName: 'Samsung Galaxy S24',
-        productImage: 'https://via.placeholder.com/60x60?text=Samsung',
-        price: 900,
-        quantity: 1,
-        variant: 'أسود - 128GB',
-        addedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
-      }
-    ],
-    totalAmount: 900,
-    status: 'abandoned',
+    items: [{
+      id: 2, productId: 2, productName: 'Samsung Galaxy S24',
+      productImage: 'https://via.placeholder.com/60x60?text=Samsung',
+      price: 900, quantity: 1, variant: 'أسود - 128GB',
+      addedAt: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString()
+    }],
+    totalAmount: 900, status: 'abandoned',
     lastActivity: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
     createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-    abandonedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    convertedAt: null,
-    sessionDuration: 25,
-    pageViews: 8,
-  },
-  {
-    id: 3,
-    userId: 3,
-    userName: 'محمد أحمد',
-    userEmail: 'mohamed@example.com',
-    userAvatar: 'https://via.placeholder.com/40x40?text=م',
-    items: [
-      {
-        id: 4,
-        productId: 1,
-        productName: 'iPhone 15 Pro',
-        productImage: 'https://via.placeholder.com/60x60?text=iPhone',
-        price: 1200,
-        quantity: 1,
-        variant: 'أحمر - 512GB',
-        addedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
-      },
-      {
-        id: 5,
-        productId: 2,
-        productName: 'Samsung Galaxy S24',
-        productImage: 'https://via.placeholder.com/60x60?text=Samsung',
-        price: 900,
-        quantity: 1,
-        variant: 'أبيض - 256GB',
-        addedAt: new Date(Date.now() - 10 * 60 * 60 * 1000).toISOString()
-      }
-    ],
-    totalAmount: 2100,
-    status: 'converted',
-    lastActivity: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    abandonedAt: null,
-    convertedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-    sessionDuration: 67,
-    pageViews: 23,
-  },
-  {
-    id: 4,
-    userId: 4,
-    userName: 'سارة حسن',
-    userEmail: 'sara@example.com',
-    userAvatar: 'https://via.placeholder.com/40x40?text=س',
-    items: [
-      {
-        id: 6,
-        productId: 3,
-        productName: 'قميص قطني أنيق',
-        productImage: 'https://via.placeholder.com/60x60?text=Shirt',
-        price: 120,
-        quantity: 3,
-        variant: 'أزرق - Medium',
-        addedAt: new Date(Date.now() - 20 * 60 * 1000).toISOString()
-      }
-    ],
-    totalAmount: 360,
-    status: 'active',
-    lastActivity: new Date(Date.now() - 20 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    abandonedAt: null,
-    convertedAt: null,
-    sessionDuration: 15,
-    pageViews: 5,
-  },
-  {
-    id: 5,
-    userId: 5,
-    userName: 'عبدالله كريم',
-    userEmail: 'abdullah@example.com',
-    userAvatar: 'https://via.placeholder.com/40x40?text=ع',
-    items: [],
-    totalAmount: 0,
-    status: 'abandoned',
-    lastActivity: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    abandonedAt: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    convertedAt: null,
-    sessionDuration: 5,
-    pageViews: 2,
-  },
+    sessionDuration: 25, pageViews: 8,
+  }
 ];
 
 const Carts = () => {
@@ -211,14 +55,10 @@ const Carts = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  
-  // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedCart, setSelectedCart] = useState(null);
 
-  useEffect(() => {
-    loadCarts();
-  }, []);
+  useEffect(() => { loadCarts(); }, []);
 
   const loadCarts = () => {
     setLoading(true);
@@ -250,30 +90,15 @@ const Carts = () => {
 
   const filteredCarts = carts.filter(cart => {
     const matchesSearch = cart.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cart.userEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cart.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()));
+                         cart.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !filterStatus || cart.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleOpenDialog = (cart) => {
-    setSelectedCart(cart);
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedCart(null);
-  };
+  const handleChangePage = (event, newPage) => { setPage(newPage); };
+  const handleChangeRowsPerPage = (event) => { setRowsPerPage(parseInt(event.target.value, 10)); setPage(0); };
+  const handleOpenDialog = (cart) => { setSelectedCart(cart); setOpenDialog(true); };
+  const handleCloseDialog = () => { setOpenDialog(false); setSelectedCart(null); };
 
   const handleDeleteCart = (cartId) => {
     if (window.confirm('هل أنت متأكد من حذف هذه العربة؟')) {
@@ -283,28 +108,6 @@ const Carts = () => {
         toast.success('تم حذف العربة بنجاح');
       } catch (error) {
         toast.error('فشل في حذف العربة');
-      }
-    }
-  };
-
-  const handleClearCart = (cartId) => {
-    if (window.confirm('هل أنت متأكد من إفراغ هذه العربة؟')) {
-      try {
-        const updatedCarts = carts.map(cart =>
-          cart.id === cartId
-            ? { 
-                ...cart, 
-                items: [], 
-                totalAmount: 0, 
-                status: 'abandoned',
-                abandonedAt: new Date().toISOString()
-              }
-            : cart
-        );
-        saveCarts(updatedCarts);
-        toast.success('تم إفراغ العربة بنجاح');
-      } catch (error) {
-        toast.error('فشل في إفراغ العربة');
       }
     }
   };
@@ -329,17 +132,11 @@ const Carts = () => {
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('ar-SA', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
 
-  const formatCurrency = (amount) => {
-    return `${amount.toLocaleString()} ر.س`;
-  };
+  const formatCurrency = (amount) => { return `${amount.toLocaleString()} ر.س`; };
 
   const getTimeAgo = (dateString) => {
     const now = new Date();
@@ -365,42 +162,21 @@ const Carts = () => {
 
   const activeCarts = carts.filter(c => c.status === 'active').length;
   const abandonedCarts = carts.filter(c => c.status === 'abandoned').length;
-  const convertedCarts = carts.filter(c => c.status === 'converted').length;
-  const totalRevenue = carts
-    .filter(c => c.status === 'converted')
-    .reduce((sum, c) => sum + c.totalAmount, 0);
+  const totalRevenue = carts.filter(c => c.status === 'converted').reduce((sum, c) => sum + c.totalAmount, 0);
 
   return (
     <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
+      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
         <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            إدارة عربات التسوق
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            متابعة وإدارة عربات التسوق النشطة والمهجورة
-          </Typography>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>إدارة عربات التسوق</Typography>
+          <Typography variant="body1" color="text.secondary">متابعة وإدارة عربات التسوق النشطة والمهجورة</Typography>
         </Box>
       </motion.div>
 
-      {/* Statistics Cards */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
         <Grid container spacing={3} sx={{ mb: 4 }}>
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ 
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
-              borderRadius: 3
-            }}>
+            <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
@@ -414,11 +190,7 @@ const Carts = () => {
           </Grid>
           
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ 
-              background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
-              color: 'white',
-              borderRadius: 3
-            }}>
+            <Card sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
@@ -432,11 +204,7 @@ const Carts = () => {
           </Grid>
           
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ 
-              background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
-              color: 'white',
-              borderRadius: 3
-            }}>
+            <Card sx={{ background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
@@ -450,11 +218,7 @@ const Carts = () => {
           </Grid>
           
           <Grid item xs={12} sm={6} md={3}>
-            <Card sx={{ 
-              background: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)',
-              color: 'white',
-              borderRadius: 3
-            }}>
+            <Card sx={{ background: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
@@ -469,39 +233,21 @@ const Carts = () => {
         </Grid>
       </motion.div>
 
-      {/* Filters and Search */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.2 }}>
         <Card sx={{ mb: 4, borderRadius: 3 }}>
           <CardContent>
             <Grid container spacing={3} alignItems="center">
               <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  placeholder="البحث في العربات..."
-                  value={searchTerm}
+                <TextField fullWidth placeholder="البحث في العربات..." value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
+                  InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon color="action" /></InputAdornment> }}
                 />
               </Grid>
               
               <Grid item xs={12} md={2}>
                 <FormControl fullWidth>
                   <InputLabel>الحالة</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    label="الحالة"
-                  >
+                  <Select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} label="الحالة">
                     <MenuItem value="">جميع الحالات</MenuItem>
                     <MenuItem value="active">نشطة</MenuItem>
                     <MenuItem value="abandoned">متروكة</MenuItem>
@@ -511,28 +257,13 @@ const Carts = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <Button
-                  variant="outlined"
-                  startIcon={<RefreshIcon />}
-                  onClick={loadCarts}
-                  fullWidth
-                >
-                  تحديث
-                </Button>
+                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={loadCarts} fullWidth>تحديث</Button>
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<FilterIcon />}
-                  fullWidth
-                  sx={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                    }
-                  }}
-                >
+                <Button variant="contained" startIcon={<FilterIcon />} fullWidth
+                  sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}>
                   تصفية
                 </Button>
               </Grid>
@@ -541,12 +272,7 @@ const Carts = () => {
         </Card>
       </motion.div>
 
-      {/* Carts Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}>
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <TableContainer>
             <Table>
@@ -557,36 +283,24 @@ const Carts = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>المبلغ الإجمالي</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>الحالة</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>النشاط الأخير</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>إحصائيات</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 <AnimatePresence>
-                  {filteredCarts
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  {filteredCarts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((cart, index) => (
-                      <motion.tr
-                        key={cart.id}
-                        component={TableRow}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        hover
-                      >
+                      <motion.tr key={cart.id} component={TableRow}
+                        initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3, delay: index * 0.05 }} hover>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Avatar src={cart.userAvatar} sx={{ width: 40, height: 40 }}>
                               <PersonIcon />
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2" fontWeight="bold">
-                                {cart.userName}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {cart.userEmail}
-                              </Typography>
+                              <Typography variant="subtitle2" fontWeight="bold">{cart.userName}</Typography>
+                              <Typography variant="caption" color="text.secondary">{cart.userEmail}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
@@ -616,11 +330,7 @@ const Carts = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <Chip
-                            label={getStatusText(cart.status)}
-                            color={getStatusColor(cart.status)}
-                            size="small"
-                          />
+                          <Chip label={getStatusText(cart.status)} color={getStatusColor(cart.status)} size="small" />
                         </TableCell>
                         
                         <TableCell>
@@ -633,48 +343,15 @@ const Carts = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <ScheduleIcon fontSize="small" color="action" />
-                              <Typography variant="caption">{cart.sessionDuration} دقيقة</Typography>
-                            </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <ViewIcon fontSize="small" color="action" />
-                              <Typography variant="caption">{cart.pageViews} صفحة</Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="عرض التفاصيل">
-                              <IconButton
-                                size="small"
-                                color="info"
-                                onClick={() => handleOpenDialog(cart)}
-                              >
+                              <IconButton size="small" color="info" onClick={() => handleOpenDialog(cart)}>
                                 <ViewIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             
-                            {cart.items.length > 0 && (
-                              <Tooltip title="إفراغ العربة">
-                                <IconButton
-                                  size="small"
-                                  color="warning"
-                                  onClick={() => handleClearCart(cart.id)}
-                                >
-                                  <ClearIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            )}
-                            
                             <Tooltip title="حذف العربة">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteCart(cart.id)}
-                              >
+                              <IconButton size="small" color="error" onClick={() => handleDeleteCart(cart.id)}>
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
@@ -687,188 +364,83 @@ const Carts = () => {
             </Table>
           </TableContainer>
           
-          <TablePagination
-            component="div"
-            count={filteredCarts.length}
-            page={page}
-            onPageChange={handleChangePage}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            labelRowsPerPage="عدد الصفوف في الصفحة:"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`}
-          />
+          <TablePagination component="div" count={filteredCarts.length} page={page}
+            onPageChange={handleChangePage} rowsPerPage={rowsPerPage} onRowsPerPageChange={handleChangeRowsPerPage}
+            labelRowsPerPage="عدد الصفوف في الصفحة:" labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`} />
         </Card>
       </motion.div>
 
-      {/* Cart Details Dialog */}
-      <Dialog
-        open={openDialog}
-        onClose={handleCloseDialog}
-        maxWidth="md"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
-      >
-        <DialogTitle sx={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
-          fontWeight: 'bold'
-        }}>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', fontWeight: 'bold' }}>
           تفاصيل عربة التسوق
         </DialogTitle>
         
         <DialogContent sx={{ p: 3, mt: 2 }}>
           {selectedCart && (
             <Box>
-              {/* Cart Header */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                 <Avatar src={selectedCart.userAvatar} sx={{ width: 60, height: 60 }}>
                   <PersonIcon />
                 </Avatar>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant="h6" fontWeight="bold">
-                    {selectedCart.userName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {selectedCart.userEmail}
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1 }}>
-                    <Chip
-                      label={getStatusText(selectedCart.status)}
-                      color={getStatusColor(selectedCart.status)}
-                      size="small"
-                    />
-                    <Typography variant="body2" color="text.secondary">
-                      إنشئت: {formatDate(selectedCart.createdAt)}
-                    </Typography>
-                  </Box>
+                  <Typography variant="h6" fontWeight="bold">{selectedCart.userName}</Typography>
+                  <Typography variant="body2" color="text.secondary">{selectedCart.userEmail}</Typography>
+                  <Chip label={getStatusText(selectedCart.status)} color={getStatusColor(selectedCart.status)} size="small" sx={{ mt: 1 }} />
                 </Box>
                 <Box sx={{ textAlign: 'center' }}>
                   <Typography variant="h5" fontWeight="bold" color="primary">
                     {formatCurrency(selectedCart.totalAmount)}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    المجموع الإجمالي
-                  </Typography>
+                  <Typography variant="caption" color="text.secondary">المجموع الإجمالي</Typography>
                 </Box>
               </Box>
 
-              {/* Cart Statistics */}
-              <Grid container spacing={2} sx={{ mb: 3 }}>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ p: 2, textAlign: 'center', bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                    <Typography variant="h6" fontWeight="bold" color="primary">
-                      {selectedCart.items.length}
-                    </Typography>
-                    <Typography variant="caption">منتجات</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ p: 2, textAlign: 'center', bgcolor: alpha(theme.palette.info.main, 0.05) }}>
-                    <Typography variant="h6" fontWeight="bold" color="info.main">
-                      {selectedCart.sessionDuration}
-                    </Typography>
-                    <Typography variant="caption">دقيقة</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ p: 2, textAlign: 'center', bgcolor: alpha(theme.palette.success.main, 0.05) }}>
-                    <Typography variant="h6" fontWeight="bold" color="success.main">
-                      {selectedCart.pageViews}
-                    </Typography>
-                    <Typography variant="caption">صفحة</Typography>
-                  </Card>
-                </Grid>
-                <Grid item xs={6} md={3}>
-                  <Card sx={{ p: 2, textAlign: 'center', bgcolor: alpha(theme.palette.warning.main, 0.05) }}>
-                    <Typography variant="h6" fontWeight="bold" color="warning.main">
-                      {getTimeAgo(selectedCart.lastActivity)}
-                    </Typography>
-                    <Typography variant="caption">آخر نشاط</Typography>
-                  </Card>
-                </Grid>
-              </Grid>
-
-              {/* Cart Items */}
-              <Box>
-                <Typography variant="h6" gutterBottom>منتجات العربة:</Typography>
-                {selectedCart.items.length > 0 ? (
-                  <List>
-                    {selectedCart.items.map((item, index) => (
-                      <React.Fragment key={item.id}>
-                        <ListItem sx={{ px: 0 }}>
-                          <ListItemAvatar>
-                            <Avatar
-                              src={item.productImage}
-                              variant="rounded"
-                              sx={{ width: 60, height: 60 }}
-                            >
-                              <BagIcon />
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="subtitle1" fontWeight="bold">
-                                  {item.productName}
-                                </Typography>
-                                <Typography variant="h6" color="primary">
-                                  {formatCurrency(item.price * item.quantity)}
-                                </Typography>
-                              </Box>
-                            }
-                            secondary={
-                              <Box>
-                                <Typography variant="body2" color="text.secondary">
-                                  {item.variant}
-                                </Typography>
-                                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                                  <Typography variant="body2">
-                                    الكمية: {item.quantity} × {formatCurrency(item.price)}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    أضيف: {formatDate(item.addedAt)}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            }
-                          />
-                        </ListItem>
-                        {index < selectedCart.items.length - 1 && <Divider />}
-                      </React.Fragment>
-                    ))}
-                  </List>
-                ) : (
-                  <Card sx={{ p: 3, textAlign: 'center', bgcolor: alpha(theme.palette.grey[500], 0.05) }}>
-                    <CartIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
-                    <Typography variant="h6" color="text.secondary">
-                      العربة فارغة
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      لا توجد منتجات في هذه العربة
-                    </Typography>
-                  </Card>
-                )}
-              </Box>
+              <Typography variant="h6" gutterBottom>منتجات العربة:</Typography>
+              {selectedCart.items.length > 0 ? (
+                <List>
+                  {selectedCart.items.map((item, index) => (
+                    <React.Fragment key={item.id}>
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemAvatar>
+                          <Avatar src={item.productImage} variant="rounded" sx={{ width: 60, height: 60 }}>
+                            <BagIcon />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <Typography variant="subtitle1" fontWeight="bold">{item.productName}</Typography>
+                              <Typography variant="h6" color="primary">
+                                {formatCurrency(item.price * item.quantity)}
+                              </Typography>
+                            </Box>
+                          }
+                          secondary={
+                            <Box>
+                              <Typography variant="body2" color="text.secondary">{item.variant}</Typography>
+                              <Typography variant="body2">
+                                الكمية: {item.quantity} × {formatCurrency(item.price)}
+                              </Typography>
+                            </Box>
+                          }
+                        />
+                      </ListItem>
+                      {index < selectedCart.items.length - 1 && <Divider />}
+                    </React.Fragment>
+                  ))}
+                </List>
+              ) : (
+                <Card sx={{ p: 3, textAlign: 'center', bgcolor: alpha(theme.palette.grey[500], 0.05) }}>
+                  <CartIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
+                  <Typography variant="h6" color="text.secondary">العربة فارغة</Typography>
+                </Card>
+              )}
             </Box>
           )}
         </DialogContent>
         
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCloseDialog} color="inherit">
-            إغلاق
-          </Button>
-          {selectedCart && selectedCart.items.length > 0 && (
-            <Button
-              variant="outlined"
-              color="warning"
-              onClick={() => {
-                handleClearCart(selectedCart.id);
-                handleCloseDialog();
-              }}
-            >
-              إفراغ العربة
-            </Button>
-          )}
+          <Button onClick={handleCloseDialog} color="inherit">إغلاق</Button>
         </DialogActions>
       </Dialog>
     </Box>
