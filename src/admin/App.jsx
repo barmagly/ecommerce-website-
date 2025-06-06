@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, CssBaseline } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
@@ -104,22 +104,20 @@ function AdminApp() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ direction: 'rtl' }}>
-        <Router>
-          <AdminLayout>
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/users" element={<Users />} />
-              <Route path="/products" element={<Products />} />
-              <Route path="/orders" element={<Orders />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/coupons" element={<Coupons />} />
-              <Route path="/reviews" element={<Reviews />} />
-              <Route path="/carts" element={<Carts />} />
-              <Route path="/variants" element={<Variants />} />
-            </Routes>
-          </AdminLayout>
-        </Router>
+        <AdminLayout>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/orders" element={<Orders />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/coupons" element={<Coupons />} />
+            <Route path="/reviews" element={<Reviews />} />
+            <Route path="/carts" element={<Carts />} />
+            <Route path="/variants" element={<Variants />} />
+          </Routes>
+        </AdminLayout>
         
         <ToastContainer
           position="top-left"

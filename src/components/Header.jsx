@@ -41,11 +41,7 @@ export default function Header() {
     }
   }, [dispatch, isAuthenticated]);
 
-  useEffect(() => {
-    console.log("Profile user data:", profileUser);
-    console.log("Profile loading:", loading);
-    console.log("Profile error:", error);
-  }, [profileUser, loading, error]);
+
 
   const handleSearch = (e) => {
     e.preventDefault();

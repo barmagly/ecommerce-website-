@@ -150,72 +150,123 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
   
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      initial={{ opacity: 0, y: 20, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
+      whileHover={{ 
+        y: -8, 
+        scale: 1.02,
+        transition: { duration: 0.3, type: "spring", stiffness: 200 }
+      }}
     >
       <Card
         sx={{
           height: '100%',
-          background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
-          border: `1px solid ${alpha(color, 0.2)}`,
-          borderRadius: 3,
+          background: `linear-gradient(135deg, ${alpha(color, 0.15)} 0%, ${alpha(color, 0.05)} 100%)`,
+          border: `2px solid ${alpha(color, 0.2)}`,
+          borderRadius: 4,
           position: 'relative',
           overflow: 'hidden',
+          boxShadow: `0 8px 40px ${alpha(color, 0.12)}`,
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: `0 12px 60px ${alpha(color, 0.2)}`,
+            border: `2px solid ${alpha(color, 0.4)}`,
+          },
           '&::before': {
             content: '""',
             position: 'absolute',
             top: 0,
             left: 0,
             right: 0,
-            height: '4px',
-            background: color,
+            height: '6px',
+            background: `linear-gradient(90deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 100,
+            height: 100,
+            background: `radial-gradient(circle, ${alpha(color, 0.1)} 0%, transparent 70%)`,
+            borderRadius: '50%',
           }
         }}
       >
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 4, position: 'relative', zIndex: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Box>
-              <Typography variant="h4" fontWeight="bold" color={color}>
-                <AnimatedCounter value={value} />
-              </Typography>
-              <Typography variant="h6" color="text.primary" fontWeight={600}>
+            <Box sx={{ flex: 1 }}>
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
+              >
+                <Typography variant="h3" fontWeight="bold" color={color} sx={{ mb: 1 }}>
+                  <AnimatedCounter value={value} />
+                </Typography>
+              </motion.div>
+              <Typography variant="h6" color="text.primary" fontWeight={700} sx={{ mb: 0.5 }}>
                 {title}
               </Typography>
               {subtitle && (
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.8 }}>
                   {subtitle}
                 </Typography>
               )}
               {trend && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  {trend === 'up' ? (
-                    <TrendingUp sx={{ color: '#4caf50', fontSize: 16, mr: 0.5 }} />
-                  ) : (
-                    <TrendingDown sx={{ color: '#f44336', fontSize: 16, mr: 0.5 }} />
-                  )}
-                  <Typography 
-                    variant="caption" 
-                    color={trend === 'up' ? '#4caf50' : '#f44336'}
-                    fontWeight={600}
-                  >
-                    {trendValue}% مقارنة بالشهر الماضي
-                  </Typography>
-                </Box>
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5, duration: 0.3 }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5 }}>
+                    {trend === 'up' ? (
+                      <TrendingUp sx={{ color: '#4caf50', fontSize: 18, mr: 0.5 }} />
+                    ) : (
+                      <TrendingDown sx={{ color: '#f44336', fontSize: 18, mr: 0.5 }} />
+                    )}
+                    <Typography 
+                      variant="body2" 
+                      fontWeight="bold"
+                      color={trend === 'up' ? '#4caf50' : '#f44336'}
+                    >
+                      {trendValue}% مقارنة بالشهر الماضي
+                    </Typography>
+                  </Box>
+                </motion.div>
               )}
             </Box>
-            <Avatar
-              sx={{
-                width: 64,
-                height: 64,
-                bgcolor: alpha(color, 0.1),
-                color: color,
-                border: `2px solid ${alpha(color, 0.2)}`,
+            
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.4, duration: 0.6, type: "spring" }}
+              whileHover={{ 
+                scale: 1.1, 
+                rotate: 5,
+                transition: { duration: 0.2 }
               }}
             >
-              {icon}
-            </Avatar>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                width: 85,
+                height: 85,
+                borderRadius: '50%',
+                background: `linear-gradient(135deg, ${alpha(color, 0.15)} 0%, ${alpha(color, 0.05)} 100%)`,
+                border: `3px solid ${alpha(color, 0.2)}`,
+                color: color,
+                boxShadow: `0 8px 25px ${alpha(color, 0.15)}`,
+                '& svg': {
+                  fontSize: 32,
+                  filter: `drop-shadow(0 2px 8px ${alpha(color, 0.3)})`,
+                }
+              }}>
+                {icon}
+              </Box>
+            </motion.div>
           </Box>
         </CardContent>
       </Card>
@@ -230,18 +281,34 @@ const ChartCard = ({ title, children, height = 300, actions }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
+      whileHover={{ 
+        y: -3,
+        transition: { duration: 0.2 }
+      }}
     >
       <Card
         sx={{
-          borderRadius: 3,
-          border: '1px solid',
+          borderRadius: 4,
+          border: '2px solid',
           borderColor: 'divider',
-          boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)',
+          backdropFilter: 'blur(10px)',
+          transition: 'all 0.3s ease',
+          '&:hover': {
+            boxShadow: '0 12px 48px rgba(0,0,0,0.12)',
+            borderColor: 'primary.main',
+          }
         }}
       >
-        <CardContent sx={{ p: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" fontWeight="bold">
+        <CardContent sx={{ p: 4 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+            <Typography variant="h5" fontWeight="bold" sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+            }}>
               {title}
             </Typography>
             {actions && (
@@ -250,7 +317,18 @@ const ChartCard = ({ title, children, height = 300, actions }) => {
               </Box>
             )}
           </Box>
-          <Box sx={{ height }}>
+                     <Box sx={{ 
+             height, 
+             width: '100%',
+             '& .recharts-wrapper': {
+               width: '100% !important',
+               maxWidth: '100% !important',
+             },
+             '& .recharts-responsive-container': {
+               width: '100% !important',
+               maxWidth: '100% !important',
+             }
+           }}>
             {children}
           </Box>
         </CardContent>
@@ -362,7 +440,13 @@ const Dashboard = () => {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ 
+      p: { xs: 2, md: 3 }, 
+      width: '100%', 
+      maxWidth: '100%',
+      minHeight: 'calc(100vh - 64px)',
+      boxSizing: 'border-box'
+    }}>
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -397,9 +481,9 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-        {/* Primary Stats Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+                 {/* Primary Stats Cards */}
+         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+          <Grid item xs={12}>
             <StatsCard
               title="إجمالي المستخدمين"
               value={dashboardData.totalUsers}
@@ -410,7 +494,7 @@ const Dashboard = () => {
               subtitle="العملاء النشطون"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12}>
             <StatsCard
               title="المنتجات"
               value={dashboardData.totalProducts}
@@ -421,7 +505,7 @@ const Dashboard = () => {
               subtitle="في المخزون"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12}>
             <StatsCard
               title="الطلبات"
               value={dashboardData.totalOrders}
@@ -432,7 +516,7 @@ const Dashboard = () => {
               subtitle="إجمالي الطلبات"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12}>
             <StatsCard
               title="الإيرادات"
               value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
@@ -445,9 +529,9 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Secondary Stats */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={2.4}>
+                 {/* Secondary Stats */}
+         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+          <Grid item xs={12}>
             <StatsCard
               title="الفئات"
               value={dashboardData.totalCategories}
@@ -456,7 +540,7 @@ const Dashboard = () => {
               subtitle="فئات المنتجات"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12}>
             <StatsCard
               title="الكوبونات النشطة"
               value={dashboardData.totalCoupons}
@@ -465,7 +549,7 @@ const Dashboard = () => {
               subtitle="كوبونات الخصم"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12}>
             <StatsCard
               title="المراجعات"
               value={dashboardData.totalReviews}
@@ -476,7 +560,7 @@ const Dashboard = () => {
               subtitle="مراجعات العملاء"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12}>
             <StatsCard
               title="عربات التسوق النشطة"
               value={dashboardData.totalCarts}
@@ -485,7 +569,7 @@ const Dashboard = () => {
               subtitle="عربات التسوق"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={2.4}>
+          <Grid item xs={12}>
             <StatsCard
               title="خيارات المنتجات"
               value={dashboardData.totalVariants}
@@ -496,13 +580,12 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-        {/* Charts Row */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Sales Trend */}
-          <Grid item xs={12} lg={8}>
+                 {/* Sales Trend Chart - Full Width */}
+         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+          <Grid item xs={12}>
             <ChartCard
               title="اتجاه المبيعات والإيرادات"
-              height={400}
+              height={450}
               actions={[
                 <Tooltip title="التحليلات">
                   <IconButton size="small">
@@ -512,7 +595,7 @@ const Dashboard = () => {
               ]}
             >
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={salesData}>
+                <ComposedChart data={salesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={alpha(theme.palette.text.primary, 0.1)} />
                   <XAxis dataKey="month" stroke={theme.palette.text.secondary} />
                   <YAxis stroke={theme.palette.text.secondary} />
@@ -550,138 +633,188 @@ const Dashboard = () => {
               </ResponsiveContainer>
             </ChartCard>
           </Grid>
-
-          {/* Category Distribution */}
-          <Grid item xs={12} lg={4}>
-            <ChartCard title="توزيع الفئات" height={400}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={120}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <RechartsTooltip 
-                    contentStyle={{
-                      backgroundColor: theme.palette.background.paper,
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 8,
-                    }}
-                  />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </Grid>
         </Grid>
 
-        {/* Performance Radar and Recent Activity */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          {/* Performance Metrics */}
-          <Grid item xs={12} md={6}>
-            <ChartCard title="مقاييس الأداء" height={350}>
-              <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={performanceMetrics}>
-                  <PolarGrid stroke={alpha(theme.palette.text.primary, 0.1)} />
-                  <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
-                  <PolarRadiusAxis 
-                    angle={90} 
-                    domain={[0, 100]} 
-                    tick={{ fontSize: 10 }}
-                  />
-                  <Radar
-                    name="الأداء"
-                    dataKey="A"
-                    stroke="#667eea"
-                    fill="#667eea"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                  <RechartsTooltip 
-                    contentStyle={{
-                      backgroundColor: theme.palette.background.paper,
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 8,
-                    }}
-                  />
-                </RadarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </Grid>
+                 {/* Category Distribution Chart - Full Width */}
+                 <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+                   <Grid item xs={12}>
+                     <ChartCard title="توزيع الفئات" height={400}>
+                       <ResponsiveContainer width="100%" height="100%">
+                         <PieChart>
+                           <Pie
+                             data={categoryData}
+                             cx="50%"
+                             cy="50%"
+                             innerRadius={60}
+                             outerRadius={140}
+                             paddingAngle={5}
+                             dataKey="value"
+                           >
+                             {categoryData.map((entry, index) => (
+                               <Cell key={`cell-${index}`} fill={entry.color} />
+                             ))}
+                           </Pie>
+                           <RechartsTooltip 
+                             contentStyle={{
+                               backgroundColor: theme.palette.background.paper,
+                               border: `1px solid ${theme.palette.divider}`,
+                               borderRadius: 8,
+                             }}
+                           />
+                           <Legend />
+                         </PieChart>
+                       </ResponsiveContainer>
+                     </ChartCard>
+                   </Grid>
+                 </Grid>
 
-          {/* Top Products */}
-          <Grid item xs={12} md={6}>
-            <ChartCard title="المنتجات الأكثر مبيعاً" height={350}>
-              <List sx={{ maxHeight: 320, overflow: 'auto' }}>
+                 {/* Performance Metrics Chart - Full Width */}
+                 <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+                   <Grid item xs={12}>
+                     <ChartCard title="مقاييس الأداء" height={400}>
+                       <ResponsiveContainer width="100%" height="100%">
+                         <RadarChart data={performanceMetrics} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
+                           <PolarGrid stroke={alpha(theme.palette.text.primary, 0.1)} />
+                           <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+                           <PolarRadiusAxis 
+                             angle={90} 
+                             domain={[0, 100]} 
+                             tick={{ fontSize: 10 }}
+                           />
+                           <Radar
+                             name="الأداء"
+                             dataKey="A"
+                             stroke="#667eea"
+                             fill="#667eea"
+                             fillOpacity={0.2}
+                             strokeWidth={2}
+                           />
+                           <RechartsTooltip 
+                             contentStyle={{
+                               backgroundColor: theme.palette.background.paper,
+                               border: `1px solid ${theme.palette.divider}`,
+                               borderRadius: 8,
+                             }}
+                           />
+                         </RadarChart>
+                       </ResponsiveContainer>
+                     </ChartCard>
+                   </Grid>
+                 </Grid>
+
+                 {/* Top Products - Full Width */}
+         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+          <Grid item xs={12}>
+            <ChartCard title="المنتجات الأكثر مبيعاً" height={400}>
+              <Grid container spacing={2}>
                 {topProducts.map((product, index) => (
-                  <ListItem key={index} sx={{ px: 0 }}>
-                    <ListItemAvatar>
-                      <Avatar
-                        sx={{
-                          bgcolor: categoryData[index % categoryData.length]?.color || '#667eea',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        #{index + 1}
-                      </Avatar>
-                    </ListItemAvatar>
-                    <ListItemText
-                      primary={
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          {product.name}
-                        </Typography>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography variant="caption" color="text.secondary">
-                            المبيعات: {product.sales} • الإيرادات: ${product.revenue.toLocaleString()}
+                  <Grid item xs={12} key={index}>
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    >
+                      <Card sx={{ 
+                        height: '100%', 
+                        borderRadius: 3,
+                        border: '1px solid',
+                        borderColor: alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.2),
+                        background: `linear-gradient(135deg, ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.05)} 0%, transparent 100%)`,
+                        '&:hover': {
+                          boxShadow: `0 8px 25px ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.15)}`,
+                          transform: 'translateY(-2px)',
+                        },
+                        transition: 'all 0.3s ease'
+                      }}>
+                        <CardContent sx={{ p: 2.5, textAlign: 'center' }}>
+                          <Avatar
+                            sx={{
+                              width: 50,
+                              height: 50,
+                              bgcolor: categoryData[index % categoryData.length]?.color || '#667eea',
+                              fontWeight: 'bold',
+                              mx: 'auto',
+                              mb: 2,
+                              fontSize: '1.2rem'
+                            }}
+                          >
+                            #{index + 1}
+                          </Avatar>
+                          <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                            {product.name}
                           </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}>
-                            <Typography variant="caption" sx={{ mr: 1 }}>
-                              المخزون:
-                            </Typography>
-                            <Chip
-                              label={product.stock}
-                              size="small"
-                              color={product.stock > 50 ? 'success' : product.stock > 20 ? 'warning' : 'error'}
-                              variant="outlined"
-                            />
-                          </Box>
-                        </Box>
-                      }
-                    />
-                  </ListItem>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            المبيعات: {product.sales.toLocaleString()}
+                          </Typography>
+                          <Typography variant="subtitle2" color="primary" fontWeight={600} sx={{ mb: 1 }}>
+                            ${product.revenue.toLocaleString()}
+                          </Typography>
+                          <Chip
+                            label={`مخزون: ${product.stock}`}
+                            size="small"
+                            color={product.stock > 50 ? 'success' : product.stock > 20 ? 'warning' : 'error'}
+                            variant="outlined"
+                            sx={{ fontSize: '0.75rem' }}
+                          />
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  </Grid>
                 ))}
-              </List>
+              </Grid>
             </ChartCard>
           </Grid>
         </Grid>
 
-        {/* Recent Orders Table */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+        {/* Recent Orders Table - Full Width */}
+        <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
+          <Grid item xs={12}>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+          <Card sx={{ 
+            borderRadius: 4, 
+            border: '2px solid', 
+            borderColor: 'divider',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.08)',
+            background: 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.7) 100%)',
+            backdropFilter: 'blur(10px)',
+          }}>
             <CardContent sx={{ p: 0 }}>
-              <Box sx={{ p: 3, pb: 0 }}>
-                <Typography variant="h6" fontWeight="bold">
+              <Box sx={{ p: 4, pb: 2 }}>
+                <Typography variant="h5" fontWeight="bold" sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1
+                }}>
                   الطلبات الحديثة
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body1" color="text.secondary">
                   أحدث طلبات العملاء وحالتها
                 </Typography>
               </Box>
-              <TableContainer>
+              <TableContainer sx={{ 
+                maxHeight: 500, 
+                '&::-webkit-scrollbar': {
+                  width: 8,
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: alpha('#000', 0.05),
+                  borderRadius: 4,
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: alpha('#000', 0.2),
+                  borderRadius: 4,
+                  '&:hover': {
+                    background: alpha('#000', 0.3),
+                  }
+                }
+              }}>
                 <Table>
                   <TableHead>
                     <TableRow>
@@ -746,7 +879,9 @@ const Dashboard = () => {
               </TableContainer>
             </CardContent>
           </Card>
-        </motion.div>
+            </motion.div>
+          </Grid>
+        </Grid>
       </motion.div>
     </Box>
   );
