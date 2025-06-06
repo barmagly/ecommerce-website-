@@ -53,6 +53,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 320;
 
@@ -60,63 +61,63 @@ const menuItems = [
   {
     text: 'لوحة التحكم',
     icon: <DashboardIcon />,
-    path: '/dashboard',
+    path: '/admin',
     color: '#1976d2',
     gradient: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)'
   },
   {
     text: 'المستخدمين',
     icon: <PeopleIcon />,
-    path: '/users',
+    path: '/admin/users',
     color: '#2e7d32',
     gradient: 'linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)'
   },
   {
     text: 'المنتجات',
     icon: <InventoryIcon />,
-    path: '/products',
+    path: '/admin/products',
     color: '#ed6c02',
     gradient: 'linear-gradient(135deg, #ed6c02 0%, #e65100 100%)'
   },
   {
     text: 'الطلبات',
     icon: <ShoppingCartIcon />,
-    path: '/orders',
+    path: '/admin/orders',
     color: '#9c27b0',
     gradient: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)'
   },
   {
     text: 'الفئات',
     icon: <CategoryIcon />,
-    path: '/categories',
+    path: '/admin/categories',
     color: '#d32f2f',
     gradient: 'linear-gradient(135deg, #d32f2f 0%, #c62828 100%)'
   },
   {
     text: 'الكوبونات',
     icon: <CouponIcon />,
-    path: '/coupons',
+    path: '/admin/coupons',
     color: '#f57c00',
     gradient: 'linear-gradient(135deg, #f57c00 0%, #ef6c00 100%)'
   },
   {
     text: 'المراجعات',
     icon: <ReviewIcon />,
-    path: '/reviews',
+    path: '/admin/reviews',
     color: '#388e3c',
     gradient: 'linear-gradient(135deg, #388e3c 0%, #2e7d32 100%)'
   },
   {
     text: 'عربات التسوق',
     icon: <CartIcon />,
-    path: '/carts',
+    path: '/admin/carts',
     color: '#0288d1',
     gradient: 'linear-gradient(135deg, #0288d1 0%, #0277bd 100%)'
   },
   {
     text: 'الخيارات',
     icon: <VariantIcon />,
-    path: '/variants',
+    path: '/admin/variants',
     color: '#7b1fa2',
     gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
   },
@@ -223,6 +224,7 @@ function AdminLayout({ children }) {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -332,17 +334,10 @@ function AdminLayout({ children }) {
       >
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Divider sx={{ mb: 2, opacity: 0.3 }} />
-          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-            🚀 نسخة 2.0.0 - 2024
+          <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 1500 }}>
+            🚀 Barmagly
           </Typography>
-          <Box sx={{ mt: 1, display: 'flex', justifyContent: 'center', gap: 1 }}>
-            <IconButton size="small" sx={{ color: 'text.secondary' }}>
-              <SettingsIcon fontSize="small" />
-            </IconButton>
-            <IconButton size="small" sx={{ color: 'text.secondary' }}>
-              <EmailIcon fontSize="small" />
-            </IconButton>
-          </Box>
+         
         </Box>
       </motion.div>
     </Box>
@@ -405,30 +400,20 @@ function AdminLayout({ children }) {
           {/* Enhanced Action Buttons */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Tooltip title="الإشعارات">
+              <Tooltip title="العودة للصفحة الرئيسية">
                 <IconButton 
+                  onClick={() => window.open('/', '_blank')}
                   sx={{ 
-                    background: alpha(theme.palette.error.main, 0.1),
-                    '&:hover': { background: alpha(theme.palette.error.main, 0.2) }
+                    background: alpha(theme.palette.success.main, 0.1),
+                    '&:hover': { background: alpha(theme.palette.success.main, 0.2) }
                   }}
                 >
-                  <Badge badgeContent={4} color="error">
-                    <NotificationsIcon sx={{ color: theme.palette.error.main }} />
-                  </Badge>
+                  <HomeIcon sx={{ color: theme.palette.success.main }} />
                 </IconButton>
               </Tooltip>
             </motion.div>
 
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Tooltip title="اللغة">
-                <IconButton sx={{ 
-                  background: alpha(theme.palette.info.main, 0.1),
-                  '&:hover': { background: alpha(theme.palette.info.main, 0.2) }
-                }}>
-                  <LanguageIcon sx={{ color: theme.palette.info.main }} />
-                </IconButton>
-              </Tooltip>
-            </motion.div>
+         
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Tooltip title="الملف الشخصي">
@@ -495,10 +480,10 @@ function AdminLayout({ children }) {
           }} />
           <Box>
             <Typography variant="subtitle2" fontWeight="bold">
-              أحمد محمد
+              {user?.name || 'أحمد محمد'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              مدير النظام
+              {user?.role || 'مدير النظام'}
             </Typography>
           </Box>
         </MenuItem>
@@ -507,12 +492,18 @@ function AdminLayout({ children }) {
           <SettingsIcon sx={{ mr: 2, color: 'primary.main' }} />
           الإعدادات
         </MenuItem>
-        <MenuItem sx={{ borderRadius: 2, mx: 1, my: 0.5 }}>
+        <MenuItem 
+          onClick={() => window.open('/', '_blank')}
+          sx={{ borderRadius: 2, mx: 1, my: 0.5 }}
+        >
           <HomeIcon sx={{ mr: 2, color: 'success.main' }} />
           العودة للموقع
         </MenuItem>
         <Divider />
-        <MenuItem sx={{ borderRadius: 2, mx: 1, mt: 0.5, color: 'error.main' }}>
+        <MenuItem 
+          onClick={logout}
+          sx={{ borderRadius: 2, mx: 1, mt: 0.5, color: 'error.main' }}
+        >
           <LogoutIcon sx={{ mr: 2 }} />
           تسجيل الخروج
         </MenuItem>

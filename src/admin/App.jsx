@@ -15,9 +15,12 @@ import Coupons from './pages/Coupons';
 import Reviews from './pages/Reviews';
 import Carts from './pages/Carts';
 import Variants from './pages/Variants';
+import AdminLogin from './pages/AdminLogin';
 
-// Import layout
+// Import layout and auth
 import AdminLayout from './components/AdminLayout';
+import { AuthProvider } from './context/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Arabic RTL theme
 const theme = createTheme({
@@ -104,20 +107,84 @@ function AdminApp() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ direction: 'rtl' }}>
-        <AdminLayout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/categories" element={<Categories />} />
-            <Route path="/coupons" element={<Coupons />} />
-            <Route path="/reviews" element={<Reviews />} />
-            <Route path="/carts" element={<Carts />} />
-            <Route path="/variants" element={<Variants />} />
+            {/* Public Route */}
+            <Route path="/login" element={<AdminLogin />} />
+            
+            {/* Protected Routes */}
+            <Route path="/" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Dashboard />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Dashboard />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/users" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Users />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/products" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Products />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/orders" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Orders />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/categories" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Categories />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/coupons" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Coupons />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/reviews" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Reviews />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/carts" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Carts />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/variants" element={
+              <ProtectedRoute>
+                <AdminLayout>
+                  <Variants />
+                </AdminLayout>
+              </ProtectedRoute>
+            } />
           </Routes>
-        </AdminLayout>
+        </AuthProvider>
         
         <ToastContainer
           position="top-left"
