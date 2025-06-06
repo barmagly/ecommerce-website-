@@ -1,6 +1,5 @@
 import Store from '../services/Slice/Store';
 import { toast } from 'react-toastify';
-import { useNavigate } from 'react-router-dom';
 
 export const checkAuthAndRedirect = (navigate) => {
     const state = Store.getState();
@@ -17,7 +16,7 @@ export const checkAuthAndRedirect = (navigate) => {
     return true;
 };
 
-export const handleAddToCart = (dispatch, addToCartAction, product, navigate) => {
+export const handleAddToCart = (dispatch, addToCartAction, product,navigate=null) => {
     if (checkAuthAndRedirect(navigate)) {
         dispatch(addToCartAction(product))
             .unwrap()
@@ -38,7 +37,7 @@ export const handleAddToCart = (dispatch, addToCartAction, product, navigate) =>
     }
 };
 
-export const handleAddToWishlist = (dispatch, addToWishlistAction, product, navigate) => {
+export const handleAddToWishlist = (dispatch, addToWishlistAction, product, navigate=null) => {
     if (checkAuthAndRedirect(navigate)) {
         dispatch(addToWishlistAction(product))
             .unwrap()

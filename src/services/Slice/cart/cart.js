@@ -1,19 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api";
+const API_URL = "http://localhost:5000/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.get(`${API_KEY}/cart/showMyCart`, {
+            const { data } = await axios.get(`${API_URL}/cart/showMyCart`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
             // console.log("data in slice", data);
             const productsRequests = data[0].cartItems.map((item) =>
-                axios.get(`${API_KEY}/products/${item.prdID}`, {
+                axios.get(`${API_URL}/products/${item.prdID}`, {
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -42,7 +42,7 @@ export const addToCartThunk = createAsyncThunk(
         try {
             const token = localStorage.getItem("token");
             const { data } = await axios.patch(
-                `${API_KEY}/cart/cartOP`,
+                `${API_URL}/cart/cartOP`,
                 {
                     prdID: productId,
                     quantity
@@ -93,7 +93,7 @@ const cartSlice = createSlice({
         decreaseQ(state, action) {
             const item = state.products.cartItems.find(item => item._id === action.payload)
             item.quantity -= 1
-            authFetch(`${API_KEY}/cart/cartOP`, {
+            authFetch(`${API_URL}/cart/cartOP`, {
                 method: "PATCH",
                 body: JSON.stringify({
                     prdID: item._id,
@@ -105,7 +105,7 @@ const cartSlice = createSlice({
         increaseQ(state, action) {
             const item = state.products.cartItems.find(item => item._id === action.payload)
             item.quantity += 1
-            authFetch(`${API_KEY}/cart/cartOP`, {
+            authFetch(`${API_URL}/cart/cartOP`, {
                 method: "PATCH",
                 body: JSON.stringify({
                     prdID: item._id,
@@ -120,7 +120,7 @@ const cartSlice = createSlice({
             if (state.products.cartItems.length > 1) {
                 const item = state.products.cartItems.find(item => item._id === action.payload)
                 authFetch(
-                    `${API_KEY}/cart/cartOP`,
+                    `${API_URL}/cart/cartOP`,
                     {
                         method: "PATCH",
                         body: JSON.stringify({ prdID: item._id, quantity: 0 }),
@@ -130,14 +130,14 @@ const cartSlice = createSlice({
                 state.products.total = calculateTotal(state.products.cartItems);
             }
             else {
-                authFetch(`${API_KEY}/cart/${state.products._id}`, {
+                authFetch(`${API_URL}/cart/${state.products._id}`, {
                     method: "DELETE",
                 });
                 state.products = [];
             }
         },
         deleteAllCart(state, action) {
-            authFetch(`${API_KEY}/cart/${state.products._id}`, {
+            authFetch(`${API_URL}/cart/${state.products._id}`, {
                 method: "DELETE",
             });
             state.items = [];

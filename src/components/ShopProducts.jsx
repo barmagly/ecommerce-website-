@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
+import { addToCartThunk } from "../services/Slice/cart/cart";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -118,6 +119,35 @@ export default function ShopProducts() {
       });
   };
 
+  const handleAddToCart = (e, productId) => {
+    e.stopPropagation(); // Prevent product card click
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCartThunk({ productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center py-5">
@@ -203,7 +233,7 @@ export default function ShopProducts() {
                 </div>
               ))}
               <div className={`product-actions mt-auto gap-2 ${hoveredProduct === item._id ? 'show' : ''}`} style={{ display: 'flex', opacity: hoveredProduct === item._id ? 1 : 0, pointerEvents: hoveredProduct === item._id ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
-                <button className="btn btn-sm btn-danger"><i className="fas fa-shopping-cart"></i></button>
+                <button className="btn btn-sm btn-danger" onClick={(e)=>handleAddToCart(e, item._id)}><i className="fas fa-shopping-cart"></i></button>
                 <button
                   className="btn btn-sm btn-outline-danger"
                   onClick={(e) => handleWishlistClick(e, item._id)}
