@@ -481,104 +481,104 @@ const Dashboard = () => {
           </Box>
         </Box>
 
-                 {/* Primary Stats Cards */}
-         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-          <Grid item xs={12}>
-            <StatsCard
-              title="إجمالي المستخدمين"
-              value={dashboardData.totalUsers}
-              icon={<UsersIcon sx={{ fontSize: 28 }} />}
-              color="#667eea"
-              trend="up"
-              trendValue={12.5}
-              subtitle="العملاء النشطون"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="المنتجات"
-              value={dashboardData.totalProducts}
-              icon={<ProductsIcon sx={{ fontSize: 28 }} />}
-              color="#4facfe"
-              trend="up"
-              trendValue={8.2}
-              subtitle="في المخزون"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="الطلبات"
-              value={dashboardData.totalOrders}
-              icon={<OrdersIcon sx={{ fontSize: 28 }} />}
-              color="#fa709a"
-              trend="up"
-              trendValue={15.3}
-              subtitle="إجمالي الطلبات"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="الإيرادات"
-              value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
-              icon={<AttachMoney sx={{ fontSize: 28 }} />}
-              color="#96CEB4"
-              trend="up"
-              trendValue={23.1}
-              subtitle="إجمالي الإيرادات"
-            />
-          </Grid>
-        </Grid>
+                 {/* Primary Stats Cards - Flex Layout */}
+         <Box sx={{ 
+           display: 'flex', 
+           flexWrap: 'wrap', 
+           gap: { xs: 2, md: 3 }, 
+           mb: 4,
+           '& > *': { 
+             flex: '1 1 auto',
+             minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }
+           }
+         }}>
+           <StatsCard
+             title="إجمالي المستخدمين"
+             value={dashboardData.totalUsers}
+             icon={<UsersIcon sx={{ fontSize: 28 }} />}
+             color="#667eea"
+             trend="up"
+             trendValue={12.5}
+             subtitle="العملاء النشطون"
+           />
+           <StatsCard
+             title="المنتجات"
+             value={dashboardData.totalProducts}
+             icon={<ProductsIcon sx={{ fontSize: 28 }} />}
+             color="#4facfe"
+             trend="up"
+             trendValue={8.2}
+             subtitle="في المخزون"
+           />
+           <StatsCard
+             title="الطلبات"
+             value={dashboardData.totalOrders}
+             icon={<OrdersIcon sx={{ fontSize: 28 }} />}
+             color="#fa709a"
+             trend="up"
+             trendValue={15.3}
+             subtitle="إجمالي الطلبات"
+           />
+           <StatsCard
+             title="الإيرادات"
+             value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
+             icon={<AttachMoney sx={{ fontSize: 28 }} />}
+             color="#96CEB4"
+             trend="up"
+             trendValue={23.1}
+             subtitle="إجمالي الإيرادات"
+           />
+         </Box>
 
-                 {/* Secondary Stats */}
-         <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-          <Grid item xs={12}>
-            <StatsCard
-              title="الفئات"
-              value={dashboardData.totalCategories}
-              icon={<CategoryIcon sx={{ fontSize: 28 }} />}
-              color="#ff9a9e"
-              subtitle="فئات المنتجات"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="الكوبونات النشطة"
-              value={dashboardData.totalCoupons}
-              icon={<CouponIcon sx={{ fontSize: 28 }} />}
-              color="#a8edea"
-              subtitle="كوبونات الخصم"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="المراجعات"
-              value={dashboardData.totalReviews}
-              icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
-              color="#ffeaa7"
-              trend="up"
-              trendValue={5.7}
-              subtitle="مراجعات العملاء"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="عربات التسوق النشطة"
-              value={dashboardData.totalCarts}
-              icon={<CartIcon sx={{ fontSize: 28 }} />}
-              color="#fd79a8"
-              subtitle="عربات التسوق"
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <StatsCard
-              title="خيارات المنتجات"
-              value={dashboardData.totalVariants}
-              icon={<VariantIcon sx={{ fontSize: 28 }} />}
-              color="#7b1fa2"
-              subtitle="خيارات المنتجات"
-            />
-          </Grid>
-        </Grid>
+                 {/* Secondary Stats - Flex Layout */}
+         <Box sx={{ 
+           display: 'flex', 
+           flexWrap: 'wrap', 
+           gap: { xs: 2, md: 3 }, 
+           mb: 4,
+           '& > *': { 
+             flex: '1 1 auto',
+             minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(20% - 14.4px)' }
+           }
+         }}>
+           <StatsCard
+             title="الفئات"
+             value={dashboardData.totalCategories}
+             icon={<CategoryIcon sx={{ fontSize: 28 }} />}
+             color="#ff9a9e"
+             subtitle="فئات المنتجات"
+           />
+           <StatsCard
+             title="الكوبونات النشطة"
+             value={dashboardData.totalCoupons}
+             icon={<CouponIcon sx={{ fontSize: 28 }} />}
+             color="#a8edea"
+             subtitle="كوبونات الخصم"
+           />
+           <StatsCard
+             title="المراجعات"
+             value={dashboardData.totalReviews}
+             icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
+             color="#ffeaa7"
+             trend="up"
+             trendValue={5.7}
+             subtitle="مراجعات العملاء"
+           />
+           <StatsCard
+             title="عربات التسوق النشطة"
+             value={dashboardData.totalCarts}
+             icon={<CartIcon sx={{ fontSize: 28 }} />}
+             color="#fd79a8"
+             subtitle="عربات التسوق"
+           />
+           <StatsCard
+             title="خيارات المنتجات"
+             value={dashboardData.totalVariants}
+             icon={<VariantIcon sx={{ fontSize: 28 }} />}
+             color="#7b1fa2"
+             subtitle="خيارات المنتجات"
+           />
+         </Box> 
 
                  {/* Sales Trend Chart - Full Width */}
          <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
@@ -635,9 +635,10 @@ const Dashboard = () => {
           </Grid>
         </Grid>
 
-                 {/* Category Distribution Chart - Full Width */}
+        {/* Charts Row - Side by Side */}
                  <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-                   <Grid item xs={12}>
+                   {/* Category Distribution Chart */}
+                   <Grid item xs={12} md={6}>
                      <ChartCard title="توزيع الفئات" height={400}>
                        <ResponsiveContainer width="100%" height="100%">
                          <PieChart>
@@ -646,7 +647,7 @@ const Dashboard = () => {
                              cx="50%"
                              cy="50%"
                              innerRadius={60}
-                             outerRadius={140}
+                             outerRadius={120}
                              paddingAngle={5}
                              dataKey="value"
                            >
@@ -666,11 +667,9 @@ const Dashboard = () => {
                        </ResponsiveContainer>
                      </ChartCard>
                    </Grid>
-                 </Grid>
-
-                 {/* Performance Metrics Chart - Full Width */}
-                 <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
-                   <Grid item xs={12}>
+                   
+                   {/* Performance Metrics Chart */}
+                   <Grid item xs={12} md={6}>
                      <ChartCard title="مقاييس الأداء" height={400}>
                        <ResponsiveContainer width="100%" height="100%">
                          <RadarChart data={performanceMetrics} margin={{ top: 20, right: 30, bottom: 20, left: 30 }}>
@@ -706,63 +705,71 @@ const Dashboard = () => {
          <Grid container spacing={{ xs: 2, md: 3 }} sx={{ mb: 4, width: '100%', margin: 0 }}>
           <Grid item xs={12}>
             <ChartCard title="المنتجات الأكثر مبيعاً" height={400}>
-              <Grid container spacing={2}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: 2,
+                '& > *': { 
+                  flex: '1 1 auto',
+                  minWidth: { xs: '100%', sm: 'calc(50% - 8px)', md: 'calc(33.333% - 10.67px)', lg: 'calc(20% - 12.8px)' }
+                }
+              }}>
                 {topProducts.map((product, index) => (
-                  <Grid item xs={12} key={index}>
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-                    >
-                      <Card sx={{ 
-                        height: '100%', 
-                        borderRadius: 3,
-                        border: '1px solid',
-                        borderColor: alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.2),
-                        background: `linear-gradient(135deg, ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.05)} 0%, transparent 100%)`,
-                        '&:hover': {
-                          boxShadow: `0 8px 25px ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.15)}`,
-                          transform: 'translateY(-2px)',
-                        },
-                        transition: 'all 0.3s ease'
-                      }}>
-                        <CardContent sx={{ p: 2.5, textAlign: 'center' }}>
-                          <Avatar
-                            sx={{
-                              width: 50,
-                              height: 50,
-                              bgcolor: categoryData[index % categoryData.length]?.color || '#667eea',
-                              fontWeight: 'bold',
-                              mx: 'auto',
-                              mb: 2,
-                              fontSize: '1.2rem'
-                            }}
-                          >
-                            #{index + 1}
-                          </Avatar>
-                          <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
-                            {product.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            المبيعات: {product.sales.toLocaleString()}
-                          </Typography>
-                          <Typography variant="subtitle2" color="primary" fontWeight={600} sx={{ mb: 1 }}>
-                            ${product.revenue.toLocaleString()}
-                          </Typography>
-                          <Chip
-                            label={`مخزون: ${product.stock}`}
-                            size="small"
-                            color={product.stock > 50 ? 'success' : product.stock > 20 ? 'warning' : 'error'}
-                            variant="outlined"
-                            sx={{ fontSize: '0.75rem' }}
-                          />
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  </Grid>
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                    style={{ flex: '1 1 auto', minWidth: 'inherit' }}
+                  >
+                    <Card sx={{ 
+                      height: '100%', 
+                      borderRadius: 3,
+                      border: '1px solid',
+                      borderColor: alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.2),
+                      background: `linear-gradient(135deg, ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.05)} 0%, transparent 100%)`,
+                      '&:hover': {
+                        boxShadow: `0 8px 25px ${alpha(categoryData[index % categoryData.length]?.color || '#667eea', 0.15)}`,
+                        transform: 'translateY(-2px)',
+                      },
+                      transition: 'all 0.3s ease'
+                    }}>
+                      <CardContent sx={{ p: 2.5, textAlign: 'center' }}>
+                        <Avatar
+                          sx={{
+                            width: 50,
+                            height: 50,
+                            bgcolor: categoryData[index % categoryData.length]?.color || '#667eea',
+                            fontWeight: 'bold',
+                            mx: 'auto',
+                            mb: 2,
+                            fontSize: '1.2rem'
+                          }}
+                        >
+                          #{index + 1}
+                        </Avatar>
+                        <Typography variant="h6" fontWeight={600} sx={{ mb: 1 }}>
+                          {product.name}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                          المبيعات: {product.sales.toLocaleString()}
+                        </Typography>
+                        <Typography variant="subtitle2" color="primary" fontWeight={600} sx={{ mb: 1 }}>
+                          ${product.revenue.toLocaleString()}
+                        </Typography>
+                        <Chip
+                          label={`مخزون: ${product.stock}`}
+                          size="small"
+                          color={product.stock > 50 ? 'success' : product.stock > 20 ? 'warning' : 'error'}
+                          variant="outlined"
+                          sx={{ fontSize: '0.75rem' }}
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
-              </Grid>
+              </Box>
             </ChartCard>
           </Grid>
         </Grid>
