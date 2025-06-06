@@ -7,6 +7,7 @@ import { toast, ToastContainer } from 'react-toastify';
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { addToCartThunk } from "../services/Slice/cart/cart";
+import { handleAddToCart, handleAddToWishlist } from '../utils/authUtils';
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -142,9 +143,14 @@ export default function ProductDetails() {
     setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
   };
 
-  const handleAddToCart=()=>{
-    dispatch(addToCartThunk({productId:id}))
-  }  
+  const handleAddToCartClick = () => {
+    handleAddToCart(dispatch, addToCartThunk, { productId: id }, navigate);
+  };
+
+  const handleAddToWishlistClick = () => {
+    handleAddToWishlist(dispatch, addUserWishlistThunk, { prdId: id }, navigate);
+  };
+
   const handleReviewSubmit = e => {
     e.preventDefault();
     if (reviewForm.name && reviewForm.comment) {
@@ -156,35 +162,6 @@ export default function ProductDetails() {
   const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
   const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.name} بسعر ${product.price} ج.م\nرابط المنتج: ${currentUrl}`;
   const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
-
-  const handleWishlistClick = (e) => {
-    e.preventDefault();
-    if (!isAuthenticated) {
-      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى المفضلة', {
-        position: "top-center",
-        rtl: true,
-        autoClose: 3000
-      });
-      navigate('/login');
-      return;
-    }
-    dispatch(addUserWishlistThunk({ prdId: id }))
-      .unwrap()
-      .then(() => {
-        toast.success('تمت إضافة المنتج إلى المفضلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 2000
-        });
-      })
-      .catch((error) => {
-        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى المفضلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 3000
-        });
-      });
-  };
 
   return (
     <>
@@ -290,10 +267,10 @@ export default function ProductDetails() {
             )}
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
-              <button className="btn btn-danger px-4" onClick={handleAddToCart}>أضف للسلة</button>
+              <button className="btn btn-danger px-4" onClick={handleAddToCartClick}>أضف للسلة</button>
               <button
                 className="btn btn-outline-danger px-4"
-                onClick={handleWishlistClick}
+                onClick={handleAddToWishlistClick}
               >
                 <i className={`${wishlist?.some(w => w._id === id) ? 'fas' : 'far'} fa-heart ms-2`}></i>
                 {wishlist?.some(w => w._id === id) ? 'إزالة من المفضلة' : 'أضف للمفضلة'}

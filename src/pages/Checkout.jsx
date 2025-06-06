@@ -1,11 +1,24 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
+import ProtectedRoute from "../components/ProtectedRoute";
 
 export default function Checkout() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { cartItems = [], total = 0 } = location.state || {};
+
+  useEffect(() => {
+    // If no cart data is present or user is not authenticated, redirect to cart
+    if (!cartItems.length || !isAuthenticated) {
+      navigate('/cart');
+    }
+  }, [cartItems, isAuthenticated, navigate]);
+
   const [form, setForm] = useState({
     firstName: "",
     address: "",
@@ -33,12 +46,6 @@ export default function Checkout() {
   const [instapayNumber] = useState("01012345678");
   const [instapayStatus, setInstapayStatus] = useState("");
 
-  const cart = [
-    { id: 1, name: "شاشة LCD", price: 650, image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/bihpca5v_expires_30_days.png" },
-    { id: 2, name: "يد تحكم H1", price: 1100, image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/c4u0gdzp_expires_30_days.png" }
-  ];
-  const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-
   // التحقق من صحة البريد الإلكتروني
   const validateEmail = (email) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,11 +68,11 @@ export default function Checkout() {
   const validateExpiry = (expiry) => {
     const re = /^(0[1-9]|1[0-2])\/([0-9]{2})$/;
     if (!re.test(expiry)) return false;
-    
+
     const [month, year] = expiry.split('/');
     const currentYear = new Date().getFullYear() % 100;
     const currentMonth = new Date().getMonth() + 1;
-    
+
     if (parseInt(year) < currentYear) return false;
     if (parseInt(year) === currentYear && parseInt(month) < currentMonth) return false;
     return true;
@@ -80,7 +87,7 @@ export default function Checkout() {
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
-    
+
     // مسح رسالة الخطأ عند التعديل
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
@@ -90,7 +97,7 @@ export default function Checkout() {
   const handleCardChange = e => {
     const { name, value } = e.target;
     setCardDetails(prev => ({ ...prev, [name]: value }));
-    
+
     // مسح رسالة الخطأ عند التعديل
     if (cardErrors[name]) {
       setCardErrors(prev => ({ ...prev, [name]: '' }));
@@ -106,19 +113,19 @@ export default function Checkout() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     // التحقق من الحقول المطلوبة
     if (!form.firstName.trim()) newErrors.firstName = 'الاسم الأول مطلوب';
     if (!form.address.trim()) newErrors.address = 'العنوان مطلوب';
     if (!form.city.trim()) newErrors.city = 'المدينة مطلوبة';
-    
+
     // التحقق من البريد الإلكتروني
     if (!form.email.trim()) {
       newErrors.email = 'البريد الإلكتروني مطلوب';
     } else if (!validateEmail(form.email)) {
       newErrors.email = 'البريد الإلكتروني غير صالح';
     }
-    
+
     // التحقق من رقم الهاتف
     if (!form.phone.trim()) {
       newErrors.phone = 'رقم الهاتف مطلوب';
@@ -129,7 +136,7 @@ export default function Checkout() {
     // التحقق من تفاصيل البطاقة إذا تم اختيار الدفع بالفيزا
     if (payment === "visa") {
       const newCardErrors = {};
-      
+
       if (!validateCardNumber(cardDetails.number)) {
         newCardErrors.number = 'رقم البطاقة غير صالح';
       }
@@ -142,7 +149,7 @@ export default function Checkout() {
       if (!cardDetails.holder.trim()) {
         newCardErrors.holder = 'اسم حامل البطاقة مطلوب';
       }
-      
+
       if (Object.keys(newCardErrors).length > 0) {
         setCardErrors(newCardErrors);
         return false;
@@ -164,9 +171,8 @@ export default function Checkout() {
 
   const handleOrder = e => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
-      // التمرير إلى أول حقل به خطأ
       const firstError = document.querySelector('.is-invalid');
       if (firstError) {
         firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -174,236 +180,238 @@ export default function Checkout() {
       return;
     }
 
-    // تخزين حالة تأكيد الطلب وتخزين بيانات الطلب
+    // Update the order confirmation to use actual cart data
     localStorage.setItem("orderConfirmed", "true");
-    localStorage.setItem("cart", JSON.stringify(cart));
-    localStorage.setItem("lastOrderTotal", subtotal);
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+    localStorage.setItem("lastOrderTotal", total);
     navigate("/order-confirmation");
   };
 
   return (
-    <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
-      <Header />
-      <div className="container py-5">
-        <Breadcrumb items={[
-          { label: "سلة المشتريات", to: "/cart" },
-          { label: "إتمام الشراء", to: "/checkout" }
-        ]} />
-        <h2 className="fw-bold mb-4">تفاصيل الفاتورة</h2>
-        <div className="row g-4">
-          <div className="col-lg-7">
-            <form onSubmit={handleOrder} noValidate>
-              <div className="mb-3">
-                <label className="form-label">الاسم الأول *</label>
-                <input 
-                  name="firstName" 
-                  className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
-                  value={form.firstName} 
-                  onChange={handleChange} 
-                  required 
-                />
-                {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
-              </div>
-              <div className="mb-3">
-                <label className="form-label">العنوان *</label>
-                <input 
-                  name="address" 
-                  className={`form-control ${errors.address ? 'is-invalid' : ''}`}
-                  value={form.address} 
-                  onChange={handleChange} 
-                  required 
-                />
-                {errors.address && <div className="invalid-feedback">{errors.address}</div>}
-              </div>
-              <div className="mb-3">
-                <label className="form-label">شقة/دور (اختياري)</label>
-                <input 
-                  name="apartment" 
-                  className="form-control"
-                  value={form.apartment} 
-                  onChange={handleChange} 
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">المدينة *</label>
-                <input 
-                  name="city" 
-                  className={`form-control ${errors.city ? 'is-invalid' : ''}`}
-                  value={form.city} 
-                  onChange={handleChange} 
-                  required 
-                />
-                {errors.city && <div className="invalid-feedback">{errors.city}</div>}
-              </div>
-              <div className="mb-3">
-                <label className="form-label">رقم الهاتف *</label>
-                <input 
-                  name="phone" 
-                  className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
-                  value={form.phone} 
-                  onChange={handleChange} 
-                  required 
-                  placeholder="01XXXXXXXXX"
-                />
-                {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
-              </div>
-              <div className="mb-3">
-                <label className="form-label">البريد الإلكتروني *</label>
-                <input 
-                  name="email" 
-                  type="email"
-                  className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                  value={form.email} 
-                  onChange={handleChange} 
-                  required 
-                />
-                {errors.email && <div className="invalid-feedback">{errors.email}</div>}
-              </div>
-              <div className="form-check mb-3">
-                <input className="form-check-input" type="checkbox" id="saveInfo" />
-                <label className="form-check-label" htmlFor="saveInfo">
-                  حفظ هذه المعلومات لعمليات الشراء القادمة
-                </label>
-              </div>
-            </form>
-          </div>
-          <div className="col-lg-5">
-            <div className="card shadow-sm border-0 mb-4">
-              <div className="card-body">
-                <h5 className="fw-bold mb-3">ملخص الطلب</h5>
-                {cart.map(item => (
-                  <div className="d-flex align-items-center mb-3" key={item.id}>
-                    <img src={item.image} alt={item.name} style={{width:54, height:54, borderRadius:8, marginLeft:8}} />
-                    <span className="fw-bold flex-fill">{item.name}</span>
-                    <span>{item.price} ج.م</span>
-                  </div>
-                ))}
-                <hr />
-                <div className="d-flex justify-content-between mb-2">
-                  <span>الإجمالي الفرعي:</span>
-                  <span>{subtotal} ج.م</span>
-                </div>
-                <div className="d-flex justify-content-between mb-2">
-                  <span>الشحن:</span>
-                  <span>مجاني</span>
-                </div>
-                <hr />
-                <div className="d-flex justify-content-between mb-3">
-                  <span className="fw-bold">الإجمالي الكلي:</span>
-                  <span className="fw-bold text-danger">{subtotal} ج.م</span>
-                </div>
+    <ProtectedRoute>
+      <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
+        <Header />
+        <div className="container py-5">
+          <Breadcrumb items={[
+            { label: "سلة المشتريات", to: "/cart" },
+            { label: "إتمام الشراء", to: "/checkout" }
+          ]} />
+          <h2 className="fw-bold mb-4">تفاصيل الفاتورة</h2>
+          <div className="row g-4">
+            <div className="col-lg-7">
+              <form onSubmit={handleOrder} noValidate>
                 <div className="mb-3">
-                  <input 
-                    name="coupon" 
-                    className="form-control" 
-                    placeholder="كود الخصم" 
-                    value={form.coupon} 
-                    onChange={handleChange} 
+                  <label className="form-label">الاسم الأول *</label>
+                  <input
+                    name="firstName"
+                    className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
                   />
-                  <button 
-                    className="btn btn-outline-dark w-100 mt-2" 
-                    type="button" 
-                    onClick={()=>alert("تم تطبيق الكوبون (تجريبي)")}
-                  >
-                    تطبيق الكوبون
-                  </button>
+                  {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
                 </div>
                 <div className="mb-3">
-                  <label className="form-label fw-bold">طريقة الدفع</label>
-                  <select 
-                    className="form-select" 
-                    value={payment} 
-                    onChange={e=>setPayment(e.target.value)}
-                  >
-                    <option value="cod">الدفع عند الاستلام</option>
-                    <option value="visa">بطاقة فيزا/ماستر كارد</option>
-                    <option value="instapay">الدفع عبر Instapay</option>
-                  </select>
+                  <label className="form-label">العنوان *</label>
+                  <input
+                    name="address"
+                    className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                    value={form.address}
+                    onChange={handleChange}
+                    required
+                  />
+                  {errors.address && <div className="invalid-feedback">{errors.address}</div>}
                 </div>
-                {payment === "visa" && (
-                  <div className="mb-3">
-                    <label className="form-label fw-bold">تفاصيل البطاقة</label>
-                    <input 
-                      type="text" 
-                      name="number"
-                      placeholder="رقم البطاقة" 
-                      className={`form-control mb-2 ${cardErrors.number ? 'is-invalid' : ''}`}
-                      value={cardDetails.number}
-                      onChange={handleCardChange}
-                    />
-                    {cardErrors.number && <div className="invalid-feedback mb-2">{cardErrors.number}</div>}
-                    <div className="row g-2 mb-2">
-                      <div className="col-6">
-                        <input 
-                          type="text" 
-                          name="expiry"
-                          placeholder="MM/YY" 
-                          className={`form-control ${cardErrors.expiry ? 'is-invalid' : ''}`}
-                          value={cardDetails.expiry}
-                          onChange={handleCardChange}
-                        />
-                        {cardErrors.expiry && <div className="invalid-feedback">{cardErrors.expiry}</div>}
-                      </div>
-                      <div className="col-6">
-                        <input 
-                          type="text" 
-                          name="cvv"
-                          placeholder="CVV" 
-                          className={`form-control ${cardErrors.cvv ? 'is-invalid' : ''}`}
-                          value={cardDetails.cvv}
-                          onChange={handleCardChange}
-                        />
-                        {cardErrors.cvv && <div className="invalid-feedback">{cardErrors.cvv}</div>}
-                      </div>
+                <div className="mb-3">
+                  <label className="form-label">شقة/دور (اختياري)</label>
+                  <input
+                    name="apartment"
+                    className="form-control"
+                    value={form.apartment}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">المدينة *</label>
+                  <input
+                    name="city"
+                    className={`form-control ${errors.city ? 'is-invalid' : ''}`}
+                    value={form.city}
+                    onChange={handleChange}
+                    required
+                  />
+                  {errors.city && <div className="invalid-feedback">{errors.city}</div>}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">رقم الهاتف *</label>
+                  <input
+                    name="phone"
+                    className={`form-control ${errors.phone ? 'is-invalid' : ''}`}
+                    value={form.phone}
+                    onChange={handleChange}
+                    required
+                    placeholder="01XXXXXXXXX"
+                  />
+                  {errors.phone && <div className="invalid-feedback">{errors.phone}</div>}
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">البريد الإلكتروني *</label>
+                  <input
+                    name="email"
+                    type="email"
+                    className={`form-control ${errors.email ? 'is-invalid' : ''}`}
+                    value={form.email}
+                    onChange={handleChange}
+                    required
+                  />
+                  {errors.email && <div className="invalid-feedback">{errors.email}</div>}
+                </div>
+                <div className="form-check mb-3">
+                  <input className="form-check-input" type="checkbox" id="saveInfo" />
+                  <label className="form-check-label" htmlFor="saveInfo">
+                    حفظ هذه المعلومات لعمليات الشراء القادمة
+                  </label>
+                </div>
+              </form>
+            </div>
+            <div className="col-lg-5">
+              <div className="card shadow-sm border-0 mb-4">
+                <div className="card-body">
+                  <h5 className="fw-bold mb-3">ملخص الطلب</h5>
+                  {cartItems.map(item => (
+                    <div className="d-flex align-items-center mb-3" key={item._id}>
+                      <img src={item.images[0].url} alt={item.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
+                      <span className="fw-bold flex-fill">{item.name}</span>
+                      <span>{item.price * item.quantity} ج.م</span>
                     </div>
-                    <input 
-                      type="text" 
-                      name="holder"
-                      placeholder="اسم حامل البطاقة" 
-                      className={`form-control ${cardErrors.holder ? 'is-invalid' : ''}`}
-                      value={cardDetails.holder}
-                      onChange={handleCardChange}
-                    />
-                    {cardErrors.holder && <div className="invalid-feedback">{cardErrors.holder}</div>}
+                  ))}
+                  <hr />
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>الإجمالي الفرعي:</span>
+                    <span>{total} ج.م</span>
                   </div>
-                )}
-                {payment === "instapay" && (
-                  <div className="mb-3 border rounded p-3 bg-light">
-                    <h6 className="fw-bold mb-2">الدفع عبر Instapay</h6>
-                    <div className="mb-2">رقم Instapay لتحويل المبلغ:</div>
-                    <div className="alert alert-info fw-bold mb-2" dir="ltr" style={{direction:'ltr',textAlign:'left'}}>{instapayNumber}</div>
-                    <div className="mb-2">يرجى تحويل المبلغ إلى رقم Instapay أعلاه من خلال تطبيق Instapay على هاتفك، ثم رفع صورة (Screenshot) لإثبات التحويل.</div>
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      className={`form-control mb-2 ${errors.instapay ? 'is-invalid' : ''}`}
-                      onChange={handleInstapayImage} 
+                  <div className="d-flex justify-content-between mb-2">
+                    <span>الشحن:</span>
+                    <span>مجاني</span>
+                  </div>
+                  <hr />
+                  <div className="d-flex justify-content-between mb-3">
+                    <span className="fw-bold">الإجمالي الكلي:</span>
+                    <span className="fw-bold text-danger">{total} ج.م</span>
+                  </div>
+                  <div className="mb-3">
+                    <input
+                      name="coupon"
+                      className="form-control"
+                      placeholder="كود الخصم"
+                      value={form.coupon}
+                      onChange={handleChange}
                     />
-                    {errors.instapay && <div className="invalid-feedback mb-2">{errors.instapay}</div>}
-                    {instapayImage && (
-                      <div className="mb-2">
-                        <span className="text-success">تم رفع الصورة بنجاح!</span>
-                        <div className="mt-2">
-                          <img src={URL.createObjectURL(instapayImage)} alt="إثبات التحويل" style={{maxWidth:200, borderRadius:8}} />
+                    <button
+                      className="btn btn-outline-dark w-100 mt-2"
+                      type="button"
+                      onClick={() => alert("تم تطبيق الكوبون (تجريبي)")}
+                    >
+                      تطبيق الكوبون
+                    </button>
+                  </div>
+                  <div className="mb-3">
+                    <label className="form-label fw-bold">طريقة الدفع</label>
+                    <select
+                      className="form-select"
+                      value={payment}
+                      onChange={e => setPayment(e.target.value)}
+                    >
+                      <option value="cod">الدفع عند الاستلام</option>
+                      <option value="visa">بطاقة فيزا/ماستر كارد</option>
+                      <option value="instapay">الدفع عبر Instapay</option>
+                    </select>
+                  </div>
+                  {payment === "visa" && (
+                    <div className="mb-3">
+                      <label className="form-label fw-bold">تفاصيل البطاقة</label>
+                      <input
+                        type="text"
+                        name="number"
+                        placeholder="رقم البطاقة"
+                        className={`form-control mb-2 ${cardErrors.number ? 'is-invalid' : ''}`}
+                        value={cardDetails.number}
+                        onChange={handleCardChange}
+                      />
+                      {cardErrors.number && <div className="invalid-feedback mb-2">{cardErrors.number}</div>}
+                      <div className="row g-2 mb-2">
+                        <div className="col-6">
+                          <input
+                            type="text"
+                            name="expiry"
+                            placeholder="MM/YY"
+                            className={`form-control ${cardErrors.expiry ? 'is-invalid' : ''}`}
+                            value={cardDetails.expiry}
+                            onChange={handleCardChange}
+                          />
+                          {cardErrors.expiry && <div className="invalid-feedback">{cardErrors.expiry}</div>}
+                        </div>
+                        <div className="col-6">
+                          <input
+                            type="text"
+                            name="cvv"
+                            placeholder="CVV"
+                            className={`form-control ${cardErrors.cvv ? 'is-invalid' : ''}`}
+                            value={cardDetails.cvv}
+                            onChange={handleCardChange}
+                          />
+                          {cardErrors.cvv && <div className="invalid-feedback">{cardErrors.cvv}</div>}
                         </div>
                       </div>
-                    )}
-                    {instapayStatus && <div className="alert alert-warning mt-2">{instapayStatus}</div>}
-                  </div>
-                )}
-                <button 
-                  className="btn btn-danger w-100 py-2 fw-bold" 
-                  onClick={handleOrder}
-                >
-                  تأكيد الطلب
-                </button>
-                {orderPlaced && <div className="alert alert-success mt-3">تم إرسال طلبك بنجاح! سنقوم بالتواصل معك قريبًا.</div>}
+                      <input
+                        type="text"
+                        name="holder"
+                        placeholder="اسم حامل البطاقة"
+                        className={`form-control ${cardErrors.holder ? 'is-invalid' : ''}`}
+                        value={cardDetails.holder}
+                        onChange={handleCardChange}
+                      />
+                      {cardErrors.holder && <div className="invalid-feedback">{cardErrors.holder}</div>}
+                    </div>
+                  )}
+                  {payment === "instapay" && (
+                    <div className="mb-3 border rounded p-3 bg-light">
+                      <h6 className="fw-bold mb-2">الدفع عبر Instapay</h6>
+                      <div className="mb-2">رقم Instapay لتحويل المبلغ:</div>
+                      <div className="alert alert-info fw-bold mb-2" dir="ltr" style={{ direction: 'ltr', textAlign: 'left' }}>{instapayNumber}</div>
+                      <div className="mb-2">يرجى تحويل المبلغ إلى رقم Instapay أعلاه من خلال تطبيق Instapay على هاتفك، ثم رفع صورة (Screenshot) لإثبات التحويل.</div>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className={`form-control mb-2 ${errors.instapay ? 'is-invalid' : ''}`}
+                        onChange={handleInstapayImage}
+                      />
+                      {errors.instapay && <div className="invalid-feedback mb-2">{errors.instapay}</div>}
+                      {instapayImage && (
+                        <div className="mb-2">
+                          <span className="text-success">تم رفع الصورة بنجاح!</span>
+                          <div className="mt-2">
+                            <img src={URL.createObjectURL(instapayImage)} alt="إثبات التحويل" style={{ maxWidth: 200, borderRadius: 8 }} />
+                          </div>
+                        </div>
+                      )}
+                      {instapayStatus && <div className="alert alert-warning mt-2">{instapayStatus}</div>}
+                    </div>
+                  )}
+                  <button
+                    className="btn btn-danger w-100 py-2 fw-bold"
+                    onClick={handleOrder}
+                  >
+                    تأكيد الطلب
+                  </button>
+                  {orderPlaced && <div className="alert alert-success mt-3">تم إرسال طلبك بنجاح! سنقوم بالتواصل معك قريبًا.</div>}
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </ProtectedRoute>
   );
 } 

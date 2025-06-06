@@ -1,19 +1,19 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-// const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api/cart";
+const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.get(`http://localhost:5000/api/cart/showMyCart`, {
+            const { data } = await axios.get(`${API_KEY}/cart/showMyCart`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 }
             });
             // console.log("data in slice", data);
             const productsRequests = data[0].cartItems.map((item) =>
-                axios.get(`http://localhost:5000/api/products/${item.prdID}`, {
+                axios.get(`${API_KEY}/products/${item.prdID}`, {
                     headers: {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -22,13 +22,13 @@ export const getCartThunk = createAsyncThunk(
             );
 
             const products = await Promise.all(productsRequests);
-            
+
             data[0].cartItems.forEach(item => {
                 const product = products.find(product => product._id === item.prdID);
                 if (product) {
                     product.quantity = item.quantity;
                 }
-            });            
+            });
             return { ...data[0], cartItems: products };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
@@ -42,7 +42,7 @@ export const addToCartThunk = createAsyncThunk(
         try {
             const token = localStorage.getItem("token");
             const { data } = await axios.patch(
-                `http://localhost:5000/api/cart/cartOP`,
+                `${API_KEY}/cart/cartOP`,
                 {
                     prdID: productId,
                     quantity
@@ -93,52 +93,52 @@ const cartSlice = createSlice({
         decreaseQ(state, action) {
             const item = state.products.cartItems.find(item => item._id === action.payload)
             item.quantity -= 1
-            authFetch(`http://localhost:5000/api/cart/cartOP`, {
-              method: "PATCH",
-              body: JSON.stringify({
-                prdID: item._id,
-                quantity: -1,
-              }),
+            authFetch(`${API_KEY}/cart/cartOP`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    prdID: item._id,
+                    quantity: -1,
+                }),
             });
             state.products.total = calculateTotal(state.products.cartItems);
         },
         increaseQ(state, action) {
             const item = state.products.cartItems.find(item => item._id === action.payload)
             item.quantity += 1
-            authFetch(`http://localhost:5000/api/cart/cartOP`, {
-              method: "PATCH",
-              body: JSON.stringify({
-                prdID: item._id,
-                quantity: 1,
-              }),
+            authFetch(`${API_KEY}/cart/cartOP`, {
+                method: "PATCH",
+                body: JSON.stringify({
+                    prdID: item._id,
+                    quantity: 1,
+                }),
             });
             state.products.total = calculateTotal(state.products.cartItems);
         },
         deleteItem(state, action) {
-            console.log("len: ",state.products.cartItems.length);
-            
+            console.log("len: ", state.products.cartItems.length);
+
             if (state.products.cartItems.length > 1) {
                 const item = state.products.cartItems.find(item => item._id === action.payload)
                 authFetch(
-                  `http://localhost:5000/api/cart/cartOP`,
-                  {
-                    method: "PATCH",
-                    body: JSON.stringify({ prdID: item._id, quantity: 0 }),
-                  }
+                    `${API_KEY}/cart/cartOP`,
+                    {
+                        method: "PATCH",
+                        body: JSON.stringify({ prdID: item._id, quantity: 0 }),
+                    }
                 );
                 state.products.cartItems = state.products.cartItems.filter(item => item._id !== action.payload)
                 state.products.total = calculateTotal(state.products.cartItems);
             }
             else {
-                authFetch(`http://localhost:5000/api/cart/${state.products._id}`, {
-                  method: "DELETE",
+                authFetch(`${API_KEY}/cart/${state.products._id}`, {
+                    method: "DELETE",
                 });
                 state.products = [];
             }
         },
         deleteAllCart(state, action) {
-            authFetch(`http://localhost:5000/api/cart/${state.products._id}`, {
-              method: "DELETE",
+            authFetch(`${API_KEY}/cart/${state.products._id}`, {
+                method: "DELETE",
             });
             state.items = [];
         },
@@ -181,5 +181,5 @@ const cartSlice = createSlice({
     }
 });
 
-export const { clearCartError,decreaseQ,deleteAllCart,deleteItem,increaseQ } = cartSlice.actions;
+export const { clearCartError, decreaseQ, deleteAllCart, deleteItem, increaseQ } = cartSlice.actions;
 export default cartSlice;
