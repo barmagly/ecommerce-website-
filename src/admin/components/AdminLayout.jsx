@@ -496,12 +496,14 @@ function AdminLayout({ children }) {
           </Box>
         </MenuItem>
         <Divider />
-        <MenuItem sx={{ borderRadius: 2, mx: 1, my: 0.5 }}>
+        <MenuItem 
+          onClick={() => window.location.href = '/admin/settings'}
+          sx={{ borderRadius: 2, mx: 1, my: 0.5 }}>
           <SettingsIcon sx={{ mr: 2, color: 'primary.main' }} />
           الإعدادات
         </MenuItem>
         <MenuItem 
-          onClick={() => window.open('/', '_blank')}
+          onClick={() => window.open('/settings', '_blank')}
           sx={{ borderRadius: 2, mx: 1, my: 0.5 }}
         >
           <HomeIcon sx={{ mr: 2, color: 'success.main' }} />
