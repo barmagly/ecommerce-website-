@@ -192,14 +192,13 @@ export const printInvoice = async (elementRef) => {
           }
           
           /* Grid layout */
-          [class*="MuiGrid-container"] {
+          .invoice-container [class*="MuiGrid-container"] {
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
             margin: 15px 0;
           }
-          
-          [class*="MuiGrid-"][class*="size"] {
+          .invoice-container [class*="MuiGrid-"][class*="size"] {
             flex: 1;
             min-width: 200px;
           }

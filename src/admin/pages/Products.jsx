@@ -32,6 +32,11 @@ import {
   Alert,
   Tooltip,
   CircularProgress,
+  Switch,
+  FormControlLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -46,6 +51,10 @@ import {
   Category as CategoryIcon,
   Star as StarIcon,
   Refresh as RefreshIcon,
+  ExpandMore as ExpandMoreIcon,
+  Palette as PaletteIcon,
+  Straighten as SizeIcon,
+  Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -267,12 +276,19 @@ const Products = () => {
     stock: '',
     sku: '',
     images: [''],
+    imageCover: '',
     status: 'نشط',
     featured: false,
     tags: '',
     weight: '',
     dimensions: '',
     brand: '',
+    hasVariants: false,
+    attributes: [],
+    variants: [],
+    features: [],
+    specifications: [],
+    category: 'clothing',
   });
 
   const [errors, setErrors] = useState({});
@@ -375,12 +391,19 @@ const Products = () => {
       stock: '',
       sku: '',
       images: [''],
+      imageCover: '',
       status: 'نشط',
       featured: false,
       tags: '',
       weight: '',
       dimensions: '',
       brand: '',
+      hasVariants: false,
+      attributes: [],
+      variants: [],
+      features: [],
+      specifications: [],
+      category: 'clothing',
     });
     setErrors({});
   };
@@ -393,18 +416,41 @@ const Products = () => {
       setFormData({
         name: product.name,
         description: product.description,
-        price: product.price.toString(),
+        price: product.price ? product.price.toString() : '',
         salePrice: product.salePrice ? product.salePrice.toString() : '',
         categoryId: product.categoryId.toString(),
-        stock: product.stock.toString(),
-        sku: product.sku,
-        images: product.images,
+        stock: product.stock ? product.stock.toString() : '',
+        sku: product.sku || '',
+        images: product.images || [''],
+        imageCover: product.imageCover || '',
         status: product.status,
         featured: product.featured,
         tags: product.tags ? product.tags.join(', ') : '',
         weight: product.weight ? product.weight.toString() : '',
         dimensions: product.dimensions || '',
         brand: product.brand || '',
+        hasVariants: product.hasVariants || false,
+        attributes: (product.attributes || []).map(attr => ({
+          ...attr,
+          id: attr.id || Date.now() + Math.random()
+        })),
+        variants: (product.variants || []).map(variant => ({
+          ...variant,
+          id: variant.id || Date.now() + Math.random(),
+          images: variant.images || ['']
+        })),
+        features: (product.features || []).map(feature => ({
+          ...feature,
+          id: feature.id || Date.now() + Math.random()
+        })),
+        specifications: (product.specifications || []).map(spec => ({
+          ...spec,
+          id: spec.id || Date.now() + Math.random(),
+          items: (spec.items || []).map(item => ({
+            ...item,
+            id: item.id || Date.now() + Math.random()
+          }))
+        })),
       });
     } else {
       resetForm();
@@ -424,10 +470,19 @@ const Products = () => {
 
     if (!formData.name.trim()) newErrors.name = 'اسم المنتج مطلوب';
     if (!formData.description.trim()) newErrors.description = 'وصف المنتج مطلوب';
-    if (!formData.price || parseFloat(formData.price) <= 0) newErrors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر';
     if (!formData.categoryId) newErrors.categoryId = 'الفئة مطلوبة';
-    if (!formData.stock || parseInt(formData.stock) < 0) newErrors.stock = 'الكمية مطلوبة ويجب أن تكون صفر أو أكبر';
-    if (!formData.sku.trim()) newErrors.sku = 'رمز المنتج مطلوب';
+    if (!formData.imageCover.trim() && (!formData.images || !formData.images.some(img => img.trim()))) {
+      newErrors.imageCover = 'صورة الغلاف مطلوبة';
+    }
+    
+    // Conditional validation based on hasVariants
+    if (!formData.hasVariants) {
+      if (!formData.price || parseFloat(formData.price) <= 0) newErrors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر';
+      if (!formData.stock || parseInt(formData.stock) < 0) newErrors.stock = 'الكمية مطلوبة ويجب أن تكون صفر أو أكبر';
+      if (!formData.sku.trim()) newErrors.sku = 'رمز المنتج مطلوب';
+    } else {
+      if (formData.variants.length === 0) newErrors.variants = 'يجب إضافة متغير واحد على الأقل للمنتج';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -442,13 +497,10 @@ const Products = () => {
       const productData = {
         name: formData.name.trim(),
         description: formData.description.trim(),
-        price: parseFloat(formData.price),
-        salePrice: formData.salePrice ? parseFloat(formData.salePrice) : null,
         category: category ? category.name : '',
         categoryId: parseInt(formData.categoryId),
-        stock: parseInt(formData.stock),
-        sku: formData.sku.trim(),
         images: formData.images.filter(img => img.trim()),
+        imageCover: formData.imageCover.trim() || (formData.images.find(img => img.trim()) || ''),
         status: formData.status,
         featured: formData.featured,
         rating: 0,
@@ -457,8 +509,21 @@ const Products = () => {
         weight: formData.weight ? parseFloat(formData.weight) : null,
         dimensions: formData.dimensions.trim() || null,
         brand: formData.brand.trim() || null,
+        hasVariants: formData.hasVariants,
+        attributes: formData.attributes,
+        variants: formData.variants,
+        features: formData.features,
+        specifications: formData.specifications,
         updatedAt: new Date().toISOString(),
       };
+
+      // Add price, stock, and sku only if not using variants
+      if (!formData.hasVariants) {
+        productData.price = parseFloat(formData.price);
+        productData.salePrice = formData.salePrice ? parseFloat(formData.salePrice) : null;
+        productData.stock = parseInt(formData.stock);
+        productData.sku = formData.sku.trim();
+      }
 
       let updatedProducts;
 
@@ -526,6 +591,191 @@ const Products = () => {
       const newImages = formData.images.filter((_, i) => i !== index);
       setFormData(prev => ({ ...prev, images: newImages }));
     }
+  };
+
+  // Attribute management functions
+  const addAttribute = () => {
+    const newAttribute = {
+      id: Date.now(),
+      name: '',
+      values: ['']
+    };
+    setFormData(prev => ({ ...prev, attributes: [...prev.attributes, newAttribute] }));
+  };
+
+  const removeAttribute = (attributeId) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.filter(attr => attr.id !== attributeId)
+    }));
+  };
+
+  const updateAttribute = (attributeId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.map(attr =>
+        attr.id === attributeId ? { ...attr, [field]: value } : attr
+      )
+    }));
+  };
+
+  const addAttributeValue = (attributeId) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.map(attr =>
+        attr.id === attributeId
+          ? { ...attr, values: [...attr.values, ''] }
+          : attr
+      )
+    }));
+  };
+
+  const removeAttributeValue = (attributeId, valueIndex) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.map(attr =>
+        attr.id === attributeId
+          ? { ...attr, values: attr.values.filter((_, i) => i !== valueIndex) }
+          : attr
+      )
+    }));
+  };
+
+  const updateAttributeValue = (attributeId, valueIndex, value) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.map(attr =>
+        attr.id === attributeId
+          ? {
+              ...attr,
+              values: attr.values.map((val, i) => i === valueIndex ? value : val)
+            }
+          : attr
+      )
+    }));
+  };
+
+  // Variant management functions
+  const addVariant = () => {
+    const newVariant = {
+      id: Date.now(),
+      sku: '',
+      attributes: {},
+      price: '',
+      quantity: '',
+      images: ['']
+    };
+    setFormData(prev => ({ ...prev, variants: [...prev.variants, newVariant] }));
+  };
+
+  const removeVariant = (variantId) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.filter(variant => variant.id !== variantId)
+    }));
+  };
+
+  const updateVariant = (variantId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(variant =>
+        variant.id === variantId ? { ...variant, [field]: value } : variant
+      )
+    }));
+  };
+
+  const updateVariantAttribute = (variantId, attributeName, value) => {
+    setFormData(prev => ({
+      ...prev,
+      variants: prev.variants.map(variant =>
+        variant.id === variantId
+          ? { ...variant, attributes: { ...variant.attributes, [attributeName]: value } }
+          : variant
+      )
+    }));
+  };
+
+  // Feature management functions
+  const addFeature = () => {
+    const newFeature = { id: Date.now(), name: '', value: '' };
+    setFormData(prev => ({ ...prev, features: [...prev.features, newFeature] }));
+  };
+
+  const removeFeature = (featureId) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.filter(feature => feature.id !== featureId)
+    }));
+  };
+
+  const updateFeature = (featureId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      features: prev.features.map(feature =>
+        feature.id === featureId ? { ...feature, [field]: value } : feature
+      )
+    }));
+  };
+
+  // Specification management functions
+  const addSpecificationGroup = () => {
+    const newGroup = { id: Date.now(), group: '', items: [{ id: Date.now(), name: '', value: '' }] };
+    setFormData(prev => ({ ...prev, specifications: [...prev.specifications, newGroup] }));
+  };
+
+  const removeSpecificationGroup = (groupId) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.filter(spec => spec.id !== groupId)
+    }));
+  };
+
+  const updateSpecificationGroup = (groupId, groupName) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.map(spec =>
+        spec.id === groupId ? { ...spec, group: groupName } : spec
+      )
+    }));
+  };
+
+  const addSpecificationItem = (groupId) => {
+    const newItem = { id: Date.now(), name: '', value: '' };
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.map(spec =>
+        spec.id === groupId
+          ? { ...spec, items: [...spec.items, newItem] }
+          : spec
+      )
+    }));
+  };
+
+  const removeSpecificationItem = (groupId, itemId) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.map(spec =>
+        spec.id === groupId
+          ? { ...spec, items: spec.items.filter(item => item.id !== itemId) }
+          : spec
+      )
+    }));
+  };
+
+  const updateSpecificationItem = (groupId, itemId, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      specifications: prev.specifications.map(spec =>
+        spec.id === groupId
+          ? {
+              ...spec,
+              items: spec.items.map(item =>
+                item.id === itemId ? { ...item, [field]: value } : item
+              )
+            }
+          : spec
+      )
+    }));
   };
 
   if (loading) {
@@ -861,7 +1111,7 @@ const Products = () => {
                           transition={{ duration: 0.3, delay: index * 0.05 }}
                           hover
                         >
-                      <TableCell>
+                          <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar
                                 src={product.images?.[0]}
@@ -904,8 +1154,8 @@ const Products = () => {
                                   )}
                                 </Box>
                               </Box>
-                        </Box>
-                      </TableCell>
+                            </Box>
+                          </TableCell>
                           
                           <TableCell>
                             <Box>
@@ -943,7 +1193,7 @@ const Products = () => {
                             />
                           </TableCell>
                           
-                      <TableCell>
+                          <TableCell>
                             <Box sx={{ textAlign: 'center' }}>
                               <Chip
                                 label={product.stock}
@@ -993,7 +1243,7 @@ const Products = () => {
                             </Box>
                           </TableCell>
                           
-                      <TableCell>
+                          <TableCell>
                             <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                               <Tooltip title="عرض التفاصيل" arrow>
                                 <IconButton
@@ -1079,7 +1329,7 @@ const Products = () => {
                                 </IconButton>
                               </Tooltip>
                             </Box>
-                      </TableCell>
+                          </TableCell>
                         </motion.tr>
                   ))}
                   </AnimatePresence>
@@ -1101,8 +1351,6 @@ const Products = () => {
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`}
       />
 
-
-
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
@@ -1115,243 +1363,232 @@ const Products = () => {
         <DialogTitle sx={{ 
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '-100%',
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent)',
+            animation: 'shimmer 2s infinite',
+          },
+          '@keyframes shimmer': {
+            '0%': { left: '-100%' },
+            '100%': { left: '100%' }
+          }
         }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+            {dialogMode === 'add' && <AddIcon />}
+            {dialogMode === 'edit' && <EditIcon />}
+            {dialogMode === 'view' && <ViewIcon />}
+            <Typography variant="h6" component="span">
           {dialogMode === 'add' ? 'إضافة منتج جديد' : 
            dialogMode === 'edit' ? 'تعديل المنتج' : 'عرض المنتج'}
+            </Typography>
+          </Box>
         </DialogTitle>
         
-        <DialogContent sx={{ p: 3, mt: 2 }}>
-          {dialogMode === 'view' && selectedProduct ? (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={4}>
-                <Avatar
-                  src={selectedProduct.images?.[0]}
-                  sx={{ width: 200, height: 200, borderRadius: 3, mx: 'auto' }}
-                >
-                  <ImageIcon sx={{ fontSize: 80 }} />
-                </Avatar>
+        <DialogContent sx={{ p: 0, mt: 0, maxHeight: '70vh', overflowY: 'auto', bgcolor: '#f7f8fa' }}>
+          <form>
+            <Grid container spacing={3} sx={{ p: 3 }}>
+              {/* General Info Section */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>
+                    📝 معلومات المنتج الأساسية
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid xs={12} md={6}>
+                      <TextField fullWidth label="اسم المنتج" value={formData.name || ''} onChange={handleFormChange('name')} required variant="outlined" />
+                    </Grid>
+                    <Grid xs={12} md={6}>
+                      <TextField fullWidth label="العلامة التجارية" value={formData.brand || ''} onChange={handleFormChange('brand')} required variant="outlined" />
+                    </Grid>
+                    <Grid xs={12} md={6}>
+                      <FormControl fullWidth variant="outlined">
+                        <InputLabel>الفئة</InputLabel>
+                        <Select value={formData.category || ''} onChange={handleFormChange('category')} label="الفئة">
+                          {/* TODO: Map categories from backend */}
+                          <MenuItem value="">اختر الفئة</MenuItem>
+                          <MenuItem value="electronics">إلكترونيات</MenuItem>
+                          <MenuItem value="clothing">ملابس</MenuItem>
+                          <MenuItem value="books">كتب</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid xs={12}>
+                      <TextField fullWidth label="الوصف" value={formData.description || ''} onChange={handleFormChange('description')} required multiline minRows={3} variant="outlined" />
+                    </Grid>
+                  </Grid>
+                </Paper>
               </Grid>
-              
-              <Grid item xs={12} md={8}>
-                <Typography variant="h5" fontWeight="bold" gutterBottom>
-                  {selectedProduct.name}
-                </Typography>
-                <Typography variant="body1" color="text.secondary" paragraph>
-                  {selectedProduct.description}
-                </Typography>
-                
-                <Grid container spacing={2} sx={{ mt: 2 }}>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">السعر</Typography>
-                    <Typography variant="h6" color="primary">${selectedProduct.price}</Typography>
+
+              {/* Images Section */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>
+                    🖼️ الصور
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <Grid xs={12} md={6}>
+                      <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }} startIcon={<ImageIcon />}>اختر صورة الغلاف
+                        <input type="file" accept="image/*" hidden onChange={e => { const file = e.target.files[0]; if (file) { const reader = new FileReader(); reader.onload = ev => { setFormData(prev => ({ ...prev, imageCover: ev.target.result, imageCoverFile: file })); }; reader.readAsDataURL(file); } }} />
+                      </Button>
+                      {formData.imageCover && (<Box sx={{ mt: 2, textAlign: 'center' }}><img src={formData.imageCover} alt="cover preview" style={{ maxWidth: '100%', maxHeight: 120, borderRadius: 8, border: '1px solid #eee' }} /></Box>)}
+                    </Grid>
+                    <Grid xs={12} md={6}>
+                      <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }} startIcon={<ImageIcon />}>اختر صور متعددة
+                        <input type="file" accept="image/*" multiple hidden onChange={e => { const files = Array.from(e.target.files); if (files.length) { Promise.all(files.map(file => { return new Promise(resolve => { const reader = new FileReader(); reader.onload = ev => resolve({ url: ev.target.result, file }); reader.readAsDataURL(file); }); })).then(images => { setFormData(prev => ({ ...prev, images: images.map(img => img.url), imagesFiles: images.map(img => img.file) })); }); } }} />
+                      </Button>
+                      {formData.images && formData.images.length > 0 && (<Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>{formData.images.map((img, idx) => (<img key={idx} src={img} alt={`gallery-${idx}`} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid #eee' }} />))}</Box>)}
+                    </Grid>
                   </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">المخزون</Typography>
-                    <Typography variant="h6">{selectedProduct.stock}</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">الفئة</Typography>
-                    <Typography variant="body1">{selectedProduct.category}</Typography>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="subtitle2" color="text.secondary">الحالة</Typography>
-                    <Chip label={selectedProduct.status} size="small" />
-                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Features Section */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>⭐ الميزات</Typography>
+                  {formData.features && formData.features.map((feature, idx) => (
+                    <Grid container spacing={2} key={feature.id || idx} sx={{ mb: 1 }}>
+                      <Grid xs={12} md={5}><TextField fullWidth label="اسم الميزة" value={feature.name} onChange={e => updateFeature(feature.id, 'name', e.target.value)} /></Grid>
+                      <Grid xs={12} md={5}><TextField fullWidth label="قيمة الميزة" value={feature.value} onChange={e => updateFeature(feature.id, 'value', e.target.value)} /></Grid>
+                      <Grid xs={12} md={2}><Button color="error" onClick={() => removeFeature(feature.id)}>حذف</Button></Grid>
+                    </Grid>
+                  ))}
+                  <Button variant="outlined" onClick={addFeature}>إضافة ميزة</Button>
+                </Paper>
+              </Grid>
+
+              {/* Specifications Section */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>📋 المواصفات</Typography>
+                  {formData.specifications && formData.specifications.map((spec, idx) => (
+                    <Box key={spec.id || idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, mt: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid xs={12} md={6}><TextField fullWidth label="اسم المجموعة" value={spec.group} onChange={e => updateSpecificationGroup(spec.id, e.target.value)} /></Grid>
+                        <Grid xs={12} md={6}><Button variant="outlined" fullWidth onClick={() => addSpecificationItem(spec.id)}>إضافة عنصر</Button></Grid>
+                        {spec.items && spec.items.map((item, itemIdx) => (
+                          <React.Fragment key={item.id || itemIdx}>
+                            <Grid xs={12} md={5}><TextField fullWidth label="اسم العنصر" value={item.name} onChange={e => updateSpecificationItem(spec.id, item.id, 'name', e.target.value)} /></Grid>
+                            <Grid xs={12} md={5}><TextField fullWidth label="قيمة العنصر" value={item.value} onChange={e => updateSpecificationItem(spec.id, item.id, 'value', e.target.value)} /></Grid>
+                            <Grid xs={12} md={2}><Button color="error" onClick={() => removeSpecificationItem(spec.id, item.id)}>حذف</Button></Grid>
+                          </React.Fragment>
+                        ))}
+                        <Grid xs={12}><Button color="error" onClick={() => removeSpecificationGroup(spec.id)}>حذف المجموعة</Button></Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                  <Button variant="outlined" onClick={addSpecificationGroup}>إضافة مجموعة مواصفات</Button>
+                </Paper>
+              </Grid>
+
+              {/* Attributes Section */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>🎨 السمات (للمتغيرات)</Typography>
+                  {formData.attributes && formData.attributes.map((attr, idx) => (
+                    <Grid container spacing={2} key={attr.id || idx} sx={{ mb: 1 }}>
+                      <Grid xs={12} md={5}><TextField fullWidth label="اسم السمة" value={attr.name} onChange={e => updateAttribute(attr.id, 'name', e.target.value)} /></Grid>
+                      <Grid xs={12} md={5}><TextField fullWidth label="القيم (مفصولة بفاصلة)" value={attr.values.join(',')} onChange={e => updateAttribute(attr.id, 'values', e.target.value.split(','))} /></Grid>
+                      <Grid xs={12} md={2}><Button color="error" onClick={() => removeAttribute(attr.id)}>حذف</Button></Grid>
+                    </Grid>
+                  ))}
+                  <Button variant="outlined" onClick={addAttribute}>إضافة سمة</Button>
+                </Paper>
+              </Grid>
+
+              {/* Variants Switch */}
+              <Grid xs={12}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <FormControlLabel control={<Switch checked={formData.hasVariants || false} onChange={handleFormChange('hasVariants')} color="primary" />} label="المنتج له متغيرات (مقاسات، ألوان، إلخ)" />
+                </Paper>
+              </Grid>
+
+              {/* Inventory & Pricing Section (Simple Product) */}
+              {!formData.hasVariants && (
+                <Grid xs={12}>
+                  <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>💰 المخزون والتسعير</Typography>
+                    <Grid container spacing={2}>
+                      <Grid xs={12} md={4}><TextField fullWidth label="السعر" type="number" value={formData.price || ''} onChange={handleFormChange('price')} required variant="outlined" /></Grid>
+                      <Grid xs={12} md={4}><TextField fullWidth label="الكمية في المخزون" type="number" value={formData.stock || ''} onChange={handleFormChange('stock')} required variant="outlined" /></Grid>
+                      <Grid xs={12} md={4}><TextField fullWidth label="رمز المنتج (SKU)" value={formData.sku || ''} onChange={handleFormChange('sku')} required variant="outlined" /></Grid>
+                    </Grid>
+                  </Paper>
                 </Grid>
-              </Grid>
-            </Grid>
-          ) : (
-            <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="اسم المنتج"
-                  value={formData.name}
-                  onChange={handleFormChange('name')}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="رمز المنتج (SKU)"
-                  value={formData.sku}
-                  onChange={handleFormChange('sku')}
-                  error={!!errors.sku}
-                  helperText={errors.sku}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="وصف المنتج"
-                  value={formData.description}
-                  onChange={handleFormChange('description')}
-                  error={!!errors.description}
-                  helperText={errors.description}
-                  multiline
-                  rows={3}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="السعر"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleFormChange('price')}
-                  error={!!errors.price}
-                  helperText={errors.price}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="سعر التخفيض"
-                  type="number"
-                  value={formData.salePrice}
-                  onChange={handleFormChange('salePrice')}
-                  InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                  }}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={4}>
-                <TextField
-                  fullWidth
-                  label="الكمية في المخزون"
-                  type="number"
-                  value={formData.stock}
-                  onChange={handleFormChange('stock')}
-                  error={!!errors.stock}
-                  helperText={errors.stock}
-                  required
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth error={!!errors.categoryId}>
-                  <InputLabel>الفئة</InputLabel>
-                  <Select
-                    value={formData.categoryId}
-                    onChange={handleFormChange('categoryId')}
-                    label="الفئة"
-                    required
-                  >
-                    {categories.map(category => (
-                      <MenuItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </MenuItem>
+              )}
+
+              {/* Variants Section (if hasVariants) */}
+              {formData.hasVariants && (
+                <Grid xs={12}>
+                  <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                    <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>🧩 المتغيرات</Typography>
+                    <Button variant="outlined" onClick={addVariant}>إضافة متغير</Button>
+                    {formData.variants && formData.variants.map((variant, idx) => (
+                      <Box key={variant.id || idx} sx={{ border: '1px solid #eee', borderRadius: 2, p: 2, mt: 2 }}>
+                        <Grid container spacing={2}>
+                          <Grid xs={12} md={3}><TextField fullWidth label="SKU المتغير" value={variant.sku} onChange={e => updateVariant(variant.id, 'sku', e.target.value)} required /></Grid>
+                          {/* Dynamic attributes */}
+                          {formData.attributes && formData.attributes.map((attr, aIdx) => (
+                            <Grid xs={12} md={2} key={aIdx}>
+                              <TextField fullWidth label={attr.name} value={variant.attributes ? variant.attributes[attr.name] || '' : ''} onChange={e => updateVariantAttribute(variant.id, attr.name, e.target.value)} />
+                            </Grid>
+                          ))}
+                          <Grid xs={12} md={2}><TextField fullWidth label="السعر" type="number" value={variant.price} onChange={e => updateVariant(variant.id, 'price', e.target.value)} required /></Grid>
+                          <Grid xs={12} md={2}><TextField fullWidth label="الكمية" type="number" value={variant.quantity} onChange={e => updateVariant(variant.id, 'quantity', e.target.value)} required /></Grid>
+                          <Grid xs={12} md={3}><Button color="error" onClick={() => removeVariant(variant.id)}>حذف المتغير</Button></Grid>
+                        </Grid>
+                        {/* Variant Images */}
+                        <Grid container spacing={2} sx={{ mt: 1 }}>
+                          <Grid xs={12} md={6}>
+                            <Button variant="outlined" component="label" fullWidth sx={{ height: 56 }} startIcon={<ImageIcon />}>اختر صور المتغير
+                              <input type="file" accept="image/*" multiple hidden onChange={e => {
+                                const files = Array.from(e.target.files);
+                                if (files.length) {
+                                  Promise.all(files.map(file => {
+                                    return new Promise(resolve => {
+                                      const reader = new FileReader();
+                                      reader.onload = ev => resolve({ url: ev.target.result, file });
+                                      reader.readAsDataURL(file);
+                                    });
+                                  })).then(images => {
+                                    updateVariant(variant.id, 'images', images.map(img => img.url));
+                                  });
+                                }
+                              }} />
+                            </Button>
+                            {variant.images && variant.images.length > 0 && (<Box sx={{ mt: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>{variant.images.map((img, idx) => (<img key={idx} src={img} alt={`variant-gallery-${idx}`} style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, border: '1px solid #eee' }} />))}</Box>)}
+                          </Grid>
+                        </Grid>
+                      </Box>
                     ))}
-                  </Select>
-                  {errors.categoryId && (
-                    <Typography variant="caption" color="error" sx={{ mt: 1, mx: 1.5 }}>
-                      {errors.categoryId}
-                    </Typography>
-                  )}
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth>
-                  <InputLabel>الحالة</InputLabel>
-                  <Select
-                    value={formData.status}
-                    onChange={handleFormChange('status')}
-                    label="الحالة"
-                  >
-                    <MenuItem value="نشط">نشط</MenuItem>
-                    <MenuItem value="غير نشط">غير نشط</MenuItem>
-                    <MenuItem value="نفد المخزون">نفد المخزون</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="العلامة التجارية"
-                  value={formData.brand}
-                  onChange={handleFormChange('brand')}
-                />
-              </Grid>
-              
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="الوزن (كجم)"
-                  type="number"
-                  value={formData.weight}
-                  onChange={handleFormChange('weight')}
-                  step="0.1"
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="الأبعاد"
-                  value={formData.dimensions}
-                  onChange={handleFormChange('dimensions')}
-                  placeholder="الطول x العرض x الارتفاع"
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="الكلمات المفتاحية"
-                  value={formData.tags}
-                  onChange={handleFormChange('tags')}
-                  placeholder="فصل بالفاصلة"
-                />
-              </Grid>
-              
-              <Grid item xs={12}>
-                <Typography variant="subtitle2" gutterBottom>صور المنتج</Typography>
-                {formData.images.map((image, index) => (
-                  <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                    <TextField
-                      fullWidth
-                      placeholder="رابط الصورة"
-                      value={image}
-                      onChange={(e) => handleImageChange(index, e.target.value)}
-                    />
-                    {formData.images.length > 1 && (
-                      <IconButton 
-                        color="error" 
-                        onClick={() => removeImageField(index)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    )}
-                  </Box>
-                ))}
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={addImageField}
-                  size="small"
-                >
-                  إضافة صورة
-                </Button>
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Status Section */}
+              <Grid xs={12} md={6}>
+                <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
+                  <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>⚡ الحالة</Typography>
+                  <FormControl fullWidth variant="outlined">
+                    <InputLabel>الحالة</InputLabel>
+                    <Select value={formData.status || ''} onChange={handleFormChange('status')} label="الحالة">
+                      <MenuItem value="active">نشط</MenuItem>
+                      <MenuItem value="inactive">غير نشط</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Paper>
               </Grid>
             </Grid>
-          )}
+          </form>
         </DialogContent>
         
         <DialogActions sx={{ p: 3 }}>
