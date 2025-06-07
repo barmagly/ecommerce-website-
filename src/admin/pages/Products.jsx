@@ -1518,7 +1518,6 @@ const Products = () => {
                   <Paper elevation={2} sx={{ p: 3, borderRadius: 3 }}>
                     <Typography variant="h6" fontWeight="bold" sx={{ mb: 2, color: 'primary.main' }}>💰 المخزون والتسعير</Typography>
                     <Grid container spacing={2}>
-                      <Grid xs={12} md={4}><TextField fullWidth label="السعر" type="number" value={formData.price || ''} onChange={handleFormChange('price')} required variant="outlined" /></Grid>
                       <Grid xs={12} md={4}><TextField fullWidth label="الكمية في المخزون" type="number" value={formData.stock || ''} onChange={handleFormChange('stock')} required variant="outlined" /></Grid>
                       <Grid xs={12} md={4}><TextField fullWidth label="رمز المنتج (SKU)" value={formData.sku || ''} onChange={handleFormChange('sku')} required variant="outlined" /></Grid>
                     </Grid>
