@@ -57,7 +57,7 @@ export default function ShopProducts() {
     let isMounted = true;
     const fetchProducts = () => {
       setLoading(true);
-      fetch('http://localhost:5000/api/products')
+      fetch('https://ecommerce-website-backend-nine.vercel.app/api/products')
         .then(res => res.json())
         .then(data => {
           if (isMounted) {

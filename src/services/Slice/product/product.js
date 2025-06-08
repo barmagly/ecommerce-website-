@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = import.meta.env.VITE_API_KEY || "http://localhost:5000/api/products";
+const API_KEY = import.meta.env.VITE_API_KEY || "https://ecommerce-website-backend-nine.vercel.app/api/products";
 
 export const getProductsThunk = createAsyncThunk(
     "product/getProducts",
