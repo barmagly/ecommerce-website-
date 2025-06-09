@@ -1,3 +1,5 @@
+const webpack = require('webpack');
+
 module.exports = {
   style: {
     postcss: {
@@ -27,7 +29,7 @@ module.exports = {
 
       // Add Buffer polyfill
       webpackConfig.plugins.push(
-        new webpackConfig.ProvidePlugin({
+        new webpack.ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
           process: 'process/browser',
         })
