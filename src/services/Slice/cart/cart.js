@@ -12,7 +12,7 @@ export const getCartThunk = createAsyncThunk(
                 }
             });
             console.log("data in slice", data);
-            return data[0];
+            return data[0] || [];
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
         }

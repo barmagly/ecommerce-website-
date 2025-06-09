@@ -20,6 +20,7 @@ export default function Checkout() {
     if (!cartItems.length || !token) {
       navigate('/cart');
     }
+    console.log("cartItems in checkout", cartItems);
   }, [cartItems, navigate]);
 
   const [form, setForm] = useState({
@@ -387,10 +388,10 @@ export default function Checkout() {
                 <div className="card-body">
                   <h5 className="fw-bold mb-3">ملخص الطلب</h5>
                   {cartItems.map(item => (
-                    <div className="d-flex align-items-center mb-3" key={item._id}>
-                      <img src={item.images[0].url} alt={item.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
-                      <span className="fw-bold flex-fill">{item.name}</span>
-                      <span>{item.price * item.quantity} ج.م</span>
+                    <div className="d-flex align-items-center mb-3" key={item?.variantId ? item?.variantId._id : item?.prdID._id}>
+                      <img src={item?.variantId ? item?.variantId?.images[0].url : item?.prdID?.images[0].url} alt={item?.prdID?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
+                      <span className="fw-bold flex-fill">{item?.prdID?.name}</span>
+                      <span>{item?.variantId ? item?.variantId?.price * item?.quantity : item?.prdID?.price * item?.quantity} ج.م</span>
                     </div>
                   ))}
                   <hr />
