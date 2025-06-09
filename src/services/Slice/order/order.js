@@ -1,10 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-// const API_KEY = "https://ecommerce-website-backend-nine.vercel.app/api/orders";
+const API_KEY = "https://ecommerce-website-backend-nine.vercel.app/api/orders";
 
-const API_KEY = "http://localhost:5000/api/orders";
+// const API_KEY = "http://localhost:5000/api/orders";
 
-// جلب الطلبات
 export const getOrdersThunk = createAsyncThunk(
     "order/getOrders",
     async (_, thunkAPI) => {
@@ -25,7 +24,6 @@ export const getOrdersThunk = createAsyncThunk(
     }
 );
 
-// إنشاء طلب جديد
 export const createOrderThunk = createAsyncThunk(
     "order/createOrder",
     async (formData, thunkAPI) => {
@@ -34,7 +32,7 @@ export const createOrderThunk = createAsyncThunk(
             const { data } = await axios.post(`${API_KEY}/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
-                    "Content-Type": "multipart/form-data", // مهم جدًا لو فيه صورة
+                    "Content-Type": "multipart/form-data",
                 },
             });
             return {
@@ -86,7 +84,7 @@ const orderSlice = createSlice({
             })
             .addCase(createOrderThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.orders.push(action.payload.order); // إضافة الطلب الجديد
+                state.orders.push(action.payload.order);
                 state.success = true;
             })
             .addCase(createOrderThunk.rejected, (state, action) => {
