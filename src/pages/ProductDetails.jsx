@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { getVariantsThunk } from "../services/Slice/variant/variant";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import { addToCartThunk } from "../services/Slice/cart/cart";
@@ -40,8 +41,11 @@ export default function ProductDetails() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { products, loading, error } = useSelector((state) => state.product);
+  const { variants, loading: variantsLoading } = useSelector((state) => state.variant);
   const { wishlist } = useSelector((state) => state.userWishlist);
   const product = products?.find(p => p._id === id);
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
 
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [mainImg, setMainImg] = useState(null);
@@ -50,11 +54,13 @@ export default function ProductDetails() {
 
   useEffect(() => {
     dispatch(getProductsThunk());
-  }, [dispatch]);
+    if (id) {
+      dispatch(getVariantsThunk({ prdId: id }));
+    }
+  }, [dispatch, id]);
 
   useEffect(() => {
     if (product) {
-      setMainImg(product.images?.[0]?.url || product.imageCover || PLACEHOLDER_IMG);
       // Initialize selected attributes
       const initialAttributes = {};
       product.attributes?.forEach(attr => {
@@ -65,6 +71,33 @@ export default function ProductDetails() {
       setSelectedAttributes(initialAttributes);
     }
   }, [product]);
+
+  useEffect(() => {
+    if (variants && variants.length > 0) {
+      // Find matching variant based on selected attributes
+      const matchingVariant = variants.find(variant => {
+        return Object.entries(selectedAttributes).every(([key, value]) =>
+          variant.attributes[key] === value
+        );
+      });
+
+      if (matchingVariant) {
+        setSelectedVariant(matchingVariant);
+        setCurrentVariantIndex(variants.findIndex(v => v._id === matchingVariant._id));
+      } else {
+        setSelectedVariant(variants[0]);
+        setCurrentVariantIndex(0);
+      }
+    }
+  }, [variants, selectedAttributes]);
+
+  useEffect(() => {
+    if (selectedVariant) {
+      setMainImg(selectedVariant.images?.[0]?.url || product?.imageCover || PLACEHOLDER_IMG);
+    } else if (product) {
+      setMainImg(product.images?.[0]?.url || product.imageCover || PLACEHOLDER_IMG);
+    }
+  }, [selectedVariant, product]);
 
   // Get similar products (same category)
   const similarProducts = products?.filter(p =>
@@ -92,6 +125,26 @@ export default function ProductDetails() {
 
   const handleDragEnd = () => {
     setIsDragging(false);
+  };
+
+  const handleNextVariant = () => {
+    if (variants && variants.length > 0) {
+      const nextIndex = (currentVariantIndex + 1) % variants.length;
+      setCurrentVariantIndex(nextIndex);
+      setSelectedVariant(variants[nextIndex]);
+      // Update selected attributes to match the new variant
+      setSelectedAttributes(variants[nextIndex].attributes);
+    }
+  };
+
+  const handlePrevVariant = () => {
+    if (variants && variants.length > 0) {
+      const prevIndex = (currentVariantIndex - 1 + variants.length) % variants.length;
+      setCurrentVariantIndex(prevIndex);
+      setSelectedVariant(variants[prevIndex]);
+      // Update selected attributes to match the new variant
+      setSelectedAttributes(variants[prevIndex].attributes);
+    }
   };
 
   if (loading) {
@@ -141,7 +194,16 @@ export default function ProductDetails() {
   };
 
   const handleAddToCartClick = () => {
-    handleAddToCart(dispatch, addToCartThunk, { productId: id }, navigate);
+    if (selectedVariant) {
+      handleAddToCart(dispatch, addToCartThunk, {
+        productId: id,
+        variantId: selectedVariant._id
+      }, navigate);
+    } else {
+      handleAddToCart(dispatch, addToCartThunk, {
+        productId: id
+      }, navigate);
+    }
   };
 
   const handleAddToWishlistClick = () => {
@@ -173,9 +235,9 @@ export default function ProductDetails() {
                 style={{ maxWidth: 480, maxHeight: 420, borderRadius: 18, objectFit: 'contain', width: '100%', transition: '0.25s' }}
               />
             </div>
-            {product.images && product.images.length > 1 && (
+            {(selectedVariant?.images || product.images) && (selectedVariant?.images || product.images).length > 1 && (
               <div className="d-flex gap-2 mt-3 justify-content-center flex-wrap">
-                {product.images.map((img, idx) => (
+                {(selectedVariant?.images || product.images).map((img, idx) => (
                   <img
                     key={idx}
                     src={img.url}
@@ -209,28 +271,97 @@ export default function ProductDetails() {
             </div>
             <div className="mb-3">
               <span className="text-danger fw-bold fs-3">
-                {product?.price} ج.م
+                {selectedVariant?.price || product?.price} ج.م
               </span>
+              {selectedVariant && (
+                <span className="ms-2 text-muted" style={{ fontSize: '0.9em' }}>
+                  SKU: {selectedVariant.sku}
+                </span>
+              )}
             </div>
+
+            {variants && variants.length > 1 && (
+              <div className="mb-3 d-flex align-items-center gap-2">
+                <button
+                  className="btn btn-outline-dark"
+                  onClick={handlePrevVariant}
+                  disabled={!variants || variants.length <= 1}
+                >
+                  <i className="fas fa-chevron-right"></i>
+                </button>
+                <span className="text-muted">
+                  {currentVariantIndex + 1} من {variants.length}
+                </span>
+                <button
+                  className="btn btn-outline-dark"
+                  onClick={handleNextVariant}
+                  disabled={!variants || variants.length <= 1}
+                >
+                  <i className="fas fa-chevron-left"></i>
+                </button>
+              </div>
+            )}
+
             <p className="mb-3 text-muted" style={{ fontSize: '1.1rem' }}>{product.description}</p>
 
             {product.attributes?.map((attr, idx) => (
               <div key={idx} className="mb-3">
                 <span className="fw-bold">{attr.name}:</span>
                 <div className="d-flex gap-2 mt-2 flex-wrap">
-                  {attr.values.map((value, vIdx) => (
-                    <button
-                      key={vIdx}
-                      className={`btn btn-sm ${selectedAttributes[attr.name] === value ? 'btn-danger text-white' : 'btn-outline-dark'}`}
-                      style={{ minWidth: 70, fontWeight: 700, fontSize: '1.1em' }}
-                      onClick={() => setSelectedAttributes(prev => ({ ...prev, [attr.name]: value }))}
-                    >
-                      {value}
-                    </button>
-                  ))}
+                  {attr.values.map((value, vIdx) => {
+                    // Check if this value is available in any variant
+                    const isAvailable = variants?.some(v =>
+                      v.attributes[attr.name] === value &&
+                      Object.entries(selectedAttributes).every(([key, val]) =>
+                        key === attr.name || v.attributes[key] === val
+                      )
+                    );
+
+                    return (
+                      <button
+                        key={vIdx}
+                        className={`btn btn-sm ${selectedAttributes[attr.name] === value
+                          ? 'btn-danger text-white'
+                          : isAvailable
+                            ? 'btn-outline-dark'
+                            : 'btn-outline-secondary'
+                          }`}
+                        style={{
+                          minWidth: 70,
+                          fontWeight: 700,
+                          fontSize: '1.1em',
+                          opacity: isAvailable ? 1 : 0.5,
+                          cursor: isAvailable ? 'pointer' : 'not-allowed'
+                        }}
+                        onClick={() => {
+                          if (isAvailable) {
+                            setSelectedAttributes(prev => ({ ...prev, [attr.name]: value }));
+                          }
+                        }}
+                        disabled={!isAvailable}
+                      >
+                        {value}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             ))}
+
+            {selectedVariant && (
+              <div className="mb-3">
+                <div className="d-flex align-items-center gap-2">
+                  <span className={`badge ${selectedVariant.inStock ? 'bg-success' : 'bg-danger'}`}>
+                    {selectedVariant.inStock ? 'متوفر' : 'غير متوفر'}
+                  </span>
+                  {selectedVariant.quantity > 0 && (
+                    <span className="text-muted">
+                      الكمية المتوفرة: {selectedVariant.quantity}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {product.features?.length > 0 && (
               <div className="mb-3">
