@@ -24,14 +24,22 @@ module.exports = {
         "assert": require.resolve("assert/"),
         "url": require.resolve("url/"),
         "buffer": require.resolve("buffer/"),
+        "process": require.resolve("process/browser.js"),
         "fs": false
       };
 
-      // Add Buffer polyfill
+      // Add Buffer and Process polyfills
       webpackConfig.plugins.push(
         new webpack.ProvidePlugin({
           Buffer: ['buffer', 'Buffer'],
-          process: 'process/browser',
+          process: 'process/browser.js',
+        })
+      );
+
+      // Add DefinePlugin for process.env
+      webpackConfig.plugins.push(
+        new webpack.DefinePlugin({
+          'process.env': JSON.stringify(process.env)
         })
       );
 
