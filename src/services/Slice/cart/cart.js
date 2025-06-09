@@ -12,25 +12,7 @@ export const getCartThunk = createAsyncThunk(
                 }
             });
             console.log("data in slice", data);
-            // const productsRequests = data[0].cartItems.map((item) =>
-            //     axios.get(`${API_URL}/products/${item.prdID}`, {
-            //         headers: {
-            //             "Content-Type": "application/json",
-            //             Authorization: `Bearer ${localStorage.getItem("token")}`,
-            //         },
-            //     }).then(res => res.data)
-            // );
-
-            // const products = await Promise.all(productsRequests);
-
-            // data[0].cartItems.forEach(item => {
-            //     const product = products.find(product => product._id === item.prdID);
-            //     if (product) {
-            //         product.quantity = item.quantity;
-            //     }
-            // });
             return data[0];
-            // return { ...data[0], cartItems: products };
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
         }
