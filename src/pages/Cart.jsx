@@ -14,16 +14,16 @@ export default function Cart() {
   const token= localStorage.getItem('token')
   const navigate = useNavigate();
 
-  const handleRemove = (id) => {
-    dispatch(deleteItem(id))
+  const handleRemove = (variantId, prdID) => {
+    dispatch(deleteItem({variantId, prdID}))
   };
 
-  const decreaseQuantity = (id) => {
-    dispatch(decreaseQ(id))
+  const decreaseQuantity = (variantId, prdID) => {
+    dispatch(decreaseQ({variantId, prdID}))
   };
 
-  const increaseQuantity = (id) => {
-    dispatch(increaseQ(id))
+  const increaseQuantity = (variantId, prdID) => {
+    dispatch(increaseQ({variantId, prdID}))
   }
 
   const handleCheckout = () => {
@@ -66,22 +66,22 @@ export default function Cart() {
                     {products.length === 0 ? (
                       <tr><td colSpan="5" className="text-center">سلة المشتريات فارغة</td></tr>
                     ) : products?.cartItems?.map(item => (
-                      <tr key={item?._id}>
+                      <tr key={item?.variantId ? item?.variantId._id : item?.prdID._id}>
                         <td>
-                          <img src={item?.images[0].url} alt={item?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
-                          <span className="fw-bold">{item.name}</span>
+                          <img src={item?.variantId ? item?.variantId?.images[0].url : item?.prdID?.images[0].url} alt={item?.prdID?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
+                          <span className="fw-bold">{item?.prdID?.name}</span>
                         </td>
-                        <td>{item?.price} ج.م</td>
+                        <td>{item?.variantId ? item?.variantId?.price : item?.prdID?.price} ج.م</td>
                         <td>
                           <div className="d-flex align-items-center justify-content-center gap-2">
-                            <button className="btn btn-light px-2 py-1" onClick={() => decreaseQuantity(item.id)} disabled={item.quantity == 1}>-</button>
+                            <button className="btn btn-light px-2 py-1" onClick={() => decreaseQuantity(item?.variantId?._id, item?.prdID?._id)} disabled={item.quantity === 1}>-</button>
                             <span className="mx-2">{item.quantity}</span>
-                            <button className="btn btn-light px-2 py-1" onClick={() => increaseQuantity(item.id)} disabled={item.quantity >= item.stock}>+</button>
+                            <button className="btn btn-light px-2 py-1" onClick={() => increaseQuantity(item?.variantId?._id, item?.prdID?._id)} disabled={item.quantity >= item?.prdID?.stock}>+</button>
                           </div>
                         </td>
-                        <td>{item?.price * item?.quantity} ج.م</td>
+                        <td>{item?.variantId ? item?.variantId?.price * item?.quantity : item?.prdID?.price * item?.quantity} ج.م</td>
                         <td>
-                          <button className="btn btn-danger btn-sm" onClick={() => handleRemove(item.id)} title="حذف المنتج">
+                          <button className="btn btn-danger btn-sm" onClick={() => handleRemove(item?.variantId?._id, item?.prdID?._id)} title="حذف المنتج">
                             <i className="fas fa-trash"></i>
                           </button>
                         </td>

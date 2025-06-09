@@ -194,16 +194,10 @@ export default function ProductDetails() {
   };
 
   const handleAddToCartClick = () => {
-    if (selectedVariant) {
-      handleAddToCart(dispatch, addToCartThunk, {
-        productId: id,
-        variantId: selectedVariant._id
-      }, navigate);
-    } else {
-      handleAddToCart(dispatch, addToCartThunk, {
-        productId: id
-      }, navigate);
-    }
+    handleAddToCart(dispatch, addToCartThunk, {
+      productId: id,
+      variantId: selectedVariant?._id
+    }, navigate);
   };
 
   const handleAddToWishlistClick = () => {
