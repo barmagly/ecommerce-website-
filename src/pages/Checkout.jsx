@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from "../components/ProtectedRoute";
+import { createOrderThunk } from "../services/Slice/order/order";
 
 export default function Checkout() {
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
   const { token } = useSelector((state) => state.auth);
+  const { loading, error, success } = useSelector((state) => state.order);
   const { cartItems = [], total = 0 } = location.state || {};
 
   useEffect(() => {
@@ -106,7 +109,24 @@ export default function Checkout() {
 
   const handleInstapayImage = (e) => {
     if (e.target.files && e.target.files[0]) {
-      setInstapayImage(e.target.files[0]);
+      const file = e.target.files[0];
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({
+          ...prev,
+          instapay: 'يرجى اختيار ملف صورة صالح'
+        }));
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({
+          ...prev,
+          instapay: 'حجم الصورة يجب أن لا يتجاوز 5 ميجابايت'
+        }));
+        return;
+      }
+      setInstapayImage(file);
       setInstapayStatus("بانتظار تأكيد الإدارة...");
     }
   };
@@ -158,7 +178,7 @@ export default function Checkout() {
 
     // التحقق من صورة Instapay إذا تم اختيار الدفع عبر Instapay
     if (payment === "instapay" && !instapayImage) {
-      newErrors.instapay = 'يرجى رفع صورة إثبات تحويل Instapay';
+      newErrors.instapay = 'يرجى رفع صورة إثبات التحويل';
     }
 
     if (Object.keys(newErrors).length > 0) {
@@ -169,7 +189,7 @@ export default function Checkout() {
     return true;
   };
 
-  const handleOrder = e => {
+  const handleOrder = async (e) => {
     e.preventDefault();
 
     if (!validateForm()) {
@@ -180,11 +200,89 @@ export default function Checkout() {
       return;
     }
 
-    // Update the order confirmation to use actual cart data
-    localStorage.setItem("orderConfirmed", "true");
-    localStorage.setItem("cart", JSON.stringify(cartItems));
-    localStorage.setItem("lastOrderTotal", total);
-    navigate("/order-confirmation");
+    try {
+      const formData = new FormData();
+
+      // Add order details
+      formData.append('name', form.firstName);
+      formData.append('email', form.email);
+      formData.append('phone', form.phone);
+      formData.append('address', form.address);
+      formData.append('city', form.city);
+      formData.append('postalCode', '00000'); // Default value
+      formData.append('country', 'مصر'); // Default value
+      formData.append('apartment', form.apartment || '');
+
+      // Create shipping address string
+      const shippingAddress = `${form.address}${form.apartment ? `, ${form.apartment}` : ''}, ${form.city}, مصر`;
+      formData.append('shippingAddress', shippingAddress);
+
+      // Map payment method to schema enum values
+      let paymentMethod;
+      switch (payment) {
+        case 'visa':
+          paymentMethod = 'credit_card';
+          break;
+        case 'instapay':
+          paymentMethod = 'bank_transfer';
+          break;
+        case 'cod':
+          paymentMethod = 'cash_on_delivery';
+          break;
+        default:
+          paymentMethod = 'cash_on_delivery';
+      }
+      formData.append('paymentMethod', paymentMethod);
+
+      // Add payment proof image if using Instapay
+      if (payment === 'instapay') {
+        if (!instapayImage) {
+          setErrors(prev => ({
+            ...prev,
+            instapay: 'يرجى رفع صورة إثبات التحويل'
+          }));
+          return;
+        }
+        formData.append('image', instapayImage);
+      }
+
+      // Add card details if using Visa
+      if (payment === 'visa') {
+        formData.append('cardDetails', JSON.stringify({
+          number: cardDetails.number,
+          expiry: cardDetails.expiry,
+          cvv: cardDetails.cvv,
+          holder: cardDetails.holder
+        }));
+      }
+
+      // Dispatch createOrderThunk
+      const resultAction = await dispatch(createOrderThunk(formData));
+
+      if (createOrderThunk.fulfilled.match(resultAction)) {
+        setOrderPlaced(true);
+
+        // Clear cart and redirect after a short delay
+        setTimeout(() => {
+          navigate('/order-confirmation', {
+            state: {
+              orderId: resultAction.payload.order._id,
+              total: total
+            }
+          });
+        }, 2000);
+      } else {
+        setErrors(prev => ({
+          ...prev,
+          submit: resultAction.payload?.message || 'حدث خطأ أثناء إنشاء الطلب'
+        }));
+      }
+    } catch (error) {
+      setErrors(prev => ({
+        ...prev,
+        submit: error.message || 'حدث خطأ أثناء إنشاء الطلب'
+      }));
+    }
   };
 
   return (
@@ -272,6 +370,16 @@ export default function Checkout() {
                     حفظ هذه المعلومات لعمليات الشراء القادمة
                   </label>
                 </div>
+                {error && (
+                  <div className="alert alert-danger mt-3">
+                    {error}
+                  </div>
+                )}
+                {success && (
+                  <div className="alert alert-success mt-3">
+                    تم إنشاء الطلب بنجاح! جاري تحويلك...
+                  </div>
+                )}
               </form>
             </div>
             <div className="col-lg-5">
@@ -391,7 +499,11 @@ export default function Checkout() {
                         <div className="mb-2">
                           <span className="text-success">تم رفع الصورة بنجاح!</span>
                           <div className="mt-2">
-                            <img src={URL.createObjectURL(instapayImage)} alt="إثبات التحويل" style={{ maxWidth: 200, borderRadius: 8 }} />
+                            <img
+                              src={URL.createObjectURL(instapayImage)}
+                              alt="إثبات التحويل"
+                              style={{ maxWidth: 200, borderRadius: 8 }}
+                            />
                           </div>
                         </div>
                       )}
@@ -401,10 +513,22 @@ export default function Checkout() {
                   <button
                     className="btn btn-danger w-100 py-2 fw-bold"
                     onClick={handleOrder}
+                    disabled={loading}
                   >
-                    تأكيد الطلب
+                    {loading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        جاري إنشاء الطلب...
+                      </>
+                    ) : (
+                      'تأكيد الطلب'
+                    )}
                   </button>
-                  {orderPlaced && <div className="alert alert-success mt-3">تم إرسال طلبك بنجاح! سنقوم بالتواصل معك قريبًا.</div>}
+                  {orderPlaced && (
+                    <div className="alert alert-success mt-3">
+                      تم إرسال طلبك بنجاح! جاري تحويلك...
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,32 +1,34 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from '../components/ProtectedRoute';
-
-const mockOrders = [
-  { id: 1, number: "#1001", date: "2024-06-01", status: "قيد التنفيذ", total: 1200, items: 2 },
-  { id: 2, number: "#1002", date: "2024-05-28", status: "مكتمل", total: 650, items: 1 },
-  { id: 3, number: "#1003", date: "2024-05-20", status: "ملغى", total: 900, items: 1 },
-  { id: 4, number: "#1004", date: "2024-06-02", status: "قيد التنفيذ", total: 1750, items: 3 },
-  { id: 5, number: "#1005", date: "2024-05-15", status: "مكتمل", total: 300, items: 1 },
-];
+import { getOrdersThunk } from "../services/Slice/order/order";
 
 const statusTabs = [
   { key: "all", label: "جميع الطلبات" },
-  { key: "قيد التنفيذ", label: "قيد التنفيذ" },
-  { key: "مكتمل", label: "مكتمل" },
-  { key: "ملغى", label: "ملغى" },
+  { key: "pending", label: "قيد الانتظار" },
+  { key: "processing", label: "قيد المعالجة" },
+  { key: "shipped", label: "تم الشحن" },
+  { key: "delivered", label: "تم التوصيل" },
+  { key: "cancelled", label: "ملغي" },
 ];
 
 export default function Orders() {
+  const dispatch = useDispatch();
+  const { orders, loading, error } = useSelector((state) => state.order);
   const [activeTab, setActiveTab] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  useEffect(() => {
+    dispatch(getOrdersThunk());
+  }, [dispatch]);
+
   const filteredOrders = activeTab === "all"
-    ? mockOrders
-    : mockOrders.filter(order => order.status === activeTab);
+    ? orders
+    : orders.filter(order => order.status === activeTab);
 
   const handleShowDetails = (order) => {
     setSelectedOrder(order);
@@ -37,6 +39,80 @@ export default function Orders() {
     setShowModal(false);
     setSelectedOrder(null);
   };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('ar-EG', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'delivered':
+        return 'badge bg-success';
+      case 'shipped':
+        return 'badge bg-info';
+      case 'processing':
+        return 'badge bg-primary';
+      case 'pending':
+        return 'badge bg-warning text-dark';
+      case 'cancelled':
+        return 'badge bg-danger';
+      default:
+        return 'badge bg-secondary';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'delivered':
+        return 'تم التوصيل';
+      case 'shipped':
+        return 'تم الشحن';
+      case 'processing':
+        return 'قيد المعالجة';
+      case 'pending':
+        return 'قيد الانتظار';
+      case 'cancelled':
+        return 'ملغي';
+      default:
+        return status;
+    }
+  };
+
+  if (loading) {
+    return (
+      <ProtectedRoute>
+        <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
+          <Header />
+          <div className="container py-5 text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">جاري التحميل...</span>
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error) {
+    return (
+      <ProtectedRoute>
+        <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
+          <Header />
+          <div className="container py-5">
+            <div className="alert alert-danger" role="alert">
+              {error}
+            </div>
+          </div>
+          <Footer />
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
@@ -73,25 +149,23 @@ export default function Orders() {
                         <th>الحالة</th>
                         <th>عدد المنتجات</th>
                         <th>الإجمالي</th>
+                        <th>طريقة الدفع</th>
                         <th>تفاصيل</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredOrders.map(order => (
-                        <tr key={order.id}>
-                          <td>{order.number}</td>
-                          <td>{order.date}</td>
+                        <tr key={order._id}>
+                          <td>#{order._id.slice(-6)}</td>
+                          <td>{formatDate(order.createdAt)}</td>
                           <td>
-                            <span className={
-                              order.status === "مكتمل" ? "badge bg-success" :
-                                order.status === "قيد التنفيذ" ? "badge bg-warning text-dark" :
-                                  "badge bg-danger"
-                            }>
-                              {order.status}
+                            <span className={getStatusBadge(order.status)}>
+                              {getStatusLabel(order.status)}
                             </span>
                           </td>
-                          <td>{order.items}</td>
+                          <td>{order.cartItems?.length || 0}</td>
                           <td>{order.total} ج.م</td>
+                          <td>{order.paymentMethod}</td>
                           <td>
                             <button className="btn btn-outline-primary btn-sm" onClick={() => handleShowDetails(order)}>عرض</button>
                           </td>
@@ -107,25 +181,67 @@ export default function Orders() {
         {/* Order Details Modal */}
         {selectedOrder && (
           <div className={`modal fade show`} style={{ display: showModal ? 'block' : 'none', background: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog" aria-modal="true">
-            <div className="modal-dialog modal-dialog-centered" role="document">
+            <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
               <div className="modal-content" dir="rtl">
                 <div className="modal-header">
-                  <h5 className="modal-title">تفاصيل الطلب {selectedOrder.number}</h5>
+                  <h5 className="modal-title">تفاصيل الطلب #{selectedOrder._id.slice(-6)}</h5>
                   <button type="button" className="btn-close ms-0" aria-label="إغلاق" onClick={handleCloseModal}></button>
                 </div>
                 <div className="modal-body">
-                  <ul className="list-unstyled mb-3">
-                    <li><strong>رقم الطلب:</strong> {selectedOrder.number}</li>
-                    <li><strong>تاريخ الطلب:</strong> {selectedOrder.date}</li>
-                    <li><strong>الحالة:</strong> <span className={
-                      selectedOrder.status === "مكتمل" ? "badge bg-success" :
-                        selectedOrder.status === "قيد التنفيذ" ? "badge bg-warning text-dark" :
-                          "badge bg-danger"
-                    }>{selectedOrder.status}</span></li>
-                    <li><strong>عدد المنتجات:</strong> {selectedOrder.items}</li>
-                    <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
-                  </ul>
-                  {/* يمكن إضافة تفاصيل المنتجات هنا لاحقًا */}
+                  <div className="row">
+                    <div className="col-md-6">
+                      <h6 className="fw-bold mb-3">معلومات الطلب</h6>
+                      <ul className="list-unstyled mb-3">
+                        <li><strong>رقم الطلب:</strong> #{selectedOrder._id.slice(-6)}</li>
+                        <li><strong>تاريخ الطلب:</strong> {formatDate(selectedOrder.createdAt)}</li>
+                        <li><strong>الحالة:</strong> <span className={getStatusBadge(selectedOrder.status)}>
+                          {getStatusLabel(selectedOrder.status)}
+                        </span></li>
+                        <li><strong>طريقة الدفع:</strong> {selectedOrder.paymentMethod}</li>
+                        <li><strong>حالة الدفع:</strong> {selectedOrder.paymentStatus}</li>
+                        <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
+                      </ul>
+                    </div>
+                    <div className="col-md-6">
+                      <h6 className="fw-bold mb-3">معلومات الشحن</h6>
+                      <ul className="list-unstyled mb-3">
+                        <li><strong>الاسم:</strong> {selectedOrder.name}</li>
+                        <li><strong>البريد الإلكتروني:</strong> {selectedOrder.email}</li>
+                        <li><strong>رقم الهاتف:</strong> {selectedOrder.phone}</li>
+                        <li><strong>العنوان:</strong> {selectedOrder.address}</li>
+                        <li><strong>المدينة:</strong> {selectedOrder.city}</li>
+                        <li><strong>الرمز البريدي:</strong> {selectedOrder.postalCode}</li>
+                        <li><strong>الدولة:</strong> {selectedOrder.country}</li>
+                      </ul>
+                    </div>
+                  </div>
+                  {selectedOrder.cartItems?.length > 0 && (
+                    <div className="mt-4">
+                      <h6 className="fw-bold mb-3">المنتجات</h6>
+                      <div className="table-responsive">
+                        <table className="table table-bordered">
+                          <thead className="table-light">
+                            <tr>
+                              <th>المنتج</th>
+                              <th>السعر</th>
+                              <th>الكمية</th>
+                              <th>الإجمالي</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedOrder.cartItems.map((item, index) => (
+                              <tr key={index}>
+                                <td>{item.name}</td>
+                                <td>{item.price} ج.م</td>
+                                <td>{item.quantity}</td>
+                                <td>{item.price * item.quantity} ج.م</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>إغلاق</button>

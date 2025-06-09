@@ -40,6 +40,8 @@ export const addToCartThunk = createAsyncThunk(
     "product/addToCart",
     async ({ productId, variantId = null, quantity = 1 }, thunkAPI) => {
         try {
+            console.log(variantId);
+            
             const token = localStorage.getItem("token");
             const { data } = await axios.patch(
                 `${API_URL}/cart/cartOP`,

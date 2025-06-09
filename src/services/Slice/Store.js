@@ -5,6 +5,8 @@ import productSlice from "./product/product";
 import userProfileSlice from "./userProfile/userProfile";
 import userWishlistSlice from "./wishlist/wishlist";
 import cartSlice from "./cart/cart";
+import orderSlice from "./order/order";
+import variantSlice from "./variant/variant";
 
 const Store = configureStore({
     reducer: {
@@ -14,6 +16,8 @@ const Store = configureStore({
         userProfile: userProfileSlice,
         userWishlist:userWishlistSlice.reducer,
         userCart:cartSlice.reducer,
+        order:orderSlice.reducer,
+        variant:variantSlice.reducer
     }
 });
 
