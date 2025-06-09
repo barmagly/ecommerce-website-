@@ -5,7 +5,7 @@ import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
 import { addToCartThunk } from "../services/Slice/cart/cart";
-
+const API_URL = process.env.REACT_APP_API_URL + "/api/products";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 const StarRating = ({ rating }) => {
@@ -57,7 +57,7 @@ export default function ShopProducts() {
     let isMounted = true;
     const fetchProducts = () => {
       setLoading(true);
-      fetch('https://ecommerce-website-backend-nine.vercel.app/api/products')
+      fetch(API_URL)
         .then(res => res.json())
         .then(data => {
           if (isMounted) {
