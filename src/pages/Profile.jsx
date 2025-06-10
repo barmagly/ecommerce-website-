@@ -1,10 +1,29 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from '../components/ProtectedRoute';
+import {
+  getUserProfileThunk,
+  updateUserProfileThunk,
+  updateUserPasswordThunk,
+  addAddressToBookThunk,
+  getAddressToBookThunk,
+  updateAddressToBookThunk,
+  deleteAddressToBookThunk,
+  addPaymentOptionsThunk,
+  getPaymentOptionsThunk,
+  updatePaymentOptionsThunk,
+  deletePaymentOptionsThunk
+} from "../services/Slice/userProfile/userProfile";
+import { getOrdersThunk } from "../services/Slice/order/order";
 
 export default function Profile() {
+  const dispatch = useDispatch();
+  const { user, loading, error } = useSelector((state) => state.userProfile);
+  const { orders, loading: ordersLoading, error: ordersError } = useSelector((state) => state.order);
+
   // الملف الشخصي
   const [input1, setInput1] = useState("");
   const [input2, setInput2] = useState("");
@@ -14,65 +33,367 @@ export default function Profile() {
   const [input6, setInput6] = useState("");
   const [input7, setInput7] = useState("");
   const [activeSection, setActiveSection] = useState("profile");
+  const [profileImage, setProfileImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState(null);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // دفتر العناوين
-  const [addresses, setAddresses] = useState([
-    { id: 1, name: "المنزل", city: "القاهرة", details: "شارع التحرير، عمارة 10" },
-    { id: 2, name: "العمل", city: "الجيزة", details: "شارع جامعة الدول" },
-  ]);
-  const [newAddress, setNewAddress] = useState({ name: "", city: "", details: "" });
+  const [addresses, setAddresses] = useState([]);
+  const [newAddress, setNewAddress] = useState({ label: "", city: "", details: "" });
   const [editId, setEditId] = useState(null);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressError, setAddressError] = useState(null);
+  const [addressSuccess, setAddressSuccess] = useState(false);
+  const [addressOperation, setAddressOperation] = useState(''); // 'add', 'update', 'delete'
 
   // خيارات الدفع
-  const [payments, setPayments] = useState([
-    { id: 1, type: "بطاقة ائتمان", number: "**** **** **** 1234", holder: "محمد أحمد" },
-    { id: 2, type: "بطاقة خصم", number: "**** **** **** 5678", holder: "محمد أحمد" },
-  ]);
-  const [newPayment, setNewPayment] = useState({ type: "بطاقة ائتمان", number: "", holder: "" });
+  const [paymentOptions, setPaymentOptions] = useState([]);
+  const [newPayment, setNewPayment] = useState({ cardType: "بطاقة ائتمان", cardNumber: "", cardholderName: "" });
   const [paymentTab, setPaymentTab] = useState("card");
-  const [instapayNumber] = useState("01012345678"); // رقم Instapay
+  const [instapayNumber] = useState("01012345678");
   const [instapayImage, setInstapayImage] = useState(null);
   const [instapayStatus, setInstapayStatus] = useState("");
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [paymentError, setPaymentError] = useState(null);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [paymentOperation, setPaymentOperation] = useState('');
+  const [editPaymentId, setEditPaymentId] = useState(null);
 
   // المرتجعات والإلغاءات
-  const [returns, setReturns] = useState([
-    { id: 1, order: "#1001", status: "قيد المعالجة", type: "مرتجع" },
-    { id: 2, order: "#1002", status: "تم الإلغاء", type: "إلغاء" },
-  ]);
+  const [returns, setReturns] = useState([]);
+  const [cancellations, setCancellations] = useState([]);
 
   // المفضلة
-  const [wishlist, setWishlist] = useState([
-    { id: 1, name: "ساعة ذكية", price: 1200, image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/0tl68r54_expires_30_days.png" },
-    { id: 2, name: "سماعات بلوتوث", price: 350, image: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/aoc77xzc_expires_30_days.png" },
-  ]);
+  const [wishlistLoading, setWishlistLoading] = useState(false);
+  const [wishlistError, setWishlistError] = useState(null);
+  const [wishlistSuccess, setWishlistSuccess] = useState(false);
+
+  // Order Details Modal
+  const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
+  // Function to mask card number
+  const maskCardNumber = (cardNumber) => {
+    if (!cardNumber) return '';
+    // Get last 4 digits
+    const lastFour = cardNumber.slice(-4);
+    // Create mask with asterisks
+    const mask = '*'.repeat(cardNumber.length - 4);
+    return `${mask}${lastFour}`;
+  };
+
+  // Function to format card number with spaces
+  const formatCardNumber = (cardNumber) => {
+    if (!cardNumber) return '';
+    // Remove any non-digit characters
+    const cleaned = cardNumber.replace(/\D/g, '');
+    // Add space after every 4 digits
+    const formatted = cleaned.replace(/(\d{4})/g, '$1 ').trim();
+    return formatted;
+  };
+
+  const handleCardNumberChange = (e) => {
+    const formatted = formatCardNumber(e.target.value);
+    setNewPayment({ ...newPayment, cardNumber: formatted });
+  };
+
+  useEffect(() => {
+    dispatch(getUserProfileThunk());
+    dispatch(getAddressToBookThunk()).unwrap()
+      .then((result) => {
+        if (result.status === 'success') {
+          setAddresses(result.data);
+        }
+      })
+      .catch((error) => {
+        setAddressError(error.message || 'حدث خطأ أثناء جلب العناوين');
+      });
+
+    // Fetch orders
+    dispatch(getOrdersThunk()).unwrap()
+      .then((result) => {
+        if (result.status === 'success') {
+          // Filter returns and cancellations
+          const returnsList = result.orders.filter(order => order.status === 'cancelled');
+          const cancellationsList = result.orders.filter(order => order.status === 'cancelled');
+          setReturns(returnsList);
+          setCancellations(cancellationsList);
+        }
+      })
+      .catch((error) => {
+        console.error('Error fetching orders:', error);
+      });
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (user) {
+      // Split the full name into first and last name
+      const nameParts = user.name.split(' ');
+      setInput1(nameParts[0] || ''); // First name
+      setInput2(nameParts.slice(1).join(' ') || ''); // Last name
+      setInput3(user.email || '');
+      setImagePreview(user.profileImg);
+      setInput4(user?.addresses)
+    }
+  }, [user]);
+
+  useEffect(() => {
+    // Fetch payment options when component mounts
+    dispatch(getPaymentOptionsThunk()).unwrap()
+      .then((result) => {
+        if (result.status === 'success') {
+          setPaymentOptions(result.data);
+        }
+      })
+      .catch((error) => {
+        setPaymentError(error.message || 'حدث خطأ أثناء جلب خيارات الدفع');
+      });
+  }, [dispatch]);
+
+  // Helper function to get status badge class and text
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'pending':
+        return { class: 'bg-warning', text: 'قيد الانتظار' };
+      case 'processing':
+        return { class: 'bg-info', text: 'قيد المعالجة' };
+      case 'shipped':
+        return { class: 'bg-primary', text: 'تم الشحن' };
+      case 'delivered':
+        return { class: 'bg-success', text: 'تم التوصيل' };
+      case 'cancelled':
+        return { class: 'bg-danger', text: 'ملغي' };
+      default:
+        return { class: 'bg-secondary', text: status };
+    }
+  };
 
   // دوال دفتر العناوين
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
-    if (!newAddress.name || !newAddress.city || !newAddress.details) return;
-    setAddresses([...addresses, { ...newAddress, id: Date.now() }]);
-    setNewAddress({ name: "", city: "", details: "" });
+    if (!newAddress.label || !newAddress.city || !newAddress.details) {
+      setAddressError("جميع الحقول مطلوبة");
+      return;
+    }
+
+    setAddressLoading(true);
+    setAddressError(null);
+    setAddressSuccess(false);
+    setAddressOperation('add');
+
+    try {
+      const result = await dispatch(addAddressToBookThunk(newAddress)).unwrap();
+
+      if (result.status === 'success') {
+        setAddressSuccess(true);
+        // Refresh addresses
+        const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
+        if (addressesResult.status === 'success') {
+          setAddresses(addressesResult.data);
+        }
+        setNewAddress({ label: "", city: "", details: "" });
+      }
+    } catch (error) {
+      setAddressError(error.message || 'حدث خطأ أثناء إضافة العنوان');
+    } finally {
+      setAddressLoading(false);
+    }
   };
-  const handleDeleteAddress = (id) => setAddresses(addresses.filter(a => a.id !== id));
+
   const handleEditAddress = (address) => {
-    setEditId(address.id);
-    setNewAddress({ name: address.name, city: address.city, details: address.details });
+    setEditId(address._id);
+    setNewAddress({
+      label: address.label,
+      city: address.city,
+      details: address.details
+    });
   };
-  const handleUpdateAddress = (e) => {
+
+  const handleUpdateAddress = async (e) => {
     e.preventDefault();
-    setAddresses(addresses.map(a => a.id === editId ? { ...a, ...newAddress } : a));
+    if (!newAddress.label || !newAddress.city || !newAddress.details) {
+      setAddressError("جميع الحقول مطلوبة");
+      return;
+    }
+
+    setAddressLoading(true);
+    setAddressError(null);
+    setAddressSuccess(false);
+    setAddressOperation('update');
+
+    try {
+      const result = await dispatch(updateAddressToBookThunk({
+        _id: editId,
+        ...newAddress
+      })).unwrap();
+
+      if (result.status === 'success') {
+        setAddressSuccess(true);
+        // Refresh addresses
+        const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
+        if (addressesResult.status === 'success') {
+          setAddresses(addressesResult.data);
+        }
+        setEditId(null);
+        setNewAddress({ label: "", city: "", details: "" });
+      }
+    } catch (error) {
+      setAddressError(error.message || 'حدث خطأ أثناء تحديث العنوان');
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا العنوان؟')) {
+      return;
+    }
+
+    setAddressLoading(true);
+    setAddressError(null);
+    setAddressSuccess(false);
+    setAddressOperation('delete');
+
+    try {
+      const result = await dispatch(deleteAddressToBookThunk({ _id: id })).unwrap();
+
+      if (result.status === 'success') {
+        setAddressSuccess(true);
+        // Refresh addresses
+        const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
+        if (addressesResult.status === 'success') {
+          setAddresses(addressesResult.data);
+        }
+      }
+    } catch (error) {
+      setAddressError(error.message || 'حدث خطأ أثناء حذف العنوان');
+    } finally {
+      setAddressLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
     setEditId(null);
-    setNewAddress({ name: "", city: "", details: "" });
+    setNewAddress({ label: "", city: "", details: "" });
+    setAddressError(null);
+    setAddressSuccess(false);
   };
 
   // دوال الدفع
-  const handleAddPayment = (e) => {
+  const handleAddPayment = async (e) => {
     e.preventDefault();
-    if (!newPayment.number || !newPayment.holder) return;
-    setPayments([...payments, { ...newPayment, id: Date.now() }]);
-    setNewPayment({ type: "بطاقة ائتمان", number: "", holder: "" });
+    if (!newPayment.cardNumber || !newPayment.cardholderName) {
+      setPaymentError("جميع الحقول مطلوبة");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+    setPaymentSuccess(false);
+    setPaymentOperation('add');
+
+    try {
+      const result = await dispatch(addPaymentOptionsThunk(newPayment)).unwrap();
+
+      if (result.status === 'success') {
+        setPaymentSuccess(true);
+        // Refresh payment options
+        const paymentResult = await dispatch(getPaymentOptionsThunk()).unwrap();
+        if (paymentResult.status === 'success') {
+          setPaymentOptions(paymentResult.data);
+        }
+        setNewPayment({ cardType: "بطاقة ائتمان", cardNumber: "", cardholderName: "" });
+      }
+    } catch (error) {
+      setPaymentError(error.message || 'حدث خطأ أثناء إضافة خيار الدفع');
+    } finally {
+      setPaymentLoading(false);
+    }
   };
-  const handleDeletePayment = (id) => setPayments(payments.filter(p => p.id !== id));
+
+  const handleEditPayment = (payment) => {
+    setEditPaymentId(payment._id);
+    setNewPayment({
+      cardType: payment.cardType,
+      cardNumber: payment.cardNumber,
+      cardholderName: payment.cardholderName
+    });
+  };
+
+  const handleUpdatePayment = async (e) => {
+    e.preventDefault();
+    if (!newPayment.cardNumber || !newPayment.cardholderName) {
+      setPaymentError("جميع الحقول مطلوبة");
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+    setPaymentSuccess(false);
+    setPaymentOperation('update');
+
+    try {
+      const result = await dispatch(updatePaymentOptionsThunk({
+        _id: editPaymentId,
+        ...newPayment
+      })).unwrap();
+
+      if (result.status === 'success') {
+        setPaymentSuccess(true);
+        // Refresh payment options
+        const paymentResult = await dispatch(getPaymentOptionsThunk()).unwrap();
+        if (paymentResult.status === 'success') {
+          setPaymentOptions(paymentResult.data);
+        }
+        setEditPaymentId(null);
+        setNewPayment({ cardType: "بطاقة ائتمان", cardNumber: "", cardholderName: "" });
+      }
+    } catch (error) {
+      setPaymentError(error.message || 'حدث خطأ أثناء تحديث خيار الدفع');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleDeletePayment = async (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف خيار الدفع هذا؟')) {
+      return;
+    }
+
+    setPaymentLoading(true);
+    setPaymentError(null);
+    setPaymentSuccess(false);
+    setPaymentOperation('delete');
+
+    try {
+      const result = await dispatch(deletePaymentOptionsThunk({ _id: id })).unwrap();
+
+      if (result.status === 'success') {
+        setPaymentSuccess(true);
+        // Refresh payment options
+        const paymentResult = await dispatch(getPaymentOptionsThunk()).unwrap();
+        if (paymentResult.status === 'success') {
+          setPaymentOptions(paymentResult.data);
+        }
+      }
+    } catch (error) {
+      setPaymentError(error.message || 'حدث خطأ أثناء حذف خيار الدفع');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handleCancelPaymentEdit = () => {
+    setEditPaymentId(null);
+    setNewPayment({ cardType: "بطاقة ائتمان", cardNumber: "", cardholderName: "" });
+    setPaymentError(null);
+    setPaymentSuccess(false);
+  };
 
   // Instapay
   const handleInstapayImage = (e) => {
@@ -83,47 +404,305 @@ export default function Profile() {
   };
 
   // دوال المفضلة
-  const handleRemoveWishlist = (id) => setWishlist(wishlist.filter(w => w.id !== id));
-  const handleAddToCart = (id) => alert("تمت إضافة المنتج إلى السلة!");
+  const handleRemoveWishlist = async (id) => {
+    // Implement remove from wishlist functionality when available
+    alert("سيتم إضافة خاصية الحذف من المفضلة قريباً");
+  };
+
+  const handleAddToCart = async (id) => {
+    // Implement add to cart functionality when available
+    alert("سيتم إضافة خاصية إضافة إلى السلة قريباً");
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setProfileImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProfileUpdate = async (e) => {
+    e.preventDefault();
+    setUpdateLoading(true);
+    setUpdateError(null);
+    setUpdateSuccess(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('name', `${input1} ${input2}`.trim());
+      formData.append('email', input3);
+      if (profileImage) {
+        formData.append('profileImg', profileImage);
+      }
+      if (input4) {
+        formData.append("addresses", input4)
+      }
+
+
+      const result = await dispatch(updateUserProfileThunk(formData)).unwrap();
+
+      if (result.status === 'success') {
+        setUpdateSuccess(true);
+        // Refresh profile data
+        dispatch(getUserProfileThunk());
+        // Reset form state
+        setProfileImage(null);
+      }
+    } catch (error) {
+      setUpdateError(error.message || 'حدث خطأ أثناء تحديث الملف الشخصي');
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    setPasswordLoading(true);
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (input6 !== input7) {
+      setPasswordError("كلمات المرور غير متطابقة");
+      setPasswordLoading(false);
+      return;
+    }
+
+    try {
+      const result = await dispatch(updateUserPasswordThunk({
+        currentPassword: input5,
+        newPassword: input6
+      })).unwrap();
+
+      if (result.status === 'success') {
+        setPasswordSuccess(true);
+        // Reset password fields
+        setInput5('');
+        setInput6('');
+        setInput7('');
+      }
+    } catch (error) {
+      setPasswordError(error.message || 'حدث خطأ أثناء تغيير كلمة المرور');
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleShowOrderDetails = (order) => {
+    setSelectedOrder(order);
+    setShowOrderDetails(true);
+  };
+
+  const handleCloseOrderDetails = () => {
+    setShowOrderDetails(false);
+    setSelectedOrder(null);
+  };
 
   // محتوى كل قسم
   const renderSection = () => {
+    if (loading) {
+      return (
+        <div className="card shadow-sm border-0">
+          <div className="card-body text-center">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">جاري التحميل...</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="card shadow-sm border-0">
+          <div className="card-body text-center text-danger">
+            {error}
+          </div>
+        </div>
+      );
+    }
+
     switch (activeSection) {
       case "profile":
         return (
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h4 className="fw-bold text-danger mb-4">تعديل الملف الشخصي</h4>
-              <form>
+              {updateSuccess && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  تم تحديث الملف الشخصي بنجاح
+                  <button type="button" className="btn-close" onClick={() => setUpdateSuccess(false)}></button>
+                </div>
+              )}
+              {updateError && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {updateError}
+                  <button type="button" className="btn-close" onClick={() => setUpdateError(null)}></button>
+                </div>
+              )}
+              <div className="text-center mb-4">
+                <div
+                  className="position-relative d-inline-block"
+                  style={{ cursor: 'pointer' }}
+                >
+                  <div
+                    className="position-relative rounded-circle overflow-hidden"
+                    style={{ width: '150px', height: '150px' }}
+                  >
+                    <img
+                      src={imagePreview}
+                      alt="صورة الملف الشخصي"
+                      className="w-100 h-100"
+                      style={{ objectFit: 'cover' }}
+                    />
+                    <div
+                      className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white"
+                      style={{
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                      onClick={() => document.getElementById('profileImage').click()}
+                    >
+                      <i className="fas fa-camera mb-2" style={{ fontSize: '1.5rem' }}></i>
+                      <span style={{ fontSize: '0.9rem' }}>تغيير الصورة</span>
+                    </div>
+                  </div>
+                  <input
+                    type="file"
+                    id="profileImage"
+                    accept="image/*"
+                    className="d-none"
+                    onChange={handleImageChange}
+                  />
+                </div>
+              </div>
+              <form onSubmit={handleProfileUpdate}>
                 <div className="row mb-3">
                   <div className="col-md-6 mb-3 mb-md-0">
                     <label className="form-label">الاسم الأول</label>
-                    <input type="text" className="form-control" placeholder="محمد" value={input1} onChange={e => setInput1(e.target.value)} />
+                    <input type="text" className="form-control" value={input1} onChange={e => setInput1(e.target.value)} />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">الاسم الأخير</label>
-                    <input type="text" className="form-control" placeholder="أحمد" value={input2} onChange={e => setInput2(e.target.value)} />
+                    <input type="text" className="form-control" value={input2} onChange={e => setInput2(e.target.value)} />
                   </div>
                 </div>
                 <div className="row mb-3">
                   <div className="col-md-6 mb-3 mb-md-0">
                     <label className="form-label">البريد الإلكتروني</label>
-                    <input type="email" className="form-control" placeholder="example@gmail.com" value={input3} onChange={e => setInput3(e.target.value)} />
+                    <input type="email" className="form-control" value={input3} onChange={e => setInput3(e.target.value)} disabled />
                   </div>
                   <div className="col-md-6">
                     <label className="form-label">العنوان</label>
-                    <input type="text" className="form-control" placeholder="القاهرة، مصر" value={input4} onChange={e => setInput4(e.target.value)} />
+                    <input type="text" className="form-control" value={input4} onChange={e => setInput4(e.target.value)} />
                   </div>
                 </div>
+                <div className="d-flex justify-content-end gap-3 mt-4">
+                  <button type="button" className="btn btn-outline-secondary" onClick={() => {
+                    setInput1(user?.name?.split(' ')[0] || '');
+                    setInput2(user?.name?.split(' ').slice(1).join(' ') || '');
+                    setInput3(user?.email || '');
+                    setImagePreview(user?.profileImg);
+                    setProfileImage(null);
+                  }}>إلغاء</button>
+                  <button
+                    type="submit"
+                    className="btn btn-danger fw-bold"
+                    disabled={updateLoading}
+                  >
+                    {updateLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        جاري الحفظ...
+                      </>
+                    ) : 'حفظ التغييرات'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        );
+      case "password":
+        return (
+          <div className="card shadow-sm border-0">
+            <div className="card-body">
+              <h4 className="fw-bold text-danger mb-4">تغيير كلمة المرور</h4>
+              {passwordSuccess && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  تم تغيير كلمة المرور بنجاح
+                  <button type="button" className="btn-close" onClick={() => setPasswordSuccess(false)}></button>
+                </div>
+              )}
+              {passwordError && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {passwordError}
+                  <button type="button" className="btn-close" onClick={() => setPasswordError(null)}></button>
+                </div>
+              )}
+              <form onSubmit={handlePasswordUpdate}>
                 <div className="mb-3">
-                  <label className="form-label">تغيير كلمة المرور</label>
-                  <input type="password" className="form-control mb-2" placeholder="كلمة المرور الحالية" value={input5} onChange={e => setInput5(e.target.value)} />
-                  <input type="password" className="form-control mb-2" placeholder="كلمة المرور الجديدة" value={input6} onChange={e => setInput6(e.target.value)} />
-                  <input type="password" className="form-control" placeholder="تأكيد كلمة المرور الجديدة" value={input7} onChange={e => setInput7(e.target.value)} />
+                  <label className="form-label">كلمة المرور الحالية</label>
+                  <input
+                    type="password"
+                    className="form-control mb-2"
+                    value={input5}
+                    onChange={e => setInput5(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">كلمة المرور الجديدة</label>
+                  <input
+                    type="password"
+                    className="form-control mb-2"
+                    value={input6}
+                    onChange={e => setInput6(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">تأكيد كلمة المرور الجديدة</label>
+                  <input
+                    type="password"
+                    className="form-control"
+                    value={input7}
+                    onChange={e => setInput7(e.target.value)}
+                    required
+                  />
                 </div>
                 <div className="d-flex justify-content-end gap-3 mt-4">
-                  <button type="button" className="btn btn-outline-secondary">إلغاء</button>
-                  <button type="submit" className="btn btn-danger fw-bold">حفظ التغييرات</button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => {
+                      setInput5('');
+                      setInput6('');
+                      setInput7('');
+                      setPasswordError(null);
+                      setPasswordSuccess(false);
+                    }}
+                  >
+                    إلغاء
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-danger fw-bold"
+                    disabled={passwordLoading}
+                  >
+                    {passwordLoading ? (
+                      <>
+                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        جاري التحديث...
+                      </>
+                    ) : 'تغيير كلمة المرور'}
+                  </button>
                 </div>
               </form>
             </div>
@@ -134,16 +713,45 @@ export default function Profile() {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h4 className="fw-bold text-primary mb-4">دفتر العناوين</h4>
+              {addressSuccess && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  {addressOperation === 'add' && 'تم إضافة العنوان بنجاح'}
+                  {addressOperation === 'update' && 'تم تحديث العنوان بنجاح'}
+                  {addressOperation === 'delete' && 'تم حذف العنوان بنجاح'}
+                  <button type="button" className="btn-close" onClick={() => {
+                    setAddressSuccess(false);
+                    setAddressOperation('');
+                  }}></button>
+                </div>
+              )}
+              {addressError && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {addressError}
+                  <button type="button" className="btn-close" onClick={() => setAddressError(null)}></button>
+                </div>
+              )}
               <ul className="list-group mb-4">
                 {addresses.map(addr => (
-                  <li key={addr.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  <li key={addr._id} className="list-group-item d-flex justify-content-between align-items-center">
                     <div>
-                      <div className="fw-bold">{addr.name} - {addr.city}</div>
+                      <div className="fw-bold">{addr.label} - {addr.city}</div>
                       <div className="text-muted small">{addr.details}</div>
                     </div>
                     <div>
-                      <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEditAddress(addr)}>تعديل</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteAddress(addr.id)}>حذف</button>
+                      <button
+                        className="btn btn-sm btn-outline-primary me-2"
+                        onClick={() => handleEditAddress(addr)}
+                        disabled={addressLoading}
+                      >
+                        تعديل
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDeleteAddress(addr._id)}
+                        disabled={addressLoading}
+                      >
+                        حذف
+                      </button>
                     </div>
                   </li>
                 ))}
@@ -151,18 +759,56 @@ export default function Profile() {
               <form onSubmit={editId ? handleUpdateAddress : handleAddAddress} className="row g-2 align-items-end">
                 <div className="col-md-3">
                   <label className="form-label">اسم العنوان</label>
-                  <input className="form-control" value={newAddress.name} onChange={e => setNewAddress({ ...newAddress, name: e.target.value })} placeholder="مثال: المنزل" />
+                  <input
+                    className="form-control"
+                    value={newAddress.label}
+                    onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
+                    placeholder="مثال: المنزل"
+                    required
+                  />
                 </div>
                 <div className="col-md-3">
                   <label className="form-label">المدينة</label>
-                  <input className="form-control" value={newAddress.city} onChange={e => setNewAddress({ ...newAddress, city: e.target.value })} placeholder="مثال: القاهرة" />
+                  <input
+                    className="form-control"
+                    value={newAddress.city}
+                    onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
+                    placeholder="مثال: القاهرة"
+                    required
+                  />
                 </div>
                 <div className="col-md-4">
                   <label className="form-label">تفاصيل العنوان</label>
-                  <input className="form-control" value={newAddress.details} onChange={e => setNewAddress({ ...newAddress, details: e.target.value })} placeholder="مثال: شارع التحرير" />
+                  <input
+                    className="form-control"
+                    value={newAddress.details}
+                    onChange={e => setNewAddress({ ...newAddress, details: e.target.value })}
+                    placeholder="مثال: شارع التحرير"
+                    required
+                  />
                 </div>
                 <div className="col-md-2">
-                  <button className="btn btn-success w-100" type="submit">{editId ? "تحديث" : "إضافة"}</button>
+                  <div className="d-flex gap-2">
+                    {editId && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-secondary flex-grow-1"
+                        onClick={handleCancelEdit}
+                        disabled={addressLoading}
+                      >
+                        إلغاء
+                      </button>
+                    )}
+                    <button
+                      className="btn btn-success flex-grow-1"
+                      type="submit"
+                      disabled={addressLoading}
+                    >
+                      {addressLoading ? (
+                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      ) : editId ? "تحديث" : "إضافة"}
+                    </button>
+                  </div>
                 </div>
               </form>
             </div>
@@ -173,6 +819,23 @@ export default function Profile() {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               <h4 className="fw-bold text-primary mb-4">خيارات الدفع</h4>
+              {paymentSuccess && (
+                <div className="alert alert-success alert-dismissible fade show" role="alert">
+                  {paymentOperation === 'add' && 'تم إضافة خيار الدفع بنجاح'}
+                  {paymentOperation === 'update' && 'تم تحديث خيار الدفع بنجاح'}
+                  {paymentOperation === 'delete' && 'تم حذف خيار الدفع بنجاح'}
+                  <button type="button" className="btn-close" onClick={() => {
+                    setPaymentSuccess(false);
+                    setPaymentOperation('');
+                  }}></button>
+                </div>
+              )}
+              {paymentError && (
+                <div className="alert alert-danger alert-dismissible fade show" role="alert">
+                  {paymentError}
+                  <button type="button" className="btn-close" onClick={() => setPaymentError(null)}></button>
+                </div>
+              )}
               <ul className="nav nav-tabs mb-4">
                 <li className="nav-item">
                   <button className={`nav-link${paymentTab === "card" ? " active" : ""}`} onClick={() => setPaymentTab("card")}>بطاقة فيزا/ماستر كارد</button>
@@ -184,34 +847,86 @@ export default function Profile() {
               {paymentTab === "card" && (
                 <>
                   <ul className="list-group mb-4">
-                    {payments.map(pay => (
-                      <li key={pay.id} className="list-group-item d-flex justify-content-between align-items-center">
+                    {paymentOptions.map(pay => (
+                      <li key={pay._id} className="list-group-item d-flex justify-content-between align-items-center">
                         <div>
-                          <div className="fw-bold">{pay.type}</div>
-                          <div className="text-muted small">{pay.number} - {pay.holder}</div>
+                          <div className="fw-bold">{pay.cardType}</div>
+                          <div className="text-muted small">{maskCardNumber(pay.cardNumber)} - {pay.cardholderName}</div>
                         </div>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeletePayment(pay.id)}>حذف</button>
+                        <div>
+                          <button
+                            className="btn btn-sm btn-outline-primary me-2"
+                            onClick={() => handleEditPayment(pay)}
+                            disabled={paymentLoading}
+                          >
+                            تعديل
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => handleDeletePayment(pay._id)}
+                            disabled={paymentLoading}
+                          >
+                            حذف
+                          </button>
+                        </div>
                       </li>
                     ))}
                   </ul>
-                  <form onSubmit={handleAddPayment} className="row g-2 align-items-end">
+                  <form onSubmit={editPaymentId ? handleUpdatePayment : handleAddPayment} className="row g-2 align-items-end">
                     <div className="col-md-3">
                       <label className="form-label">نوع البطاقة</label>
-                      <select className="form-select" value={newPayment.type} onChange={e => setNewPayment({ ...newPayment, type: e.target.value })}>
+                      <select
+                        className="form-select"
+                        value={newPayment.cardType}
+                        onChange={e => setNewPayment({ ...newPayment, cardType: e.target.value })}
+                      >
                         <option>بطاقة ائتمان</option>
                         <option>بطاقة خصم</option>
                       </select>
                     </div>
                     <div className="col-md-4">
                       <label className="form-label">رقم البطاقة</label>
-                      <input className="form-control" value={newPayment.number} onChange={e => setNewPayment({ ...newPayment, number: e.target.value })} placeholder="**** **** **** 1234" />
+                      <input
+                        className="form-control"
+                        value={newPayment.cardNumber}
+                        onChange={handleCardNumberChange}
+                        placeholder="1234 5678 1234 5678"
+                        required
+                        maxLength="19" // 16 digits + 3 spaces
+                      />
                     </div>
                     <div className="col-md-3">
                       <label className="form-label">اسم حامل البطاقة</label>
-                      <input className="form-control" value={newPayment.holder} onChange={e => setNewPayment({ ...newPayment, holder: e.target.value })} placeholder="محمد أحمد" />
+                      <input
+                        className="form-control"
+                        value={newPayment.cardholderName}
+                        onChange={e => setNewPayment({ ...newPayment, cardholderName: e.target.value })}
+                        placeholder="احمد كمال"
+                        required
+                      />
                     </div>
                     <div className="col-md-2">
-                      <button className="btn btn-success w-100" type="submit">إضافة</button>
+                      <div className="d-flex gap-2">
+                        {editPaymentId && (
+                          <button
+                            type="button"
+                            className="btn btn-outline-secondary flex-grow-1"
+                            onClick={handleCancelPaymentEdit}
+                            disabled={paymentLoading}
+                          >
+                            إلغاء
+                          </button>
+                        )}
+                        <button
+                          className="btn btn-success flex-grow-1"
+                          type="submit"
+                          disabled={paymentLoading}
+                        >
+                          {paymentLoading ? (
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          ) : editPaymentId ? "تحديث" : "إضافة"}
+                        </button>
+                      </div>
                     </div>
                   </form>
                 </>
@@ -238,57 +953,210 @@ export default function Profile() {
       case "returns":
       case "cancellations":
         return (
-          <div className="card shadow-sm border-0">
-            <div className="card-body">
-              <h4 className="fw-bold text-primary mb-4">{activeSection === "returns" ? "المرتجعات" : "الإلغاءات"}</h4>
-              <table className="table table-bordered text-center">
-                <thead className="table-light">
-                  <tr>
-                    <th>رقم الطلب</th>
-                    <th>النوع</th>
-                    <th>الحالة</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {returns.filter(r => activeSection === "returns" ? r.type === "مرتجع" : r.type === "إلغاء").map(r => (
-                    <tr key={r.id}>
-                      <td>{r.order}</td>
-                      <td>{r.type}</td>
-                      <td>{r.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      case "wishlist":
-        return (
-          <div className="card shadow-sm border-0">
-            <div className="card-body">
-              <h4 className="fw-bold text-primary mb-4">المفضلة</h4>
-              <div className="row g-3">
-                {wishlist.length === 0 && <div className="col-12 text-center">لا توجد منتجات في المفضلة</div>}
-                {wishlist.map(item => (
-                  <div className="col-12 col-md-6 col-lg-4" key={item.id}>
-                    <div className="card h-100 border-0 shadow-sm">
-                      <img src={item.image} alt={item.name} className="card-img-top p-3" style={{ height: 120, objectFit: 'contain' }} />
-                      <div className="card-body text-center">
-                        <h6 className="fw-bold mb-2">{item.name}</h6>
-                        <span className="text-danger fw-bold mb-2 d-block">{item.price} ج.م</span>
-                        <button className="btn btn-dark btn-sm w-100 mb-2" onClick={() => handleAddToCart(item.id)}>
-                          <i className="fas fa-shopping-cart ms-2"></i>أضف إلى السلة
-                        </button>
-                        <button className="btn btn-outline-danger btn-sm w-100" onClick={() => handleRemoveWishlist(item.id)}>
-                          <i className="fas fa-trash"></i> حذف
-                        </button>
-                      </div>
+          <>
+            <div className="card shadow-sm border-0">
+              <div className="card-body">
+                <h4 className="fw-bold text-primary mb-4">{activeSection === "returns" ? "المرتجعات" : "الإلغاءات"}</h4>
+                {ordersLoading ? (
+                  <div className="text-center py-4">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">جاري التحميل...</span>
                     </div>
                   </div>
-                ))}
+                ) : ordersError ? (
+                  <div className="alert alert-danger">
+                    {ordersError}
+                  </div>
+                ) : (
+                  <>
+                    {activeSection === "returns" && returns.length === 0 && (
+                      <div className="text-center py-4">
+                        <i className="fas fa-undo text-muted mb-3" style={{ fontSize: '3rem' }}></i>
+                        <h5 className="text-muted">لا توجد مرتجعات</h5>
+                      </div>
+                    )}
+                    {activeSection === "cancellations" && cancellations.length === 0 && (
+                      <div className="text-center py-4">
+                        <i className="fas fa-times-circle text-muted mb-3" style={{ fontSize: '3rem' }}></i>
+                        <h5 className="text-muted">لا توجد إلغاءات</h5>
+                      </div>
+                    )}
+                    {(activeSection === "returns" ? returns : cancellations).length > 0 && (
+                      <div className="table-responsive">
+                        <table className="table table-bordered text-center">
+                          <thead className="table-light">
+                            <tr>
+                              <th>رقم الطلب</th>
+                              <th>التاريخ</th>
+                              <th>المبلغ</th>
+                              <th>الحالة</th>
+                              <th>التفاصيل</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(activeSection === "returns" ? returns : cancellations).map(order => {
+                              const statusBadge = getStatusBadge(order.status);
+                              return (
+                                <tr key={order._id}>
+                                  <td>#{order._id.slice(-6)}</td>
+                                  <td>{new Date(order.createdAt).toLocaleDateString('ar-EG')}</td>
+                                  <td>{order.total} ج.م</td>
+                                  <td>
+                                    <span className={`badge ${statusBadge.class}`}>
+                                      {statusBadge.text}
+                                    </span>
+                                  </td>
+                                  <td>
+                                    <button
+                                      className="btn btn-sm btn-outline-primary"
+                                      onClick={() => handleShowOrderDetails(order)}
+                                    >
+                                      عرض التفاصيل
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             </div>
-          </div>
+
+            {/* Order Details Modal */}
+            {selectedOrder && (
+              <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                <div className="modal-dialog modal-lg">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">تفاصيل الطلب #{selectedOrder._id.slice(-6)}</h5>
+                      <button type="button" className="btn-close" onClick={handleCloseOrderDetails}></button>
+                    </div>
+                    <div className="modal-body">
+                      <div className="row mb-4">
+                        <div className="col-md-6">
+                          <h6 className="fw-bold mb-3">معلومات الطلب</h6>
+                          <p className="mb-2">
+                            <span className="text-muted">التاريخ:</span> {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">الحالة:</span>
+                            <span className={`badge ${getStatusBadge(selectedOrder.status).class} ms-2`}>
+                              {getStatusBadge(selectedOrder.status).text}
+                            </span>
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">المبلغ الإجمالي:</span> {selectedOrder.total} ج.م
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">طريقة الدفع:</span> {
+                              selectedOrder.paymentMethod === 'paypal' ? 'باي بال' :
+                                selectedOrder.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' :
+                                  selectedOrder.paymentMethod === 'cash_on_delivery' ? 'الدفع عند الاستلام' :
+                                    selectedOrder.paymentMethod
+                            }
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">حالة الدفع:</span> {
+                              selectedOrder.paymentStatus === 'pending' ? 'قيد الانتظار' :
+                                selectedOrder.paymentStatus === 'paid' ? 'تم الدفع' :
+                                  selectedOrder.paymentStatus
+                            }
+                          </p>
+                        </div>
+                        <div className="col-md-6">
+                          <h6 className="fw-bold mb-3">معلومات الشحن</h6>
+                          <p className="mb-2">
+                            <span className="text-muted">الاسم:</span> {selectedOrder.name}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">البريد الإلكتروني:</span> {selectedOrder.email}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">رقم الهاتف:</span> {selectedOrder.phone}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">العنوان:</span> {selectedOrder.address}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">المدينة:</span> {selectedOrder.city}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">الرمز البريدي:</span> {selectedOrder.postalCode}
+                          </p>
+                          <p className="mb-2">
+                            <span className="text-muted">الدولة:</span> {selectedOrder.country}
+                          </p>
+                        </div>
+                      </div>
+
+                      {selectedOrder.image && (
+                        <div className="mb-4">
+                          <h6 className="fw-bold mb-3">صورة إثبات الدفع</h6>
+                          <img
+                            src={selectedOrder.image}
+                            alt="إثبات الدفع"
+                            className="img-fluid rounded"
+                            style={{ maxHeight: '200px' }}
+                          />
+                        </div>
+                      )}
+
+                      <h6 className="fw-bold mb-3">المنتجات</h6>
+                      <div className="table-responsive">
+                        <table className="table table-bordered">
+                          <thead className="table-light">
+                            <tr>
+                              <th>المنتج</th>
+                              <th>السعر</th>
+                              <th>الكمية</th>
+                              <th>المجموع</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedOrder.cartItems?.map((item, index) => (
+                              <tr key={index}>
+                                <td>
+                                  <div className="d-flex align-items-center">
+                                    <img
+                                      src={item.image}
+                                      alt={item.name}
+                                      style={{ width: '50px', height: '50px', objectFit: 'cover', marginLeft: '10px' }}
+                                    />
+                                    <div>
+                                      <div>{item.name}</div>
+                                      {item.variantId && (
+                                        <small className="text-muted">(متغير)</small>
+                                      )}
+                                    </div>
+                                  </div>
+                                </td>
+                                <td>{item.price} ج.م</td>
+                                <td>{item.quantity}</td>
+                                <td>{item.price * item.quantity} ج.م</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                          <tfoot>
+                            <tr>
+                              <td colSpan="3" className="text-start fw-bold">المجموع الكلي</td>
+                              <td className="fw-bold">{selectedOrder.total} ج.م</td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </div>
+                    <div className="modal-footer">
+                      <button type="button" className="btn btn-secondary" onClick={handleCloseOrderDetails}>إغلاق</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
         );
       default:
         return null;
@@ -309,13 +1177,14 @@ export default function Profile() {
               <div className="list-group mb-4 shadow-sm">
                 <div className="list-group-item fw-bold bg-light">إدارة حسابي</div>
                 <button className={`list-group-item list-group-item-action${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}>الملف الشخصي</button>
+                {!user?.isGoogleUser && (
+                  <button className={`list-group-item list-group-item-action${activeSection === "password" ? " text-danger active" : ""}`} onClick={() => setActiveSection("password")}>تغيير كلمة المرور</button>
+                )}
                 <button className={`list-group-item list-group-item-action${activeSection === "address" ? " active" : ""}`} onClick={() => setActiveSection("address")}>دفتر العناوين</button>
                 <button className={`list-group-item list-group-item-action${activeSection === "payment" ? " active" : ""}`} onClick={() => setActiveSection("payment")}>خيارات الدفع</button>
                 <div className="list-group-item fw-bold bg-light mt-3">طلباتي</div>
                 <button className={`list-group-item list-group-item-action${activeSection === "returns" ? " active" : ""}`} onClick={() => setActiveSection("returns")}>المرتجعات</button>
                 <button className={`list-group-item list-group-item-action${activeSection === "cancellations" ? " active" : ""}`} onClick={() => setActiveSection("cancellations")}>الإلغاءات</button>
-                <div className="list-group-item fw-bold bg-light mt-3">المفضلة</div>
-                <button className={`list-group-item list-group-item-action${activeSection === "wishlist" ? " active" : ""}`} onClick={() => setActiveSection("wishlist")}>المفضلة</button>
               </div>
             </div>
             {/* Main Section */}
