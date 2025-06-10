@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_URL = process.env.REACT_APP_API_URL + "/api";
+const API_URL = "https://ecommerce-website-backend-nine.vercel.app" + "/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
@@ -22,7 +22,7 @@ export const getCartThunk = createAsyncThunk(
 export const addToCartThunk = createAsyncThunk(
     "product/addToCart",
     async ({ productId, variantId = null, quantity = 1 }, thunkAPI) => {
-        try {            
+        try {
             const token = localStorage.getItem("token");
             const { data } = await axios.patch(
                 `${API_URL}/cart/cartOP`,
@@ -74,7 +74,7 @@ const cartSlice = createSlice({
         clearCartError: (state) => {
             state.error = null;
         },
-        decreaseQ(state, action) {            
+        decreaseQ(state, action) {
             const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
             console.log("item in decreaseQ", item);
             item.quantity -= 1

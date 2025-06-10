@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = process.env.REACT_APP_API_URL + "/api/products";
+const API_KEY = "https://ecommerce-website-backend-nine.vercel.app" + "/api/products";
 
 export const getProductsThunk = createAsyncThunk(
     "product/getProducts",
     async (_, thunkAPI) => {
         try {
             const { data } = await axios.get(`${API_KEY}`);
-            
+
             return data.products;
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response?.data || "error server");

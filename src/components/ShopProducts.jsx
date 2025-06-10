@@ -5,7 +5,7 @@ import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
 import { addToCartThunk } from "../services/Slice/cart/cart";
-const API_URL = process.env.REACT_APP_API_URL + "/api/products";
+const API_URL = "https://ecommerce-website-backend-nine.vercel.app" + "/api/products";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 const StarRating = ({ rating }) => {
@@ -233,7 +233,7 @@ export default function ShopProducts() {
                 </div>
               ))}
               <div className={`product-actions mt-auto gap-2 ${hoveredProduct === item._id ? 'show' : ''}`} style={{ display: 'flex', opacity: hoveredProduct === item._id ? 1 : 0, pointerEvents: hoveredProduct === item._id ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
-                <button className="btn btn-sm btn-danger" onClick={(e)=>handleAddToCart(e, item._id)}><i className="fas fa-shopping-cart"></i></button>
+                <button className="btn btn-sm btn-danger" onClick={(e) => handleAddToCart(e, item._id)}><i className="fas fa-shopping-cart"></i></button>
                 <button
                   className="btn btn-sm btn-outline-danger"
                   onClick={(e) => handleWishlistClick(e, item._id)}
