@@ -106,7 +106,7 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
         >
           <option value="الكل">الكل</option>
           {Array.isArray(categories) && categories.map(category => (
-            <option key={category._id || category.id} value={category.name}>
+            <option key={category._id || category.id} value={category._id}>
               {category.name}
             </option>
           ))}
