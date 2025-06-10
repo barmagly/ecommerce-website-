@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_URL = "https://ecommerce-website-backend-nine.vercel.app/api";
-// const API_URL = "http://localhost:5000/api";
+const API_URL = process.env.REACT_APP_API_URL + "/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
@@ -12,25 +11,8 @@ export const getCartThunk = createAsyncThunk(
                     Authorization: `Bearer ${token}`,
                 }
             });
-            // console.log("data in slice", data);
-            const productsRequests = data[0].cartItems.map((item) =>
-                axios.get(`${API_URL}/products/${item.prdID}`, {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }).then(res => res.data)
-            );
-
-            const products = await Promise.all(productsRequests);
-
-            data[0].cartItems.forEach(item => {
-                const product = products.find(product => product._id === item.prdID);
-                if (product) {
-                    product.quantity = item.quantity;
-                }
-            });
-            return { ...data[0], cartItems: products };
+            console.log("data in slice", data);
+            return data[0] || [];
         } catch (error) {
             return thunkAPI.rejectWithValue(error.response.data || "error server");
         }
@@ -39,17 +21,15 @@ export const getCartThunk = createAsyncThunk(
 
 export const addToCartThunk = createAsyncThunk(
     "product/addToCart",
-    async ({ productId, quantity = 1 ,variantId}, thunkAPI) => {
-        try {
-            console.log(variantId);
-            
+    async ({ productId, variantId = null, quantity = 1 }, thunkAPI) => {
+        try {            
             const token = localStorage.getItem("token");
             const { data } = await axios.patch(
                 `${API_URL}/cart/cartOP`,
                 {
                     prdID: productId,
-                    quantity,
-                    variantId
+                    variantId,
+                    quantity
                 },
                 {
                     headers: {
@@ -79,7 +59,7 @@ function authFetch(url, options = {}) {
 }
 
 function calculateTotal(cartItems) {
-    const total = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const total = cartItems.reduce((acc, item) => acc + (item.variantId ? item.variantId.price : item.prdID.price) * item.quantity, 0);
     return total;
 }
 
@@ -94,43 +74,44 @@ const cartSlice = createSlice({
         clearCartError: (state) => {
             state.error = null;
         },
-        decreaseQ(state, action) {
-            const item = state.products.cartItems.find(item => item._id === action.payload)
+        decreaseQ(state, action) {            
+            const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
+            console.log("item in decreaseQ", item);
             item.quantity -= 1
             authFetch(`${API_URL}/cart/cartOP`, {
                 method: "PATCH",
                 body: JSON.stringify({
-                    prdID: item._id,
+                    prdID: item.prdID?._id,
+                    variantId: item.variantId?._id,
                     quantity: -1,
                 }),
             });
             state.products.total = calculateTotal(state.products.cartItems);
         },
         increaseQ(state, action) {
-            const item = state.products.cartItems.find(item => item._id === action.payload)
+            const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
             item.quantity += 1
             authFetch(`${API_URL}/cart/cartOP`, {
                 method: "PATCH",
                 body: JSON.stringify({
-                    prdID: item._id,
+                    prdID: item.prdID?._id,
+                    variantId: item.variantId?._id,
                     quantity: 1,
                 }),
             });
             state.products.total = calculateTotal(state.products.cartItems);
         },
         deleteItem(state, action) {
-            console.log("len: ", state.products.cartItems.length);
-
             if (state.products.cartItems.length > 1) {
-                const item = state.products.cartItems.find(item => item._id === action.payload)
+                const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
                 authFetch(
                     `${API_URL}/cart/cartOP`,
                     {
                         method: "PATCH",
-                        body: JSON.stringify({ prdID: item._id, quantity: 0 }),
+                        body: JSON.stringify({ prdID: item.prdID?._id, variantId: item.variantId?._id, quantity: 0 }),
                     }
                 );
-                state.products.cartItems = state.products.cartItems.filter(item => item._id !== action.payload)
+                state.products.cartItems = state.products.cartItems.filter(item => item.variantId?._id !== action.payload.variantId || item.prdID?._id !== action.payload.prdID)
                 state.products.total = calculateTotal(state.products.cartItems);
             }
             else {
