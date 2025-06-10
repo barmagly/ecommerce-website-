@@ -20,7 +20,6 @@ export default function Checkout() {
     if (!cartItems.length || !token) {
       navigate('/cart');
     }
-    console.log("cartItems in checkout", cartItems);
   }, [cartItems, navigate]);
 
   const [form, setForm] = useState({

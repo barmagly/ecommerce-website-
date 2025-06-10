@@ -1,170 +1,72 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { getProductsThunk } from "../services/Slice/product/product";
+import { addToCartThunk } from "../services/Slice/cart/cart";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
-import { addToCartThunk } from "../services/Slice/cart/cart";
+import { FaStar } from "react-icons/fa";
+
 const API_URL = process.env.REACT_APP_API_URL + "/api/products";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
-const StarRating = ({ rating }) => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
-
-  for (let i = 0; i < 5; i++) {
-    if (i < fullStars) {
-      stars.push(<i key={i} className="fas fa-star text-warning"></i>);
-    } else if (i === fullStars && hasHalfStar) {
-      stars.push(<i key={i} className="fas fa-star-half-alt text-warning"></i>);
-    } else {
-      stars.push(<i key={i} className="far fa-star text-warning"></i>);
-    }
-  }
-
-  return <div className="d-flex gap-1">{stars}</div>;
-};
-
-const AvailabilityBadge = ({ stock }) => {
-  const statusConfig = {
-    true: { label: "متوفر", className: "bg-success" },
-    false: { label: "غير متوفر", className: "bg-danger" }
-  };
-
-  const config = statusConfig[stock > 0] || statusConfig[false];
-
-  return (
-    <span className={`badge ${config.className} position-absolute`} style={{ top: 10, right: 10 }}>
-      {config.label}
-    </span>
-  );
-};
-
-export default function ShopProducts() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function ShopProducts({ products = [] }) {
   const [hoveredProduct, setHoveredProduct] = useState(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { wishlist } = useSelector((state) => state.userWishlist);
-  const { token } = useSelector((state) => state.auth);
-  const isAuthenticated = !!token;
+  const wishlist = useSelector(state => state.userWishlist.wishlist);
 
-  // تحديث تلقائي كل دقيقة
-  useEffect(() => {
-    let isMounted = true;
-    const fetchProducts = () => {
-      setLoading(true);
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (isMounted) {
-            // تحقق من شكل البيانات المستلمة
-            let productsArray = [];
-            if (Array.isArray(data)) {
-              productsArray = data;
-            } else if (data && Array.isArray(data.products)) {
-              productsArray = data.products;
-            } else if (data && Array.isArray(data.data)) {
-              productsArray = data.data;
-            }
-            setProducts(productsArray);
-            setLoading(false);
-          }
-        })
-        .catch((err) => {
-          if (isMounted) {
-            console.error('Error fetching products:', err);
-            setError('حدث خطأ في جلب المنتجات');
-            setLoading(false);
-          }
-        });
-    };
-    fetchProducts();
-    const interval = setInterval(fetchProducts, 60000); // كل دقيقة
-    return () => {
-      isMounted = false;
-      clearInterval(interval);
-    };
-  }, []);
-
-  const handleWishlistClick = (e, productId) => {
-    e.stopPropagation(); // Prevent product card click
-    if (!isAuthenticated) {
-      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى المفضلة', {
-        position: "top-center",
-        rtl: true,
-        autoClose: 3000
-      });
-      navigate('/login');
-      return;
+  const handleAddToCart = async (e, productId) => {
+    e.stopPropagation();
+    try {
+      await dispatch(addToCartThunk({ productId, quantity: 1 }));
+      toast.success("تمت إضافة المنتج إلى السلة");
+    } catch (error) {
+      toast.error("حدث خطأ أثناء إضافة المنتج إلى السلة");
     }
-    dispatch(addUserWishlistThunk({ prdId: productId }))
-      .unwrap()
-      .then(() => {
-        toast.success('تمت إضافة المنتج إلى المفضلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 2000
-        });
-      })
-      .catch((error) => {
-        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى المفضلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 3000
-        });
-      });
   };
 
-  const handleAddToCart = (e, productId) => {
-    e.stopPropagation(); // Prevent product card click
-    if (!isAuthenticated) {
-      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
-        position: "top-center",
-        rtl: true,
-        autoClose: 3000
-      });
-      navigate('/login');
-      return;
+  const handleWishlistClick = async (e, productId) => {
+    e.stopPropagation();
+    try {
+      await dispatch(addUserWishlistThunk(productId));
+      toast.success("تمت إضافة المنتج إلى المفضلة");
+    } catch (error) {
+      toast.error("حدث خطأ أثناء إضافة المنتج إلى المفضلة");
     }
-    dispatch(addToCartThunk({ productId }))
-      .unwrap()
-      .then(() => {
-        toast.success('تمت إضافة المنتج إلى السلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 2000
-        });
-      })
-      .catch((error) => {
-        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
-          position: "top-center",
-          rtl: true,
-          autoClose: 3000
-        });
-      });
   };
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center py-5">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">جاري التحميل...</span>
+  const StarRating = ({ rating }) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<i key={i} className="fas fa-star text-warning"></i>);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<i key={i} className="fas fa-star-half-alt text-warning"></i>);
+      } else {
+        stars.push(<i key={i} className="far fa-star text-warning"></i>);
+      }
+    }
+
+    return <div className="d-flex gap-1">{stars}</div>;
+  };
+
+  const AvailabilityBadge = ({ stock }) => {
+    if (stock > 0) {
+      return (
+        <div className="position-absolute top-0 end-0 m-2">
+          <span className="badge bg-success">متوفر</span>
         </div>
-      </div>
-    );
-  }
-
-  if (error) {
+      );
+    }
     return (
-      <div className="alert alert-danger text-center" role="alert">
-        {error}
+      <div className="position-absolute top-0 end-0 m-2">
+        <span className="badge bg-danger">غير متوفر</span>
       </div>
     );
-  }
+  };
 
   if (!Array.isArray(products) || products.length === 0) {
     return (
