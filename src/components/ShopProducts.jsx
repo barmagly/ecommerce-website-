@@ -6,7 +6,7 @@ import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
 import { FaStar } from "react-icons/fa";
 
-const API_URL = process.env.REACT_APP_API_URL + "/api/products";
+const API_URL = "http://localhost:5000" + "/api/products";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 export default function ShopProducts({ products = [] }) {
