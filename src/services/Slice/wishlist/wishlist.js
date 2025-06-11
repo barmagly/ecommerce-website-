@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = import.meta.env.VITE_API_URL + "/api/auth/wishlist";
+const API_URL = process.env.REACT_APP_API_URL+ "/api/auth/wishlist";
 
 export const getUserWishlistThunk = createAsyncThunk(
     "userWishlist/getUserWishlist",

@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 // رابط الـ API الأساسي
-const API_KEY = `${import.meta.env.VITE_API_URL}/api/products`;
+const API_KEY = `${process.env.REACT_APP_API_URL}api/products`;
 
 // Thunk لجلب المتغيرات (variants) الخاصة بمنتج معين
 export const getVariantsThunk = createAsyncThunk(
