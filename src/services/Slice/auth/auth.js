@@ -1,6 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = process.env.REACT_APP_API_URL + "/api/auth";
+
+if (!import.meta.env.VITE_API_URL) {
+    throw new Error("VITE_API_URL is not defined! Please set it in your environment variables.");
+}
+const API_KEY = import.meta.env.VITE_API_URL + "/api/auth";
 
 export const googleLoginThunk = createAsyncThunk(
     "auth/googleLogin",
