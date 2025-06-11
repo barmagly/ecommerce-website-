@@ -8,7 +8,7 @@ const navLinks = [
   { label: "الرئيسية", href: "/" },
   { label: "المتجر", href: "/shop" },
   { label: "تواصل معنا", href: "/contact" },
-  { label: "من نحن", href: "/about" },
+  // { label: "من نحن", href: "/about" },
 ];
 
 const authLinks = [
@@ -16,7 +16,7 @@ const authLinks = [
   { label: "المتجر", href: "/shop" },
   { label: "طلباتي", href: "/orders" },
   { label: "تواصل معنا", href: "/contact" },
-  { label: "من نحن", href: "/about" },
+  // { label: "من نحن", href: "/about" },
 ];
 
 function isActive(href) {

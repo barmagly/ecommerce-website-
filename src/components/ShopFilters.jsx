@@ -96,23 +96,6 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="mb-4">
-        <label className="form-label fw-bold">الفئة</label>
-        <select
-          className="form-select"
-          value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
-        >
-          <option value="الكل">الكل</option>
-          {Array.isArray(categories) && categories.map(category => (
-            <option key={category._id || category.id} value={category.name}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-      </div>
-
       {/* Rating Filter */}
       <div className="mb-4">
         <label className="form-label fw-bold">التقييم</label>

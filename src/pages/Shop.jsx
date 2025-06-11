@@ -5,6 +5,8 @@ import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
+import { Grid, Typography } from "@mui/material";
+import { Image } from "react-bootstrap";
 
 export default function Shop() {
   const [products, setProducts] = useState([]);
@@ -33,12 +35,12 @@ export default function Shop() {
       setLoading(true);
       setError(null);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/products`);
-      
+
       // Ensure we're setting an array
-      const productsData = Array.isArray(response.data) ? response.data : 
-                          response.data.products ? response.data.products : 
-                          [];
-      
+      const productsData = Array.isArray(response.data) ? response.data :
+        response.data.products ? response.data.products :
+          [];
+
       setProducts(productsData);
       setFilteredProducts(productsData);
     } catch (err) {
@@ -52,12 +54,12 @@ export default function Shop() {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/categories`);
-      
+
       // Ensure we're setting an array
       const categoriesData = Array.isArray(response.data) ? response.data :
-                           response.data.categories ? response.data.categories :
-                           [];
-      
+        response.data.categories ? response.data.categories :
+          [];
+
       setCategories(categoriesData);
     } catch (err) {
       console.error("Error fetching categories:", err);
@@ -68,6 +70,20 @@ export default function Shop() {
   const handleFiltersApplied = (filteredProducts) => {
     setFilteredProducts(filteredProducts);
   };
+
+  const fetchProductCat = async (id) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/products/category/${id}`)
+      setFilteredProducts(response.data)
+    } catch (err) {
+      setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
+      console.error("Error fetching products:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const handleFilterChange = (filterParams) => {
     setLoading(true);
@@ -98,9 +114,9 @@ export default function Shop() {
     // Set new sort option
     setSortOption(option);
     const filterParams = new URLSearchParams(currentFilters);
-    
+
     // Add sort parameter
-    switch(option) {
+    switch (option) {
       case 'newest':
         filterParams.set("sort", "-createdAt");
         break;
@@ -119,7 +135,7 @@ export default function Shop() {
       default:
         filterParams.delete("sort");
     }
-    
+
     handleFilterChange(filterParams.toString());
   };
 
@@ -157,35 +173,44 @@ export default function Shop() {
       <div className="shop-page bg-light py-4">
         <div className="container">
           <Breadcrumb items={[{ label: "المتجر", to: "/shop" }]} />
-          
+
+          <Grid container spacing={3}>
+            {categories.map(cat =>
+              <Grid key={cat._id} onClick={() => fetchProductCat(cat._id)} sx={{cursor:'pointer'}}>
+                <Image src={cat?.image} alt={cat} roundedCircle height={150} width={150} />
+                <Typography fontWeight={'bold'} textAlign={'center'}>{cat.name}</Typography>
+              </Grid>
+            )}
+          </Grid>
+
           {/* فلاتر أفقية */}
           <div className="d-flex flex-wrap gap-2 align-items-center bg-white p-3 rounded shadow-sm mb-4">
             <span className="fw-bold">ترتيب حسب:</span>
-            <button 
+            <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'newest' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('newest')}
             >
               الأحدث
             </button>
-            <button 
+            <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'bestselling' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('bestselling')}
             >
               الأكثر مبيعًا
             </button>
-            <button 
+            <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'topRated' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('topRated')}
             >
               الأعلى تقييمًا
             </button>
-            <button 
+            <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'priceAsc' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('priceAsc')}
             >
               السعر: من الأقل للأعلى
             </button>
-            <button 
+            <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'priceDesc' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('priceDesc')}
             >
@@ -196,7 +221,7 @@ export default function Shop() {
           <div className="row">
             {/* أقسام وفلاتر جانبية */}
             <div className="col-lg-3 mb-4">
-              <ShopFilters 
+              <ShopFilters
                 onFiltersApplied={handleFiltersApplied}
                 categories={categories}
                 products={products}

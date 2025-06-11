@@ -431,7 +431,7 @@ export default function Checkout() {
                       onChange={e => setPayment(e.target.value)}
                     >
                       <option value="cod">الدفع عند الاستلام</option>
-                      <option value="visa">بطاقة فيزا/ماستر كارد</option>
+                      {/* <option value="visa">بطاقة فيزا/ماستر كارد</option> */}
                       <option value="instapay">الدفع عبر Instapay</option>
                     </select>
                   </div>
