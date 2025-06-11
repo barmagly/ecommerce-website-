@@ -8,6 +8,7 @@ import cartSlice from "./cart/cart";
 import orderSlice from "./order/order";
 import variantSlice from "./variant/variant";
 import reviewSlice from "./review/review";
+import passwordReducer from './password/password';
 
 const Store = configureStore({
     reducer: {
@@ -15,11 +16,12 @@ const Store = configureStore({
         categorie: categorieSlice.reducer,
         product: productSlice.reducer,
         userProfile: userProfileSlice,
-        userWishlist:userWishlistSlice.reducer,
-        userCart:cartSlice.reducer,
-        order:orderSlice.reducer,
-        variant:variantSlice.reducer,
-        reviews:reviewSlice.reducer
+        userWishlist: userWishlistSlice.reducer,
+        userCart: cartSlice.reducer,
+        order: orderSlice.reducer,
+        variant: variantSlice.reducer,
+        reviews: reviewSlice.reducer,
+        password: passwordReducer
     }
 });
 

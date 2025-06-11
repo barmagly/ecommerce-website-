@@ -21,6 +21,8 @@ import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
 import OrderConfirmation from './pages/OrderConfirmation';
 import ProductDetails from './pages/ProductDetails';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import AdminApp from './admin/App';
 import { Provider } from 'react-redux';
 import Store from './services/Slice/Store'
@@ -40,6 +42,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
             {/* <Route path="/about" element={<About />} /> */}
             <Route path="/contact" element={<Contact />} />
             <Route path="/cart" element={<Cart />} />

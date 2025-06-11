@@ -9,32 +9,11 @@ import 'react-toastify/dist/ReactToastify.css';
 import { GoogleLogin } from '@react-oauth/google';
 
 export default function Login() {
-  const [showModal, setShowModal] = useState(false);
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [loginEmail, setLoginEmail] = useState("");
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.userProfile?.profile) || [];
-
-  const handleForgot = (e) => {
-    e.preventDefault();
-    setShowModal(true);
-  };
-
-  const handleModalClose = () => {
-    setShowModal(false);
-    setEmail("");
-    setSubmitted(false);
-  };
-
-  const handleModalSubmit = (e) => {
-    e.preventDefault();
-    // هنا ممكن تضيف إرسال الإيميل للسيرفر مثلاً
-    setSubmitted(true);
-    toast.success("تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني");
-  };
 
   const handleLogin = async () => {
     if (!loginEmail || !password) {
@@ -149,10 +128,9 @@ export default function Login() {
                   تسجيل الدخول
                 </button>
                 <Link
-                  href="#"
+                  to="/forgot-password"
                   className="text-danger text-decoration-none"
                   style={{ paddingRight: "20px" }}
-                  onClick={handleForgot}
                 >
                   نسيت كلمة المرور؟
                 </Link>
@@ -184,57 +162,6 @@ export default function Login() {
           </div>
         </div>
       </div>
-      {/* Forgot Password Modal */}
-      {showModal && (
-        <div
-          className="modal fade show"
-          tabIndex="-1"
-          style={{ display: "block", background: "rgba(0,0,0,0.35)" }}
-        >
-          <div className="modal-dialog modal-dialog-centered" data-aos="zoom-in">
-            <div className="modal-content">
-              <div className="modal-header border-0">
-                <h5 className="modal-title">نسيت كلمة المرور؟</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={handleModalClose}
-                ></button>
-              </div>
-              <div className="modal-body">
-                {submitted ? (
-                  <div
-                    className="alert alert-success text-center"
-                    data-aos="fade-up"
-                  >
-                    تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني.
-                  </div>
-                ) : (
-                  <form onSubmit={handleModalSubmit}>
-                    <div className="mb-3">
-                      <label htmlFor="forgot-email" className="form-label">
-                        البريد الإلكتروني
-                      </label>
-                      <input
-                        type="email"
-                        className="form-control"
-                        id="forgot-email"
-                        placeholder="أدخل بريدك الإلكتروني"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <button type="submit" className="btn btn-danger w-100">
-                      إرسال
-                    </button>
-                  </form>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
       <Footer />
     </div>
   );
