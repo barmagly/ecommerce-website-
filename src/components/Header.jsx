@@ -131,13 +131,6 @@ export default function Header() {
                   <>
                     <button
                       className="btn btn-icon"
-                      onClick={() => navigate('/notifications')}
-                      title="الإشعارات"
-                    >
-                      <i className="fas fa-bell"></i>
-                    </button>
-                    <button
-                      className="btn btn-icon"
                       onClick={() => navigate('/cart')}
                       title="سلة المشتريات"
                     >
@@ -296,13 +289,6 @@ export default function Header() {
               {isAuthenticated ? (
                 <div className="d-flex flex-column gap-2">
                   <div className="d-flex flex-wrap gap-2">
-                    <button
-                      className="btn btn-icon"
-                      onClick={() => navigate('/notifications')}
-                      title="الإشعارات"
-                    >
-                      <i className="fas fa-bell"></i>
-                    </button>
                     <button
                       className="btn btn-icon"
                       onClick={() => navigate('/cart')}
