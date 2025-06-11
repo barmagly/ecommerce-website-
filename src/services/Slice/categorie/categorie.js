@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = import.meta.env.VITE_API_URL + "/api/categories";
+const API_KEY = process.env.REACT_APP_API_URL + "/api/categories";
 
 export const getCategoriesThunk = createAsyncThunk(
     "categorie/getCategories",
