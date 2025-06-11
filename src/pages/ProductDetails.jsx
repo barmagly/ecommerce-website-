@@ -632,7 +632,7 @@ export default function ProductDetails() {
                                   <span className="text-muted small">{new Date(r.createdAt).toLocaleDateString('ar-EG')}</span>
                                 </div>
                                 <div className="text-muted" style={{ fontSize: '1.05em', lineHeight: 1.6 }}>{r.comment}</div>
-                                {isReviewOwner(r.userId?._id) && (
+                                {profileUser && profileUser._id === r.userId?._id && (
                                   <div className="mt-3 text-end">
                                     <button
                                       className="btn btn-sm btn-outline-primary ms-2"
