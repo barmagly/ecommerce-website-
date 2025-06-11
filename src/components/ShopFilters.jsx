@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+const API_URL = process.env.REACT_APP_API_URL
 
 export default function ShopFilters({ onFiltersApplied, categories = [], products = [] }) {
   const [priceRange, setPriceRange] = useState([0, 0]);
@@ -34,7 +35,7 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
 
       // Build query string
       const queryParams = new URLSearchParams(filters).toString();
-      const response = await axios.get(`http://localhost:5000/api/products/filter?${queryParams}`);
+      const response = await axios.get(`${API_URL}/api/products/filter?${queryParams}`);
 
       // Ensure we're passing an array to the parent component
       const filteredProducts = response.data.data;
