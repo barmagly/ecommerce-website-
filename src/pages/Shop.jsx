@@ -11,8 +11,8 @@ import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+const API_URL = process.env.REACT_APP_API_URL
 export default function Shop() {
-
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
@@ -69,7 +69,7 @@ export default function Shop() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`http://localhost:5000/api/products`);
+      const response = await axios.get(`${API_URL}/api/products`);
 
       // Ensure we're setting an array
       const productsData = Array.isArray(response.data) ? response.data :
@@ -88,7 +88,7 @@ export default function Shop() {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/categories`);
+      const response = await axios.get(`${API_URL}/api/categories`);
 
       // Ensure we're setting an array
       const categoriesData = Array.isArray(response.data) ? response.data :
@@ -110,7 +110,7 @@ export default function Shop() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`http://localhost:5000/api/products/category/${id}`)
+      const response = await axios.get(`${API_URL}/api/products/category/${id}`)
       setFilteredProducts(response.data)
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
@@ -122,7 +122,7 @@ export default function Shop() {
 
   const handleFilterChange = (filterParams) => {
     setLoading(true);
-    axios.get(`http://localhost:5000/api/products/filter?${filterParams}`)
+    axios.get(`${API_URL}/api/products/filter?${filterParams}`)
       .then(response => {
         setFilteredProducts(response.data.data);
         setCurrentFilters(filterParams);
