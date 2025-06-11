@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_URL = "https://ecommerce-website-backend-nine.vercel.app" + "/api";
+const API_URL = process.env.REACT_APP_API_URL + "/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {

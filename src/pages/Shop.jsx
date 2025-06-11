@@ -5,10 +5,21 @@ import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
-import { Grid, Typography } from "@mui/material";
+import { Box, Grid, IconButton, Typography } from "@mui/material";
 import { Image } from "react-bootstrap";
-
+import { useTheme } from '@mui/material/styles';
+import { useMediaQuery } from '@mui/material';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 export default function Shop() {
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+
+  const [page, setPage] = useState(0);
+  const [categoriesPerPage, setCategoriesPerPage] = useState(9);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,6 +34,30 @@ export default function Shop() {
     minRating: '',
     inStock: ''
   });
+
+  useEffect(() => {
+    if (isMobile) {
+      setCategoriesPerPage(3);
+    } else if (isTablet) {
+      setCategoriesPerPage(6);
+    } else if (isDesktop) {
+      setCategoriesPerPage(9);
+    }
+  }, [isMobile, isTablet, isDesktop]);
+
+  const pageCount = Math.ceil(categories.length / categoriesPerPage);
+  const startIdx = page * categoriesPerPage;
+  const endIdx = startIdx + categoriesPerPage;
+  const currentCategories = categories.slice(startIdx, endIdx);
+
+  const handlePrev = () => {
+    setPage((prev) => (prev > 0 ? prev - 1 : prev));
+    setCategories(currentCategories)
+  };
+  const handleNext = () => {
+    setPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
+    setCategories(currentCategories)
+  };
 
   // Fetch initial products and categories
   useEffect(() => {
@@ -174,14 +209,47 @@ export default function Shop() {
         <div className="container">
           <Breadcrumb items={[{ label: "المتجر", to: "/shop" }]} />
 
-          <Grid container spacing={3}>
+          <Box
+            sx={{ display: "flex", overflowX: "auto", gap: 2, p: 2,
+              scrollSnapType: "x mandatory",
+              "&::-webkit-scrollbar": {
+                height: 4,
+                width: 10,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "gray",
+                borderRadius: 4,
+              },
+              "&::-webkit-scrollbar-thumb:hover": {
+                backgroundColor: "black",
+              },
+              "&:hover::-webkit-scrollbar": {
+                height: 5,
+                width: 10,
+              },
+            }}
+          >
             {categories.map(cat =>
-              <Grid key={cat._id} onClick={() => fetchProductCat(cat._id)} sx={{cursor:'pointer'}}>
-                <Image src={cat?.image} alt={cat} roundedCircle height={150} width={150} />
-                <Typography fontWeight={'bold'} textAlign={'center'}>{cat.name}</Typography>
+              <Grid key={cat._id} onClick={() => fetchProductCat(cat._id)} minHeight={110} minWidth={110} px={0} sx={{cursor: 'pointer' ,scrollSnapAlign: 'center'}} 
+                rowSpacing={2}
+              >
+                <Image
+                  src={cat?.image}
+                  alt={cat.name}
+                  roundedCircle
+                  height={100}
+                  width={100}
+                  style={{
+                    objectFit: 'cover',
+                    marginBottom: 8,
+                  }}
+                />
+                <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title={cat.name}>
+                  {cat.name}
+                </Typography>
               </Grid>
             )}
-          </Grid>
+          </Box>
 
           {/* فلاتر أفقية */}
           <div className="d-flex flex-wrap gap-2 align-items-center bg-white p-3 rounded shadow-sm mb-4">
