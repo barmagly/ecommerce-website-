@@ -1,6 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
+if (!import.meta.env.VITE_API_URL) {
+  throw new Error("VITE_API_URL is not defined! Please set it in your environment variables.");
+}
 const API_URL = `${import.meta.env.VITE_API_URL}/api/auth`;
 
 export const getUserProfileThunk = createAsyncThunk(
