@@ -4,10 +4,12 @@ import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { getVariantsThunk } from "../services/Slice/variant/variant";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 import { addToCartThunk } from "../services/Slice/cart/cart";
 import { handleAddToCart, handleAddToWishlist } from '../utils/authUtils';
+import { createReviewThunk, getProductReviewsThunk, updateReviewThunk, deleteReviewThunk } from "../services/Slice/review/review";
+import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -43,19 +45,32 @@ export default function ProductDetails() {
   const { products, loading, error } = useSelector((state) => state.product);
   const { variants, loading: variantsLoading } = useSelector((state) => state.variant);
   const { wishlist } = useSelector((state) => state.userWishlist);
+  const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
+  const { token, user: currentUser } = useSelector((state) => state.auth);
+  const { user: profileUser } = useSelector((state) => state.userProfile);
+
+  console.log("Auth State:", useSelector((state) => state.auth));
+  console.log("Current User:", currentUser);
+  console.log("Profile User:", profileUser);
+  console.log("Reviews:", reviews);
+
   const product = products?.find(p => p._id === id);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
+  const [editingReview, setEditingReview] = useState(null);
+  const [editForm, setEditForm] = useState({ rating: 5, comment: "" });
 
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [mainImg, setMainImg] = useState(null);
-  const [reviewForm, setReviewForm] = useState({ name: "", rating: 5, comment: "" });
-  const [reviews, setReviews] = useState([]);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+  const [reviewError, setReviewError] = useState(null);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
     dispatch(getProductsThunk());
     if (id) {
       dispatch(getVariantsThunk({ prdId: id }));
+      dispatch(getProductReviewsThunk(id));
     }
   }, [dispatch, id]);
 
@@ -98,6 +113,12 @@ export default function ProductDetails() {
       setMainImg(product.images?.[0]?.url || product.imageCover || PLACEHOLDER_IMG);
     }
   }, [selectedVariant, product]);
+
+  useEffect(() => {
+    if (token) {
+      dispatch(getUserProfileThunk());
+    }
+  }, [dispatch, token]);
 
   // Get similar products (same category)
   const similarProducts = products?.filter(p =>
@@ -204,17 +225,105 @@ export default function ProductDetails() {
     handleAddToWishlist(dispatch, addUserWishlistThunk, { prdId: id }, navigate);
   };
 
-  const handleReviewSubmit = e => {
+  const handleReviewSubmit = async (e) => {
     e.preventDefault();
-    if (reviewForm.name && reviewForm.comment) {
-      setReviews([{ ...reviewForm, date: new Date().toISOString().slice(0, 10) }, ...reviews]);
-      setReviewForm({ name: "", rating: 5, comment: "" });
+    if (!token) {
+      setReviewError("يرجى تسجيل الدخول لإضافة تقييم");
+      return;
+    }
+
+    if (reviewForm.comment) {
+      setIsSubmittingReview(true);
+      setReviewError(null);
+
+      try {
+        await dispatch(createReviewThunk({
+          productId: id,
+          rating: reviewForm.rating,
+          comment: reviewForm.comment
+        })).unwrap();
+
+        setReviewForm({ rating: 5, comment: "" });
+        dispatch(getProductsThunk());
+        if (id) {
+          dispatch(getVariantsThunk({ prdId: id }));
+          dispatch(getProductReviewsThunk(id));
+        }
+      } catch (error) {
+        setReviewError(error || "حدث خطأ أثناء إضافة التقييم");
+      } finally {
+        setIsSubmittingReview(false);
+      }
+    } else {
+      setReviewError("يرجى إضافة تعليق للتقييم");
+    }
+  };
+
+  const handleEditReview = (review) => {
+    setEditingReview(review._id);
+    setEditForm({ rating: review.rating, comment: review.comment });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReview(null);
+    setEditForm({ rating: 5, comment: "" });
+  };
+
+  const handleUpdateReview = async (e) => {
+    e.preventDefault();
+    if (!editingReview) return;
+
+    setIsSubmittingReview(true);
+    setReviewError(null);
+
+    try {
+      await dispatch(updateReviewThunk({
+        reviewId: editingReview,
+        rating: editForm.rating,
+        comment: editForm.comment
+      })).unwrap();
+
+      setEditingReview(null);
+      setEditForm({ rating: 5, comment: "" });
+      dispatch(getProductsThunk());
+      if (id) {
+        dispatch(getVariantsThunk({ prdId: id }));
+        dispatch(getProductReviewsThunk(id));
+      }
+    } catch (error) {
+      setReviewError(error || "حدث خطأ أثناء تحديث التقييم");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذا التقييم؟")) return;
+
+    try {
+      await dispatch(deleteReviewThunk(reviewId)).unwrap();
+      dispatch(getProductsThunk());
+      if (id) {
+        dispatch(getVariantsThunk({ prdId: id }));
+        dispatch(getProductReviewsThunk(id));
+      }
+
+    } catch (error) {
+      setReviewError(error || "حدث خطأ أثناء حذف التقييم");
     }
   };
 
   const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
   const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.name} بسعر ${product.price} ج.م\nرابط المنتج: ${currentUrl}`;
   const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
+
+  const isReviewOwner = (reviewUserId) => {
+    console.log("Checking review ownership:");
+    console.log("Current User ID:", profileUser?._id);
+    console.log("Review User ID:", reviewUserId);
+    console.log("Is Owner:", profileUser?._id === reviewUserId);
+    return profileUser?._id === reviewUserId;
+  };
 
   return (
     <>
@@ -425,78 +534,185 @@ export default function ProductDetails() {
         {/* قسم التقييمات */}
         <div className="row mt-5">
           <div className="col-12 col-lg-10 mx-auto">
-            <div className="bg-white rounded shadow-sm p-4 mb-4" style={{ border: '1px solid #eee' }}>
+            <div className="bg-white rounded-4 shadow-sm p-4 mb-4" style={{ border: '1px solid #eee' }}>
               <div className="row g-4">
                 <div className="col-12 col-md-4 border-end-md" style={{ borderLeft: '1.5px solid #eee' }}>
-                  <div className="fw-bold mb-2 text-center" style={{ fontSize: '1.18em' }}>مراجعات المستخدمين</div>
-                  <div className="d-flex align-items-center justify-content-center mt-2 mb-1">
-                    <span className="fw-bold text-warning" style={{ fontSize: '2.2em', lineHeight: 1 }}>
-                      {product.ratings?.average || 0}
-                    </span>
-                    <span className="ms-2">
-                      <StarRating rating={product.ratings?.average || 0} />
-                    </span>
-                  </div>
-                  <div className="text-muted text-center mb-3">
-                    {product.ratings?.count || 0} تقييم
+                  <div className="text-center p-4">
+                    <div className="fw-bold mb-3" style={{ fontSize: '1.4em', color: '#333' }}>تقييمات المستخدمين</div>
+                    <div className="d-flex align-items-center justify-content-center gap-3 mb-3">
+                      <div className="text-center">
+                        <span className="fw-bold text-warning d-block" style={{ fontSize: '3.5em', lineHeight: 1 }}>
+                          {product.ratings?.average || 0}
+                        </span>
+                        <span className="text-muted" style={{ fontSize: '0.9em' }}>من 5</span>
+                      </div>
+                      <div>
+                        <StarRating rating={product.ratings?.average || 0} />
+                        <div className="text-muted mt-2" style={{ fontSize: '0.95em' }}>
+                          {product.ratings?.count || 0} تقييم
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div className="col-12 col-md-8">
-                  <h4 className="fw-bold mb-4 text-center">
-                    <i className="fas fa-star text-warning ms-2"></i> أفضل التقييمات
-                  </h4>
-                  <div className="mb-4">
-                    {reviews.length === 0 && (
-                      <div className="alert alert-info text-center">لا توجد تقييمات بعد.</div>
-                    )}
-                    {reviews.map((r, i) => (
-                      <div key={i} className="border-bottom pb-3 mb-3">
-                        <div className="d-flex align-items-center gap-2 mb-1">
-                          <StarRating rating={r.rating} />
-                          <b>{r.name}</b>
-                          <span className="text-muted small">{r.date}</span>
+                  <div className="p-3">
+                    <h4 className="fw-bold mb-4 text-center" style={{ color: '#333' }}>
+                      <i className="fas fa-star text-warning ms-2"></i> التقييمات
+                    </h4>
+                    <div className="mb-4">
+                      {reviewsLoading ? (
+                        <div className="text-center py-4">
+                          <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">جاري التحميل...</span>
+                          </div>
                         </div>
-                        <div className="text-muted" style={{ fontSize: '1.08em' }}>{r.comment}</div>
-                      </div>
-                    ))}
+                      ) : reviews.length === 0 ? (
+                        <div className="alert alert-info text-center py-4">
+                          <i className="fas fa-info-circle ms-2"></i>
+                          لا توجد تقييمات بعد.
+                        </div>
+                      ) : (
+                        reviews.map((r, i) => (
+                          <div key={i} className="border-bottom pb-4 mb-4">
+                            {editingReview === r._id ? (
+                              <form onSubmit={handleUpdateReview} className="mt-3">
+                                <div className="row g-3 mb-3">
+                                  <div className="col-md-6 mb-2 mb-md-0 text-center">
+                                    <StarRating
+                                      rating={editForm.rating}
+                                      setRating={r => setEditForm(f => ({ ...f, rating: r }))}
+                                      interactive={true}
+                                    />
+                                  </div>
+                                  <div className="col-md-6">
+                                    <textarea
+                                      name="comment"
+                                      className="form-control"
+                                      placeholder="تعليقك"
+                                      value={editForm.comment}
+                                      onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))}
+                                      required
+                                      rows="3"
+                                      style={{ resize: 'none' }}
+                                    />
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <button
+                                    className="btn btn-danger px-4 me-2"
+                                    type="submit"
+                                    disabled={isSubmittingReview}
+                                  >
+                                    {isSubmittingReview ? (
+                                      <>
+                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                        جاري الحفظ...
+                                      </>
+                                    ) : (
+                                      'حفظ التغييرات'
+                                    )}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-secondary px-4"
+                                    onClick={handleCancelEdit}
+                                  >
+                                    إلغاء
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <>
+                                <div className="d-flex align-items-center gap-3 mb-2">
+                                  <div className="d-flex align-items-center gap-2">
+                                    <StarRating rating={r.rating} />
+                                    <span className="fw-bold" style={{ color: '#333' }}>{r.userId?.name || 'مستخدم'}</span>
+                                  </div>
+                                  <span className="text-muted small">{new Date(r.createdAt).toLocaleDateString('ar-EG')}</span>
+                                </div>
+                                <div className="text-muted" style={{ fontSize: '1.05em', lineHeight: 1.6 }}>{r.comment}</div>
+                                {isReviewOwner(r.userId?._id) && (
+                                  <div className="mt-3 text-end">
+                                    <button
+                                      className="btn btn-sm btn-outline-primary ms-2"
+                                      onClick={() => handleEditReview(r)}
+                                      style={{ borderRadius: '8px', padding: '0.5rem 1rem' }}
+                                    >
+                                      <i className="fas fa-edit me-1"></i>
+                                      تعديل
+                                    </button>
+                                    <button
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => handleDeleteReview(r._id)}
+                                      style={{ borderRadius: '8px', padding: '0.5rem 1rem' }}
+                                    >
+                                      <i className="fas fa-trash me-1"></i>
+                                      حذف
+                                    </button>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                    <form onSubmit={handleReviewSubmit} className="border rounded-4 p-4 bg-light mt-4">
+                      <h6 className="fw-bold mb-3 text-center" style={{ color: '#333' }}>أضف تقييمك</h6>
+                      {reviewError && (
+                        <div className="alert alert-danger text-center mb-3">
+                          {reviewError}
+                        </div>
+                      )}
+                      {!token ? (
+                        <div className="alert alert-info text-center">
+                          يرجى <button className="btn btn-link p-0" onClick={() => navigate('/login')}>تسجيل الدخول</button> لإضافة تقييم
+                        </div>
+                      ) : (
+                        <>
+                          <div className="row g-3 mb-3">
+                            <div className="col-md-6 mb-2 mb-md-0 text-center">
+                              <StarRating
+                                rating={reviewForm.rating}
+                                setRating={r => setReviewForm(f => ({ ...f, rating: r }))}
+                                interactive={true}
+                              />
+                            </div>
+                            <div className="col-md-6">
+                              <textarea
+                                name="comment"
+                                className="form-control"
+                                placeholder="اكتب تعليقك هنا..."
+                                value={reviewForm.comment}
+                                onChange={handleReviewChange}
+                                required
+                                rows="3"
+                                style={{ resize: 'none' }}
+                              />
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            <button
+                              className="btn btn-danger px-5 py-2"
+                              type="submit"
+                              disabled={isSubmittingReview}
+                              style={{ borderRadius: '8px' }}
+                            >
+                              {isSubmittingReview ? (
+                                <>
+                                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                  جاري الإرسال...
+                                </>
+                              ) : (
+                                'إرسال التقييم'
+                              )}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </form>
                   </div>
-                  <form onSubmit={handleReviewSubmit} className="border rounded p-3 bg-light mt-3">
-                    <h6 className="fw-bold mb-3 text-center">أضف تقييمك</h6>
-                    <div className="row g-2 mb-2 align-items-center justify-content-center">
-                      <div className="col-md-4 mb-2 mb-md-0">
-                        <input
-                          type="text"
-                          name="name"
-                          className="form-control"
-                          placeholder="اسمك"
-                          value={reviewForm.name}
-                          onChange={handleReviewChange}
-                          required
-                        />
-                      </div>
-                      <div className="col-md-4 mb-2 mb-md-0 text-center">
-                        <StarRating
-                          rating={reviewForm.rating}
-                          setRating={r => setReviewForm(f => ({ ...f, rating: r }))}
-                          interactive={true}
-                        />
-                      </div>
-                      <div className="col-md-4">
-                        <input
-                          type="text"
-                          name="comment"
-                          className="form-control"
-                          placeholder="تعليقك"
-                          value={reviewForm.comment}
-                          onChange={handleReviewChange}
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <button className="btn btn-danger mt-2 px-5" type="submit">إرسال التقييم</button>
-                    </div>
-                  </form>
                 </div>
               </div>
             </div>

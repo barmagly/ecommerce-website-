@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = "https://ecommerce-website-backend-nine.vercel.app" + "/api/auth";
+const API_KEY = "http://localhost:5000" + "/api/auth";
 
 export const googleLoginThunk = createAsyncThunk(
     "auth/googleLogin",

@@ -34,11 +34,11 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
 
       // Build query string
       const queryParams = new URLSearchParams(filters).toString();
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/products/filter?${queryParams}`);
+      const response = await axios.get(`http://localhost:5000/api/products/filter?${queryParams}`);
 
       // Ensure we're passing an array to the parent component
       const filteredProducts = response.data.data;
-                             
+
       console.log(filteredProducts);
       // Call the parent component's callback with the filtered products
       if (onFiltersApplied) {
@@ -55,7 +55,7 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
   return (
     <div className="filters-sidebar bg-white p-3 rounded shadow-sm">
       <h5 className="fw-bold mb-3">تصفية المنتجات</h5>
-      
+
       {error && (
         <div className="alert alert-danger mb-3" role="alert">
           {error}

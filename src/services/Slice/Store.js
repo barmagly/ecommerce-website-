@@ -7,6 +7,7 @@ import userWishlistSlice from "./wishlist/wishlist";
 import cartSlice from "./cart/cart";
 import orderSlice from "./order/order";
 import variantSlice from "./variant/variant";
+import reviewSlice from "./review/review";
 
 const Store = configureStore({
     reducer: {
@@ -17,7 +18,8 @@ const Store = configureStore({
         userWishlist:userWishlistSlice.reducer,
         userCart:cartSlice.reducer,
         order:orderSlice.reducer,
-        variant:variantSlice.reducer
+        variant:variantSlice.reducer,
+        reviews:reviewSlice.reducer
     }
 });
 
