@@ -92,6 +92,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data for Arabic dashboard
 const salesData = [
@@ -165,6 +166,7 @@ const AnimatedCounter = ({ value, duration = 2000 }) => {
 // Stats Card Component
 const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) => {
   const theme = useTheme();
+  const navigate = useNavigate();
   
   return (
     <motion.div
@@ -499,6 +501,7 @@ const StatusBadge = ({ status }) => {
 
 const Dashboard = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     totalUsers: 0,
@@ -846,42 +849,50 @@ const Dashboard = () => {
             minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }
           }
         }}>
-          <StatsCard
-            title="إجمالي المستخدمين"
-            value={dashboardData.totalUsers}
-            icon={<UsersIcon sx={{ fontSize: 28 }} />}
-            color="#1a237e"
-            trend="up"
-            trendValue={12.5}
-            subtitle="العملاء النشطون"
-          />
-          <StatsCard
-            title="المنتجات"
-            value={dashboardData.totalProducts}
-            icon={<ProductsIcon sx={{ fontSize: 28 }} />}
-            color="#0d47a1"
-            trend="up"
-            trendValue={8.2}
-            subtitle="في المخزون"
-          />
-          <StatsCard
-            title="الطلبات"
-            value={dashboardData.totalOrders}
-            icon={<OrdersIcon sx={{ fontSize: 28 }} />}
-            color="#1565c0"
-            trend="up"
-            trendValue={15.3}
-            subtitle="إجمالي الطلبات"
-          />
-          <StatsCard
-            title="الإيرادات"
-            value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
-            icon={<AttachMoney sx={{ fontSize: 28 }} />}
-            color="#1976d2"
-            trend="up"
-            trendValue={23.1}
-            subtitle="إجمالي الإيرادات"
-          />
+          <Box onClick={() => navigate('/admin/users')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="إجمالي المستخدمين"
+              value={dashboardData.totalUsers}
+              icon={<UsersIcon sx={{ fontSize: 28 }} />}
+              color="#1a237e"
+              trend="up"
+              trendValue={12.5}
+              subtitle="العملاء النشطون"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/products')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="المنتجات"
+              value={dashboardData.totalProducts}
+              icon={<ProductsIcon sx={{ fontSize: 28 }} />}
+              color="#0d47a1"
+              trend="up"
+              trendValue={8.2}
+              subtitle="في المخزون"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/orders')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="الطلبات"
+              value={dashboardData.totalOrders}
+              icon={<OrdersIcon sx={{ fontSize: 28 }} />}
+              color="#1565c0"
+              trend="up"
+              trendValue={15.3}
+              subtitle="إجمالي الطلبات"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/revenue')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="الإيرادات"
+              value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
+              icon={<AttachMoney sx={{ fontSize: 28 }} />}
+              color="#1976d2"
+              trend="up"
+              trendValue={23.1}
+              subtitle="إجمالي الإيرادات"
+            />
+          </Box>
         </Box>
 
         {/* Secondary Stats - Flex Layout */}
@@ -895,43 +906,53 @@ const Dashboard = () => {
             minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(20% - 14.4px)' }
           }
         }}>
-          <StatsCard
-            title="الفئات"
-            value={dashboardData.totalCategories}
-            icon={<CategoryIcon sx={{ fontSize: 28 }} />}
-            color="#2196f3"
-            subtitle="فئات المنتجات"
-          />
-          <StatsCard
-            title="الكوبونات النشطة"
-            value={dashboardData.totalCoupons}
-            icon={<CouponIcon sx={{ fontSize: 28 }} />}
-            color="#42a5f5"
-            subtitle="كوبونات الخصم"
-          />
-          <StatsCard
-            title="المراجعات"
-            value={dashboardData.totalReviews}
-            icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
-            color="#64b5f6"
-            trend="up"
-            trendValue={5.7}
-            subtitle="مراجعات العملاء"
-          />
-          <StatsCard
-            title="عربات التسوق النشطة"
-            value={dashboardData.totalCarts}
-            icon={<CartIcon sx={{ fontSize: 28 }} />}
-            color="#90caf9"
-            subtitle="عربات التسوق"
-          />
-          <StatsCard
-            title="خيارات المنتجات"
-            value={dashboardData.totalVariants}
-            icon={<VariantIcon sx={{ fontSize: 28 }} />}
-            color="#bbdefb"
-            subtitle="خيارات المنتجات"
-          />
+          <Box onClick={() => navigate('/admin/categories')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="الفئات"
+              value={dashboardData.totalCategories}
+              icon={<CategoryIcon sx={{ fontSize: 28 }} />}
+              color="#2196f3"
+              subtitle="فئات المنتجات"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/coupons')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="الكوبونات النشطة"
+              value={dashboardData.totalCoupons}
+              icon={<CouponIcon sx={{ fontSize: 28 }} />}
+              color="#42a5f5"
+              subtitle="كوبونات الخصم"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/reviews')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="المراجعات"
+              value={dashboardData.totalReviews}
+              icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
+              color="#64b5f6"
+              trend="up"
+              trendValue={5.7}
+              subtitle="مراجعات العملاء"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/carts')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="عربات التسوق النشطة"
+              value={dashboardData.totalCarts}
+              icon={<CartIcon sx={{ fontSize: 28 }} />}
+              color="#90caf9"
+              subtitle="عربات التسوق"
+            />
+          </Box>
+          <Box onClick={() => navigate('/admin/variants')} sx={{ cursor: 'pointer' }}>
+            <StatsCard
+              title="خيارات المنتجات"
+              value={dashboardData.totalVariants}
+              icon={<VariantIcon sx={{ fontSize: 28 }} />}
+              color="#bbdefb"
+              subtitle="خيارات المنتجات"
+            />
+          </Box>
         </Box>
       </motion.div>
     </Box>
