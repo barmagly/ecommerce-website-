@@ -546,6 +546,18 @@ const Dashboard = () => {
   const topProducts = stats?.topProducts || [];
   const performanceMetrics = stats?.performanceMetrics || [];
 
+  // Fix NaN display in stats cards
+  const safeOverview = {
+    totalUsers: Number.isFinite(overview?.totalUsers) ? overview.totalUsers : 0,
+    totalProducts: Number.isFinite(overview?.totalProducts) ? overview.totalProducts : 0,
+    totalOrders: Number.isFinite(overview?.totalOrders) ? overview.totalOrders : 0,
+    totalCategories: Number.isFinite(overview?.totalCategories) ? overview.totalCategories : 0,
+    totalCoupons: Number.isFinite(overview?.totalCoupons) ? overview.totalCoupons : 0,
+    totalReviews: Number.isFinite(overview?.totalReviews) ? overview.totalReviews : 0,
+    totalCarts: Number.isFinite(overview?.totalCarts) ? overview.totalCarts : 0,
+    totalVariants: Number.isFinite(overview?.totalVariants) ? overview.totalVariants : 0,
+  };
+
   return (
     <Box sx={{ 
       p: { xs: 2, md: 4 }, 
@@ -605,7 +617,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/users')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="إجمالي المستخدمين"
-                value={overview.totalUsers}
+                value={safeOverview.totalUsers}
                 icon={<UsersIcon sx={{ fontSize: 28 }} />}
                 color="#1a237e"
                 trend="up"
@@ -616,7 +628,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/products')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="المنتجات"
-                value={overview.totalProducts}
+                value={safeOverview.totalProducts}
                 icon={<ProductsIcon sx={{ fontSize: 28 }} />}
                 color="#0d47a1"
                 trend="up"
@@ -627,7 +639,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/orders')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="الطلبات"
-                value={overview.totalOrders}
+                value={safeOverview.totalOrders}
                 icon={<OrdersIcon sx={{ fontSize: 28 }} />}
                 color="#1565c0"
                 trend="up"
@@ -638,7 +650,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/categories')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="الفئات"
-                value={overview.totalCategories}
+                value={safeOverview.totalCategories}
                 icon={<CategoryIcon sx={{ fontSize: 28 }} />}
                 color="#2196f3"
                 subtitle="فئات المنتجات"
@@ -647,7 +659,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/coupons')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="الكوبونات النشطة"
-                value={overview.totalCoupons}
+                value={safeOverview.totalCoupons}
                 icon={<CouponIcon sx={{ fontSize: 28 }} />}
                 color="#42a5f5"
                 subtitle="كوبونات الخصم"
@@ -656,7 +668,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/reviews')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="المراجعات"
-                value={overview.totalReviews}
+                value={safeOverview.totalReviews}
                 icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
                 color="#64b5f6"
                 trend="up"
@@ -667,7 +679,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/carts')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="عربات التسوق النشطة"
-                value={overview.totalCarts}
+                value={safeOverview.totalCarts}
                 icon={<CartIcon sx={{ fontSize: 28 }} />}
                 color="#90caf9"
                 subtitle="عربات التسوق"
@@ -676,7 +688,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/variants')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="خيارات المنتجات"
-                value={overview.totalVariants}
+                value={safeOverview.totalVariants}
                 icon={<VariantIcon sx={{ fontSize: 28 }} />}
                 color="#bbdefb"
                 subtitle="خيارات المنتجات"
@@ -754,11 +766,11 @@ const Dashboard = () => {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {recentOrders.map((order) => (
-                        <TableRow key={order.id}>
-                          <TableCell>{order.id}</TableCell>
-                          <TableCell>{order.customer}</TableCell>
-                          <TableCell>${order.total}</TableCell>
+                      {(recentOrders && recentOrders.length > 0 ? recentOrders : []).map((order) => (
+                        <TableRow key={order._id || order.id}>
+                          <TableCell>{order.orderNumber || order.id}</TableCell>
+                          <TableCell>{order.customer?.name || order.customer || '-'}</TableCell>
+                          <TableCell>${order.total?.toFixed(2) || 0}</TableCell>
                           <TableCell>
                             <StatusBadge status={order.status} />
                           </TableCell>

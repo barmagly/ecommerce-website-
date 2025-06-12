@@ -272,31 +272,25 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   
   // Form state
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     name: '',
     description: '',
+    brand: '',
+    category: '',
     price: '',
-    salePrice: '',
-    categoryId: '',
+    hasVariants: false,
     stock: '',
     sku: '',
-    images: [''],
     imageCover: '',
-    status: 'active',
-    featured: false,
-    tags: '',
-    weight: '',
-    dimensions: '',
-    brand: '',
-    hasVariants: false,
-    attributes: [],
-    variants: [],
+    images: [],
     features: [],
     specifications: [],
-    category: 'clothing',
-  });
+    attributes: [],
+    variants: []
+  };
 
-  const [errors, setErrors] = useState({});
+  const [formData, setFormData] = useState(initialFormData);
+  const [formErrors, setFormErrors] = useState({});
 
   // Load products from localStorage on component mount
   useEffect(() => {
@@ -343,81 +337,40 @@ const Products = () => {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      description: '',
-      price: '',
-      salePrice: '',
-      categoryId: '',
-      stock: '',
-      sku: '',
-      images: [''],
-      imageCover: '',
-      status: 'active',
-      featured: false,
-      tags: '',
-      weight: '',
-      dimensions: '',
-      brand: '',
-      hasVariants: false,
-      attributes: [],
-      variants: [],
-      features: [],
-      specifications: [],
-      category: 'clothing',
-    });
-    setErrors({});
+    setFormData(initialFormData);
+    setFormErrors({});
   };
 
-  const handleOpenDialog = (mode, product = null) => {
-    setDialogMode(mode);
-    setSelectedProduct(product);
-    
-    if (mode === 'edit' && product) {
-      setFormData({
+  const handleOpenDialog = (product = null) => {
+    if (product) {
+      // Map the product data to match our form structure
+      const mappedProduct = {
         name: product.name || '',
         description: product.description || '',
-        price: product.price ? product.price.toString() : '',
-        salePrice: product.salePrice ? product.salePrice.toString() : '',
-        categoryId: product.categoryId ? product.categoryId.toString() : '',
-        stock: product.stock ? product.stock.toString() : '',
-        sku: product.sku || '',
-        images: product.images || [''],
-        imageCover: product.imageCover || '',
-        status: product.status || 'active',
-        featured: product.featured || false,
-        tags: product.tags ? product.tags.join(', ') : '',
-        weight: product.weight ? product.weight.toString() : '',
-        dimensions: product.dimensions || '',
         brand: product.brand || '',
+        category: product.category?._id || '',
+        price: product.price?.toString() || '',
         hasVariants: product.hasVariants || false,
-        attributes: (product.attributes || []).map(attr => ({
-          ...attr,
-          id: attr.id || Date.now() + Math.random()
-        })),
-        variants: (product.variants || []).map(variant => ({
-          ...variant,
-          id: variant.id || Date.now() + Math.random(),
-          images: variant.images || ['']
-        })),
-        features: (product.features || []).map(feature => ({
-          ...feature,
-          id: feature.id || Date.now() + Math.random()
-        })),
-        specifications: (product.specifications || []).map(spec => ({
-          ...spec,
-          id: spec.id || Date.now() + Math.random(),
-          items: (spec.items || []).map(item => ({
-            ...item,
-            id: item.id || Date.now() + Math.random()
-          }))
-        })),
-        category: product.category ? (typeof product.category === 'object' ? product.category.name : product.category) : 'clothing'
-      });
+        stock: product.stock?.toString() || '',
+        sku: product.sku || '',
+        imageCover: product.imageCover?.url || '',
+        images: product.images?.map(img => img.url) || [],
+        features: product.features || [],
+        specifications: product.specifications || [],
+        attributes: product.attributes || [],
+        variants: product.productVariants?.map(variant => ({
+          sku: variant.sku,
+          attributes: Object.fromEntries(variant.attributes),
+          price: variant.price?.toString(),
+          quantity: variant.quantity?.toString(),
+          images: variant.images?.map(img => img.url) || []
+        })) || []
+      };
+      setFormData(mappedProduct);
     } else {
-      resetForm();
+      setFormData(initialFormData);
     }
-    
+    setSelectedProduct(product);
     setOpenDialog(true);
   };
 
@@ -427,90 +380,182 @@ const Products = () => {
     resetForm();
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) newErrors.name = 'اسم المنتج مطلوب';
-    if (!formData.description.trim()) newErrors.description = 'وصف المنتج مطلوب';
-    if (!formData.categoryId) newErrors.categoryId = 'الفئة مطلوبة';
-    if (!formData.imageCover.trim() && (!formData.images || !formData.images.some(img => img.trim()))) {
-      newErrors.imageCover = 'صورة الغلاف مطلوبة';
-    }
-    
-    // Conditional validation based on hasVariants
-    if (!formData.hasVariants) {
-      if (!formData.price || parseFloat(formData.price) <= 0) newErrors.price = 'السعر مطلوب ويجب أن يكون أكبر من صفر';
-      if (!formData.stock || parseInt(formData.stock) < 0) newErrors.stock = 'الكمية مطلوبة ويجب أن تكون صفر أو أكبر';
-      if (!formData.sku.trim()) newErrors.sku = 'رمز المنتج مطلوب';
-    } else {
-      if (formData.variants.length === 0) newErrors.variants = 'يجب إضافة متغير واحد على الأقل للمنتج';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) {
-      toast.error('Please fill in all required fields correctly');
+    // Validate form
+    const errors = {};
+    if (!formData.name) errors.name = 'اسم المنتج مطلوب';
+    if (!formData.description || formData.description.length < 20) {
+      errors.description = 'الوصف مطلوب ويجب أن يكون 20 حرف على الأقل';
+    }
+    if (!formData.brand) errors.brand = 'العلامة التجارية مطلوبة';
+    if (!formData.category) errors.category = 'الفئة مطلوبة';
+    if (!formData.imageCover) errors.imageCover = 'صورة الغلاف مطلوبة';
+    
+    if (!formData.hasVariants) {
+      if (!formData.price) errors.price = 'السعر مطلوب';
+      if (!formData.stock) errors.stock = 'الكمية مطلوبة';
+      if (!formData.sku) errors.sku = 'رمز المنتج مطلوب';
+    } else {
+      if (!formData.variants.length) {
+        errors.variants = 'يجب إضافة متغير واحد على الأقل';
+      }
+      // Validate variants
+      formData.variants.forEach((variant, index) => {
+        if (!variant.sku) errors[`variant_${index}_sku`] = 'رمز المتغير مطلوب';
+        if (!variant.price) errors[`variant_${index}_price`] = 'سعر المتغير مطلوب';
+        if (variant.quantity === undefined) errors[`variant_${index}_quantity`] = 'كمية المتغير مطلوبة';
+        if (!variant.attributes || Object.keys(variant.attributes).length === 0) {
+          errors[`variant_${index}_attributes`] = 'سمات المتغير مطلوبة';
+        }
+      });
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
 
     try {
-      // Format the data before sending to server
-      const formattedData = {
-        ...formData,
-        // Convert string numbers to actual numbers
-        price: formData.price ? parseFloat(formData.price) : undefined,
-        salePrice: formData.salePrice ? parseFloat(formData.salePrice) : undefined,
-        stock: formData.stock ? parseInt(formData.stock) : undefined,
-        weight: formData.weight ? parseFloat(formData.weight) : undefined,
-        // Convert category to categoryId if it's a string
-        categoryId: typeof formData.category === 'string' ? formData.category : formData.categoryId,
-        // Remove temporary IDs from arrays
-        attributes: formData.attributes?.map(({ id, ...attr }) => attr),
-        variants: formData.variants?.map(({ id, ...variant }) => ({
-          ...variant,
-          price: parseFloat(variant.price),
-          quantity: parseInt(variant.quantity)
-        })),
-        features: formData.features?.map(({ id, ...feature }) => feature),
-        specifications: formData.specifications?.map(({ id, ...spec }) => ({
-          ...spec,
-          items: spec.items?.map(({ id, ...item }) => item)
-        })),
-        // Convert tags string to array
-        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
-      };
+      // Create FormData instance
+      const formDataToSend = new FormData();
 
-      // Remove undefined values
-      Object.keys(formattedData).forEach(key => {
-        if (formattedData[key] === undefined) {
-          delete formattedData[key];
+      // Add basic product data
+      formDataToSend.append('name', formData.name);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('brand', formData.brand);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('hasVariants', formData.hasVariants);
+
+      // Add simple product fields if no variants
+      if (!formData.hasVariants) {
+        formDataToSend.append('price', formData.price);
+        formDataToSend.append('stock', formData.stock);
+        formDataToSend.append('sku', formData.sku);
+      }
+
+      // Add image cover
+      if (formData.imageCover instanceof File) {
+        formDataToSend.append('imageCover', formData.imageCover);
+      } else if (typeof formData.imageCover === 'string' && formData.imageCover.startsWith('data:')) {
+        // Convert base64 to file if it's a new image
+        const response = await fetch(formData.imageCover);
+        const blob = await response.blob();
+        const file = new File([blob], 'imageCover.jpg', { type: 'image/jpeg' });
+        formDataToSend.append('imageCover', file);
+      }
+
+      // Add additional images
+      formData.images.forEach((image, index) => {
+        if (image instanceof File) {
+          formDataToSend.append(`images`, image);
+        } else if (typeof image === 'string' && image.startsWith('data:')) {
+          // Convert base64 to file if it's a new image
+          fetch(image)
+            .then(res => res.blob())
+            .then(blob => {
+              const file = new File([blob], `image${index}.jpg`, { type: 'image/jpeg' });
+              formDataToSend.append('images', file);
+            });
         }
       });
 
-      if (selectedProduct) {
-        const response = await productsAPI.update(selectedProduct._id, formattedData);
-        if (response.data) {
-          toast.success('Product updated successfully');
-          handleCloseDialog();
-          fetchProducts();
-        }
-      } else {
-        const response = await productsAPI.create(formattedData);
-        if (response.data) {
-          toast.success('Product created successfully');
-          handleCloseDialog();
-          fetchProducts();
-        }
+      // Add attributes
+      formDataToSend.append('attributes', JSON.stringify(formData.attributes));
+
+      // Add variants if product has variants
+      if (formData.hasVariants) {
+        const variants = formData.variants.map(variant => {
+          const variantData = {
+            sku: variant.sku,
+            attributes: Object.fromEntries(variant.attributes),
+            price: Number(variant.price),
+            quantity: Number(variant.quantity),
+            images: []
+          };
+
+          // Handle variant images
+          variant.images.forEach((image, index) => {
+            if (image instanceof File) {
+              formDataToSend.append(`variant_${variant.sku}_images`, image);
+            } else if (typeof image === 'string' && image.startsWith('data:')) {
+              // Convert base64 to file if it's a new image
+              fetch(image)
+                .then(res => res.blob())
+                .then(blob => {
+                  const file = new File([blob], `variant_${variant.sku}_${index}.jpg`, { type: 'image/jpeg' });
+                  formDataToSend.append(`variant_${variant.sku}_images`, file);
+                });
+            } else {
+              // If it's an existing image URL, just add it to the images array
+              variantData.images.push({
+                url: image,
+                alt: `${formData.name} - ${variant.sku}`,
+                isPrimary: false
+              });
+            }
+          });
+
+          return variantData;
+        });
+
+        formDataToSend.append('variants', JSON.stringify(variants));
       }
+
+      // Add features and specifications
+      formDataToSend.append('features', JSON.stringify(formData.features));
+      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
+
+      // Send the request
+      if (selectedProduct) {
+        await productsAPI.update(selectedProduct._id, formDataToSend);
+        toast.success('تم تحديث المنتج بنجاح');
+      } else {
+        await productsAPI.create(formDataToSend);
+        toast.success('تم إضافة المنتج بنجاح');
+      }
+      
+      handleCloseDialog();
+      fetchProducts();
     } catch (err) {
-      console.error('Error updating product:', err);
-      const errorMessage = err.response?.data?.message || (selectedProduct ? 'Failed to update product' : 'Failed to create product');
-      toast.error(errorMessage);
+      console.error('Error saving product:', err);
+      toast.error(err.response?.data?.message || 'حدث خطأ أثناء حفظ المنتج');
+    }
+  };
+
+  // Update image handling functions
+  const handleImageCoverChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormData(prev => ({
+        ...prev,
+        imageCover: file
+      }));
+    }
+  };
+
+  const handleImagesChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length) {
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, ...files]
+      }));
+    }
+  };
+
+  const handleVariantImagesChange = (variantIndex, e) => {
+    const files = Array.from(e.target.files);
+    if (files.length) {
+      setFormData(prev => ({
+        ...prev,
+        variants: prev.variants.map((variant, idx) => 
+          idx === variantIndex 
+            ? { ...variant, images: [...variant.images, ...files] }
+            : variant
+        )
+      }));
     }
   };
 
@@ -550,8 +595,8 @@ const Products = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
     }
   };
 
@@ -575,26 +620,38 @@ const Products = () => {
   // Attribute management functions
   const addAttribute = () => {
     const newAttribute = {
-      id: Date.now(),
       name: '',
-      values: ['']
+      values: []
     };
-    setFormData(prev => ({ ...prev, attributes: [...prev.attributes, newAttribute] }));
-  };
-
-  const removeAttribute = (attributeId) => {
     setFormData(prev => ({
       ...prev,
-      attributes: prev.attributes.filter(attr => attr.id !== attributeId)
+      attributes: [...prev.attributes, newAttribute]
     }));
   };
 
-  const updateAttribute = (attributeId, field, value) => {
+  const removeAttribute = (index) => {
     setFormData(prev => ({
       ...prev,
-      attributes: prev.attributes.map(attr =>
-        attr.id === attributeId ? { ...attr, [field]: value } : attr
-      )
+      attributes: prev.attributes.filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const updateAttribute = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      attributes: prev.attributes.map((attr, idx) => {
+        if (idx !== index) return attr;
+        
+        if (field === 'values') {
+          // Handle values as an array
+          const values = typeof value === 'string' 
+            ? value.split(',').map(v => v.trim()).filter(Boolean)
+            : value;
+          return { ...attr, values };
+        }
+        
+        return { ...attr, [field]: value };
+      })
     }));
   };
 
@@ -637,40 +694,42 @@ const Products = () => {
   // Variant management functions
   const addVariant = () => {
     const newVariant = {
-      id: Date.now(),
       sku: '',
-      attributes: {},
+      attributes: new Map(),
       price: '',
-      quantity: '',
-      images: ['']
+      quantity: 0,
+      images: []
     };
-    setFormData(prev => ({ ...prev, variants: [...prev.variants, newVariant] }));
-  };
-
-  const removeVariant = (variantId) => {
     setFormData(prev => ({
       ...prev,
-      variants: prev.variants.filter(variant => variant.id !== variantId)
+      variants: [...prev.variants, newVariant]
     }));
   };
 
-  const updateVariant = (variantId, field, value) => {
+  const updateVariant = (index, field, value) => {
     setFormData(prev => ({
       ...prev,
-      variants: prev.variants.map(variant =>
-        variant.id === variantId ? { ...variant, [field]: value } : variant
-      )
+      variants: prev.variants.map((variant, idx) => {
+        if (idx !== index) return variant;
+        
+        if (field === 'attributes') {
+          // Handle attributes as a Map
+          const newAttributes = new Map(variant.attributes);
+          Object.entries(value).forEach(([key, val]) => {
+            newAttributes.set(key, val);
+          });
+          return { ...variant, attributes: newAttributes };
+        }
+        
+        return { ...variant, [field]: value };
+      })
     }));
   };
 
-  const updateVariantAttribute = (variantId, attributeName, value) => {
+  const removeVariant = (index) => {
     setFormData(prev => ({
       ...prev,
-      variants: prev.variants.map(variant =>
-        variant.id === variantId
-          ? { ...variant, attributes: { ...variant.attributes, [attributeName]: value } }
-          : variant
-      )
+      variants: prev.variants.filter((_, idx) => idx !== index)
     }));
   };
 
@@ -1278,95 +1337,393 @@ const Products = () => {
         </DialogTitle>
 
         <DialogContent sx={{ p: 0, mt: 0, maxHeight: '70vh', overflowY: 'auto', bgcolor: '#f7f8fa' }}>
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3} sx={{ p: 3 }}>
-              {/* General Info Section */}
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+            <Grid container spacing={3}>
+              {/* Basic Info */}
               <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
+                  required
                   label="اسم المنتج"
                   value={formData.name}
                   onChange={handleFormChange('name')}
-                  error={!!errors.name}
-                  helperText={errors.name}
-                />
-              </Grid>
-              <Grid xs={12} md={6}>
-                <FormControl fullWidth error={!!errors.category}>
-                  <InputLabel>الفئة</InputLabel>
-                  <Select
-                    value={formData.category || ''}
-                    onChange={handleFormChange('category')}
-                    label="الفئة"
-                  >
-                    {categoryOptions.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {errors.category && (
-                    <FormHelperText>{errors.category}</FormHelperText>
-                  )}
-                </FormControl>
-              </Grid>
-              <Grid xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="السعر"
-                  type="number"
-                  value={formData.price}
-                  onChange={handleFormChange('price')}
-                  error={!!errors.price}
-                  helperText={errors.price}
+                  error={!!formErrors.name}
+                  helperText={formErrors.name}
                 />
               </Grid>
               <Grid xs={12} md={6}>
                 <TextField
                   fullWidth
-                  label="سعر البيع"
-                  type="number"
-                  value={formData.salePrice}
-                  onChange={handleFormChange('salePrice')}
-                  error={!!errors.salePrice}
-                  helperText={errors.salePrice}
+                  required
+                  label="العلامة التجارية"
+                  value={formData.brand}
+                  onChange={handleFormChange('brand')}
+                  error={!!formErrors.brand}
+                  helperText={formErrors.brand}
                 />
               </Grid>
               <Grid xs={12}>
                 <TextField
                   fullWidth
+                  required
                   label="الوصف"
-                  value={formData.description}
-                  onChange={handleFormChange('description')}
                   multiline
                   minRows={3}
-                  error={!!errors.description}
-                  helperText={errors.description}
+                  value={formData.description}
+                  onChange={handleFormChange('description')}
+                  error={!!formErrors.description}
+                  helperText={formErrors.description}
                 />
               </Grid>
+              <Grid xs={12} md={6}>
+                <FormControl fullWidth required error={!!formErrors.category}>
+                  <InputLabel>الفئة</InputLabel>
+                  <Select
+                    value={formData.category}
+                    onChange={handleFormChange('category')}
+                    label="الفئة"
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category._id} value={category._id}>
+                        {category.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {formErrors.category && (
+                    <FormHelperText>{formErrors.category}</FormHelperText>
+                  )}
+                </FormControl>
+              </Grid>
+              <Grid xs={12} md={6}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={formData.hasVariants}
+                      onChange={(e) => handleFormChange('hasVariants')(e)}
+                    />
+                  }
+                  label="المنتج له متغيرات"
+                />
+              </Grid>
+
+              {/* Simple Product Fields */}
+              {!formData.hasVariants && (
+                <>
+                  <Grid xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="السعر"
+                      value={formData.price}
+                      onChange={handleFormChange('price')}
+                      error={!!formErrors.price}
+                      helperText={formErrors.price}
+                    />
+                  </Grid>
+                  <Grid xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="الكمية"
+                      value={formData.stock}
+                      onChange={handleFormChange('stock')}
+                      error={!!formErrors.stock}
+                      helperText={formErrors.stock}
+                    />
+                  </Grid>
+                  <Grid xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="رمز المنتج"
+                      value={formData.sku}
+                      onChange={handleFormChange('sku')}
+                      error={!!formErrors.sku}
+                      helperText={formErrors.sku}
+                    />
+                  </Grid>
+                </>
+              )}
+
+              {/* Product Images */}
+              <Grid xs={12}>
+                <Typography variant="subtitle1" gutterBottom>
+                  صور المنتج
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid xs={12} md={6}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={<ImageIcon />}
+                    >
+                      صورة الغلاف
+                      <input
+                        type="file"
+                        hidden
+                        accept="image/*"
+                        onChange={handleImageCoverChange}
+                      />
+                    </Button>
+                    {formData.imageCover && (
+                      <Box sx={{ mt: 1 }}>
+                        <img
+                          src={formData.imageCover}
+                          alt="Cover"
+                          style={{ maxWidth: '100%', maxHeight: 200 }}
+                        />
+                      </Box>
+                    )}
+                  </Grid>
+                  <Grid xs={12} md={6}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={<ImageIcon />}
+                    >
+                      صور إضافية
+                      <input
+                        type="file"
+                        hidden
+                        multiple
+                        accept="image/*"
+                        onChange={handleImagesChange}
+                      />
+                    </Button>
+                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {formData.images.map((img, index) => (
+                        <Box key={index} sx={{ position: 'relative' }}>
+                          <img
+                            src={img}
+                            alt={`Product ${index + 1}`}
+                            style={{ width: 100, height: 100, objectFit: 'cover' }}
+                          />
+                          <IconButton
+                            size="small"
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              right: 0,
+                              bgcolor: 'rgba(0,0,0,0.5)',
+                              color: 'white',
+                              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+                            }}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                images: prev.images.filter((_, i) => i !== index)
+                              }));
+                            }}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+
+              {/* Variants Section */}
+              {formData.hasVariants && (
+                <Grid xs={12}>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      المتغيرات
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      startIcon={<AddIcon />}
+                      onClick={addVariant}
+                    >
+                      إضافة متغير
+                    </Button>
+                  </Box>
+                  {formData.variants.map((variant, index) => (
+                    <Paper key={index} sx={{ p: 2, mb: 2 }}>
+                      <Grid container spacing={2}>
+                        <Grid xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            label="رمز المتغير"
+                            value={variant.sku}
+                            onChange={(e) => updateVariant(index, 'sku', e.target.value)}
+                            error={!!formErrors[`variant_${index}_sku`]}
+                            helperText={formErrors[`variant_${index}_sku`]}
+                          />
+                        </Grid>
+                        <Grid xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="السعر"
+                            value={variant.price}
+                            onChange={(e) => updateVariant(index, 'price', e.target.value)}
+                            error={!!formErrors[`variant_${index}_price`]}
+                            helperText={formErrors[`variant_${index}_price`]}
+                          />
+                        </Grid>
+                        <Grid xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="الكمية"
+                            value={variant.quantity}
+                            onChange={(e) => updateVariant(index, 'quantity', e.target.value)}
+                            error={!!formErrors[`variant_${index}_quantity`]}
+                            helperText={formErrors[`variant_${index}_quantity`]}
+                          />
+                        </Grid>
+                        <Grid xs={12} md={3}>
+                          <Button
+                            color="error"
+                            onClick={() => removeVariant(index)}
+                            startIcon={<DeleteIcon />}
+                          >
+                            حذف
+                          </Button>
+                        </Grid>
+                        {/* Variant Attributes */}
+                        {formData.attributes.map((attr, attrIndex) => (
+                          <Grid xs={12} md={4} key={attrIndex}>
+                            <FormControl fullWidth>
+                              <InputLabel>{attr.name}</InputLabel>
+                              <Select
+                                value={variant.attributes[attr.name] || ''}
+                                onChange={(e) => {
+                                  const newAttributes = {
+                                    ...variant.attributes,
+                                    [attr.name]: e.target.value
+                                  };
+                                  updateVariant(index, 'attributes', newAttributes);
+                                }}
+                                label={attr.name}
+                              >
+                                {attr.values.map((value) => (
+                                  <MenuItem key={value} value={value}>
+                                    {value}
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          </Grid>
+                        ))}
+                        {/* Variant Images */}
+                        <Grid xs={12}>
+                          <Button
+                            variant="outlined"
+                            component="label"
+                            startIcon={<ImageIcon />}
+                          >
+                            صور المتغير
+                            <input
+                              type="file"
+                              hidden
+                              multiple
+                              accept="image/*"
+                              onChange={(e) => handleVariantImagesChange(index, e)}
+                            />
+                          </Button>
+                          <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                            {variant.images.map((img, imgIndex) => (
+                              <Box key={imgIndex} sx={{ position: 'relative' }}>
+                                <img
+                                  src={img}
+                                  alt={`Variant ${index + 1} - ${imgIndex + 1}`}
+                                  style={{ width: 100, height: 100, objectFit: 'cover' }}
+                                />
+                                <IconButton
+                                  size="small"
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    right: 0,
+                                    bgcolor: 'rgba(0,0,0,0.5)',
+                                    color: 'white',
+                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+                                  }}
+                                  onClick={() => {
+                                    const newImages = variant.images.filter(
+                                      (_, i) => i !== imgIndex
+                                    );
+                                    updateVariant(index, 'images', newImages);
+                                  }}
+                                >
+                                  <CloseIcon fontSize="small" />
+                                </IconButton>
+                              </Box>
+                            ))}
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                </Grid>
+              )}
+
+              {/* Attributes Section */}
+              <Grid xs={12}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle1" gutterBottom>
+                    السمات
+                  </Typography>
+                  <Button
+                    variant="outlined"
+                    startIcon={<AddIcon />}
+                    onClick={addAttribute}
+                  >
+                    إضافة سمة
+                  </Button>
+                </Box>
+                {formData.attributes.map((attr, index) => (
+                  <Paper key={index} sx={{ p: 2, mb: 2 }}>
+                    <Grid container spacing={2}>
+                      <Grid xs={12} md={5}>
+                        <TextField
+                          fullWidth
+                          label="اسم السمة"
+                          value={attr.name}
+                          onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid xs={12} md={5}>
+                        <TextField
+                          fullWidth
+                          label="القيم (مفصولة بفاصلة)"
+                          value={Array.isArray(attr.values) ? attr.values.join(',') : attr.values}
+                          onChange={(e) => updateAttribute(index, 'values', e.target.value)}
+                        />
+                      </Grid>
+                      <Grid xs={12} md={2}>
+                        <Button
+                          color="error"
+                          onClick={() => removeAttribute(index)}
+                          startIcon={<DeleteIcon />}
+                        >
+                          حذف
+                        </Button>
+                      </Grid>
+                    </Grid>
+                  </Paper>
+                ))}
+              </Grid>
             </Grid>
-          </form>
+
+            <DialogActions sx={{ mt: 3 }}>
+              <Button onClick={handleCloseDialog}>إلغاء</Button>
+              <Button type="submit" variant="contained" color="primary">
+                {selectedProduct ? 'تحديث' : 'إضافة'}
+              </Button>
+            </DialogActions>
+          </Box>
         </DialogContent>
-        
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={handleCloseDialog} color="inherit">
-            {dialogMode === 'view' ? 'إغلاق' : 'إلغاء'}
-          </Button>
-          {dialogMode !== 'view' && (
-            <Button
-              variant="contained"
-              onClick={handleSubmit}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                }
-              }}
-            >
-              {dialogMode === 'add' ? 'إضافة' : 'حفظ التغييرات'}
-            </Button>
-          )}
-        </DialogActions>
       </Dialog>
     </Box>
   );
