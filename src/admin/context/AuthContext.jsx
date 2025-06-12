@@ -1,7 +1,9 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { login as loginAction, logout as logoutAction, clearError } from '../store/slices/authSlice';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -12,65 +14,60 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { user, token, isAuthenticated, loading, error } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const checkAuth = () => {
-      try {
-        const adminAuth = localStorage.getItem('adminAuth');
-        if (adminAuth) {
-          const userData = JSON.parse(adminAuth);
-          setUser(userData);
-          setIsAuthenticated(true);
-        }
-      } catch (error) {
-        console.error('Error checking auth status:', error);
-        localStorage.removeItem('adminAuth');
-      }
-      setLoading(false);
-    };
-    
-    checkAuth();
-  }, []);
+    // Check if there's a token in localStorage on mount
+    const storedToken = localStorage.getItem('adminToken');
+    if (storedToken && !isAuthenticated) {
+      // You might want to validate the token here
+      // For now, we'll just set it in the state
+      dispatch(loginAction({ token: storedToken })).unwrap()
+        .catch((error) => {
+          console.error('Token validation error:', error);
+          localStorage.removeItem('adminToken');
+        });
+    }
+  }, [dispatch, isAuthenticated]);
 
-  const login = (userData) => {
+  const login = async (credentials) => {
     try {
-      localStorage.setItem('adminAuth', JSON.stringify(userData));
-      setUser(userData);
-      setIsAuthenticated(true);
-      setLoading(false);
+      // Clear any previous errors
+      dispatch(clearError());
+      
+      const result = await dispatch(loginAction(credentials)).unwrap();
+      return result;
     } catch (error) {
-      console.error('Error during login:', error);
+      // Ensure the error is properly propagated
+      throw new Error(error.message || 'Login failed');
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
-      localStorage.removeItem('adminAuth');
-      setUser(null);
-      setIsAuthenticated(false);
+      await dispatch(logoutAction()).unwrap();
       navigate('/admin/login');
     } catch (error) {
-      console.error('Error during logout:', error);
+      console.error('Logout error:', error);
+      // Even if the API call fails, we should still log out locally
+      localStorage.removeItem('adminToken');
+      navigate('/admin/login');
     }
   };
 
   const value = {
-    isAuthenticated,
     user,
+    token,
+    isAuthenticated,
     loading,
+    error,
     login,
-    logout
+    logout,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export default AuthContext; 

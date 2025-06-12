@@ -47,62 +47,17 @@ import {
   Block as BlockIcon,
   Refresh as RefreshIcon,
   FilterList as FilterIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-
-// Mock users data based on user.js controller
-const mockUsers = [
-  {
-    _id: '1',
-    name: 'أحمد محمد العلي',
-    email: 'ahmed@example.com',
-    phone: '01234567890',
-    role: 'user',
-    active: true,
-    addresses: ['الرياض، المملكة العربية السعودية'],
-    createdAt: '2024-01-15',
-    wishlist: ['product1', 'product2']
-  },
-  {
-    _id: '2',
-    name: 'فاطمة سالم',
-    email: 'fatima@example.com',
-    phone: '01987654321',
-    role: 'admin',
-    active: true,
-    addresses: ['جدة، المملكة العربية السعودية'],
-    createdAt: '2024-01-10',
-    wishlist: []
-  },
-  {
-    _id: '3',
-    name: 'محمد حسن',
-    email: 'mohammed@example.com',
-    phone: '01122334455',
-    role: 'user',
-    active: false,
-    addresses: ['الدمام، المملكة العربية السعودية'],
-    createdAt: '2024-01-05',
-    wishlist: ['product3']
-  },
-  {
-    _id: '4',
-    name: 'سارة أحمد',
-    email: 'sarah@example.com',
-    phone: '01555666777',
-    role: 'user',
-    active: true,
-    addresses: ['مكة المكرمة، المملكة العربية السعودية'],
-    createdAt: '2024-01-12',
-    wishlist: ['product1', 'product4']
-  }
-];
+import { usersAPI } from '../services/api';
 
 const Users = () => {
   const theme = useTheme();
-  const [users, setUsers] = useState(mockUsers);
-  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -114,17 +69,37 @@ const Users = () => {
     email: '',
     phone: '',
     role: 'user',
-    active: true,
+    status: 'active',
     addresses: '',
   });
 
+  // Fetch users
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      const response = await usersAPI.getAll();
+      // The backend returns { users: [...] } format
+      setUsers(response.data.users || []);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch users');
+      toast.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
   // Filter users based on search and filters
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = (users || []).filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
+                         (user.phone || '').includes(searchTerm);
     const matchesRole = roleFilter === '' || user.role === roleFilter;
-    const matchesStatus = statusFilter === '' || user.active.toString() === statusFilter;
+    const matchesStatus = statusFilter === '' || user.status === statusFilter;
     
     return matchesSearch && matchesRole && matchesStatus;
   });
@@ -138,7 +113,7 @@ const Users = () => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        active: user.active,
+        status: user.status,
         addresses: user.addresses.join(', '),
       });
     } else {
@@ -147,7 +122,7 @@ const Users = () => {
         email: '',
         phone: '',
         role: 'user',
-        active: true,
+        status: 'active',
         addresses: '',
       });
     }
@@ -157,74 +132,53 @@ const Users = () => {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedUser(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      role: 'user',
+      status: 'active',
+      addresses: '',
+    });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      setLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      if (dialogMode === 'add') {
-        const newUser = {
-          _id: Date.now().toString(),
-          ...formData,
-          addresses: formData.addresses.split(',').map(addr => addr.trim()),
-          createdAt: new Date().toISOString().split('T')[0],
-          wishlist: []
-        };
-        setUsers([...users, newUser]);
-        toast.success('تم إضافة المستخدم بنجاح!');
-      } else if (dialogMode === 'edit') {
-        const updatedUsers = users.map(user =>
-          user._id === selectedUser._id
-            ? {
-                ...user,
-                ...formData,
-                addresses: formData.addresses.split(',').map(addr => addr.trim())
-              }
-            : user
-        );
-        setUsers(updatedUsers);
-        toast.success('تم تحديث المستخدم بنجاح!');
+      if (selectedUser) {
+        await usersAPI.update(selectedUser._id, formData);
+        toast.success('User updated successfully');
+      } else {
+        await usersAPI.create(formData);
+        toast.success('User created successfully');
       }
-      
       handleCloseDialog();
-    } catch (error) {
-      toast.error('حدث خطأ في العملية');
-    } finally {
-      setLoading(false);
+      fetchUsers();
+    } catch (err) {
+      toast.error(selectedUser ? 'Failed to update user' : 'Failed to create user');
     }
   };
 
-  const handleDelete = async (userId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذا المستخدم؟')) {
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
       try {
-        setLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setUsers(users.filter(user => user._id !== userId));
-        toast.success('تم حذف المستخدم بنجاح!');
-      } catch (error) {
-        toast.error('فشل في حذف المستخدم');
-      } finally {
-        setLoading(false);
+        await usersAPI.delete(id);
+        toast.success('User deleted successfully');
+        fetchUsers();
+      } catch (err) {
+        toast.error('Failed to delete user');
       }
     }
   };
 
-  const handleToggleStatus = async (userId) => {
+  const handleToggleStatus = async (id, currentStatus) => {
     try {
-      setLoading(true);
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const updatedUsers = users.map(user =>
-        user._id === userId ? { ...user, active: !user.active } : user
-      );
-      setUsers(updatedUsers);
-      toast.success('تم تحديث حالة المستخدم!');
-    } catch (error) {
-      toast.error('فشل في تحديث الحالة');
-    } finally {
-      setLoading(false);
+      const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
+      await usersAPI.update(id, { status: newStatus });
+      toast.success(`User ${newStatus === 'active' ? 'activated' : 'blocked'} successfully`);
+      fetchUsers();
+    } catch (err) {
+      toast.error('Failed to update user status');
     }
   };
 
@@ -248,8 +202,8 @@ const Users = () => {
     );
   };
 
-  const getStatusBadge = (active) => {
-    return active ? (
+  const getStatusBadge = (status) => {
+    return status === 'active' ? (
       <Chip
         icon={<VerifiedIcon />}
         label="نشط"
@@ -267,6 +221,22 @@ const Users = () => {
       />
     );
   };
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -327,8 +297,8 @@ const Users = () => {
                     label="الحالة"
                   >
                     <MenuItem value="">الكل</MenuItem>
-                    <MenuItem value="true">نشط</MenuItem>
-                    <MenuItem value="false">محظور</MenuItem>
+                    <MenuItem value="active">نشط</MenuItem>
+                    <MenuItem value="blocked">محظور</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
@@ -382,7 +352,7 @@ const Users = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#2e7d32">
-                      {users.filter(u => u.active).length}
+                      {users.filter(u => u.status === 'active').length}
                     </Typography>
                     <Typography variant="h6" color="text.primary">
                       المستخدمين النشطين
@@ -420,7 +390,7 @@ const Users = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#f57c00">
-                      {users.filter(u => !u.active).length}
+                      {users.filter(u => u.status === 'blocked').length}
                     </Typography>
                     <Typography variant="h6" color="text.primary">
                       المحظورين
@@ -495,7 +465,7 @@ const Users = () => {
                         {getRoleBadge(user.role)}
                       </TableCell>
                       <TableCell>
-                        {getStatusBadge(user.active)}
+                        {getStatusBadge(user.status)}
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
@@ -520,13 +490,13 @@ const Users = () => {
                               <EditIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title={user.active ? "حظر" : "إلغاء الحظر"}>
+                          <Tooltip title={user.status === 'active' ? "حظر" : "إلغاء الحظر"}>
                             <IconButton 
                               size="small" 
-                              onClick={() => handleToggleStatus(user._id)}
-                              color={user.active ? "error" : "success"}
+                              onClick={() => handleToggleStatus(user._id, user.status)}
+                              color={user.status === 'active' ? "error" : "success"}
                             >
-                              <BlockIcon fontSize="small" />
+                              {user.status === 'active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="حذف">
@@ -566,6 +536,7 @@ const Users = () => {
                 <TextField
                   fullWidth
                   label="الاسم الكامل"
+                  name="name"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   disabled={dialogMode === 'view'}
@@ -576,6 +547,7 @@ const Users = () => {
                   fullWidth
                   label="البريد الإلكتروني"
                   type="email"
+                  name="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={dialogMode === 'view'}
@@ -585,6 +557,7 @@ const Users = () => {
                 <TextField
                   fullWidth
                   label="رقم الهاتف"
+                  name="phone"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   disabled={dialogMode === 'view'}
@@ -609,6 +582,7 @@ const Users = () => {
                   label="العناوين"
                   multiline
                   rows={3}
+                  name="addresses"
                   value={formData.addresses}
                   onChange={(e) => setFormData({ ...formData, addresses: e.target.value })}
                   disabled={dialogMode === 'view'}
@@ -620,12 +594,12 @@ const Users = () => {
                   <FormControl fullWidth disabled={dialogMode === 'view'}>
                     <InputLabel>الحالة</InputLabel>
                     <Select
-                      value={formData.active}
-                      onChange={(e) => setFormData({ ...formData, active: e.target.value })}
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                       label="الحالة"
                     >
-                      <MenuItem value={true}>نشط</MenuItem>
-                      <MenuItem value={false}>محظور</MenuItem>
+                      <MenuItem value="active">نشط</MenuItem>
+                      <MenuItem value="blocked">محظور</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>

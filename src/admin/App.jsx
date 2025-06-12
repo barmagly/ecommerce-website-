@@ -1,9 +1,15 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { Box, CssBaseline } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
+import { useDispatch, useSelector } from 'react-redux';
+import { Provider } from 'react-redux';
+import { store } from './store';
+import { fetchDashboardData } from './store/slices/dashboardSlice';
 import 'react-toastify/dist/ReactToastify.css';
+import { AuthProvider } from './context/AuthContext';
+import AppContent from './AppContent';
 
 // Import pages
 import Dashboard from './pages/Dashboard';
@@ -20,7 +26,6 @@ import AdminLogin from './pages/AdminLogin';
 
 // Import layout and auth
 import AdminLayout from './components/AdminLayout';
-import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Arabic RTL theme
@@ -103,112 +108,24 @@ const theme = createTheme({
   },
 });
 
-function AdminApp() {
+const AdminAppContent = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Box sx={{ direction: 'rtl' }}>
-        <AuthProvider>
-          <Routes>
-            {/* Public Route */}
-            <Route path="/login" element={<AdminLogin />} />
-            
-            {/* Protected Routes */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Dashboard />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Dashboard />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/users" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Users />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/products" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Products />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/orders" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Orders />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/categories" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Categories />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/coupons" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Coupons />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/reviews" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Reviews />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/carts" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Carts />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/variants" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Variants />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <AdminLayout>
-                  <Settings />
-                </AdminLayout>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </AuthProvider>
-        
-        <ToastContainer
-          position="top-left"
-          autoClose={5000}
-          hideProgressBar={false}
-          newestOnTop={false}
-          closeOnClick
-          rtl={true}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
-          theme="light"
-        />
-      </Box>
-    </ThemeProvider>
+    <AuthProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <ToastContainer />
+        <AppContent />
+      </ThemeProvider>
+    </AuthProvider>
   );
-}
+};
+
+const AdminApp = () => {
+  return (
+    <Provider store={store}>
+      <AdminAppContent />
+    </Provider>
+  );
+};
 
 export default AdminApp; 

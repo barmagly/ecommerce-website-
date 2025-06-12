@@ -49,117 +49,13 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
-
-// Initial sample categories
-const initialCategories = [
-  {
-    id: 1,
-    name: 'إلكترونيات',
-    slug: 'electronics',
-    description: 'جميع المنتجات الإلكترونية والأجهزة الذكية',
-    image: 'https://via.placeholder.com/200x200?text=Electronics',
-    parentId: null,
-    level: 0,
-    isActive: true,
-    isFeatured: true,
-    sortOrder: 1,
-    productsCount: 125,
-    metaTitle: 'إلكترونيات - متجر إلكتروني',
-    metaDescription: 'تسوق أحدث الأجهزة الإلكترونية والهواتف الذكية',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: 'هواتف ذكية',
-    slug: 'smartphones',
-    description: 'أحدث الهواتف الذكية من جميع العلامات التجارية',
-    image: 'https://via.placeholder.com/200x200?text=Phones',
-    parentId: 1,
-    level: 1,
-    isActive: true,
-    isFeatured: false,
-    sortOrder: 1,
-    productsCount: 45,
-    metaTitle: 'هواتف ذكية',
-    metaDescription: 'هواتف ذكية بأحدث التقنيات',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    name: 'ملابس',
-    slug: 'clothing',
-    description: 'أزياء عصرية للرجال والنساء والأطفال',
-    image: 'https://via.placeholder.com/200x200?text=Clothing',
-    parentId: null,
-    level: 0,
-    isActive: true,
-    isFeatured: true,
-    sortOrder: 2,
-    productsCount: 89,
-    metaTitle: 'ملابس وأزياء',
-    metaDescription: 'أحدث صيحات الموضة والأزياء العصرية',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    name: 'ملابس رجالية',
-    slug: 'mens-clothing',
-    description: 'ملابس أنيقة للرجال',
-    image: 'https://via.placeholder.com/200x200?text=Mens',
-    parentId: 3,
-    level: 1,
-    isActive: true,
-    isFeatured: false,
-    sortOrder: 1,
-    productsCount: 34,
-    metaTitle: 'ملابس رجالية',
-    metaDescription: 'ملابس رجالية أنيقة وعصرية',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 5,
-    name: 'كتب',
-    slug: 'books',
-    description: 'كتب في جميع المجالات والتخصصات',
-    image: 'https://via.placeholder.com/200x200?text=Books',
-    parentId: null,
-    level: 0,
-    isActive: true,
-    isFeatured: false,
-    sortOrder: 3,
-    productsCount: 67,
-    metaTitle: 'كتب ومراجع',
-    metaDescription: 'مكتبة شاملة للكتب والمراجع',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 6,
-    name: 'منزل وحديقة',
-    slug: 'home-garden',
-    description: 'أدوات ومستلزمات المنزل والحديقة',
-    image: 'https://via.placeholder.com/200x200?text=Home',
-    parentId: null,
-    level: 0,
-    isActive: false,
-    isFeatured: false,
-    sortOrder: 4,
-    productsCount: 23,
-    metaTitle: 'منزل وحديقة',
-    metaDescription: 'كل ما تحتاجه للمنزل والحديقة',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+import { categoriesAPI } from '../services/api';
 
 const Categories = () => {
   const theme = useTheme();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
@@ -183,41 +79,113 @@ const Categories = () => {
     sortOrder: '',
     metaTitle: '',
     metaDescription: '',
+    level: '0',
+    metaKeywords: '',
+    displayOrder: '0'
   });
 
   const [errors, setErrors] = useState({});
 
-  // Load categories from localStorage on component mount
-  useEffect(() => {
-    loadCategories();
-  }, []);
-
-  const loadCategories = () => {
-    setLoading(true);
+  // Fetch categories
+  const fetchCategories = async () => {
     try {
-      const savedCategories = localStorage.getItem('adminCategories');
-      if (savedCategories) {
-        setCategories(JSON.parse(savedCategories));
-      } else {
-        // Initialize with sample data
-        setCategories(initialCategories);
-        localStorage.setItem('adminCategories', JSON.stringify(initialCategories));
-      }
-    } catch (error) {
-      console.error('Error loading categories:', error);
-      toast.error('فشل في تحميل الفئات');
+      setLoading(true);
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data.categories || []);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch categories');
+      toast.error('Failed to load categories');
     } finally {
       setLoading(false);
     }
   };
 
-  const saveCategories = (updatedCategories) => {
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle dialog open/close
+  const handleOpenDialog = (category = null) => {
+    setDialogMode(category ? 'edit' : 'add');
+    setSelectedCategory(category);
+    
+    // Initialize form data with safe defaults
+    setFormData({
+      name: category?.name || '',
+      slug: category?.slug || '',
+      description: category?.description || '',
+      image: category?.image || '',
+      level: category?.level?.toString() || '0',
+      parentId: category?.parentId?.toString() || '',
+      isActive: category?.isActive ?? true,
+      featured: category?.featured ?? false,
+      metaTitle: category?.metaTitle || '',
+      metaDescription: category?.metaDescription || '',
+      metaKeywords: category?.metaKeywords || '',
+      displayOrder: category?.displayOrder?.toString() || '0'
+    });
+    
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setSelectedCategory(null);
+    setFormData({
+      name: '',
+      slug: '',
+      description: '',
+      image: '',
+      parentId: '',
+      isActive: true,
+      isFeatured: false,
+      sortOrder: '',
+      metaTitle: '',
+      metaDescription: '',
+      level: '0',
+      metaKeywords: '',
+      displayOrder: '0'
+    });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     try {
-      localStorage.setItem('adminCategories', JSON.stringify(updatedCategories));
-      setCategories(updatedCategories);
-    } catch (error) {
-      console.error('Error saving categories:', error);
-      toast.error('فشل في حفظ البيانات');
+      if (selectedCategory) {
+        await categoriesAPI.update(selectedCategory._id, formData);
+        toast.success('Category updated successfully');
+      } else {
+        await categoriesAPI.create(formData);
+        toast.success('Category created successfully');
+      }
+      handleCloseDialog();
+      fetchCategories();
+    } catch (err) {
+      toast.error(selectedCategory ? 'Failed to update category' : 'Failed to create category');
+    }
+  };
+
+  // Handle category deletion
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this category?')) {
+      try {
+        await categoriesAPI.delete(id);
+        toast.success('Category deleted successfully');
+        fetchCategories();
+      } catch (err) {
+        toast.error('Failed to delete category');
+      }
     }
   };
 
@@ -238,26 +206,28 @@ const Categories = () => {
 
   // Get parent categories (level 0)
   const getParentCategories = () => {
-    return categories.filter(cat => cat.level === 0);
+    return (categories || []).filter(cat => cat.level === 0);
   };
 
   // Get category hierarchy display
   const getCategoryHierarchy = (category) => {
+    if (!category) return '';
     if (category.level === 0) return category.name;
-    const parent = categories.find(cat => cat.id === category.parentId);
+    const parent = (categories || []).find(cat => cat._id === category.parentId);
     return parent ? `${parent.name} > ${category.name}` : category.name;
   };
 
   // Filter categories based on search and filters
-  const filteredCategories = categories.filter(category => {
+  const filteredCategories = (categories || []).filter(category => {
+    if (!category) return false;
     const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         category.description.toLowerCase().includes(searchTerm.toLowerCase());
+                         (category.description || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = !filterStatus || 
       (filterStatus === 'active' && category.isActive) ||
       (filterStatus === 'inactive' && !category.isActive);
     
-    const matchesLevel = !filterLevel || category.level.toString() === filterLevel;
+    const matchesLevel = !filterLevel || (category.level || 0).toString() === filterLevel;
     
     return matchesSearch && matchesStatus && matchesLevel;
   });
@@ -283,124 +253,11 @@ const Categories = () => {
       sortOrder: '',
       metaTitle: '',
       metaDescription: '',
+      level: '0',
+      metaKeywords: '',
+      displayOrder: '0'
     });
     setErrors({});
-  };
-
-  const handleOpenDialog = (mode, category = null) => {
-    setDialogMode(mode);
-    setSelectedCategory(category);
-    
-    if (mode === 'edit' && category) {
-      setFormData({
-        name: category.name,
-        slug: category.slug,
-        description: category.description,
-        image: category.image,
-        parentId: category.parentId ? category.parentId.toString() : '',
-        isActive: category.isActive,
-        isFeatured: category.isFeatured,
-        sortOrder: category.sortOrder.toString(),
-        metaTitle: category.metaTitle || '',
-        metaDescription: category.metaDescription || '',
-      });
-    } else {
-      resetForm();
-    }
-    
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setSelectedCategory(null);
-    resetForm();
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) newErrors.name = 'اسم الفئة مطلوب';
-    if (!formData.slug.trim()) newErrors.slug = 'رابط الفئة مطلوب';
-    if (!formData.description.trim()) newErrors.description = 'وصف الفئة مطلوب';
-    if (!formData.sortOrder || parseInt(formData.sortOrder) < 0) newErrors.sortOrder = 'ترتيب الفئة مطلوب';
-
-    // Check if slug is unique
-    const existingCategory = categories.find(cat => 
-      cat.slug === formData.slug && (!selectedCategory || cat.id !== selectedCategory.id)
-    );
-    if (existingCategory) newErrors.slug = 'رابط الفئة موجود بالفعل';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSaveCategory = () => {
-    if (!validateForm()) return;
-
-    try {
-      const categoryData = {
-        name: formData.name.trim(),
-        slug: formData.slug.trim(),
-        description: formData.description.trim(),
-        image: formData.image.trim() || 'https://via.placeholder.com/200x200?text=Category',
-        parentId: formData.parentId ? parseInt(formData.parentId) : null,
-        level: formData.parentId ? 1 : 0,
-        isActive: formData.isActive,
-        isFeatured: formData.isFeatured,
-        sortOrder: parseInt(formData.sortOrder),
-        productsCount: 0,
-        metaTitle: formData.metaTitle.trim() || formData.name.trim(),
-        metaDescription: formData.metaDescription.trim() || formData.description.trim(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      let updatedCategories;
-
-      if (dialogMode === 'add') {
-        const newId = Math.max(...categories.map(c => c.id), 0) + 1;
-        const newCategory = {
-          ...categoryData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-        };
-        updatedCategories = [...categories, newCategory];
-        toast.success('تم إضافة الفئة بنجاح');
-      } else {
-        updatedCategories = categories.map(category =>
-          category.id === selectedCategory.id
-            ? { ...category, ...categoryData }
-            : category
-        );
-        toast.success('تم تحديث الفئة بنجاح');
-      }
-
-      saveCategories(updatedCategories);
-      handleCloseDialog();
-    } catch (error) {
-      console.error('Error saving category:', error);
-      toast.error('فشل في حفظ الفئة');
-    }
-  };
-
-  const handleDeleteCategory = (categoryId) => {
-    // Check if category has subcategories
-    const hasSubcategories = categories.some(cat => cat.parentId === categoryId);
-    if (hasSubcategories) {
-      toast.error('لا يمكن حذف فئة تحتوي على فئات فرعية');
-      return;
-    }
-
-    if (window.confirm('هل أنت متأكد من حذف هذه الفئة؟')) {
-      try {
-        const updatedCategories = categories.filter(category => category.id !== categoryId);
-        saveCategories(updatedCategories);
-        toast.success('تم حذف الفئة بنجاح');
-      } catch (error) {
-        console.error('Error deleting category:', error);
-        toast.error('فشل في حذف الفئة');
-      }
-    }
   };
 
   const handleToggleStatus = (categoryId, newStatus) => {
@@ -408,7 +265,7 @@ const Categories = () => {
       const updatedCategories = categories.map(category =>
         category.id === categoryId ? { ...category, isActive: newStatus } : category
       );
-      saveCategories(updatedCategories);
+      setCategories(updatedCategories);
       toast.success(newStatus ? 'تم تفعيل الفئة' : 'تم إلغاء تفعيل الفئة');
     } catch (error) {
       console.error('Error toggling category status:', error);
@@ -435,6 +292,14 @@ const Categories = () => {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
         <CircularProgress size={60} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
       </Box>
     );
   }
@@ -466,7 +331,7 @@ const Categories = () => {
         <Card sx={{ mb: 4, borderRadius: 3 }}>
           <CardContent>
             <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={4}>
+              <Grid xs={12} md={4}>
                 <TextField
                   fullWidth
                   placeholder="البحث في الفئات..."
@@ -482,7 +347,7 @@ const Categories = () => {
                 />
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid xs={12} md={2}>
                 <FormControl fullWidth>
                   <InputLabel>الحالة</InputLabel>
                   <Select
@@ -497,7 +362,7 @@ const Categories = () => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid xs={12} md={2}>
                 <FormControl fullWidth>
                   <InputLabel>المستوى</InputLabel>
                   <Select
@@ -512,22 +377,22 @@ const Categories = () => {
                 </FormControl>
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid xs={12} md={2}>
                 <Button
                   variant="outlined"
                   startIcon={<RefreshIcon />}
-                  onClick={loadCategories}
+                  onClick={fetchCategories}
                   fullWidth
                 >
                   تحديث
                 </Button>
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid xs={12} md={2}>
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => handleOpenDialog('add')}
+                  onClick={() => handleOpenDialog()}
                   fullWidth
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -536,7 +401,7 @@ const Categories = () => {
                     }
                   }}
                 >
-                  إضافة فئة
+                  إضافة فئة جديدة
                 </Button>
               </Grid>
             </Grid>
@@ -640,9 +505,9 @@ const Categories = () => {
         transition={{ duration: 0.5, delay: 0.3 }}
       >
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
+          <TableContainer>
+            <Table>
+              <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
                   <TableCell sx={{ fontWeight: 'bold' }}>الفئة</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>التسلسل الهرمي</TableCell>
@@ -650,32 +515,32 @@ const Categories = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>الترتيب</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>الحالة</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 <AnimatePresence>
                   {filteredCategories
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((category, index) => (
                       <motion.tr
-                        key={category.id}
+                        key={category._id}
                         component={TableRow}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
                         transition={{ duration: 0.3, delay: index * 0.05 }}
-                        hover
+                        sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
                       >
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                             <Avatar
-                              src={category.image}
-                              sx={{ width: 50, height: 50, borderRadius: 2 }}
+                              src={typeof category.image === 'string' ? category.image : undefined}
+                              sx={{ bgcolor: 'primary.main' }}
                             >
-                              <ImageIcon />
+                              <CategoryIcon />
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2" fontWeight="bold">
+                              <Typography variant="subtitle1" fontWeight="bold">
                                 {category.name}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
@@ -722,7 +587,7 @@ const Categories = () => {
                           </Typography>
                         </TableCell>
                         
-                      <TableCell>
+                        <TableCell>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             <Chip
                               label={category.isActive ? 'نشط' : 'غير نشط'}
@@ -731,13 +596,13 @@ const Categories = () => {
                             />
                             <Switch
                               checked={category.isActive}
-                              onChange={(e) => handleToggleStatus(category.id, e.target.checked)}
+                              onChange={(e) => handleToggleStatus(category._id, e.target.checked)}
                               size="small"
                             />
-                        </Box>
-                      </TableCell>
+                          </Box>
+                        </TableCell>
                         
-                      <TableCell>
+                        <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="عرض">
                               <IconButton
@@ -763,19 +628,19 @@ const Categories = () => {
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => handleDeleteCategory(category.id)}
+                                onClick={() => handleDelete(category._id)}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                           </Box>
-                      </TableCell>
+                        </TableCell>
                       </motion.tr>
-                  ))}
+                    ))}
                 </AnimatePresence>
-                </TableBody>
-              </Table>
-            </TableContainer>
+              </TableBody>
+            </Table>
+          </TableContainer>
           
           <TablePagination
             component="div"
@@ -857,8 +722,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="اسم الفئة"
+                  name="name"
                   value={formData.name}
-                  onChange={handleFormChange('name')}
+                  onChange={handleInputChange}
                   error={!!errors.name}
                   helperText={errors.name}
                   required
@@ -869,8 +735,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="رابط الفئة"
+                  name="slug"
                   value={formData.slug}
-                  onChange={handleFormChange('slug')}
+                  onChange={handleInputChange}
                   error={!!errors.slug}
                   helperText={errors.slug}
                   required
@@ -881,8 +748,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="وصف الفئة"
+                  name="description"
                   value={formData.description}
-                  onChange={handleFormChange('description')}
+                  onChange={handleInputChange}
                   error={!!errors.description}
                   helperText={errors.description}
                   multiline
@@ -895,8 +763,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="رابط الصورة"
+                  name="image"
                   value={formData.image}
-                  onChange={handleFormChange('image')}
+                  onChange={handleInputChange}
                   placeholder="https://example.com/image.jpg"
                 />
               </Grid>
@@ -906,12 +775,12 @@ const Categories = () => {
                   <InputLabel>الفئة الأساسية</InputLabel>
                   <Select
                     value={formData.parentId}
-                    onChange={handleFormChange('parentId')}
+                    onChange={(e) => setFormData(prev => ({ ...prev, parentId: e.target.value }))}
                     label="الفئة الأساسية"
                   >
                     <MenuItem value="">فئة رئيسية</MenuItem>
                     {getParentCategories().map((category) => (
-                      <MenuItem key={category.id} value={category.id.toString()}>
+                      <MenuItem key={category._id} value={category._id.toString()}>
                         {category.name}
                       </MenuItem>
                     ))}
@@ -923,9 +792,10 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="ترتيب الفئة"
+                  name="sortOrder"
                   type="number"
                   value={formData.sortOrder}
-                  onChange={handleFormChange('sortOrder')}
+                  onChange={handleInputChange}
                   error={!!errors.sortOrder}
                   helperText={errors.sortOrder}
                   required
@@ -936,8 +806,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="عنوان SEO"
+                  name="metaTitle"
                   value={formData.metaTitle}
-                  onChange={handleFormChange('metaTitle')}
+                  onChange={handleInputChange}
                 />
               </Grid>
               
@@ -945,8 +816,9 @@ const Categories = () => {
                 <TextField
                   fullWidth
                   label="وصف SEO"
+                  name="metaDescription"
                   value={formData.metaDescription}
-                  onChange={handleFormChange('metaDescription')}
+                  onChange={handleInputChange}
                   multiline
                   rows={2}
                 />
@@ -958,7 +830,7 @@ const Categories = () => {
                     control={
                       <Switch
                         checked={formData.isActive}
-                        onChange={handleFormChange('isActive')}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isActive: e.target.checked }))}
                         color="primary"
                       />
                     }
@@ -969,7 +841,7 @@ const Categories = () => {
                     control={
                       <Switch
                         checked={formData.isFeatured}
-                        onChange={handleFormChange('isFeatured')}
+                        onChange={(e) => setFormData(prev => ({ ...prev, isFeatured: e.target.checked }))}
                         color="secondary"
                       />
                     }
@@ -988,7 +860,7 @@ const Categories = () => {
           {dialogMode !== 'view' && (
             <Button
               variant="contained"
-              onClick={handleSaveCategory}
+              onClick={handleSubmit}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 '&:hover': {
