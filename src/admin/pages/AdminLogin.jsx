@@ -336,32 +336,7 @@ const AdminLogin = () => {
                 </form>
               </motion.div>
 
-              {/* Demo Credentials */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.8 }}
-              >
-                <Paper
-                  sx={{
-                    mt: 4,
-                    p: 3,
-                    background: alpha(theme.palette.info.main, 0.05),
-                    border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
-                    borderRadius: 3,
-                  }}
-                >
-                  <Typography variant="subtitle2" color="info.main" fontWeight="bold" sx={{ mb: 1 }}>
-                    بيانات تجريبية:
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    اسم المستخدم: <strong>admin</strong>
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    كلمة المرور: <strong>admin</strong>
-                  </Typography>
-                </Paper>
-              </motion.div>
+            
             </CardContent>
           </Card>
         </motion.div>

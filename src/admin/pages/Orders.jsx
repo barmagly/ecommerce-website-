@@ -63,6 +63,7 @@ import {
   TableChart as ExportIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { ordersAPI } from '../services/api';
 
 const Orders = () => {
   const theme = useTheme();
@@ -77,6 +78,7 @@ const Orders = () => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [orderToPrint, setOrderToPrint] = useState(null);
+  const [error, setError] = useState(null);
   
   // Print functionality
   const printRef = useRef();
@@ -90,284 +92,22 @@ const Orders = () => {
 
   // Initialize orders data
   useEffect(() => {
-    const savedOrders = localStorage.getItem('adminOrders');
-    if (savedOrders) {
-      setOrders(JSON.parse(savedOrders));
-    } else {
-      // Sample data
-      const sampleOrders = [
-        {
-          _id: 'ORD001',
-          orderNumber: 'ORD-2024-001',
-          customer: {
-            name: 'أحمد محمد علي',
-            email: 'ahmed@example.com',
-            phone: '+966501234567',
-            avatar: 'أم'
-          },
-          items: [
-            {
-              _id: 'item1',
-              name: 'هاتف ذكي سامسونج',
-              image: '/api/placeholder/60/60',
-              price: 1299.99,
-              quantity: 1,
-              sku: 'SAM-A54-BLK'
-            },
-            {
-              _id: 'item2',
-              name: 'غطاء حماية شفاف',
-              image: '/api/placeholder/60/60',
-              price: 49.99,
-              quantity: 2,
-              sku: 'CASE-CLEAR-001'
-            }
-          ],
-          subtotal: 1299.99,
-          tax: 194.99,
-          shipping: 25.00,
-          discount: 50.00,
-          total: 1469.98,
-          status: 'pending',
-          paymentStatus: 'paid',
-          paymentMethod: 'credit_card',
-          shippingAddress: {
-            street: 'شارع الملك فهد، حي العليا',
-            city: 'الرياض',
-            state: 'منطقة الرياض',
-            zipCode: '12345',
-            country: 'المملكة العربية السعودية'
-          },
-          billingAddress: {
-            street: 'شارع الملك فهد، حي العليا',
-            city: 'الرياض',
-            state: 'منطقة الرياض',
-            zipCode: '12345',
-            country: 'المملكة العربية السعودية'
-          },
-          trackingNumber: 'TRK123456789',
-          estimatedDelivery: '2024-01-20',
-          notes: 'يرجى التسليم في المساء',
-          createdAt: '2024-01-15T10:30:00Z',
-          updatedAt: '2024-01-15T10:30:00Z',
-          orderHistory: [
-            {
-              status: 'pending',
-              timestamp: '2024-01-15T10:30:00Z',
-              note: 'تم إنشاء الطلب'
-            }
-          ]
-        },
-        {
-          _id: 'ORD002',
-          orderNumber: 'ORD-2024-002',
-          customer: {
-            name: 'فاطمة علي حسن',
-            email: 'fatima@example.com',
-            phone: '+966509876543',
-            avatar: 'فع'
-          },
-          items: [
-            {
-              _id: 'item3',
-              name: 'ساعة ذكية آبل',
-              image: '/api/placeholder/60/60',
-              price: 899.99,
-              quantity: 1,
-              sku: 'APL-WATCH-S9'
-            }
-          ],
-          subtotal: 899.99,
-          tax: 134.99,
-          shipping: 0.00,
-          discount: 100.00,
-          total: 934.98,
-          status: 'shipped',
-          paymentStatus: 'paid',
-          paymentMethod: 'apple_pay',
-          shippingAddress: {
-            street: 'طريق الأمير محمد بن عبدالعزيز',
-            city: 'جدة',
-            state: 'منطقة مكة المكرمة',
-            zipCode: '21589',
-            country: 'المملكة العربية السعودية'
-          },
-          billingAddress: {
-            street: 'طريق الأمير محمد بن عبدالعزيز',
-            city: 'جدة',
-            state: 'منطقة مكة المكرمة',
-            zipCode: '21589',
-            country: 'المملكة العربية السعودية'
-          },
-          trackingNumber: 'TRK987654321',
-          estimatedDelivery: '2024-01-18',
-          notes: '',
-          createdAt: '2024-01-14T14:20:00Z',
-          updatedAt: '2024-01-16T09:15:00Z',
-          orderHistory: [
-            {
-              status: 'pending',
-              timestamp: '2024-01-14T14:20:00Z',
-              note: 'تم إنشاء الطلب'
-            },
-            {
-              status: 'processing',
-              timestamp: '2024-01-15T08:00:00Z',
-              note: 'تم تأكيد الطلب وبدء المعالجة'
-            },
-            {
-              status: 'shipped',
-              timestamp: '2024-01-16T09:15:00Z',
-              note: 'تم شحن الطلب'
-            }
-          ]
-        },
-        {
-          _id: 'ORD003',
-          orderNumber: 'ORD-2024-003',
-          customer: {
-            name: 'محمد حسن أحمد',
-            email: 'mohammed@example.com',
-            phone: '+966512345678',
-            avatar: 'مح'
-          },
-          items: [
-            {
-              _id: 'item4',
-              name: 'لابتوب ديل XPS',
-              image: '/api/placeholder/60/60',
-              price: 3299.99,
-              quantity: 1,
-              sku: 'DELL-XPS-13'
-            },
-            {
-              _id: 'item5',
-              name: 'فأرة لاسلكية',
-              image: '/api/placeholder/60/60',
-              price: 79.99,
-              quantity: 1,
-              sku: 'MOUSE-WL-001'
-            }
-          ],
-          subtotal: 3379.98,
-          tax: 506.99,
-          shipping: 50.00,
-          discount: 200.00,
-          total: 3736.97,
-          status: 'completed',
-          paymentStatus: 'paid',
-          paymentMethod: 'bank_transfer',
-          shippingAddress: {
-            street: 'شارع التحلية، حي السليمانية',
-            city: 'الرياض',
-            state: 'منطقة الرياض',
-            zipCode: '11564',
-            country: 'المملكة العربية السعودية'
-          },
-          billingAddress: {
-            street: 'شارع التحلية، حي السليمانية',
-            city: 'الرياض',
-            state: 'منطقة الرياض',
-            zipCode: '11564',
-            country: 'المملكة العربية السعودية'
-          },
-          trackingNumber: 'TRK456789123',
-          estimatedDelivery: '2024-01-17',
-          notes: 'تم التسليم بنجاح',
-          createdAt: '2024-01-13T16:45:00Z',
-          updatedAt: '2024-01-17T14:30:00Z',
-          orderHistory: [
-            {
-              status: 'pending',
-              timestamp: '2024-01-13T16:45:00Z',
-              note: 'تم إنشاء الطلب'
-            },
-            {
-              status: 'processing',
-              timestamp: '2024-01-14T09:00:00Z',
-              note: 'تم تأكيد الطلب وبدء المعالجة'
-            },
-            {
-              status: 'shipped',
-              timestamp: '2024-01-15T11:30:00Z',
-              note: 'تم شحن الطلب'
-            },
-            {
-              status: 'completed',
-              timestamp: '2024-01-17T14:30:00Z',
-              note: 'تم تسليم الطلب بنجاح'
-            }
-          ]
-        },
-        {
-          _id: 'ORD004',
-          orderNumber: 'ORD-2024-004',
-          customer: {
-            name: 'سارة عبدالله',
-            email: 'sara@example.com',
-            phone: '+966523456789',
-            avatar: 'سع'
-          },
-          items: [
-            {
-              _id: 'item6',
-              name: 'سماعات بلوتوث',
-              image: '/api/placeholder/60/60',
-              price: 199.99,
-              quantity: 2,
-              sku: 'BT-HEADPHONE-001'
-            }
-          ],
-          subtotal: 399.98,
-          tax: 59.99,
-          shipping: 15.00,
-          discount: 0.00,
-          total: 474.97,
-          status: 'cancelled',
-          paymentStatus: 'refunded',
-          paymentMethod: 'credit_card',
-          shippingAddress: {
-            street: 'شارع الأمير سلطان، حي الزهراء',
-            city: 'الدمام',
-            state: 'المنطقة الشرقية',
-            zipCode: '31461',
-            country: 'المملكة العربية السعودية'
-          },
-          billingAddress: {
-            street: 'شارع الأمير سلطان، حي الزهراء',
-            city: 'الدمام',
-            state: 'المنطقة الشرقية',
-            zipCode: '31461',
-            country: 'المملكة العربية السعودية'
-          },
-          trackingNumber: '',
-          estimatedDelivery: '',
-          notes: 'تم إلغاء الطلب بناء على طلب العميل',
-          createdAt: '2024-01-12T11:20:00Z',
-          updatedAt: '2024-01-13T08:45:00Z',
-          orderHistory: [
-            {
-              status: 'pending',
-              timestamp: '2024-01-12T11:20:00Z',
-              note: 'تم إنشاء الطلب'
-            },
-            {
-              status: 'cancelled',
-              timestamp: '2024-01-13T08:45:00Z',
-              note: 'تم إلغاء الطلب بناء على طلب العميل'
-            }
-          ]
-        }
-      ];
-      setOrders(sampleOrders);
-      localStorage.setItem('adminOrders', JSON.stringify(sampleOrders));
+    async function fetchOrders() {
+      try {
+        const response = await ordersAPI.getAll();
+        setOrders(response.data.orders || response.data || []);
+        setError(null);
+      } catch (err) {
+        setOrders([]);
+        setError('فشل في جلب الطلبات من السيرفر');
+      }
     }
+    fetchOrders();
   }, []);
 
   // Save orders to localStorage whenever orders change
   const saveOrders = (updatedOrders) => {
     setOrders(updatedOrders);
-    localStorage.setItem('adminOrders', JSON.stringify(updatedOrders));
   };
 
   // Utility functions
