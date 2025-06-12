@@ -9,6 +9,7 @@ import orderSlice from "./order/order";
 import variantSlice from "./variant/variant";
 import reviewSlice from "./review/review";
 import passwordReducer from './password/password';
+import homeSlice from "./home/home";
 
 const Store = configureStore({
     reducer: {
@@ -21,7 +22,8 @@ const Store = configureStore({
         order: orderSlice.reducer,
         variant: variantSlice.reducer,
         reviews: reviewSlice.reducer,
-        password: passwordReducer
+        password: passwordReducer,
+        home:homeSlice.reducer
     }
 });
 

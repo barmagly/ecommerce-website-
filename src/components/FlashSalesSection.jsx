@@ -4,87 +4,68 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCartThunk } from '../services/Slice/cart/cart';
 import { toast } from 'react-toastify';
 import './FlashSalesShowcase.css';
+import axios from 'axios';
+const API_URL = process.env.REACT_APP_API_URL + "/api/products/most-reviewed";
 
-const products = [
-  {
-    id: 1,
-    name: 'ذراع تحكم ألعاب HAVIT HV-G92',
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/i9a16i3f_expires_30_days.png',
-    price: 120,
-    oldPrice: 160,
-    rating: 5,
-    reviews: 88,
-    discount: 40
-  },
-  {
-    id: 2,
-    name: 'لوحة مفاتيح AK-900 سلكية',
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/peewgpo7_expires_30_days.png',
-    price: 960,
-    oldPrice: 1160,
-    rating: 4,
-    reviews: 75,
-    discount: 35
-  },
-  {
-    id: 3,
-    name: 'شاشة ألعاب IPS LCD',
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/u3sr8u8k_expires_30_days.png',
-    price: 370,
-    oldPrice: 400,
-    rating: 5,
-    reviews: 99,
-    discount: 30
-  },
-  {
-    id: 4,
-    name: 'كرسي مريح S-Series',
-    image: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/ml7dbshd_expires_30_days.png',
-    price: 375,
-    oldPrice: 400,
-    rating: 5,
-    reviews: 99,
-    discount: 25
-  }
-];
+// function getNext7Days() {
+//   const now = new Date();
+//   const end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+//   return end;
+// }
 
-function getNext7Days() {
-  const now = new Date();
-  const end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  return end;
-}
-
-function getTimeLeft(endDate) {
-  const now = new Date();
-  let diff = Math.max(0, endDate - now);
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  diff -= days * (1000 * 60 * 60 * 24);
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  diff -= hours * (1000 * 60 * 60);
-  const minutes = Math.floor(diff / (1000 * 60));
-  diff -= minutes * (1000 * 60);
-  const seconds = Math.floor(diff / 1000);
-  return { days, hours, minutes, seconds };
-}
+// function getTimeLeft(endDate) {
+//   const now = new Date();
+//   let diff = Math.max(0, endDate - now);
+//   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+//   diff -= days * (1000 * 60 * 60 * 24);
+//   const hours = Math.floor(diff / (1000 * 60 * 60));
+//   diff -= hours * (1000 * 60 * 60);
+//   const minutes = Math.floor(diff / (1000 * 60));
+//   diff -= minutes * (1000 * 60);
+//   const seconds = Math.floor(diff / 1000);
+//   return { days, hours, minutes, seconds };
+// }
 
 export default function FlashSalesSection() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
-  const [endDate, setEndDate] = useState(getNext7Days());
-  const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [products, setProducts] = useState([])
+
+  // const [endDate, setEndDate] = useState(getNext7Days());
+  // const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
+  // const { products, loading, error } = useSelector(state => state.home)
+  // useEffect(() => {
+  //   const timer = setInterval(() => {
+  //     const t = getTimeLeft(endDate);
+  //     setTimeLeft(t);
+  //     if (t.days === 0 && t.hours === 0 && t.minutes === 0 && t.seconds === 0) {
+  //       setEndDate(getNext7Days());
+  //     }
+  //   }, 1000);
+  //   return () => clearInterval(timer);
+  // }, [endDate]);
+
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      const t = getTimeLeft(endDate);
-      setTimeLeft(t);
-      if (t.days === 0 && t.hours === 0 && t.minutes === 0 && t.seconds === 0) {
-        setEndDate(getNext7Days());
+    setIsLoading(true);
+    setError(null);
+    async function fetchPro() {
+      try {
+        const response = await axios.get(API_URL);
+        setProducts(response.data.data)
+      } catch (err) {
+        setError(err.response?.data?.message || "حدث خطأ اثناء جلب المنتجات");
+        console.error("Get error:", err);
+      } finally {
+        setIsLoading(false);
       }
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [endDate]);
+    }
+    fetchPro()
+  }, [])
 
   const handleAddToCart = (productId) => {
     if (!isAuthenticated) {
@@ -115,17 +96,30 @@ export default function FlashSalesSection() {
   };
 
   return (
-    <div className="flashsales-section-bg py-5" style={{ minHeight: 400 }} data-aos="fade-up">
-      <div className="container">
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 ms-lg-5 gap-4 gap-md-5">
-          <div className="d-flex flex-column flex-shrink-0 align-items-center align-items-md-start me-0 me-md-5 gap-3  w-md-auto">
-            <div className="d-flex align-items-center pe-1 gap-3">
-              <div className="bg-danger rounded flashsales-bar"></div>
-              <span className="text-danger fw-bold fs-6">عروض سريعة</span>
-            </div>
-            <span className="text-black fw-bold display-5">عروض اليوم السريعة</span>
-            {/* التايمر يظهر تحت العنوان على الموبايل */}
-            <div className="flashsales-timer-row d-flex flex-row align-items-center gap-3 justify-content-center mt-3 d-md-none">
+    <div className="flashsales-section-bg py-5 container" style={{ minHeight: 400 }} data-aos="fade-up">
+      {error && (
+        <div className="container py-5">
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
+        </div>
+      )}
+      {isLoading && (
+        <div className="container py-5 text-center">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">جاري التحميل...</span>
+          </div>
+        </div>
+      )}
+      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 ms-lg-5 gap-4 gap-md-5">
+        <div className="d-flex flex-column flex-shrink-0 align-items-center align-items-md-start me-0 me-md-5 gap-3  w-md-auto">
+          <div className="d-flex align-items-center pe-1 gap-3">
+            <div className="bg-danger rounded flashsales-bar"></div>
+            <span className="text-danger fw-bold fs-6">هذا الشهر</span>
+          </div>
+          <span className="text-black fw-bold display-5">الأعلي تقييما</span>
+          {/* التايمر يظهر تحت العنوان على الموبايل */}
+          {/* <div className="flashsales-timer-row d-flex flex-row align-items-center gap-3 justify-content-center mt-3 d-md-none">
               <div className="text-center">
                 <span className="text-black small fw-bold">أيام</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.days).padStart(2, '0')}</span>
@@ -145,10 +139,10 @@ export default function FlashSalesSection() {
                 <span className="text-black small fw-bold">ثواني</span><br />
                 <span className="text-black fw-bold fs-2">{String(timeLeft.seconds).padStart(2, '0')}</span>
               </div>
-            </div>
-          </div>
-          {/* التايمر يظهر بجانب العنوان على الديسكتوب */}
-          <div className="flashsales-timer-row d-none d-md-flex flex-row align-items-center gap-3 justify-content-center">
+            </div> */}
+        </div>
+        {/* التايمر يظهر بجانب العنوان على الديسكتوب */}
+        {/* <div className="flashsales-timer-row d-none d-md-flex flex-row align-items-center gap-3 justify-content-center">
             <div className="text-center">
               <span className="text-black small fw-bold">أيام</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.days).padStart(2, '0')}</span>
@@ -168,35 +162,34 @@ export default function FlashSalesSection() {
               <span className="text-black small fw-bold">ثواني</span><br />
               <span className="text-black fw-bold fs-2">{String(timeLeft.seconds).padStart(2, '0')}</span>
             </div>
-          </div>
-          <button className="btn btn-danger px-4 py-2 fw-bold mt-3 mt-md-0" onClick={() => navigate('/shop')}>عرض جميع المنتجات</button>
-        </div>
-        <div className="row g-4 ms-lg-5 mb-5">
-          {products.map((product, idx) => (
-            <div key={product.id} className="col-12 col-md-3" data-aos="zoom-in-up">
-              <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center position-relative">
-                <span className="badge bg-danger position-absolute top-0 start-0 m-2">-{product.discount}%</span>
-                <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <img src={product.image} alt={product.name} className="mb-3" style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '12px', cursor: 'pointer' }} />
-                </Link>
-                <Link to={`/product/${product.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                  <span className="fw-bold fs-5 mt-2" style={{ cursor: 'pointer' }}>{product.name}</span>
-                </Link>
-                <div className="d-flex align-items-center gap-3 mt-2">
-                  <span className="text-danger fw-bold">{product.price} ر.س</span>
-                  <span className="fw-bold text-decoration-line-through">{product.oldPrice} ر.س</span>
-                </div>
-                <div className="d-flex align-items-center gap-2 mt-2">
-                  <span>{'⭐'.repeat(product.rating)}</span>
-                  <span className="fw-bold">({product.reviews})</span>
-                </div>
-                <button className="btn btn-dark w-100 mt-3" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="flashsales-divider mx-lg-5 mb-5"></div>
+          </div> */}
+        <button className="btn btn-danger px-4 py-2 fw-bold mt-3 mt-md-0" onClick={() => navigate('/shop')}>عرض جميع المنتجات</button>
       </div>
+      <div className="row g-4 ms-lg-5 mb-5">
+        {products?.map((product, idx) => (
+          <div key={product?.sku} className="col-12 col-md-3" data-aos="zoom-in-up">
+            <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center position-relative">
+              {/* <span className="badge bg-danger position-absolute top-0 start-0 m-2">-{product.discount}%</span> */}
+              <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <img src={product?.imageCover} alt={product?.name} className="mb-3" style={{ width: '100%', height: '180px', objectFit: 'contain', borderRadius: '12px', cursor: 'pointer' }} />
+              </Link>
+              <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <span className="fw-bold mt-2" style={{ cursor: 'pointer', textAlign: 'center' }}>{product.name}</span>
+              </Link>
+              <div className="d-flex align-items-center gap-3 mt-2">
+                <span className="text-danger fw-bold">{product.price} ج.م</span>
+                {/* <span className="fw-bold text-decoration-line-through">{product.oldPrice} ر.س</span> */}
+              </div>
+              <div className="d-flex align-items-center gap-2 mt-2">
+                <span>{'⭐'.repeat(product?.ratings?.average)}</span>
+                <span className="fw-bold">({product.ratings?.count})</span>
+              </div>
+              <button className="btn btn-dark w-100 mt-3" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="flashsales-divider mb-5"></div>
     </div>
   );
 } 
