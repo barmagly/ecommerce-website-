@@ -61,203 +61,12 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { productsAPI } from '../services/api';
-
-// Mock categories for dropdown
-const categories = [
-  { id: 1, name: 'إلكترونيات' },
-  { id: 2, name: 'ملابس' },
-  { id: 3, name: 'كتب' },
-  { id: 4, name: 'منزل وحديقة' },
-  { id: 5, name: 'رياضة' },
-  { id: 6, name: 'جمال وعناية' },
-  { id: 7, name: 'ألعاب' },
-  { id: 8, name: 'مجوهرات' },
-];
-
-// Enhanced sample products with more variety
-const initialProducts = [
-  {
-    id: 1,
-    name: 'iPhone 15 Pro Max',
-    description: 'أحدث هاتف من آبل مع تقنيات متطورة وكاميرا Pro وشاشة Super Retina XDR',
-    price: 1199.99,
-    salePrice: 1099.99,
-    category: 'إلكترونيات',
-    categoryId: 1,
-    stock: 45,
-    sku: 'IP15PM-001',
-    images: ['https://via.placeholder.com/150x150?text=iPhone+15'],
-    status: 'نشط',
-    featured: true,
-    rating: 4.9,
-    reviews: 345,
-    tags: ['هاتف', 'آبل', 'جديد', 'برو'],
-    weight: 0.22,
-    dimensions: '16.0 x 7.7 x 0.83 cm',
-    brand: 'Apple',
-    createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 2,
-    name: 'Samsung Galaxy S24 Ultra',
-    description: 'هاتف ذكي متطور من سامسونج مع قلم S Pen وكاميرا 200 ميجابكسل',
-    price: 1299.99,
-    salePrice: null,
-    category: 'إلكترونيات',
-    categoryId: 1,
-    stock: 28,
-    sku: 'SGS24U-002',
-    images: ['https://via.placeholder.com/150x150?text=Samsung+S24'],
-    status: 'نشط',
-    featured: true,
-    rating: 4.7,
-    reviews: 289,
-    tags: ['هاتف', 'سامسونج', 'أندرويد', 'قلم'],
-    weight: 0.23,
-    dimensions: '16.3 x 7.9 x 0.86 cm',
-    brand: 'Samsung',
-    createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 3,
-    name: 'MacBook Pro 16 بوصة',
-    description: 'لابتوب قوي للمحترفين مع معالج M3 Pro وذاكرة 32GB',
-    price: 2999.99,
-    salePrice: 2799.99,
-    category: 'إلكترونيات',
-    categoryId: 1,
-    stock: 12,
-    sku: 'MBP16-003',
-    images: ['https://via.placeholder.com/150x150?text=MacBook'],
-    status: 'نشط',
-    featured: true,
-    rating: 4.8,
-    reviews: 156,
-    tags: ['لابتوب', 'آبل', 'محترف', 'M3'],
-    weight: 2.1,
-    dimensions: '35.5 x 24.8 x 1.6 cm',
-    brand: 'Apple',
-    createdAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 4,
-    name: 'قميص بولو كلاسيكي',
-    description: 'قميص بولو قطني عالي الجودة متوفر بألوان متعددة',
-    price: 89.99,
-    salePrice: 69.99,
-    category: 'ملابس',
-    categoryId: 2,
-    stock: 85,
-    sku: 'POLO-004',
-    images: ['https://via.placeholder.com/150x150?text=Polo+Shirt'],
-    status: 'نشط',
-    featured: false,
-    rating: 4.4,
-    reviews: 123,
-    tags: ['قميص', 'بولو', 'قطن', 'كلاسيكي'],
-    weight: 0.25,
-    dimensions: 'S, M, L, XL',
-    brand: 'Classic Wear',
-    createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 5,
-    name: 'سماعات AirPods Pro 2',
-    description: 'سماعات لاسلكية مع إلغاء الضوضاء النشط وجودة صوت فائقة',
-    price: 249.99,
-    salePrice: null,
-    category: 'إلكترونيات',
-    categoryId: 1,
-    stock: 67,
-    sku: 'APP2-005',
-    images: ['https://via.placeholder.com/150x150?text=AirPods'],
-    status: 'نشط',
-    featured: true,
-    rating: 4.6,
-    reviews: 892,
-    tags: ['سماعات', 'لاسلكي', 'آبل', 'إلغاء ضوضاء'],
-    weight: 0.05,
-    dimensions: '3.1 x 2.1 x 2.4 cm',
-    brand: 'Apple',
-    createdAt: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 6,
-    name: 'كتاب البرمجة المتقدمة',
-    description: 'دليل شامل لتعلم البرمجة المتقدمة بلغات متعددة',
-    price: 45.99,
-    salePrice: null,
-    category: 'كتب',
-    categoryId: 3,
-    stock: 156,
-    sku: 'BOOK-006',
-    images: ['https://via.placeholder.com/150x150?text=Programming+Book'],
-    status: 'نشط',
-    featured: false,
-    rating: 4.7,
-    reviews: 78,
-    tags: ['كتاب', 'برمجة', 'تعليم', 'تقنية'],
-    weight: 0.8,
-    dimensions: '24 x 17 x 3 cm',
-    brand: 'Tech Publications',
-    createdAt: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 7,
-    name: 'طاولة مكتب خشبية',
-    description: 'طاولة مكتب عملية من الخشب الطبيعي مع أدراج للتخزين',
-    price: 299.99,
-    salePrice: 249.99,
-    category: 'منزل وحديقة',
-    categoryId: 4,
-    stock: 8,
-    sku: 'DESK-007',
-    images: ['https://via.placeholder.com/150x150?text=Wooden+Desk'],
-    status: 'نشط',
-    featured: false,
-    rating: 4.5,
-    reviews: 45,
-    tags: ['أثاث', 'مكتب', 'خشب', 'تخزين'],
-    weight: 35.5,
-    dimensions: '120 x 60 x 75 cm',
-    brand: 'Home Furniture',
-    createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 8,
-    name: 'حذاء رياضي للجري',
-    description: 'حذاء رياضي مريح ومبطن خصيصاً للجري والأنشطة الرياضية',
-    price: 129.99,
-    salePrice: 99.99,
-    category: 'رياضة',
-    categoryId: 5,
-    stock: 0,
-    sku: 'SHOE-008',
-    images: ['https://via.placeholder.com/150x150?text=Running+Shoes'],
-    status: 'نشط',
-    featured: false,
-    rating: 4.3,
-    reviews: 234,
-    tags: ['حذاء', 'رياضة', 'جري', 'مريح'],
-    weight: 0.6,
-    dimensions: '42, 43, 44, 45',
-    brand: 'SportMax',
-    createdAt: new Date(Date.now() - 35 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date().toISOString(),
-  }
-];
+import { productsAPI, categoriesAPI } from '../services/api';
 
 const Products = () => {
   const theme = useTheme();
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
@@ -327,6 +136,31 @@ const Products = () => {
     }
   };
 
+  const fetchCategories = async () => {
+    try {
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data.categories || []);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      toast.error('Failed to load categories');
+    }
+  };
+
+  // Update useEffect to fetch both products and categories
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchProducts(), fetchCategories()]);
+      } catch (err) {
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, []);
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -343,18 +177,20 @@ const Products = () => {
 
   const handleOpenDialog = (product = null) => {
     if (product) {
+      console.log('Editing product:', product); // Debugging line
       // Map the product data to match our form structure
       const mappedProduct = {
         name: product.name || '',
         description: product.description || '',
         brand: product.brand || '',
-        category: product.category?._id || '',
+        // Handle both object and string for category
+        category: (product.category && product.category._id) ? product.category._id : (product.category || ''),
         price: product.price?.toString() || '',
         hasVariants: product.hasVariants || false,
         stock: product.stock?.toString() || '',
         sku: product.sku || '',
-        imageCover: product.imageCover?.url || '',
-        images: product.images?.map(img => img.url) || [],
+        imageCover: product.imageCover?.url || product.imageCover || '',
+        images: product.images?.map(img => img.url || img) || [],
         features: product.features || [],
         specifications: product.specifications || [],
         attributes: product.attributes || [],
@@ -363,7 +199,7 @@ const Products = () => {
           attributes: Object.fromEntries(variant.attributes),
           price: variant.price?.toString(),
           quantity: variant.quantity?.toString(),
-          images: variant.images?.map(img => img.url) || []
+          images: variant.images?.map(img => img.url || img) || []
         })) || []
       };
       setFormData(mappedProduct);
@@ -382,6 +218,7 @@ const Products = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Submitting form', formData); // Debug log
     
     // Validate form
     const errors = {};
@@ -424,9 +261,9 @@ const Products = () => {
       // Add basic product data
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formDataToSend.append('brand', formData.brand);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('hasVariants', formData.hasVariants);
+      formData.append('brand', formData.brand);
+      formData.append('category', formData.category);
+      formData.append('hasVariants', formData.hasVariants);
 
       // Add simple product fields if no variants
       if (!formData.hasVariants) {
@@ -462,7 +299,7 @@ const Products = () => {
       });
 
       // Add attributes
-      formDataToSend.append('attributes', JSON.stringify(formData.attributes));
+      formDataToSend.append('attributes', formData.attributes ? JSON.stringify(formData.attributes) : []);
 
       // Add variants if product has variants
       if (formData.hasVariants) {
@@ -1244,7 +1081,7 @@ const Products = () => {
                                 <IconButton
                                   size="small"
                                   color="info"
-                                  onClick={() => handleOpenDialog('view', product)}
+                                  onClick={() => handleOpenDialog(product)}
                                   sx={{ 
                                     borderRadius: 2,
                                     '&:hover': {
@@ -1261,7 +1098,7 @@ const Products = () => {
                                 <IconButton
                                   size="small"
                                   color="primary"
-                                  onClick={() => handleOpenDialog('edit', product)}
+                                  onClick={() => handleOpenDialog(product)}
                                   sx={{ 
                                     borderRadius: 2,
                                     '&:hover': {

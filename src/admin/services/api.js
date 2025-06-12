@@ -51,8 +51,8 @@ export const dashboardAPI = {
 export const productsAPI = {
     getAll: () => api.get('/dashboard/products'),
     getOne: (id) => api.get(`/dashboard/products/${id}`),
-    create: (data) => api.post('/dashboard/products', data),
-    update: (id, data) => api.put(`/dashboard/products/${id}`, data),
+    create: (data) => api.post('/products', data),
+    update: (id, data) => api.patch(`/dashboard/products/${id}`, data),
     delete: (id) => api.delete(`/dashboard/products/${id}`),
 };
 

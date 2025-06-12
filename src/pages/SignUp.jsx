@@ -13,9 +13,29 @@ export default function SignUp() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.userProfile?.profile) || [];
+
+  const validatePassword = (pass) => {
+    if (pass.length < 8) {
+      return "كلمة المرور يجب أن تكون 8 أحرف على الأقل";
+    }
+    if (!/[A-Za-z]/.test(pass)) {
+      return "كلمة المرور يجب أن تحتوي على حرف واحد على الأقل";
+    }
+    if (!/[0-9]/.test(pass)) {
+      return "كلمة المرور يجب أن تحتوي على رقم واحد على الأقل";
+    }
+    return "";
+  };
+
+  const handlePasswordChange = (e) => {
+    const newPassword = e.target.value;
+    setPassword(newPassword);
+    setPasswordError(validatePassword(newPassword));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,6 +43,14 @@ export default function SignUp() {
     // Validate form fields
     if (!name || !address || !phone || !email || !password) {
       toast.error("الرجاء ملء جميع الحقول المطلوبة");
+      return;
+    }
+
+    // Validate password
+    const passwordValidationError = validatePassword(password);
+    if (passwordValidationError) {
+      setPasswordError(passwordValidationError);
+      toast.error(passwordValidationError);
       return;
     }
 
@@ -34,11 +62,13 @@ export default function SignUp() {
         toast.success("تم إنشاء الحساب بنجاح");
         navigate("/");
       } else {
-        toast.error(res.payload?.message || "حدث خطأ أثناء إنشاء الحساب");
+        const errorMessage = res.payload?.message || "حدث خطأ أثناء إنشاء الحساب";
+        toast.error(errorMessage);
       }
     } catch (error) {
       console.error("Registration error:", error);
-      toast.error(error?.response?.data?.message || "حدث خطأ أثناء إنشاء الحساب");
+      const errorMessage = error?.response?.data?.message || "حدث خطأ أثناء إنشاء الحساب";
+      toast.error(errorMessage);
     }
   };
 
@@ -147,11 +177,19 @@ export default function SignUp() {
                 </label>
                 <input
                   type="password"
-                  className="form-control border-0 border-bottom"
+                  className={`form-control border-0 border-bottom ${passwordError ? 'is-invalid' : ''}`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={handlePasswordChange}
                   required
                 />
+                {passwordError && (
+                  <div className="invalid-feedback d-block">
+                    {passwordError}
+                  </div>
+                )}
+                <small className="text-muted">
+                  كلمة المرور يجب أن تكون 8 أحرف على الأقل وتحتوي على حرف ورقم واحد على الأقل
+                </small>
               </div>
               <div className="d-flex flex-column gap-3 mb-4">
                 <button
