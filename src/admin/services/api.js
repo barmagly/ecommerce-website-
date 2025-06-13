@@ -56,8 +56,8 @@ export const dashboardAPI = {
 
 // Products API
 export const productsAPI = {
-    getAll: () => api.get('/dashboard/products'),
-    getOne: (id) => api.get(`/dashboard/products/${id}`),
+    getAll: () => api.get('/products'),
+    getOne: (id) => api.get(`/products/${id}`),
     create: (data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
@@ -72,7 +72,7 @@ export const productsAPI = {
         }
         return api.patch(`/products/${id}`, data);
     },
-    delete: (id) => api.delete(`/dashboard/products/${id}`),
+    delete: (id) => api.delete(`/products/${id}`),
 };
 
 // Categories API
@@ -119,34 +119,34 @@ export const usersAPI = {
 
 // Orders API
 export const ordersAPI = {
-    getAll: () => api.get('/dashboard/orders'),
-    getOne: (id) => api.get(`/dashboard/orders/${id}`),
+    getAll: () => api.get('/orders'),
+    getOne: (id) => api.get(`/orders/${id}`),
     create: (data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
-            return api.post('/dashboard/orders', data);
+            return api.post('/orders', data);
         }
-        return api.post('/dashboard/orders', data);
+        return api.post('/orders', data);
     },
     update: (id, data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
-            return api.put(`/dashboard/orders/${id}`, data);
+            return api.put(`/orders/${id}`, data);
         }
-        return api.put(`/dashboard/orders/${id}`, data);
+        return api.put(`/orders/${id}`, data);
     },
-    delete: (id) => api.delete(`/dashboard/orders/${id}`),
+    delete: (id) => api.delete(`/orders/${id}`),
 };
 
 // Profile API
 export const profileAPI = {
-    get: (id) => api.get(`/dashboard/profile/${id}`),
+    get: (id) => api.get(`/auth/profile/${id}`),
     update: (id, data) => {
         // Profile updates often include files, so use FormData
         if (data instanceof FormData) {
-            return api.put(`/dashboard/profile/${id}`, data);
+            return api.put(`/auth/profile/${id}`, data);
         }
-        return api.put(`/dashboard/profile/${id}`, data);
+        return api.put(`/auth/profile/${id}`, data);
     },
 };
 

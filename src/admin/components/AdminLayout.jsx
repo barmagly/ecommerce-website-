@@ -137,13 +137,13 @@ const AnimatedMenuItem = ({ item, isActive, onClick, index }) => {
     <motion.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
-      transition={{ 
-        duration: 0.5, 
+      transition={{
+        duration: 0.5,
         delay: index * 0.1,
         type: "spring",
         stiffness: 100
       }}
-      whileHover={{ 
+      whileHover={{
         scale: 1.02,
         transition: { duration: 0.2 }
       }}
@@ -205,7 +205,7 @@ const AnimatedMenuItem = ({ item, isActive, onClick, index }) => {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              transition={{ 
+              transition={{
                 type: "spring",
                 stiffness: 200,
                 damping: 15
@@ -252,9 +252,9 @@ function AdminLayout({ children }) {
   const isMenuOpen = Boolean(anchorEl);
 
   const drawer = (
-    <Box sx={{ 
-      height: '100%', 
-      display: 'flex', 
+    <Box sx={{
+      height: '100%',
+      display: 'flex',
       flexDirection: 'column',
       background: 'linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%)',
       position: 'relative',
@@ -275,28 +275,28 @@ function AdminLayout({ children }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, type: "spring" }}
       >
-      <Box
-        sx={{
+        <Box
+          sx={{
             p: 4,
             position: 'relative',
             zIndex: 1,
             textAlign: 'center',
-          color: 'white',
+            color: 'white',
           }}
         >
           <motion.div
-            whileHover={{ 
+            whileHover={{
               scale: 1.1,
               rotate: 360,
               transition: { duration: 0.6 }
-        }}
-      >
-        <Avatar
-          sx={{
+            }}
+          >
+            <Avatar
+              sx={{
                 width: 80,
                 height: 80,
-            mx: 'auto',
-            mb: 2,
+                mx: 'auto',
+                mb: 2,
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
                 border: '3px solid rgba(255,255,255,0.3)',
                 backdropFilter: 'blur(10px)',
@@ -304,24 +304,24 @@ function AdminLayout({ children }) {
               }}
             >
               <AnalyticsIcon sx={{ fontSize: 40, color: 'white' }} />
-        </Avatar>
+            </Avatar>
           </motion.div>
           <Typography variant="h5" fontWeight="bold" sx={{ mb: 0.5 }}>
-          لوحة التحكم
-        </Typography>
+            لوحة التحكم
+          </Typography>
           <Typography variant="body2" sx={{ opacity: 0.9 }}>
-          نظام إدارة المتجر
-        </Typography>
-         
-      </Box>
+            نظام إدارة المتجر
+          </Typography>
+
+        </Box>
       </motion.div>
 
       {/* Navigation Menu */}
       <Box sx={{ flex: 1, px: 2.5, mt: 2 }}>
         <List>
-        {menuItems.map((item, index) => {
-          const isActive = location.pathname === item.path;
-          return (
+          {menuItems.map((item, index) => {
+            const isActive = location.pathname === item.path;
+            return (
               <AnimatedMenuItem
                 key={item.text}
                 item={item}
@@ -329,9 +329,9 @@ function AdminLayout({ children }) {
                 onClick={() => navigate(item.path)}
                 index={index}
               />
-          );
-        })}
-      </List>
+            );
+          })}
+        </List>
       </Box>
 
       {/* Enhanced Footer */}
@@ -345,7 +345,7 @@ function AdminLayout({ children }) {
           <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 1500 }}>
             🚀 Barmagly
           </Typography>
-         
+
         </Box>
       </motion.div>
     </Box>
@@ -373,8 +373,8 @@ function AdminLayout({ children }) {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ 
-              ml: 2, 
+            sx={{
+              ml: 2,
               display: { md: 'none' },
               background: alpha(theme.palette.primary.main, 0.1),
               '&:hover': {
@@ -393,15 +393,15 @@ function AdminLayout({ children }) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Typography variant="h6" noWrap sx={{ 
+              <Typography variant="h6" noWrap sx={{
                 fontWeight: 700,
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 backgroundClip: 'text',
                 WebkitBackgroundClip: 'text',
                 WebkitTextFillColor: 'transparent',
               }}>
-            مرحباً بك في لوحة التحكم
-          </Typography>
+                مرحباً بك في لوحة التحكم
+              </Typography>
             </motion.div>
           </Box>
 
@@ -409,15 +409,15 @@ function AdminLayout({ children }) {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Tooltip title="العودة للصفحة الرئيسية">
-                <IconButton 
+                <IconButton
                   onClick={() => window.open('/', '_blank')}
-                  sx={{ 
+                  sx={{
                     background: alpha(theme.palette.success.main, 0.1),
                     '&:hover': { background: alpha(theme.palette.success.main, 0.2) }
                   }}
                 >
                   <HomeIcon sx={{ color: theme.palette.success.main }} />
-            </IconButton>
+                </IconButton>
               </Tooltip>
             </motion.div>
 
@@ -425,22 +425,22 @@ function AdminLayout({ children }) {
 
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Tooltip title="الملف الشخصي">
-            <IconButton
-              onClick={handleProfileMenuOpen}
-                  sx={{ 
+                <IconButton
+                  onClick={handleProfileMenuOpen}
+                  sx={{
                     background: alpha(theme.palette.primary.main, 0.1),
                     '&:hover': { background: alpha(theme.palette.primary.main, 0.2) }
                   }}
                 >
-                  <Avatar sx={{ 
-                    width: 40, 
-                    height: 40, 
+                  <Avatar sx={{
+                    width: 40,
+                    height: 40,
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     boxShadow: '0 4px 14px rgba(0,0,0,0.2)',
                   }}>
-                <AccountCircleIcon />
-              </Avatar>
-            </IconButton>
+                    <AccountCircleIcon />
+                  </Avatar>
+                </IconButton>
               </Tooltip>
             </motion.div>
           </Box>
@@ -482,9 +482,9 @@ function AdminLayout({ children }) {
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem sx={{ py: 2, borderRadius: 2, mx: 1, mb: 1 }}>
-          <Avatar sx={{ 
-            mr: 2, 
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' 
+          <Avatar sx={{
+            mr: 2,
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
           }} />
           <Box>
             <Typography variant="subtitle2" fontWeight="bold">
@@ -496,13 +496,13 @@ function AdminLayout({ children }) {
           </Box>
         </MenuItem>
         <Divider />
-        <MenuItem 
+        <MenuItem
           onClick={() => window.location.href = '/admin/settings'}
           sx={{ borderRadius: 2, mx: 1, my: 0.5 }}>
           <SettingsIcon sx={{ mr: 2, color: 'primary.main' }} />
           الإعدادات
         </MenuItem>
-        <MenuItem 
+        <MenuItem
           onClick={() => window.open('/settings', '_blank')}
           sx={{ borderRadius: 2, mx: 1, my: 0.5 }}
         >
@@ -510,7 +510,7 @@ function AdminLayout({ children }) {
           العودة للموقع
         </MenuItem>
         <Divider />
-        <MenuItem 
+        <MenuItem
           onClick={logout}
           sx={{ borderRadius: 2, mx: 1, mt: 0.5, color: 'error.main' }}
         >
@@ -595,7 +595,7 @@ function AdminLayout({ children }) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          style={{ 
+          style={{
             padding: 0,
             position: 'relative',
             zIndex: 1,
@@ -603,7 +603,7 @@ function AdminLayout({ children }) {
             height: '100%',
           }}
         >
-        {children}
+          {children}
         </motion.div>
       </Box>
     </Box>

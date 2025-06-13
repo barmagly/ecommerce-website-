@@ -11,7 +11,7 @@ export const login = createAsyncThunk(
         return rejectWithValue('admin only can login');
       }
       localStorage.setItem('adminToken', response.data.data.token);
-      return response.data;
+      return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Login failed');
     }

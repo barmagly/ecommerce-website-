@@ -111,10 +111,29 @@ const ordersSlice = createSlice({
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
         state.items = action.payload.orders;
-        state.totalOrders = action.payload.total;
-        state.totalRevenue = action.payload.totalRevenue;
-        state.pagination.totalPages = Math.ceil(action.payload.total / state.pagination.limit);
-        state.stats = action.payload.stats;
+        state.totalOrders = action.payload.count;
+
+        // Calculate status counts from orders array
+        const statusCounts = {
+          pending: 0,
+          processing: 0,
+          shipped: 0,
+          delivered: 0,
+          cancelled: 0
+        };
+
+        action.payload.orders.forEach(order => {
+          if (order.status && statusCounts.hasOwnProperty(order.status)) {
+            statusCounts[order.status]++;
+          }
+        });
+
+        state.stats = {
+          total: action.payload.count,
+          statusCounts
+        };
+
+        state.pagination.totalPages = Math.ceil(action.payload.count / state.pagination.limit);
       })
       .addCase(fetchOrders.rejected, (state, action) => {
         state.loading = false;

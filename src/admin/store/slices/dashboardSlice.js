@@ -66,7 +66,22 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.loading = false;
-        state.overview = action.payload;
+        state.overview = {
+          totalProducts: action.payload.summary.products,
+          totalCategories: action.payload.summary.categories,
+          totalUsers: action.payload.summary.users,
+          totalOrders: action.payload.summary.orders,
+          totalCoupons: 0,
+          totalReviews: 0,
+          totalCarts: 0,
+          totalVariants: 0
+        };
+        state.stats = {
+          totalProducts: action.payload.stats.totalProducts,
+          totalCategories: action.payload.stats.totalCategories,
+          totalUsers: action.payload.stats.totalUsers,
+          totalOrders: action.payload.stats.totalOrders
+        };
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.loading = false;

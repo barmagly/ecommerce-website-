@@ -617,7 +617,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/users')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="إجمالي المستخدمين"
-                value={safeOverview.totalUsers}
+                value={stats?.totalUsers || 0}
                 icon={<UsersIcon sx={{ fontSize: 28 }} />}
                 color="#1a237e"
                 trend="up"
@@ -628,7 +628,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/products')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="المنتجات"
-                value={safeOverview.totalProducts}
+                value={stats?.totalProducts || 0}
                 icon={<ProductsIcon sx={{ fontSize: 28 }} />}
                 color="#0d47a1"
                 trend="up"
@@ -639,7 +639,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/orders')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="الطلبات"
-                value={safeOverview.totalOrders}
+                value={stats?.totalOrders || 0}
                 icon={<OrdersIcon sx={{ fontSize: 28 }} />}
                 color="#1565c0"
                 trend="up"
@@ -650,7 +650,7 @@ const Dashboard = () => {
             <Box onClick={() => navigate('/admin/categories')} sx={{ cursor: 'pointer' }}>
               <StatsCard
                 title="الفئات"
-                value={safeOverview.totalCategories}
+                value={stats?.totalCategories || 0}
                 icon={<CategoryIcon sx={{ fontSize: 28 }} />}
                 color="#2196f3"
                 subtitle="فئات المنتجات"
