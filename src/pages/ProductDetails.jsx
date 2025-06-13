@@ -76,14 +76,16 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (product) {
-      // Initialize selected attributes
-      const initialAttributes = {};
-      product.attributes?.forEach(attr => {
-        if (attr.values.length > 0) {
-          initialAttributes[attr.name] = attr.values[0];
-        }
-      });
-      setSelectedAttributes(initialAttributes);
+      // Initialize selected attributes only if product has attributes
+      if (product.attributes?.length > 0) {
+        const initialAttributes = {};
+        product.attributes.forEach(attr => {
+          if (attr.values.length > 0) {
+            initialAttributes[attr.name] = attr.values[0];
+          }
+        });
+        setSelectedAttributes(initialAttributes);
+      }
     }
   }, [product]);
 
@@ -103,6 +105,9 @@ export default function ProductDetails() {
         setSelectedVariant(variants[0]);
         setCurrentVariantIndex(0);
       }
+    } else {
+      // If no variants, set selectedVariant to null
+      setSelectedVariant(null);
     }
   }, [variants, selectedAttributes]);
 
@@ -217,7 +222,7 @@ export default function ProductDetails() {
   const handleAddToCartClick = () => {
     handleAddToCart(dispatch, addToCartThunk, {
       productId: id,
-      variantId: selectedVariant?._id
+      variantId: selectedVariant?._id // This will be undefined for products without variants
     }, navigate);
   };
 
@@ -407,12 +412,11 @@ export default function ProductDetails() {
 
             <p className="mb-3 text-muted" style={{ fontSize: '1.1rem' }}>{product.description}</p>
 
-            {product.attributes?.map((attr, idx) => (
+            {product.attributes?.length > 0 && product.attributes.map((attr, idx) => (
               <div key={idx} className="mb-3">
                 <span className="fw-bold">{attr.name}:</span>
                 <div className="d-flex gap-2 mt-2 flex-wrap">
                   {attr.values.map((value, vIdx) => {
-                    // Check if this value is available in any variant
                     const isAvailable = variants?.some(v =>
                       v.attributes[attr.name] === value &&
                       Object.entries(selectedAttributes).every(([key, val]) =>
@@ -451,20 +455,33 @@ export default function ProductDetails() {
               </div>
             ))}
 
-            {selectedVariant && (
-              <div className="mb-3">
-                <div className="d-flex align-items-center gap-2">
-                  <span className={`badge ${selectedVariant.inStock ? 'bg-success' : 'bg-danger'}`}>
-                    {selectedVariant.inStock ? 'متوفر' : 'غير متوفر'}
-                  </span>
-                  {selectedVariant.quantity > 0 && (
-                    <span className="text-muted">
-                      الكمية المتوفرة: {selectedVariant.quantity}
+            <div className="mb-3">
+              <div className="d-flex align-items-center gap-2">
+                {selectedVariant ? (
+                  <>
+                    <span className={`badge ${selectedVariant.inStock ? 'bg-success' : 'bg-danger'}`}>
+                      {selectedVariant.inStock ? 'متوفر' : 'غير متوفر'}
                     </span>
-                  )}
-                </div>
+                    {selectedVariant.quantity > 0 && (
+                      <span className="text-muted">
+                        الكمية المتوفرة: {selectedVariant.quantity}
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <span className={`badge ${product.stock > 0 ? 'bg-success' : 'bg-danger'}`}>
+                      {product.stock > 0 ? 'متوفر' : 'غير متوفر'}
+                    </span>
+                    {product.stock > 0 && (
+                      <span className="text-muted">
+                        الكمية المتوفرة: {product.stock}
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
-            )}
+            </div>
 
             {product.features?.length > 0 && (
               <div className="mb-3">

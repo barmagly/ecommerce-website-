@@ -85,7 +85,7 @@ import {
   PolarRadiusAxis,
   Radar,
   ComposedChart,
-} from 'recharts';
+} from 'recharts'; 
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -93,6 +93,9 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs from 'dayjs';
 import { useNavigate } from 'react-router-dom';
+import { dashboardAPI } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchDashboardData, fetchDashboardStats } from '../store/slices/dashboardSlice';
 
 // Mock data for Arabic dashboard
 const salesData = [
@@ -502,126 +505,13 @@ const StatusBadge = ({ status }) => {
 const Dashboard = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    totalUsers: 0,
-    totalProducts: 0,
-    totalOrders: 0,
-    totalRevenue: 0,
-    totalCategories: 0,
-    totalCoupons: 0,
-    totalReviews: 0,
-    totalCarts: 0,
-    totalVariants: 0,
-  });
-  const [menuAnchorEl, setMenuAnchorEl] = useState(null);
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
-  const [selectedFilter, setSelectedFilter] = useState('هذا الشهر');
-  const [dateDialogOpen, setDateDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState([null, null]);
+  const dispatch = useDispatch();
+  const { overview, stats, loading, error } = useSelector((state) => state.dashboard);
 
-  // Simulate loading and fetch dashboard data
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        // Simulate API calls to all endpoints
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Mock data based on backend endpoints
-        setDashboardData({
-          totalUsers: 12847,
-          totalProducts: 1256,
-          totalOrders: 8934,
-          totalRevenue: 2847293,
-          totalCategories: 24,
-          totalCoupons: 18,
-          totalReviews: 4562,
-          totalCarts: 234,
-          totalVariants: 892,
-        });
-        
-        // Dashboard loaded successfully - no need for toast notification
-      } catch (error) {
-        toast.error('فشل في تحميل بيانات لوحة التحكم');
-        console.error('Dashboard error:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  // Action handlers (mock logic)
-  const handleMenuClick = (event, order) => {
-    setMenuAnchorEl(event.currentTarget);
-    setSelectedOrder(order);
-    setSelectedOrderId(order.id);
-  };
-  const handleMenuClose = () => {
-    setMenuAnchorEl(null);
-    setSelectedOrder(null);
-    setSelectedOrderId(null);
-  };
-  const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setOrderDetailsOpen(true);
-  };
-  const handleEditOrder = () => {
-    toast.info('تعديل الطلب (تجريبي)');
-    handleMenuClose();
-  };
-  const handleUpdateOrderStatus = (status) => {
-    toast.success(`تم تحديث حالة الطلب إلى: ${status}`);
-    handleMenuClose();
-  };
-  const handlePrintInvoice = () => {
-    toast.info('طباعة الفاتورة (تجريبي)');
-    handleMenuClose();
-  };
-  const handleExportPDF = () => {
-    toast.info('تصدير PDF (تجريبي)');
-    handleMenuClose();
-  };
-  const handleSendEmail = () => {
-    toast.info('إرسال إيميل للعميل (تجريبي)');
-    handleMenuClose();
-  };
-  const handleDeleteOrder = () => {
-    toast.error('تم حذف الطلب (تجريبي)');
-    handleMenuClose();
-  };
-
-  const handleFilterClick = (event) => {
-    setFilterAnchorEl(event.currentTarget);
-  };
-  const handleFilterClose = () => {
-    setFilterAnchorEl(null);
-  };
-  const handleFilterSelect = (option) => {
-    if (option === 'تحديد تاريخ...') {
-      setDateDialogOpen(true);
-    } else {
-      setSelectedFilter(option);
-    }
-    setFilterAnchorEl(null);
-  };
-  const handleDateDialogClose = () => {
-    setDateDialogOpen(false);
-  };
-  const handleDateRangeChange = (newRange) => {
-    setDateRange(newRange);
-  };
-  const handleDateRangeApply = () => {
-    if (dateRange[0] && dateRange[1]) {
-      setSelectedFilter(`${dayjs(dateRange[0]).format('YYYY/MM/DD')} - ${dayjs(dateRange[1]).format('YYYY/MM/DD')}`);
-    }
-    setDateDialogOpen(false);
-  };
+    dispatch(fetchDashboardData());
+    dispatch(fetchDashboardStats());
+  }, [dispatch]);
 
   if (loading) {
     return (
@@ -640,6 +530,33 @@ const Dashboard = () => {
       </Box>
     );
   }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  // Use default data if stats is not available
+  const salesData = stats?.salesData || [];
+  const categoryData = stats?.categoryData || [];
+  const recentOrders = stats?.recentOrders || [];
+  const topProducts = stats?.topProducts || [];
+  const performanceMetrics = stats?.performanceMetrics || [];
+
+  // Fix NaN display in stats cards
+  const safeOverview = {
+    totalUsers: Number.isFinite(overview?.totalUsers) ? overview.totalUsers : 0,
+    totalProducts: Number.isFinite(overview?.totalProducts) ? overview.totalProducts : 0,
+    totalOrders: Number.isFinite(overview?.totalOrders) ? overview.totalOrders : 0,
+    totalCategories: Number.isFinite(overview?.totalCategories) ? overview.totalCategories : 0,
+    totalCoupons: Number.isFinite(overview?.totalCoupons) ? overview.totalCoupons : 0,
+    totalReviews: Number.isFinite(overview?.totalReviews) ? overview.totalReviews : 0,
+    totalCarts: Number.isFinite(overview?.totalCarts) ? overview.totalCarts : 0,
+    totalVariants: Number.isFinite(overview?.totalVariants) ? overview.totalVariants : 0,
+  };
 
   return (
     <Box sx={{ 
@@ -686,273 +603,213 @@ const Dashboard = () => {
             },
           },
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <Typography 
-                  variant="h4" 
-                  fontWeight="bold" 
-                  gutterBottom
-                  sx={{
-                    background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    animation: 'titleGradient 3s ease infinite',
-                    '@keyframes titleGradient': {
-                      '0%': {
-                        backgroundPosition: '0% 50%',
-                      },
-                      '50%': {
-                        backgroundPosition: '100% 50%',
-                      },
-                      '100%': {
-                        backgroundPosition: '0% 50%',
-                      },
-                    },
-                  }}
-                >
-                  نظرة عامة على لوحة التحكم
-                </Typography>
-              </motion.div>
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  مرحباً بك! إليك ما يحدث في متجرك
-                </Typography>
-              </motion.div>
+          {/* Primary Stats Cards */}
+          <Box sx={{ 
+            display: 'flex', 
+            flexWrap: 'wrap', 
+            gap: { xs: 2, md: 3 }, 
+            mb: 4,
+            '& > *': { 
+              flex: '1 1 auto',
+              minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }
+            }
+          }}>
+            <Box onClick={() => navigate('/admin/users')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="إجمالي المستخدمين"
+                value={safeOverview.totalUsers}
+                icon={<UsersIcon sx={{ fontSize: 28 }} />}
+                color="#1a237e"
+                trend="up"
+                trendValue={12.5}
+                subtitle="العملاء النشطون"
+              />
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<DateRange />}
-                  onClick={handleFilterClick}
-                  sx={{
-                    borderColor: 'rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      background: 'rgba(0,0,0,0.02)',
-                    }
-                  }}
-                >
-                  {selectedFilter}
-                </Button>
-                <Menu
-                  anchorEl={filterAnchorEl}
-                  open={Boolean(filterAnchorEl)}
-                  onClose={handleFilterClose}
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-                >
-                  <MenuItem onClick={() => handleFilterSelect('اليوم')}>اليوم</MenuItem>
-                  <MenuItem onClick={() => handleFilterSelect('هذا الأسبوع')}>هذا الأسبوع</MenuItem>
-                  <MenuItem onClick={() => handleFilterSelect('هذا الشهر')}>هذا الشهر</MenuItem>
-                  <MenuItem onClick={() => handleFilterSelect('تحديد تاريخ...')}>تحديد تاريخ...</MenuItem>
-                </Menu>
-                <Dialog open={dateDialogOpen} onClose={handleDateDialogClose}>
-                  <DialogTitle>تحديد الفترة</DialogTitle>
-                  <DialogContent>
-                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="ar-sa">
-                      <Stack direction="row" spacing={2}>
-                        <DatePicker
-                          label="من"
-                          value={dateRange[0]}
-                          onChange={date => setDateRange([date, dateRange[1]])}
-                          renderInput={(params) => <TextField {...params} />}
-                        />
-                        <DatePicker
-                          label="إلى"
-                          value={dateRange[1]}
-                          onChange={date => setDateRange([dateRange[0], date])}
-                          renderInput={(params) => <TextField {...params} />}
-                        />
-                      </Stack>
-                    </LocalizationProvider>
-                  </DialogContent>
-                  <DialogActions>
-                    <Button onClick={handleDateDialogClose}>إلغاء</Button>
-                    <Button onClick={handleDateRangeApply} variant="contained">تطبيق</Button>
-                  </DialogActions>
-                </Dialog>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  variant="outlined"
-                  startIcon={<Analytics />}
-                  onClick={() => {
-                    const dataStr = JSON.stringify(dashboardData, null, 2);
-                    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-                    const url = URL.createObjectURL(dataBlob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `dashboard-report-${new Date().toISOString().split('T')[0]}.json`;
-                    link.click();
-                    toast.success('تم تصدير البيانات بنجاح');
-                  }}
-                  sx={{
-                    borderColor: 'rgba(0,0,0,0.1)',
-                    '&:hover': {
-                      borderColor: 'primary.main',
-                      background: 'rgba(0,0,0,0.02)',
-                    }
-                  }}
-                >
-                  تصدير البيانات
-                </Button>
-              </motion.div>
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Button
-                  variant="contained"
-                  startIcon={<Refresh />}
-                  onClick={() => {
-                    window.location.reload();
-                    toast.success('جاري تحديث البيانات...');
-                  }}
-                  sx={{
-                    background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
-                    boxShadow: '0 4px 20px rgba(26,35,126,0.2)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)',
-                      boxShadow: '0 6px 25px rgba(26,35,126,0.3)',
-                    }
-                  }}
-                >
-                  تحديث
-                </Button>
-              </motion.div>
+            <Box onClick={() => navigate('/admin/products')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="المنتجات"
+                value={safeOverview.totalProducts}
+                icon={<ProductsIcon sx={{ fontSize: 28 }} />}
+                color="#0d47a1"
+                trend="up"
+                trendValue={8.2}
+                subtitle="في المخزون"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/orders')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="الطلبات"
+                value={safeOverview.totalOrders}
+                icon={<OrdersIcon sx={{ fontSize: 28 }} />}
+                color="#1565c0"
+                trend="up"
+                trendValue={15.3}
+                subtitle="إجمالي الطلبات"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/categories')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="الفئات"
+                value={safeOverview.totalCategories}
+                icon={<CategoryIcon sx={{ fontSize: 28 }} />}
+                color="#2196f3"
+                subtitle="فئات المنتجات"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/coupons')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="الكوبونات النشطة"
+                value={safeOverview.totalCoupons}
+                icon={<CouponIcon sx={{ fontSize: 28 }} />}
+                color="#42a5f5"
+                subtitle="كوبونات الخصم"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/reviews')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="المراجعات"
+                value={safeOverview.totalReviews}
+                icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
+                color="#64b5f6"
+                trend="up"
+                trendValue={5.7}
+                subtitle="مراجعات العملاء"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/carts')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="عربات التسوق النشطة"
+                value={safeOverview.totalCarts}
+                icon={<CartIcon sx={{ fontSize: 28 }} />}
+                color="#90caf9"
+                subtitle="عربات التسوق"
+              />
+            </Box>
+            <Box onClick={() => navigate('/admin/variants')} sx={{ cursor: 'pointer' }}>
+              <StatsCard
+                title="خيارات المنتجات"
+                value={safeOverview.totalVariants}
+                icon={<VariantIcon sx={{ fontSize: 28 }} />}
+                color="#bbdefb"
+                subtitle="خيارات المنتجات"
+              />
             </Box>
           </Box>
-        </Box>
 
-        {/* Primary Stats Cards - Flex Layout */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: { xs: 2, md: 3 }, 
-          mb: 4,
-          '& > *': { 
-            flex: '1 1 auto',
-            minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }
-          }
-        }}>
-          <Box onClick={() => navigate('/admin/users')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="إجمالي المستخدمين"
-              value={dashboardData.totalUsers}
-              icon={<UsersIcon sx={{ fontSize: 28 }} />}
-              color="#1a237e"
-              trend="up"
-              trendValue={12.5}
-              subtitle="العملاء النشطون"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/products')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="المنتجات"
-              value={dashboardData.totalProducts}
-              icon={<ProductsIcon sx={{ fontSize: 28 }} />}
-              color="#0d47a1"
-              trend="up"
-              trendValue={8.2}
-              subtitle="في المخزون"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/orders')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="الطلبات"
-              value={dashboardData.totalOrders}
-              icon={<OrdersIcon sx={{ fontSize: 28 }} />}
-              color="#1565c0"
-              trend="up"
-              trendValue={15.3}
-              subtitle="إجمالي الطلبات"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/revenue')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="الإيرادات"
-              value={`$${(dashboardData.totalRevenue / 1000).toFixed(0)}K`}
-              icon={<AttachMoney sx={{ fontSize: 28 }} />}
-              color="#1976d2"
-              trend="up"
-              trendValue={23.1}
-              subtitle="إجمالي الإيرادات"
-            />
-          </Box>
-        </Box>
+          {/* Charts and Tables */}
+          <Grid container spacing={3}>
+            {/* Sales Chart */}
+            <Grid item xs={12} md={8}>
+              <ChartCard title="المبيعات والإيرادات">
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={salesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="month" />
+                    <YAxis />
+                    <RechartsTooltip />
+                    <Legend />
+                    <Area
+                      type="monotone"
+                      dataKey="sales"
+                      stackId="1"
+                      stroke="#8884d8"
+                      fill="#8884d8"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="revenue"
+                      stackId="2"
+                      stroke="#82ca9d"
+                      fill="#82ca9d"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </Grid>
 
-        {/* Secondary Stats - Flex Layout */}
-        <Box sx={{ 
-          display: 'flex', 
-          flexWrap: 'wrap', 
-          gap: { xs: 2, md: 3 }, 
-          mb: 4,
-          '& > *': { 
-            flex: '1 1 auto',
-            minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(20% - 14.4px)' }
-          }
-        }}>
-          <Box onClick={() => navigate('/admin/categories')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="الفئات"
-              value={dashboardData.totalCategories}
-              icon={<CategoryIcon sx={{ fontSize: 28 }} />}
-              color="#2196f3"
-              subtitle="فئات المنتجات"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/coupons')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="الكوبونات النشطة"
-              value={dashboardData.totalCoupons}
-              icon={<CouponIcon sx={{ fontSize: 28 }} />}
-              color="#42a5f5"
-              subtitle="كوبونات الخصم"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/reviews')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="المراجعات"
-              value={dashboardData.totalReviews}
-              icon={<ReviewsIcon sx={{ fontSize: 28 }} />}
-              color="#64b5f6"
-              trend="up"
-              trendValue={5.7}
-              subtitle="مراجعات العملاء"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/carts')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="عربات التسوق النشطة"
-              value={dashboardData.totalCarts}
-              icon={<CartIcon sx={{ fontSize: 28 }} />}
-              color="#90caf9"
-              subtitle="عربات التسوق"
-            />
-          </Box>
-          <Box onClick={() => navigate('/admin/variants')} sx={{ cursor: 'pointer' }}>
-            <StatsCard
-              title="خيارات المنتجات"
-              value={dashboardData.totalVariants}
-              icon={<VariantIcon sx={{ fontSize: 28 }} />}
-              color="#bbdefb"
-              subtitle="خيارات المنتجات"
-            />
-          </Box>
+            {/* Category Distribution */}
+            <Grid item xs={12} md={4}>
+              <ChartCard title="توزيع الفئات">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={categoryData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={80}
+                      label
+                    >
+                      {categoryData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </ChartCard>
+            </Grid>
+
+            {/* Recent Orders */}
+            <Grid item xs={12} md={6}>
+              <ChartCard title="آخر الطلبات">
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>الطلب</TableCell>
+                        <TableCell>العميل</TableCell>
+                        <TableCell>المبلغ</TableCell>
+                        <TableCell>الحالة</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(recentOrders && recentOrders.length > 0 ? recentOrders : []).map((order) => (
+                        <TableRow key={order._id || order.id}>
+                          <TableCell>{order.orderNumber || order.id}</TableCell>
+                          <TableCell>{order.customer?.name || order.customer || '-'}</TableCell>
+                          <TableCell>${order.total?.toFixed(2) || 0}</TableCell>
+                          <TableCell>
+                            <StatusBadge status={order.status} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </ChartCard>
+            </Grid>
+
+            {/* Top Products */}
+            <Grid item xs={12} md={6}>
+              <ChartCard title="المنتجات الأكثر مبيعاً">
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>المنتج</TableCell>
+                        <TableCell>المبيعات</TableCell>
+                        <TableCell>الإيرادات</TableCell>
+                        <TableCell>المخزون</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {topProducts.map((product) => (
+                        <TableRow key={product.name}>
+                          <TableCell>{product.name}</TableCell>
+                          <TableCell>{product.sales}</TableCell>
+                          <TableCell>${product.revenue}</TableCell>
+                          <TableCell>{product.stock}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </ChartCard>
+            </Grid>
+          </Grid>
         </Box>
       </motion.div>
     </Box>
