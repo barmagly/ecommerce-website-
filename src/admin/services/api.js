@@ -10,12 +10,19 @@ const api = axios.create({
     },
 });
 
-// Add request interceptor to add auth token
+// Add request interceptor to add auth token and handle content type
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('adminToken');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // If the request data is FormData, remove the Content-Type header
+    // to let the browser set it with the boundary
+    if (config.data instanceof FormData) {
+        delete config.headers['Content-Type'];
+    }
+
     return config;
 });
 
@@ -51,26 +58,62 @@ export const dashboardAPI = {
 export const productsAPI = {
     getAll: () => api.get('/dashboard/products'),
     getOne: (id) => api.get(`/dashboard/products/${id}`),
-    create: (data) => api.post('/products', data),
-    update: (id, data) => api.patch(`/dashboard/products/${id}`, data),
+    create: (data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.post('/products', data);
+        }
+        return api.post('/products', data);
+    },
+    update: (id, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.patch(`/products/${id}`, data);
+        }
+        return api.patch(`/products/${id}`, data);
+    },
     delete: (id) => api.delete(`/dashboard/products/${id}`),
 };
 
 // Categories API
 export const categoriesAPI = {
-    getAll: () => api.get('/dashboard/categories'),
-    getOne: (id) => api.get(`/dashboard/categories/${id}`),
-    create: (data) => api.post('/dashboard/categories', data),
-    update: (id, data) => api.put(`/dashboard/categories/${id}`, data),
-    delete: (id) => api.delete(`/dashboard/categories/${id}`),
+    getAll: () => api.get('/categories'),
+    getOne: (id) => api.get(`/categories/${id}`),
+    create: (data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.post('/categories', data);
+        }
+        return api.post('/categories', data);
+    },
+    update: (id, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.patch(`/categories/${id}`, data);
+        }
+        return api.patch(`/categories/${id}`, data);
+    },
+    delete: (id) => api.delete(`/categories/${id}`),
 };
 
 // Users API
 export const usersAPI = {
     getAll: () => api.get('/dashboard/users'),
     getOne: (id) => api.get(`/dashboard/users/${id}`),
-    create: (data) => api.post('/dashboard/users', data),
-    update: (id, data) => api.put(`/dashboard/users/${id}`, data),
+    create: (data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.post('/dashboard/users', data);
+        }
+        return api.post('/dashboard/users', data);
+    },
+    update: (id, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.put(`/dashboard/users/${id}`, data);
+        }
+        return api.put(`/dashboard/users/${id}`, data);
+    },
     delete: (id) => api.delete(`/dashboard/users/${id}`),
 };
 
@@ -78,15 +121,33 @@ export const usersAPI = {
 export const ordersAPI = {
     getAll: () => api.get('/dashboard/orders'),
     getOne: (id) => api.get(`/dashboard/orders/${id}`),
-    create: (data) => api.post('/dashboard/orders', data),
-    update: (id, data) => api.put(`/dashboard/orders/${id}`, data),
+    create: (data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.post('/dashboard/orders', data);
+        }
+        return api.post('/dashboard/orders', data);
+    },
+    update: (id, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.put(`/dashboard/orders/${id}`, data);
+        }
+        return api.put(`/dashboard/orders/${id}`, data);
+    },
     delete: (id) => api.delete(`/dashboard/orders/${id}`),
 };
 
 // Profile API
 export const profileAPI = {
     get: (id) => api.get(`/dashboard/profile/${id}`),
-    update: (id, data) => api.put(`/dashboard/profile/${id}`, data),
+    update: (id, data) => {
+        // Profile updates often include files, so use FormData
+        if (data instanceof FormData) {
+            return api.put(`/dashboard/profile/${id}`, data);
+        }
+        return api.put(`/dashboard/profile/${id}`, data);
+    },
 };
 
 export default api; 

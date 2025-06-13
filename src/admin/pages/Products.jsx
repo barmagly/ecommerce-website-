@@ -74,12 +74,12 @@ const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
-  
+
   // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
   const [dialogMode, setDialogMode] = useState('add'); // 'add', 'edit', 'view'
   const [selectedProduct, setSelectedProduct] = useState(null);
-  
+
   // Form state
   const initialFormData = {
     name: '',
@@ -111,11 +111,11 @@ const Products = () => {
     if ((products || []).length > 0) {
       const lowStockProducts = (products || []).filter(p => p.stock <= 5 && p.stock > 0);
       const outOfStockProducts = (products || []).filter(p => p.stock === 0);
-      
+
       if (outOfStockProducts.length > 0) {
         toast.warning(`تحذير: ${outOfStockProducts.length} منتج نفد مخزونه`);
       }
-      
+
       if (lowStockProducts.length > 0) {
         toast.info(`تنبيه: ${lowStockProducts.length} منتج مخزونه منخفض`);
       }
@@ -175,15 +175,14 @@ const Products = () => {
     setFormErrors({});
   };
 
-  const handleOpenDialog = (product = null) => {
+  const handleOpenDialog = (mode = 'add', product = null) => {
     if (product) {
-      console.log('Editing product:', product); // Debugging line
+      console.log('Editing product:', product);
       // Map the product data to match our form structure
       const mappedProduct = {
         name: product.name || '',
         description: product.description || '',
         brand: product.brand || '',
-        // Handle both object and string for category
         category: (product.category && product.category._id) ? product.category._id : (product.category || ''),
         price: product.price?.toString() || '',
         hasVariants: product.hasVariants || false,
@@ -203,8 +202,10 @@ const Products = () => {
         })) || []
       };
       setFormData(mappedProduct);
+      setDialogMode('edit');
     } else {
       setFormData(initialFormData);
+      setDialogMode('add');
     }
     setSelectedProduct(product);
     setOpenDialog(true);
@@ -218,8 +219,8 @@ const Products = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting form', formData); // Debug log
-    
+    console.log('Submitting form', formData);
+
     // Validate form
     const errors = {};
     if (!formData.name) errors.name = 'اسم المنتج مطلوب';
@@ -229,7 +230,7 @@ const Products = () => {
     if (!formData.brand) errors.brand = 'العلامة التجارية مطلوبة';
     if (!formData.category) errors.category = 'الفئة مطلوبة';
     if (!formData.imageCover) errors.imageCover = 'صورة الغلاف مطلوبة';
-    
+
     if (!formData.hasVariants) {
       if (!formData.price) errors.price = 'السعر مطلوب';
       if (!formData.stock) errors.stock = 'الكمية مطلوبة';
@@ -248,7 +249,7 @@ const Products = () => {
         }
       });
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
       return;
@@ -261,9 +262,9 @@ const Products = () => {
       // Add basic product data
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
-      formData.append('brand', formData.brand);
-      formData.append('category', formData.category);
-      formData.append('hasVariants', formData.hasVariants);
+      formDataToSend.append('brand', formData.brand);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('hasVariants', formData.hasVariants);
 
       // Add simple product fields if no variants
       if (!formData.hasVariants) {
@@ -299,7 +300,7 @@ const Products = () => {
       });
 
       // Add attributes
-      formDataToSend.append('attributes', formData.attributes ? JSON.stringify(formData.attributes) : []);
+      // formDataToSend.append('attributes', JSON.stringify(formData.attributes || []));
 
       // Add variants if product has variants
       if (formData.hasVariants) {
@@ -341,8 +342,8 @@ const Products = () => {
       }
 
       // Add features and specifications
-      formDataToSend.append('features', JSON.stringify(formData.features));
-      formDataToSend.append('specifications', JSON.stringify(formData.specifications));
+      // formDataToSend.append('features', JSON.stringify(formData.features));
+      // formDataToSend.append('specifications', JSON.stringify(formData.specifications));
 
       // Send the request
       if (selectedProduct) {
@@ -352,7 +353,7 @@ const Products = () => {
         await productsAPI.create(formDataToSend);
         toast.success('تم إضافة المنتج بنجاح');
       }
-      
+
       handleCloseDialog();
       fetchProducts();
     } catch (err) {
@@ -387,8 +388,8 @@ const Products = () => {
     if (files.length) {
       setFormData(prev => ({
         ...prev,
-        variants: prev.variants.map((variant, idx) => 
-          idx === variantIndex 
+        variants: prev.variants.map((variant, idx) =>
+          idx === variantIndex
             ? { ...variant, images: [...variant.images, ...files] }
             : variant
         )
@@ -430,7 +431,7 @@ const Products = () => {
   const handleFormChange = (field) => (event) => {
     const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value;
     setFormData(prev => ({ ...prev, [field]: value }));
-    
+
     // Clear error when user starts typing
     if (formErrors[field]) {
       setFormErrors(prev => ({ ...prev, [field]: '' }));
@@ -478,15 +479,15 @@ const Products = () => {
       ...prev,
       attributes: prev.attributes.map((attr, idx) => {
         if (idx !== index) return attr;
-        
+
         if (field === 'values') {
           // Handle values as an array
-          const values = typeof value === 'string' 
+          const values = typeof value === 'string'
             ? value.split(',').map(v => v.trim()).filter(Boolean)
             : value;
           return { ...attr, values };
         }
-        
+
         return { ...attr, [field]: value };
       })
     }));
@@ -520,9 +521,9 @@ const Products = () => {
       attributes: prev.attributes.map(attr =>
         attr.id === attributeId
           ? {
-              ...attr,
-              values: attr.values.map((val, i) => i === valueIndex ? value : val)
-            }
+            ...attr,
+            values: attr.values.map((val, i) => i === valueIndex ? value : val)
+          }
           : attr
       )
     }));
@@ -548,7 +549,7 @@ const Products = () => {
       ...prev,
       variants: prev.variants.map((variant, idx) => {
         if (idx !== index) return variant;
-        
+
         if (field === 'attributes') {
           // Handle attributes as a Map
           const newAttributes = new Map(variant.attributes);
@@ -557,7 +558,7 @@ const Products = () => {
           });
           return { ...variant, attributes: newAttributes };
         }
-        
+
         return { ...variant, [field]: value };
       })
     }));
@@ -643,11 +644,11 @@ const Products = () => {
       specifications: prev.specifications.map(spec =>
         spec.id === groupId
           ? {
-              ...spec,
-              items: spec.items.map(item =>
-                item.id === itemId ? { ...item, [field]: value } : item
-              )
-            }
+            ...spec,
+            items: spec.items.map(item =>
+              item.id === itemId ? { ...item, [field]: value } : item
+            )
+          }
           : spec
       )
     }));
@@ -705,7 +706,7 @@ const Products = () => {
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => handleOpenDialog('add')}
-                sx={{ 
+                sx={{
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   '&:hover': {
                     background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
@@ -798,7 +799,7 @@ const Products = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: 0.1 }}
             >
-              <Card sx={{ 
+              <Card sx={{
                 bgcolor: alpha('#1976d2', 0.1),
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
@@ -829,7 +830,7 @@ const Products = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <Card sx={{ 
+              <Card sx={{
                 bgcolor: alpha('#2e7d32', 0.1),
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
@@ -860,7 +861,7 @@ const Products = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: 0.3 }}
             >
-              <Card sx={{ 
+              <Card sx={{
                 bgcolor: alpha('#ed6c02', 0.1),
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
@@ -891,7 +892,7 @@ const Products = () => {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <Card sx={{ 
+              <Card sx={{
                 bgcolor: alpha('#9c27b0', 0.1),
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
@@ -969,7 +970,7 @@ const Products = () => {
             <TableContainer>
               <Table>
                 <TableHead>
-                  <TableRow sx={{ 
+                  <TableRow sx={{
                     bgcolor: alpha(theme.palette.primary.main, 0.08),
                     '& .MuiTableCell-head': {
                       fontWeight: 700,
@@ -1021,14 +1022,14 @@ const Products = () => {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {product.price} ريال
+                              {product.price} جنية
                               {product.salePrice && (
                                 <Typography
                                   component="span"
                                   variant="caption"
                                   sx={{ textDecoration: 'line-through', color: 'text.secondary', ml: 1 }}
                                 >
-                                  {product.salePrice} ريال
+                                  {product.salePrice} جنية
                                 </Typography>
                               )}
                             </Typography>
@@ -1081,8 +1082,8 @@ const Products = () => {
                                 <IconButton
                                   size="small"
                                   color="info"
-                                  onClick={() => handleOpenDialog(product)}
-                                  sx={{ 
+                                  onClick={() => handleOpenDialog('view', product)}
+                                  sx={{
                                     borderRadius: 2,
                                     '&:hover': {
                                       backgroundColor: alpha('#1976d2', 0.1),
@@ -1093,13 +1094,13 @@ const Products = () => {
                                   <ViewIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              
+
                               <Tooltip title="تعديل المنتج" arrow>
                                 <IconButton
                                   size="small"
                                   color="primary"
-                                  onClick={() => handleOpenDialog(product)}
-                                  sx={{ 
+                                  onClick={() => handleOpenDialog('edit', product)}
+                                  sx={{
                                     borderRadius: 2,
                                     '&:hover': {
                                       backgroundColor: alpha('#2e7d32', 0.1),
@@ -1110,13 +1111,13 @@ const Products = () => {
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
-                              
+
                               <Tooltip title="حذف المنتج" arrow>
                                 <IconButton
                                   size="small"
                                   color="error"
                                   onClick={() => handleDelete(product._id)}
-                                  sx={{ 
+                                  sx={{
                                     borderRadius: 2,
                                     '&:hover': {
                                       backgroundColor: alpha('#d32f2f', 0.1),
@@ -1130,7 +1131,7 @@ const Products = () => {
                             </Box>
                           </TableCell>
                         </motion.tr>
-                  ))}
+                      ))}
                   </AnimatePresence>
                 </TableBody>
               </Table>
@@ -1165,7 +1166,9 @@ const Products = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Typography variant="h6" component="div">
-              {selectedProduct ? 'تعديل المنتج' : 'إضافة منتج جديد'}
+              {dialogMode === 'add' ? 'إضافة منتج جديد' :
+                dialogMode === 'edit' ? 'تعديل المنتج' :
+                  'عرض تفاصيل المنتج'}
             </Typography>
             <IconButton onClick={handleCloseDialog} size="small">
               <CloseIcon />
@@ -1176,8 +1179,7 @@ const Products = () => {
         <DialogContent sx={{ p: 0, mt: 0, maxHeight: '70vh', overflowY: 'auto', bgcolor: '#f7f8fa' }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={3}>
-              {/* Basic Info */}
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   required
@@ -1188,7 +1190,7 @@ const Products = () => {
                   helperText={formErrors.name}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <TextField
                   fullWidth
                   required
@@ -1199,7 +1201,7 @@ const Products = () => {
                   helperText={formErrors.brand}
                 />
               </Grid>
-              <Grid xs={12}>
+              <Grid item xs={12}>
                 <TextField
                   fullWidth
                   required
@@ -1212,7 +1214,7 @@ const Products = () => {
                   helperText={formErrors.description}
                 />
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <FormControl fullWidth required error={!!formErrors.category}>
                   <InputLabel>الفئة</InputLabel>
                   <Select
@@ -1231,7 +1233,7 @@ const Products = () => {
                   )}
                 </FormControl>
               </Grid>
-              <Grid xs={12} md={6}>
+              <Grid item xs={12} md={6}>
                 <FormControlLabel
                   control={
                     <Switch
@@ -1555,9 +1557,11 @@ const Products = () => {
 
             <DialogActions sx={{ mt: 3 }}>
               <Button onClick={handleCloseDialog}>إلغاء</Button>
-              <Button type="submit" variant="contained" color="primary">
-                {selectedProduct ? 'تحديث' : 'إضافة'}
-              </Button>
+              {dialogMode !== 'view' && (
+                <Button type="submit" variant="contained" color="primary">
+                  {dialogMode === 'add' ? 'إضافة' : 'تحديث'}
+                </Button>
+              )}
             </DialogActions>
           </Box>
         </DialogContent>

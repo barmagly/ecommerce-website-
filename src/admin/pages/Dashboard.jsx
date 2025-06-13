@@ -85,7 +85,7 @@ import {
   PolarRadiusAxis,
   Radar,
   ComposedChart,
-} from 'recharts'; 
+} from 'recharts';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
@@ -152,14 +152,14 @@ const AnimatedCounter = ({ value, duration = 2000 }) => {
     const animate = (currentTime) => {
       if (startTime === null) startTime = currentTime;
       const progress = Math.min((currentTime - startTime) / duration, 1);
-      
+
       setCount(Math.floor(progress * (endValue - startValue) + startValue));
-      
+
       if (progress < 1) {
         requestAnimationFrame(animate);
       }
     };
-    
+
     requestAnimationFrame(animate);
   }, [value, duration]);
 
@@ -170,14 +170,14 @@ const AnimatedCounter = ({ value, duration = 2000 }) => {
 const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) => {
   const theme = useTheme();
   const navigate = useNavigate();
-  
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
-      whileHover={{ 
-        y: -8, 
+      whileHover={{
+        y: -8,
         scale: 1.02,
         transition: { duration: 0.3, type: "spring", stiffness: 200 }
       }}
@@ -252,10 +252,10 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                 transition={{ delay: 0.3, duration: 0.5, type: "spring" }}
                 whileHover={{ scale: 1.05 }}
               >
-                <Typography 
-                  variant="h3" 
-                  fontWeight="bold" 
-                  sx={{ 
+                <Typography
+                  variant="h3"
+                  fontWeight="bold"
+                  sx={{
                     mb: 1,
                     background: `linear-gradient(135deg, ${color} 0%, ${alpha(color, 0.8)} 100%)`,
                     backgroundClip: 'text',
@@ -283,10 +283,10 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <Typography 
-                  variant="h6" 
-                  color="text.primary" 
-                  fontWeight={600} 
+                <Typography
+                  variant="h6"
+                  color="text.primary"
+                  fontWeight={600}
                   sx={{ mb: 0.5 }}
                 >
                   {title}
@@ -298,9 +298,9 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.5 }}
                 >
-                  <Typography 
-                    variant="body2" 
-                    color="text.secondary" 
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
                     sx={{ opacity: 0.8 }}
                   >
                     {subtitle}
@@ -316,9 +316,9 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', mt: 1.5 }}>
                     {trend === 'up' ? (
-                      <TrendingUp sx={{ 
-                        color: '#4caf50', 
-                        fontSize: 18, 
+                      <TrendingUp sx={{
+                        color: '#4caf50',
+                        fontSize: 18,
                         mr: 0.5,
                         animation: 'bounce 1s infinite',
                         '@keyframes bounce': {
@@ -331,9 +331,9 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                         },
                       }} />
                     ) : (
-                      <TrendingDown sx={{ 
-                        color: '#f44336', 
-                        fontSize: 18, 
+                      <TrendingDown sx={{
+                        color: '#f44336',
+                        fontSize: 18,
                         mr: 0.5,
                         animation: 'bounce 1s infinite',
                         '@keyframes bounce': {
@@ -346,8 +346,8 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                         },
                       }} />
                     )}
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       fontWeight="bold"
                       color={trend === 'up' ? '#4caf50' : '#f44336'}
                     >
@@ -357,20 +357,20 @@ const StatsCard = ({ title, value, icon, color, trend, trendValue, subtitle }) =
                 </motion.div>
               )}
             </Box>
-            
+
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.4, duration: 0.6, type: "spring" }}
-              whileHover={{ 
-                scale: 1.1, 
+              whileHover={{
+                scale: 1.1,
                 rotate: 5,
                 transition: { duration: 0.2 }
               }}
             >
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+              <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
                 justifyContent: 'center',
                 width: 70,
                 height: 70,
@@ -410,7 +410,7 @@ const ChartCard = ({ title, children, height = 300, actions }) => {
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
-      whileHover={{ 
+      whileHover={{
         y: -3,
         transition: { duration: 0.2 }
       }}
@@ -446,18 +446,18 @@ const ChartCard = ({ title, children, height = 300, actions }) => {
               </Box>
             )}
           </Box>
-                     <Box sx={{ 
-             height, 
-             width: '100%',
-             '& .recharts-wrapper': {
-               width: '100% !important',
-               maxWidth: '100% !important',
-             },
-             '& .recharts-responsive-container': {
-               width: '100% !important',
-               maxWidth: '100% !important',
-             }
-           }}>
+          <Box sx={{
+            height,
+            width: '100%',
+            '& .recharts-wrapper': {
+              width: '100% !important',
+              maxWidth: '100% !important',
+            },
+            '& .recharts-responsive-container': {
+              width: '100% !important',
+              maxWidth: '100% !important',
+            }
+          }}>
             {children}
           </Box>
         </CardContent>
@@ -486,7 +486,7 @@ const StatusBadge = ({ status }) => {
   };
 
   const config = getStatusConfig(status);
-  
+
   return (
     <Chip
       label={status}
@@ -494,7 +494,7 @@ const StatusBadge = ({ status }) => {
       variant="filled"
       size="small"
       icon={config.icon}
-      sx={{ 
+      sx={{
         fontWeight: 600,
         fontSize: '0.75rem'
       }}
@@ -515,10 +515,10 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
         minHeight="70vh"
         flexDirection="column"
         gap={2}
@@ -559,9 +559,9 @@ const Dashboard = () => {
   };
 
   return (
-    <Box sx={{ 
-      p: { xs: 2, md: 4 }, 
-      width: '100%', 
+    <Box sx={{
+      p: { xs: 2, md: 4 },
+      width: '100%',
       maxWidth: '100%',
       minHeight: 'calc(100vh - 64px)',
       boxSizing: 'border-box',
@@ -586,7 +586,7 @@ const Dashboard = () => {
         transition={{ duration: 0.5 }}
       >
         {/* Header */}
-        <Box sx={{ 
+        <Box sx={{
           mb: 4,
           p: 3,
           borderRadius: 4,
@@ -604,12 +604,12 @@ const Dashboard = () => {
           },
         }}>
           {/* Primary Stats Cards */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: { xs: 2, md: 3 }, 
+          <Box sx={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: { xs: 2, md: 3 },
             mb: 4,
-            '& > *': { 
+            '& > *': {
               flex: '1 1 auto',
               minWidth: { xs: '100%', sm: 'calc(50% - 12px)', md: 'calc(25% - 18px)' }
             }

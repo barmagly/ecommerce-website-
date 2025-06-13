@@ -7,7 +7,10 @@ export const login = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const response = await authAPI.login(credentials);
-      localStorage.setItem('adminToken', response.data.token);
+      if (response.data.data.user.role !== "admin") {
+        return rejectWithValue('admin only can login');
+      }
+      localStorage.setItem('adminToken', response.data.data.token);
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data || 'Login failed');
