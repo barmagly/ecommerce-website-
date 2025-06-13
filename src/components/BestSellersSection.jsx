@@ -2,13 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './FlashSalesShowcase.css';
 import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { addToCartThunk } from '../services/Slice/cart/cart';
 const API_URL = process.env.REACT_APP_API_URL + "/api/products/best-sellers";
 
 export default function BestSellersSection() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [products, setProducts] = useState([])
+  const { token } = useSelector((state) => state.auth);
+  const isAuthenticated = !!token;
+
   useEffect(() => {
     setIsLoading(true);
     setError(null);
@@ -26,6 +33,34 @@ export default function BestSellersSection() {
     fetchPro()
   }, [])
   
+  const handleAddToCart = (productId) => {
+    if (!isAuthenticated) {
+      toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+    dispatch(addToCartThunk({ productId }))
+      .unwrap()
+      .then(() => {
+        toast.success('تمت إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      })
+      .catch((error) => {
+        toast.error(error || 'حدث خطأ أثناء إضافة المنتج إلى السلة', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      });
+  };
+
   return (
     <div className="bestsellers-section bestsellers-section-bg container" data-aos="fade-up">
       {error && (
@@ -56,7 +91,7 @@ export default function BestSellersSection() {
         {products?.map((product, idx) => (
           <div key={product?.sku} className="col-12 col-md-3" data-aos="zoom-in">
             <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
-              <Link to={`/product/${product?.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+              <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img src={product?.image} alt={product?.name} className="mb-3" style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '12px', cursor: 'pointer' }} />
               </Link>
               <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -67,9 +102,10 @@ export default function BestSellersSection() {
                 {/* {product?.oldPrice && <span className="fw-bold text-decoration-line-through">{product?.oldPrice}</span>} */}
               </div>
               <div className="d-flex align-items-center gap-2 mt-2">
-                <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/0rblkmcb_expires_30_days.png" style={{ width: '100px', height: '20px' }} alt="rating" />
-                <span className="fw-bold">({product?.ratings?.count})</span>
+                {/* <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/0rblkmcb_expires_30_days.png" style={{ width: '100px', height: '20px' }} alt="rating" /> */}
+                {/* <span className="fw-bold">({product?.totalSold})</span> */}
               </div>
+              <button className="btn btn-dark w-100 mt-3" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
             </div>
           </div>
         ))}
