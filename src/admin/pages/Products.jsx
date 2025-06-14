@@ -58,6 +58,7 @@ import {
   Straighten as SizeIcon,
   Settings as SettingsIcon,
   Close as CloseIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -95,7 +96,7 @@ const Products = () => {
     images: [],
     features: [],
     specifications: [],
-    attributes: []
+    attributes: [] // Initialize attributes as an empty array
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -109,9 +110,15 @@ const Products = () => {
     attributes: new Map(),
     price: '',
     quantity: 0,
-    images: []
+    images: [],
+    sold: 0,
+    inStock: true,
+    optionField: ''
   });
   const [editingVariant, setEditingVariant] = useState(null); // New state for editing variant
+
+  // State to hold dynamically generated variant combinations for the main product form
+  const [generatedVariants, setGeneratedVariants] = useState([]);
 
   // Add new state for variants-only dialog
   const [openVariantsOnlyDialog, setOpenVariantsOnlyDialog] = useState(false);
@@ -210,7 +217,11 @@ const Products = () => {
         images: product.images?.map(img => img.url || img) || [],
         features: product.features || [],
         specifications: product.specifications || [],
-        attributes: product.attributes || [],
+        // Ensure attributes are correctly mapped with values as arrays
+        attributes: product.attributes?.map(attr => ({
+          name: attr.name,
+          values: Array.isArray(attr.values) ? attr.values : (typeof attr.values === 'string' ? attr.values.split(',').map(v => v.trim()).filter(Boolean) : [])
+        })) || [],
         variants: product.productVariants?.map(variant => ({
           sku: variant.sku,
           attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
@@ -335,8 +346,27 @@ const Products = () => {
       // إضافة السمات
       formData.attributes.forEach((attr, index) => {
         formDataToSend.append(`attributes[${index}][name]`, attr.name);
-        formDataToSend.append(`attributes[${index}][value]`, attr.value);
+        formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
       });
+
+      // إضافة المتغيرات إذا كانت موجودة
+      if (formData.hasVariants && generatedVariants.length > 0) {
+        const variantsData = generatedVariants.map(variant => ({
+          sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
+          attributes: Object.fromEntries(variant.attributes), // Convert Map to object
+          price: parseFloat(variant.price) || 0,
+          quantity: parseInt(variant.quantity) || 0,
+          sold: parseInt(variant.sold) || 0,
+          inStock: variant.quantity > 0,
+          images: variant.images.map((img, index) => ({
+            url: img,
+            alt: `Variant image ${index + 1}`,
+            isPrimary: index === 0
+          })),
+          optionField: variant.optionField || ''
+        }));
+        formDataToSend.append('productVariants', JSON.stringify(variantsData));
+      }
 
       if (selectedProduct) {
         const response = await productsAPI.update(selectedProduct._id, formDataToSend);
@@ -382,18 +412,21 @@ const Products = () => {
     }
   };
 
-  const handleVariantImagesChange = (variantIndex, e) => {
+  const handleVariantImagesChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length) {
-      setFormData(prev => ({
-        ...prev,
-        variants: prev.variants.map((variant, idx) =>
-          idx === variantIndex
-            ? { ...variant, images: [...variant.images, ...files] }
-            : variant
-        )
-      }));
-    }
+    const newImages = [...variantFormData.images];
+
+    files.forEach(file => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        newImages.push(reader.result);
+        setVariantFormData(prev => ({
+          ...prev,
+          images: newImages
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
   };
 
   const handleDelete = async (id) => {
@@ -671,7 +704,10 @@ const Products = () => {
         attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
         price: variant.price?.toString() || '',
         quantity: variant.quantity || 0,
-        images: variant.images?.map(img => img.url || img) || []
+        images: variant.images?.map(img => img.url || img) || [],
+        sold: variant.sold || 0, // Initialize sold field
+        inStock: variant.inStock ?? (variant.quantity > 0), // Initialize inStock field
+        optionField: variant.optionField || ''
       });
     } else {
       setEditingVariant(null);
@@ -680,7 +716,10 @@ const Products = () => {
         attributes: new Map(),
         price: '',
         quantity: 0,
-        images: []
+        images: [],
+        sold: 0, // Default sold to 0 for new variants
+        inStock: true, // Default inStock to true for new variants
+        optionField: ''
       });
     }
   };
@@ -694,7 +733,10 @@ const Products = () => {
       attributes: new Map(),
       price: '',
       quantity: 0,
-      images: []
+      images: [],
+      sold: 0, // Reset sold field on close
+      inStock: true, // Reset inStock field on close
+      optionField: ''
     });
   };
 
@@ -704,18 +746,69 @@ const Products = () => {
     if (!productId) return;
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('sku', variantFormData.sku);
-      formDataToSend.append('price', variantFormData.price);
-      formDataToSend.append('quantity', variantFormData.quantity);
-      formDataToSend.append('attributes', JSON.stringify(Object.fromEntries(variantFormData.attributes)));
+      // Validate required fields
+      if (!variantFormData.sku) {
+        toast.error('رمز المتغير مطلوب');
+        return;
+      }
+      if (!variantFormData.price || variantFormData.price <= 0) {
+        toast.error('السعر يجب أن يكون أكبر من صفر');
+        return;
+      }
+      if (variantFormData.quantity < 0) {
+        toast.error('الكمية لا يمكن أن تكون سالبة');
+        return;
+      }
+      if (variantFormData.attributes.size === 0) {
+        toast.error('يجب تحديد خصائص المتغير');
+        return;
+      }
 
-      // Handle variant images
-      variantFormData.images.forEach((image, index) => {
+      const variantPayload = {
+        sku: variantFormData.sku,
+        product: productId,
+        attributes: Object.fromEntries(variantFormData.attributes),
+        price: parseFloat(variantFormData.price),
+        quantity: parseInt(variantFormData.quantity),
+        sold: parseInt(variantFormData.sold) || 0,
+        inStock: variantFormData.quantity > 0,
+        images: variantFormData.images.map((img, index) => ({
+          url: img,
+          alt: `Variant image ${index + 1}`,
+          isPrimary: index === 0
+        })),
+        // Assuming 'optionField' is part of the variant schema based on the table UI
+        optionField: variantFormData.optionField || ''
+      };
+
+      const formDataToSend = new FormData();
+      formDataToSend.append('sku', variantPayload.sku);
+      formDataToSend.append('price', variantPayload.price);
+      formDataToSend.append('quantity', variantPayload.quantity);
+      formDataToSend.append('sold', variantPayload.sold);
+      formDataToSend.append('inStock', variantPayload.inStock);
+      formDataToSend.append('attributes', JSON.stringify(variantPayload.attributes));
+
+      // Handle variant images (new files)
+      const newImagesToUpload = [];
+      const existingImageUrls = [];
+
+      variantFormData.images.forEach(image => {
         if (image instanceof File) {
-          formDataToSend.append(`images`, image);
+          newImagesToUpload.push(image);
+        } else if (typeof image === 'string') {
+          existingImageUrls.push(image);
         }
       });
+
+      newImagesToUpload.forEach((image) => {
+        formDataToSend.append(`images`, image);
+      });
+
+      // If updating and there are existing images, send their URLs
+      if (editingVariant && existingImageUrls.length > 0) {
+        formDataToSend.append('existingImages', JSON.stringify(existingImageUrls));
+      }
 
       if (editingVariant) {
         await productsAPI.updateVariant(productId, editingVariant._id, formDataToSend);
@@ -758,7 +851,10 @@ const Products = () => {
       attributes: new Map(),
       price: '',
       quantity: 0,
-      images: []
+      images: [],
+      sold: 0, // Reset sold field on close
+      inStock: true, // Reset inStock field on close
+      optionField: ''
     });
   };
 
@@ -891,6 +987,26 @@ const Products = () => {
               <TextField
                 fullWidth
                 required
+                type="number"
+                label="السعر"
+                value={variantFormData.price}
+                onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
                 label="رمز المتغير"
                 value={variantFormData.sku}
                 onChange={(e) => setVariantFormData(prev => ({ ...prev, sku: e.target.value }))}
@@ -906,14 +1022,10 @@ const Products = () => {
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                required
                 type="number"
-                label="السعر"
-                value={variantFormData.price}
-                onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
-                InputProps={{
-                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                }}
+                label="المباع"
+                value={variantFormData.sold}
+                onChange={(e) => setVariantFormData(prev => ({ ...prev, sold: e.target.value }))}
                 sx={{
                   '& .MuiOutlinedInput-root': {
                     '&:hover fieldset': {
@@ -1005,13 +1117,7 @@ const Products = () => {
                     hidden
                     multiple
                     accept="image/*"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files);
-                      setVariantFormData(prev => ({
-                        ...prev,
-                        images: [...prev.images, ...files]
-                      }));
-                    }}
+                    onChange={handleVariantImagesChange}
                   />
                 </Button>
                 <Box sx={{
@@ -1136,6 +1242,7 @@ const Products = () => {
                     <TableCell>SKU</TableCell>
                     <TableCell>السعر</TableCell>
                     <TableCell>الكمية</TableCell>
+                    <TableCell>المباع</TableCell>
                     <TableCell>السمات</TableCell>
                     <TableCell align="right">الإجراءات</TableCell>
                   </TableRow>
@@ -1146,6 +1253,7 @@ const Products = () => {
                       <TableCell>{variant.sku}</TableCell>
                       <TableCell>{variant.price} $</TableCell>
                       <TableCell>{variant.quantity}</TableCell>
+                      <TableCell>{variant.sold}</TableCell>
                       <TableCell>
                         {variant.attributes && Object.entries(variant.attributes).map(([key, value]) => (
                           <Chip key={key} label={`${key}: ${value}`} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
@@ -1261,230 +1369,263 @@ const Products = () => {
             </Grid>
 
             {selectedProductForVariantsOnly?.hasVariants && (
-              <Grid item xs={12}>
-                <Grid container spacing={3}>
-                  {/* Variant Details */}
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="رمز المتغير"
-                      value={variantFormData.sku}
-                      onChange={(e) => setVariantFormData(prev => ({ ...prev, sku: e.target.value }))}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#667eea',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      type="number"
-                      label="السعر"
-                      value={variantFormData.price}
-                      onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
-                      InputProps={{
-                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                      }}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#667eea',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      type="number"
-                      label="الكمية"
-                      value={variantFormData.quantity}
-                      onChange={(e) => setVariantFormData(prev => ({ ...prev, quantity: e.target.value }))}
-                      sx={{
-                        '& .MuiOutlinedInput-root': {
-                          '&:hover fieldset': {
-                            borderColor: '#667eea',
-                          },
-                        },
-                      }}
-                    />
-                  </Grid>
-
-                  {/* Variant Attributes */}
-                  {selectedProductForVariantsOnly?.attributes?.map((attr, attrIndex) => (
-                    <Grid item xs={12} md={4} key={attrIndex}>
-                      <FormControl fullWidth>
-                        <InputLabel>{attr.name}</InputLabel>
-                        <Select
-                          value={variantFormData.attributes.get(attr.name) || ''}
-                          onChange={(e) => {
-                            const newAttributes = new Map(variantFormData.attributes);
-                            newAttributes.set(attr.name, e.target.value);
-                            setVariantFormData(prev => ({ ...prev, attributes: newAttributes }));
-                          }}
-                          label={attr.name}
-                          sx={{
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#667eea',
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#667eea',
-                            },
-                          }}
-                        >
-                          {attr.values.map((value) => (
-                            <MenuItem key={value} value={value}>
-                              {value}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                  ))}
-
-                  {/* Variant Images */}
-                  <Grid item xs={12}>
-                    <Box sx={{
-                      border: '2px dashed #667eea',
-                      borderRadius: 2,
-                      p: 2,
-                      textAlign: 'center',
-                      bgcolor: 'rgba(102, 126, 234, 0.05)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        bgcolor: 'rgba(102, 126, 234, 0.1)',
-                      }
-                    }}>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        startIcon={<ImageIcon />}
-                        sx={{
+              <>
+                {/* Basic Information */}
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="number"
+                    label="السعر"
+                    value={variantFormData.price}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    }}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
                           borderColor: '#667eea',
-                          color: '#667eea',
-                          '&:hover': {
-                            borderColor: '#764ba2',
-                            color: '#764ba2',
-                          }
-                        }}
-                      >
-                        صور المتغير
-                        <input
-                          type="file"
-                          hidden
-                          multiple
-                          accept="image/*"
-                          onChange={(e) => {
-                            const files = Array.from(e.target.files);
-                            setVariantFormData(prev => ({
-                              ...prev,
-                              images: [...prev.images, ...files]
-                            }));
-                          }}
-                        />
-                      </Button>
-                      <Box sx={{
-                        mt: 2,
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: 1,
-                        justifyContent: 'center'
-                      }}>
-                        {variantFormData.images.map((img, imgIndex) => (
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    required
+                    label="رمز المتغير"
+                    value={variantFormData.sku}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, sku: e.target.value }))}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#667eea',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    type="number"
+                    label="المباع"
+                    value={variantFormData.sold}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, sold: e.target.value }))}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#667eea',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} md={4}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="number"
+                    label="الكمية"
+                    value={variantFormData.quantity}
+                    onChange={(e) => setVariantFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&:hover fieldset': {
+                          borderColor: '#667eea',
+                        },
+                      },
+                    }}
+                  />
+                </Grid>
+
+                {/* Variant Attributes */}
+                {selectedProductForVariantsOnly?.attributes?.map((attr, attrIndex) => (
+                  <Grid item xs={12} md={4} key={attrIndex}>
+                    <TextField
+                      fullWidth
+                      label={`${attr.name} (افصل القيم بفاصلة)`}
+                      value={Array.from(variantFormData.attributes.entries())
+                        .find(([key]) => key === attr.name)?.[1]
+                        ?.split(',')
+                        .map(v => v.trim())
+                        .filter(Boolean)
+                        .join(', ') || ''}
+                      onChange={(e) => {
+                        const newAttributes = new Map(variantFormData.attributes);
+                        newAttributes.set(attr.name, e.target.value.split(',').map(v => v.trim()).filter(Boolean).join(','));
+                        setVariantFormData(prev => ({ ...prev, attributes: newAttributes }));
+                      }}
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <Tooltip title="افصل القيم بفاصلة" arrow>
+                              <InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                            </Tooltip>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: '#667eea',
+                          },
+                        },
+                      }}
+                    />
+                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {Array.from(variantFormData.attributes.entries())
+                        .find(([key]) => key === attr.name)?.[1]
+                        ?.split(',')
+                        .map(v => v.trim())
+                        .filter(Boolean)
+                        .map((value, valueIndex) => (
+                          <Chip
+                            key={valueIndex}
+                            label={value}
+                            onDelete={() => {
+                              const currentValues = Array.from(variantFormData.attributes.entries())
+                                .find(([key]) => key === attr.name)?.[1]
+                                ?.split(',')
+                                .map(v => v.trim())
+                                .filter(Boolean) || [];
+                              const newValues = currentValues.filter((_, i) => i !== valueIndex);
+                              const newAttributes = new Map(variantFormData.attributes);
+                              newAttributes.set(attr.name, newValues.join(','));
+                              setVariantFormData(prev => ({ ...prev, attributes: newAttributes }));
+                            }}
+                            sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
+                          />
+                        ))}
+                    </Box>
+                  </Grid>
+                ))}
+
+                {/* Variant Images */}
+                <Grid item xs={12}>
+                  <Box sx={{
+                    border: '2px dashed #667eea',
+                    borderRadius: 2,
+                    p: 2,
+                    textAlign: 'center',
+                    bgcolor: 'rgba(102, 126, 234, 0.05)',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      bgcolor: 'rgba(102, 126, 234, 0.1)',
+                    }
+                  }}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      startIcon={<ImageIcon />}
+                      sx={{
+                        borderColor: '#667eea',
+                        color: '#667eea',
+                        '&:hover': {
+                          borderColor: '#764ba2',
+                          color: '#764ba2',
+                        }
+                      }}
+                    >
+                      صور المتغير
+                      <input
+                        type="file"
+                        hidden
+                        multiple
+                        accept="image/*"
+                        onChange={handleVariantImagesChange}
+                      />
+                    </Button>
+
+                    {/* Display selected images */}
+                    {variantFormData.images.length > 0 && (
+                      <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                        {variantFormData.images.map((image, index) => (
                           <Box
-                            key={imgIndex}
+                            key={index}
                             sx={{
                               position: 'relative',
-                              transition: 'transform 0.2s ease',
-                              '&:hover': {
-                                transform: 'scale(1.05)',
-                              }
+                              width: 100,
+                              height: 100,
+                              borderRadius: 1,
+                              overflow: 'hidden',
+                              border: '1px solid #e0e0e0'
                             }}
                           >
                             <img
-                              src={typeof img === 'string' ? img : URL.createObjectURL(img)}
-                              alt={`Variant ${imgIndex + 1}`}
+                              src={image}
+                              alt={`Variant image ${index + 1}`}
                               style={{
-                                width: 100,
-                                height: 100,
-                                objectFit: 'cover',
-                                borderRadius: 8,
-                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover'
                               }}
                             />
+                            {index === 0 && (
+                              <Chip
+                                label="صورة رئيسية"
+                                size="small"
+                                sx={{
+                                  position: 'absolute',
+                                  top: 4,
+                                  right: 4,
+                                  bgcolor: 'rgba(102, 126, 234, 0.9)',
+                                  color: 'white'
+                                }}
+                              />
+                            )}
                             <IconButton
                               size="small"
                               sx={{
                                 position: 'absolute',
-                                top: -8,
-                                right: -8,
-                                bgcolor: 'rgba(0,0,0,0.7)',
-                                color: 'white',
+                                top: 4,
+                                left: 4,
+                                bgcolor: 'rgba(255, 255, 255, 0.8)',
                                 '&:hover': {
-                                  bgcolor: 'rgba(0,0,0,0.9)',
-                                  transform: 'scale(1.1)'
-                                },
-                                transition: 'all 0.2s ease'
+                                  bgcolor: 'rgba(255, 255, 255, 0.9)',
+                                }
                               }}
                               onClick={() => {
+                                const newImages = [...variantFormData.images];
+                                newImages.splice(index, 1);
                                 setVariantFormData(prev => ({
                                   ...prev,
-                                  images: prev.images.filter((_, i) => i !== imgIndex)
+                                  images: newImages
                                 }));
                               }}
                             >
-                              <CloseIcon fontSize="small" />
+                              <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Box>
                         ))}
                       </Box>
-                    </Box>
-                  </Grid>
+                    )}
+                  </Box>
                 </Grid>
-              </Grid>
+
+                {/* Submit Button */}
+                <Grid item xs={12}>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    fullWidth
+                    sx={{
+                      mt: 2,
+                      py: 1.5,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                      }
+                    }}
+                  >
+                    حفظ المتغير
+                  </Button>
+                </Grid>
+              </>
             )}
           </Grid>
-
-          <DialogActions sx={{
-            mt: 3,
-            px: 3,
-            py: 2,
-            borderTop: '1px solid #e0e0e0',
-            bgcolor: '#f8f9fa'
-          }}>
-            <Button
-              onClick={handleCloseVariantsOnlyDialog}
-              sx={{
-                color: '#666',
-                '&:hover': {
-                  bgcolor: 'rgba(0,0,0,0.05)',
-                }
-              }}
-            >
-              إلغاء
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={!selectedProductForVariantsOnly}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                }
-              }}
-            >
-              إضافة المتغير
-            </Button>
-          </DialogActions>
         </Box>
       </DialogContent>
     </Dialog>
@@ -1496,6 +1637,65 @@ const Products = () => {
       {renderTableActions(product)}
     </TableCell>
   );
+
+  // Helper function to generate all combinations of attributes
+  const generateAttributeCombinations = (attributes) => {
+    if (!attributes || attributes.length === 0) {
+      return [];
+    }
+
+    const combinations = [];
+
+    function backtrack(index, currentCombination) {
+      if (index === attributes.length) {
+        combinations.push(new Map(currentCombination));
+        return;
+      }
+
+      const attribute = attributes[index];
+      attribute.values.forEach(value => {
+        currentCombination.set(attribute.name, value);
+        backtrack(index + 1, currentCombination);
+      });
+    }
+
+    backtrack(0, new Map());
+    return combinations;
+  };
+
+  // Effect to generate variants whenever attributes change in the main form
+  useEffect(() => {
+    if (formData.hasVariants && formData.attributes.length > 0) {
+      const combinations = generateAttributeCombinations(formData.attributes);
+      // Initialize generated variants with existing data if available, or default values
+      const newGeneratedVariants = combinations.map(combination => {
+        const existingVariant = (selectedProduct?.productVariants || []).find(pv => {
+          const pvAttributes = new Map(Object.entries(pv.attributes || {}));
+          // Compare maps by converting to strings or by iterating key-value pairs
+          if (pvAttributes.size !== combination.size) return false;
+          for (let [key, value] of combination) {
+            if (pvAttributes.get(key) !== value) return false;
+          }
+          return true;
+        });
+
+        return {
+          attributes: combination,
+          sku: existingVariant?.sku || '',
+          price: existingVariant?.price?.toString() || '',
+          quantity: existingVariant?.quantity?.toString() || '0',
+          sold: existingVariant?.sold?.toString() || '0',
+          inStock: existingVariant?.inStock ?? (existingVariant?.quantity > 0),
+          images: existingVariant?.images?.map(img => img.url || img) || [],
+          // Add an option field for flexibility
+          optionField: existingVariant?.optionField || ''
+        };
+      });
+      setGeneratedVariants(newGeneratedVariants);
+    } else {
+      setGeneratedVariants([]);
+    }
+  }, [formData.attributes, formData.hasVariants, selectedProduct]);
 
   if (loading) {
     return (
@@ -1920,10 +2120,10 @@ const Products = () => {
                           <TableCell>
                             <Box sx={{ textAlign: 'center' }}>
                               <Typography variant="body2" fontWeight="500">
-                                {new Date(product.createdAt).toLocaleDateString('ar-SA')}
+                                {new Date(product.createdAt).toLocaleDateString('en-US')}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {new Date(product.createdAt).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' })}
+                                {new Date(product.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
                               </Typography>
                             </Box>
                           </TableCell>
@@ -2618,6 +2818,188 @@ const Products = () => {
                   ))}
                 </Paper>
               </Grid>
+
+              {/* Attributes Section */}
+              {formData.hasVariants && (
+                <Grid item xs={12}>
+                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                      <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PaletteIcon /> السمات (المتغيرات)
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={addAttribute}
+                        sx={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          '&:hover': {
+                            background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                          }
+                        }}
+                      >
+                        إضافة سمة
+                      </Button>
+                    </Box>
+                    {formData.attributes.map((attribute, index) => (
+                      <Paper
+                        key={index}
+                        sx={{
+                          p: 3,
+                          mb: 2,
+                          bgcolor: 'white',
+                          borderRadius: 2,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                          }
+                        }}
+                      >
+                        <Grid container spacing={3} alignItems="center">
+                          <Grid item xs={12} md={5}>
+                            <TextField
+                              fullWidth
+                              label="اسم السمة"
+                              value={attribute.name}
+                              onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '&:hover fieldset': {
+                                    borderColor: '#667eea',
+                                  },
+                                },
+                              }}
+                            />
+                          </Grid>
+                          <Grid item xs={12} md={5}>
+                            <TextField
+                              fullWidth
+                              label="قيم السمة (افصل بينها بفاصلة)"
+                              value={attribute.values.join(', ')}
+                              onChange={(e) => updateAttribute(index, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
+                              InputProps={{
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <Tooltip title="افصل القيم بفاصلة" arrow>
+                                      <InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                                    </Tooltip>
+                                  </InputAdornment>
+                                ),
+                              }}
+                              sx={{
+                                '& .MuiOutlinedInput-root': {
+                                  '&:hover fieldset': {
+                                    borderColor: '#667eea',
+                                  },
+                                },
+                              }}
+                            />
+                            <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {attribute.values.map((value, valueIndex) => (
+                                <Chip
+                                  key={valueIndex}
+                                  label={value}
+                                  onDelete={() => {
+                                    const newValues = attribute.values.filter((_, i) => i !== valueIndex);
+                                    updateAttribute(index, 'values', newValues);
+                                  }}
+                                  sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
+                                />
+                              ))}
+                            </Box>
+                          </Grid>
+                          <Grid item xs={12} md={2}>
+                            <Button
+                              color="error"
+                              onClick={() => removeAttribute(index)}
+                              startIcon={<DeleteIcon />}
+                              sx={{
+                                height: '100%',
+                                '&:hover': {
+                                  bgcolor: 'rgba(211, 47, 47, 0.1)',
+                                }
+                              }}
+                            >
+                              حذف
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      </Paper>
+                    ))}
+                  </Paper>
+                </Grid>
+              )}
+
+              {/* Dynamic Variants Table */}
+              {formData.hasVariants && generatedVariants.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                    <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <InventoryIcon /> إدارة المتغيرات
+                    </Typography>
+                    <TableContainer component={Paper} elevation={1} sx={{ mt: 2 }}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.08) }}>
+                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>النسخة</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>السعر</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>الكمية</TableCell>
+                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>حقل اختياري</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {generatedVariants.map((variant, index) => (
+                            <TableRow key={index}>
+                              <TableCell>
+                                {Array.from(variant.attributes.values()).join(', ')}
+                              </TableCell>
+                              <TableCell>
+                                <TextField
+                                  size="small"
+                                  type="number"
+                                  value={variant.price}
+                                  onChange={(e) => {
+                                    const newVariants = [...generatedVariants];
+                                    newVariants[index].price = e.target.value;
+                                    setGeneratedVariants(newVariants);
+                                  }}
+                                  InputProps={{
+                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <TextField
+                                  size="small"
+                                  type="number"
+                                  value={variant.quantity}
+                                  onChange={(e) => {
+                                    const newVariants = [...generatedVariants];
+                                    newVariants[index].quantity = e.target.value;
+                                    setGeneratedVariants(newVariants);
+                                  }}
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <TextField
+                                  size="small"
+                                  value={variant.optionField}
+                                  onChange={(e) => {
+                                    const newVariants = [...generatedVariants];
+                                    newVariants[index].optionField = e.target.value;
+                                    setGeneratedVariants(newVariants);
+                                  }}
+                                />
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Grid>
+              )}
             </Grid>
 
             <DialogActions sx={{
