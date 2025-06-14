@@ -324,9 +324,13 @@ const Products = () => {
       if (formData.imageCover) {
         formDataToSend.append('imageCover', formData.imageCover);
       }
-      formData.images.forEach((image, index) => {
-        formDataToSend.append(`images`, image);
-      });
+      // Format images as objects with url, alt, and isPrimary properties
+      const formattedImages = formData.images.map((image, index) => ({
+        url: image,
+        alt: `Product image ${index + 1}`,
+        isPrimary: index === 0
+      }));
+      formDataToSend.append('images', JSON.stringify(formattedImages));
 
       // إضافة المميزات
       formData.features.forEach((feature, index) => {
@@ -369,6 +373,101 @@ const Products = () => {
       }
 
       if (selectedProduct) {
+        const formDataToSend = new FormData();
+
+        // Basic fields comparison
+        const fieldsToCompare = ['name', 'description', 'brand', 'category', 'hasVariants', 'price', 'stock', 'sku'];
+        fieldsToCompare.forEach(field => {
+          if (formData[field] !== selectedProduct[field]) {
+            formDataToSend.append(field, formData[field]);
+          }
+        });
+
+        // Handle imageCover
+        if (formData.imageCover) {
+          if (formData.imageCover instanceof File) {
+            formDataToSend.append('imageCover', formData.imageCover);
+          } else if (formData.imageCover !== selectedProduct.imageCover?.url) {
+            formDataToSend.append('imageCover', formData.imageCover);
+          }
+        }
+
+        // Handle images
+        const currentImageUrls = formData.images.map(img => {
+          if (img instanceof File) return img;
+          return typeof img === 'string' ? img : img.url;
+        });
+        const originalImageUrls = selectedProduct.images?.map(img => img.url) || [];
+
+        if (JSON.stringify(currentImageUrls) !== JSON.stringify(originalImageUrls)) {
+          formData.images.forEach((image, index) => {
+            if (image instanceof File) {
+              formDataToSend.append('images', image);
+            } else {
+              const imageUrl = typeof image === 'string' ? image : image.url;
+              formDataToSend.append('images', imageUrl);
+            }
+          });
+        }
+
+        // Handle features - format as individual fields
+        if (JSON.stringify(formData.features) !== JSON.stringify(selectedProduct.features)) {
+          formData.features.forEach((feature) => {
+            formDataToSend.append(`features[${feature.name}]`, feature.value);
+          });
+        }
+
+        // Handle specifications
+        if (JSON.stringify(formData.specifications) !== JSON.stringify(selectedProduct.specifications)) {
+          formData.specifications.forEach((spec, specIndex) => {
+            formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
+            spec.items.forEach((item, itemIndex) => {
+              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
+              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
+            });
+          });
+        }
+
+        // Handle attributes - format as individual fields
+        if (JSON.stringify(formData.attributes) !== JSON.stringify(selectedProduct.attributes)) {
+          formData.attributes.forEach((attr) => {
+            formDataToSend.append(`attributes[${attr.name}]`, attr.values.join(','));
+          });
+        }
+
+        // Handle variants
+        if (formData.hasVariants && generatedVariants.length > 0) {
+          generatedVariants.forEach((variant, index) => {
+            formDataToSend.append(`variants[${index}][sku]`, variant.sku || ('VAR-' + Date.now()));
+            formDataToSend.append(`variants[${index}][price]`, parseFloat(variant.price) || 0);
+            formDataToSend.append(`variants[${index}][quantity]`, parseInt(variant.quantity) || 0);
+            formDataToSend.append(`variants[${index}][sold]`, parseInt(variant.sold) || 0);
+            formDataToSend.append(`variants[${index}][inStock]`, variant.quantity > 0);
+
+            // Handle variant attributes
+            Object.entries(Object.fromEntries(variant.attributes)).forEach(([key, value]) => {
+              formDataToSend.append(`variants[${index}][attributes][${key}]`, value);
+            });
+
+            // Handle variant images
+            variant.images.forEach((img, imgIndex) => {
+              if (img instanceof File) {
+                formDataToSend.append(`variants[${index}][images]`, img);
+              } else {
+                const imageUrl = typeof img === 'string' ? img : img.url;
+                formDataToSend.append(`variants[${index}][images]`, imageUrl);
+              }
+            });
+          });
+        }
+
+        // Only proceed if there are changes
+        if (formDataToSend.entries().next().done) {
+          toast.info('لم يتم إجراء أي تغييرات على المنتج');
+          handleCloseDialog();
+          return;
+        }
+
         const response = await productsAPI.update(selectedProduct._id, formDataToSend);
         if (response.data.status === 'success') {
           toast.success('تم تحديث المنتج بنجاح');
@@ -376,6 +475,80 @@ const Products = () => {
           fetchProducts();
         }
       } else {
+        // For new products, send all data as before
+        const formDataToSend = new FormData();
+
+        // إضافة البيانات الأساسية
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('brand', formData.brand);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('hasVariants', formData.hasVariants);
+
+        // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
+        if (!formData.hasVariants) {
+          formDataToSend.append('price', formData.price);
+          formDataToSend.append('stock', formData.stock);
+          formDataToSend.append('sku', formData.sku);
+        } else {
+          // إضافة قيم افتراضية للمنتج المتغير
+          formDataToSend.append('price', '0');
+          formDataToSend.append('stock', '0');
+          formDataToSend.append('sku', 'VAR-' + Date.now());
+        }
+
+        // إضافة الصور
+        if (formData.imageCover) {
+          formDataToSend.append('imageCover', formData.imageCover);
+        }
+        // Format images as objects with url, alt, and isPrimary properties
+        const formattedImages = formData.images.map((image, index) => ({
+          url: image,
+          alt: `Product image ${index + 1}`,
+          isPrimary: index === 0
+        }));
+        formDataToSend.append('images', JSON.stringify(formattedImages));
+
+        // إضافة المميزات
+        formData.features.forEach((feature, index) => {
+          formDataToSend.append(`features[${index}][name]`, feature.name);
+          formDataToSend.append(`features[${index}][value]`, feature.value);
+        });
+
+        // إضافة المواصفات
+        formData.specifications.forEach((spec, specIndex) => {
+          formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
+          spec.items.forEach((item, itemIndex) => {
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
+          });
+        });
+
+        // إضافة السمات
+        formData.attributes.forEach((attr, index) => {
+          formDataToSend.append(`attributes[${index}][name]`, attr.name);
+          formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
+        });
+
+        // إضافة المتغيرات إذا كانت موجودة
+        if (formData.hasVariants && generatedVariants.length > 0) {
+          const variantsData = generatedVariants.map(variant => ({
+            sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
+            attributes: Object.fromEntries(variant.attributes), // Convert Map to object
+            price: parseFloat(variant.price) || 0,
+            quantity: parseInt(variant.quantity) || 0,
+            sold: parseInt(variant.sold) || 0,
+            inStock: variant.quantity > 0,
+            images: variant.images.map((img, index) => ({
+              url: img,
+              alt: `Variant image ${index + 1}`,
+              isPrimary: index === 0
+            })),
+            optionField: variant.optionField || ''
+          }));
+          formDataToSend.append('productVariants', JSON.stringify(variantsData));
+        }
+
         const response = await productsAPI.create(formDataToSend);
         if (response.data.status === 'success') {
           toast.success('تم إضافة المنتج بنجاح');
@@ -2026,14 +2199,14 @@ const Products = () => {
                     '& .MuiTableCell-head': {
                       fontWeight: 700,
                       fontSize: '0.95rem',
-                      color: theme.palette.primary.dark
+                      color: theme.palette.primary.dark,
+                      textAlign: 'center'
                     }
                   }}>
                     <TableCell sx={{ width: '25%' }}>المنتج</TableCell>
                     <TableCell sx={{ width: '15%' }}>السعر والخصم</TableCell>
                     <TableCell sx={{ width: '12%' }}>الفئة</TableCell>
                     <TableCell sx={{ width: '10%' }}>المخزون</TableCell>
-                    <TableCell sx={{ width: '10%' }}>الحالة</TableCell>
                     <TableCell sx={{ width: '12%' }}>التقييم والمراجعات</TableCell>
                     <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
                     <TableCell sx={{ width: '16%' }}>الإجراءات</TableCell>
@@ -2062,23 +2235,46 @@ const Products = () => {
                                 <ImageIcon />
                               </Avatar>
                               <Box>
-                                <Typography variant="subtitle1" fontWeight="bold">
+                                <Typography variant="subtitle1" fontWeight="bold" sx={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: '250px' // Adjust as needed
+                                }}>
                                   {product.name}
                                 </Typography>
-                                <Typography variant="caption" color="text.secondary">
+                                <Typography variant="caption" color="text.secondary" sx={{
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  maxWidth: '250px' // Adjust as needed
+                                }}>
                                   {product.sku}
                                 </Typography>
                               </Box>
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
+                            <Typography variant="body2" sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              maxWidth: '150px' // Adjust as needed
+                            }}>
                               {product.price} جنية
                               {product.salePrice && (
                                 <Typography
                                   component="span"
                                   variant="caption"
-                                  sx={{ textDecoration: 'line-through', color: 'text.secondary', ml: 1 }}
+                                  sx={{
+                                    textDecoration: 'line-through',
+                                    color: 'text.secondary',
+                                    ml: 1,
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    maxWidth: '100px' // Adjust as needed
+                                  }}
                                 >
                                   {product.salePrice} جنية
                                 </Typography>
@@ -2086,7 +2282,12 @@ const Products = () => {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            <Typography variant="body2">
+                            <Typography variant="body2" sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              maxWidth: '120px' // Adjust as needed
+                            }}>
                               {typeof product.category === 'object' ? product.category.name : product.category}
                             </Typography>
                           </TableCell>
@@ -2095,23 +2296,15 @@ const Products = () => {
                               label={product.stock > 0 ? `${product.stock} متوفر` : 'نفذ المخزون'}
                               color={product.stock > 0 ? 'success' : 'error'}
                               size="small"
+                              onClick={() => console.log('Stock chip clicked!')}
                             />
                           </TableCell>
                           <TableCell>
-                            <Switch
-                              checked={product.status === 'active'}
-                              onChange={(e) => handleToggleStatus(product._id, e.target.checked)}
-                              color="success"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
-                                <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
-                                <Typography variant="subtitle2" fontWeight="bold">
-                                  {product.rating}
-                                </Typography>
-                              </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
+                              <Typography variant="subtitle2" fontWeight="bold">
+                                {product.rating}
+                              </Typography>
                               <Typography variant="caption" color="text.secondary">
                                 {product.reviews} مراجعة
                               </Typography>
