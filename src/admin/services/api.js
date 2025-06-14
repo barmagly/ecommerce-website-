@@ -73,6 +73,24 @@ export const productsAPI = {
         return api.patch(`/products/${id}`, data);
     },
     delete: (id) => api.delete(`/products/${id}`),
+
+    // Product Variants API
+    getVariants: (productId) => api.get(`/products/${productId}/variants`),
+    createVariant: (productId, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.post(`/products/${productId}/variants`, data);
+        }
+        return api.post(`/products/${productId}/variants`, data);
+    },
+    updateVariant: (productId, variantId, data) => {
+        // If data contains files, use FormData
+        if (data instanceof FormData) {
+            return api.patch(`/products/${productId}/variants/${variantId}`, data);
+        }
+        return api.patch(`/products/${productId}/variants/${variantId}`, data);
+    },
+    deleteVariant: (productId, variantId) => api.delete(`/products/${productId}/variants/${variantId}`),
 };
 
 // Categories API

@@ -62,6 +62,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { productsAPI, categoriesAPI } from '../services/api';
+import axios from 'axios';
 
 const Products = () => {
   const theme = useTheme();
@@ -86,20 +87,36 @@ const Products = () => {
     description: '',
     brand: '',
     category: '',
-    price: '',
     hasVariants: false,
+    price: '',
     stock: '',
     sku: '',
     imageCover: '',
     images: [],
     features: [],
     specifications: [],
-    attributes: [],
-    variants: []
+    attributes: []
   };
 
   const [formData, setFormData] = useState(initialFormData);
   const [formErrors, setFormErrors] = useState({});
+
+  // Add new state for variants dialog
+  const [openVariantsDialog, setOpenVariantsDialog] = useState(false);
+  const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
+  const [variantFormData, setVariantFormData] = useState({
+    sku: '',
+    attributes: new Map(),
+    price: '',
+    quantity: 0,
+    images: []
+  });
+  const [editingVariant, setEditingVariant] = useState(null); // New state for editing variant
+
+  // Add new state for variants-only dialog
+  const [openVariantsOnlyDialog, setOpenVariantsOnlyDialog] = useState(false);
+  const [selectedProductForVariantsOnly, setSelectedProductForVariantsOnly] = useState(null);
+  const [hasAnyProductWithVariants, setHasAnyProductWithVariants] = useState(false);
 
   // Load products from localStorage on component mount
   useEffect(() => {
@@ -127,6 +144,7 @@ const Products = () => {
       setLoading(true);
       const response = await productsAPI.getAll();
       setProducts(response.data.products || []);
+      setHasAnyProductWithVariants(response.data.products.some(p => p.hasVariants));
       setError(null);
     } catch (err) {
       setError('Failed to fetch products');
@@ -195,7 +213,7 @@ const Products = () => {
         attributes: product.attributes || [],
         variants: product.productVariants?.map(variant => ({
           sku: variant.sku,
-          attributes: Object.fromEntries(variant.attributes),
+          attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
           price: variant.price?.toString(),
           quantity: variant.quantity?.toString(),
           images: variant.images?.map(img => img.url || img) || []
@@ -219,146 +237,127 @@ const Products = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting form', formData);
+    setFormErrors({});
+    let hasErrors = false;
 
-    // Validate form
-    const errors = {};
-    if (!formData.name) errors.name = 'اسم المنتج مطلوب';
+    // التحقق من صحة البيانات
+    if (!formData.name || formData.name.length < 3 || formData.name.length > 200) {
+      setFormErrors(prev => ({ ...prev, name: 'اسم المنتج يجب أن يكون بين 3 و 200 حرف' }));
+      hasErrors = true;
+    }
+
     if (!formData.description || formData.description.length < 20) {
-      errors.description = 'الوصف مطلوب ويجب أن يكون 20 حرف على الأقل';
+      setFormErrors(prev => ({ ...prev, description: 'الوصف يجب أن يكون 20 حرف على الأقل' }));
+      hasErrors = true;
     }
-    if (!formData.brand) errors.brand = 'العلامة التجارية مطلوبة';
-    if (!formData.category) errors.category = 'الفئة مطلوبة';
-    if (!formData.imageCover) errors.imageCover = 'صورة الغلاف مطلوبة';
 
+    if (!formData.brand) {
+      setFormErrors(prev => ({ ...prev, brand: 'العلامة التجارية مطلوبة' }));
+      hasErrors = true;
+    }
+
+    if (!formData.category) {
+      setFormErrors(prev => ({ ...prev, category: 'التصنيف مطلوب' }));
+      hasErrors = true;
+    }
+
+    if (!formData.imageCover) {
+      setFormErrors(prev => ({ ...prev, imageCover: 'صورة الغلاف مطلوبة' }));
+      hasErrors = true;
+    }
+
+    // التحقق من الحقول المطلوبة للمنتج غير المتغير
     if (!formData.hasVariants) {
-      if (!formData.price) errors.price = 'السعر مطلوب';
-      if (!formData.stock) errors.stock = 'الكمية مطلوبة';
-      if (!formData.sku) errors.sku = 'رمز المنتج مطلوب';
-    } else {
-      if (!formData.variants.length) {
-        errors.variants = 'يجب إضافة متغير واحد على الأقل';
+      if (!formData.price || formData.price < 0) {
+        setFormErrors(prev => ({ ...prev, price: 'السعر يجب أن يكون أكبر من 0' }));
+        hasErrors = true;
       }
-      // Validate variants
-      formData.variants.forEach((variant, index) => {
-        if (!variant.sku) errors[`variant_${index}_sku`] = 'رمز المتغير مطلوب';
-        if (!variant.price) errors[`variant_${index}_price`] = 'سعر المتغير مطلوب';
-        if (variant.quantity === undefined) errors[`variant_${index}_quantity`] = 'كمية المتغير مطلوبة';
-        if (!variant.attributes || Object.keys(variant.attributes).length === 0) {
-          errors[`variant_${index}_attributes`] = 'سمات المتغير مطلوبة';
-        }
-      });
+
+      if (!formData.stock || formData.stock < 0) {
+        setFormErrors(prev => ({ ...prev, stock: 'المخزون يجب أن يكون أكبر من 0' }));
+        hasErrors = true;
+      }
+
+      if (!formData.sku) {
+        setFormErrors(prev => ({ ...prev, sku: 'رمز المنتج (SKU) مطلوب' }));
+        hasErrors = true;
+      }
     }
 
-    if (Object.keys(errors).length > 0) {
-      setFormErrors(errors);
-      return;
-    }
+    if (hasErrors) return;
 
     try {
-      // Create FormData instance
+      setLoading(true);
       const formDataToSend = new FormData();
 
-      // Add basic product data
+      // إضافة البيانات الأساسية
       formDataToSend.append('name', formData.name);
       formDataToSend.append('description', formData.description);
       formDataToSend.append('brand', formData.brand);
       formDataToSend.append('category', formData.category);
       formDataToSend.append('hasVariants', formData.hasVariants);
 
-      // Add simple product fields if no variants
+      // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
       if (!formData.hasVariants) {
         formDataToSend.append('price', formData.price);
         formDataToSend.append('stock', formData.stock);
         formDataToSend.append('sku', formData.sku);
+      } else {
+        // إضافة قيم افتراضية للمنتج المتغير
+        formDataToSend.append('price', '0');
+        formDataToSend.append('stock', '0');
+        formDataToSend.append('sku', 'VAR-' + Date.now());
       }
 
-      // Add image cover
-      if (formData.imageCover instanceof File) {
+      // إضافة الصور
+      if (formData.imageCover) {
         formDataToSend.append('imageCover', formData.imageCover);
-      } else if (typeof formData.imageCover === 'string' && formData.imageCover.startsWith('data:')) {
-        // Convert base64 to file if it's a new image
-        const response = await fetch(formData.imageCover);
-        const blob = await response.blob();
-        const file = new File([blob], 'imageCover.jpg', { type: 'image/jpeg' });
-        formDataToSend.append('imageCover', file);
       }
-
-      // Add additional images
       formData.images.forEach((image, index) => {
-        if (image instanceof File) {
-          formDataToSend.append(`images`, image);
-        } else if (typeof image === 'string' && image.startsWith('data:')) {
-          // Convert base64 to file if it's a new image
-          fetch(image)
-            .then(res => res.blob())
-            .then(blob => {
-              const file = new File([blob], `image${index}.jpg`, { type: 'image/jpeg' });
-              formDataToSend.append('images', file);
-            });
-        }
+        formDataToSend.append(`images`, image);
       });
 
-      // Add attributes
-      // formDataToSend.append('attributes', JSON.stringify(formData.attributes || []));
+      // إضافة المميزات
+      formData.features.forEach((feature, index) => {
+        formDataToSend.append(`features[${index}][name]`, feature.name);
+        formDataToSend.append(`features[${index}][value]`, feature.value);
+      });
 
-      // Add variants if product has variants
-      if (formData.hasVariants) {
-        const variants = formData.variants.map(variant => {
-          const variantData = {
-            sku: variant.sku,
-            attributes: Object.fromEntries(variant.attributes),
-            price: Number(variant.price),
-            quantity: Number(variant.quantity),
-            images: []
-          };
-
-          // Handle variant images
-          variant.images.forEach((image, index) => {
-            if (image instanceof File) {
-              formDataToSend.append(`variant_${variant.sku}_images`, image);
-            } else if (typeof image === 'string' && image.startsWith('data:')) {
-              // Convert base64 to file if it's a new image
-              fetch(image)
-                .then(res => res.blob())
-                .then(blob => {
-                  const file = new File([blob], `variant_${variant.sku}_${index}.jpg`, { type: 'image/jpeg' });
-                  formDataToSend.append(`variant_${variant.sku}_images`, file);
-                });
-            } else {
-              // If it's an existing image URL, just add it to the images array
-              variantData.images.push({
-                url: image,
-                alt: `${formData.name} - ${variant.sku}`,
-                isPrimary: false
-              });
-            }
-          });
-
-          return variantData;
+      // إضافة المواصفات
+      formData.specifications.forEach((spec, specIndex) => {
+        formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
+        spec.items.forEach((item, itemIndex) => {
+          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
+          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
         });
+      });
 
-        formDataToSend.append('variants', JSON.stringify(variants));
-      }
+      // إضافة السمات
+      formData.attributes.forEach((attr, index) => {
+        formDataToSend.append(`attributes[${index}][name]`, attr.name);
+        formDataToSend.append(`attributes[${index}][value]`, attr.value);
+      });
 
-      // Add features and specifications
-      // formDataToSend.append('features', JSON.stringify(formData.features));
-      // formDataToSend.append('specifications', JSON.stringify(formData.specifications));
-
-      // Send the request
       if (selectedProduct) {
-        await productsAPI.update(selectedProduct._id, formDataToSend);
-        toast.success('تم تحديث المنتج بنجاح');
+        const response = await productsAPI.update(selectedProduct._id, formDataToSend);
+        if (response.data.status === 'success') {
+          toast.success('تم تحديث المنتج بنجاح');
+          handleCloseDialog();
+          fetchProducts();
+        }
       } else {
-        await productsAPI.create(formDataToSend);
-        toast.success('تم إضافة المنتج بنجاح');
+        const response = await productsAPI.create(formDataToSend);
+        if (response.data.status === 'success') {
+          toast.success('تم إضافة المنتج بنجاح');
+          handleCloseDialog();
+          fetchProducts();
+        }
       }
-
-      handleCloseDialog();
-      fetchProducts();
-    } catch (err) {
-      console.error('Error saving product:', err);
-      toast.error(err.response?.data?.message || 'حدث خطأ أثناء حفظ المنتج');
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast.error(error.response?.data?.message || 'حدث خطأ أثناء حفظ المنتج');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -661,6 +660,843 @@ const Products = () => {
     { value: 'books', label: 'كتب' }
   ];
 
+  // Add new handlers for variants dialog
+  const handleOpenVariantsDialog = (product, variant = null) => {
+    setSelectedProductForVariants(product);
+    setOpenVariantsDialog(true);
+    if (variant) {
+      setEditingVariant(variant);
+      setVariantFormData({
+        sku: variant.sku || '',
+        attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
+        price: variant.price?.toString() || '',
+        quantity: variant.quantity || 0,
+        images: variant.images?.map(img => img.url || img) || []
+      });
+    } else {
+      setEditingVariant(null);
+      setVariantFormData({
+        sku: '',
+        attributes: new Map(),
+        price: '',
+        quantity: 0,
+        images: []
+      });
+    }
+  };
+
+  const handleCloseVariantsDialog = () => {
+    setOpenVariantsDialog(false);
+    setSelectedProductForVariants(null);
+    setEditingVariant(null); // Clear editing variant on close
+    setVariantFormData({
+      sku: '',
+      attributes: new Map(),
+      price: '',
+      quantity: 0,
+      images: []
+    });
+  };
+
+  const handleVariantSubmit = async (e) => {
+    e.preventDefault();
+    const productId = selectedProductForVariants?._id || selectedProductForVariantsOnly?._id;
+    if (!productId) return;
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('sku', variantFormData.sku);
+      formDataToSend.append('price', variantFormData.price);
+      formDataToSend.append('quantity', variantFormData.quantity);
+      formDataToSend.append('attributes', JSON.stringify(Object.fromEntries(variantFormData.attributes)));
+
+      // Handle variant images
+      variantFormData.images.forEach((image, index) => {
+        if (image instanceof File) {
+          formDataToSend.append(`images`, image);
+        }
+      });
+
+      if (editingVariant) {
+        await productsAPI.updateVariant(productId, editingVariant._id, formDataToSend);
+        toast.success('تم تحديث المتغير بنجاح');
+      } else {
+        await productsAPI.createVariant(productId, formDataToSend);
+        toast.success('تم إضافة المتغير بنجاح');
+      }
+      handleCloseVariantsDialog();
+      fetchProducts();
+    } catch (err) {
+      console.error('Error saving variant:', err);
+      toast.error(err.response?.data?.message || 'حدث خطأ أثناء حفظ المتغير');
+    }
+  };
+
+  const handleDeleteVariant = async (productId, variantId) => {
+    if (window.confirm('هل أنت متأكد أنك تريد حذف هذا المتغير؟')) {
+      try {
+        await productsAPI.deleteVariant(productId, variantId);
+        toast.success('تم حذف المتغير بنجاح');
+        fetchProducts();
+      } catch (err) {
+        console.error('Error deleting variant:', err);
+        toast.error(err.response?.data?.message || 'حدث خطأ أثناء حذف المتغير');
+      }
+    }
+  };
+
+  // Add new handler for variants-only dialog
+  const handleOpenVariantsOnlyDialog = () => {
+    setOpenVariantsOnlyDialog(true);
+  };
+
+  const handleCloseVariantsOnlyDialog = () => {
+    setOpenVariantsOnlyDialog(false);
+    setSelectedProductForVariantsOnly(null);
+    setVariantFormData({
+      sku: '',
+      attributes: new Map(),
+      price: '',
+      quantity: 0,
+      images: []
+    });
+  };
+
+  // Modify the table actions to include variant management
+  const renderTableActions = (product) => (
+    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+      <Tooltip title="إدارة المتغيرات" arrow>
+        {product.hasVariants && (
+          <IconButton
+            size="small"
+            color="secondary"
+            onClick={() => handleOpenVariantsDialog(product)}
+            sx={{
+              borderRadius: 2,
+              '&:hover': {
+                backgroundColor: alpha('#9c27b0', 0.1),
+                transform: 'scale(1.1)'
+              }
+            }}
+          >
+            <SettingsIcon fontSize="small" />
+          </IconButton>
+        )}
+      </Tooltip>
+      <Tooltip title="عرض التفاصيل" arrow>
+        <IconButton
+          size="small"
+          color="info"
+          onClick={() => handleOpenDialog('view', product)}
+          sx={{
+            borderRadius: 2,
+            '&:hover': {
+              backgroundColor: alpha('#1976d2', 0.1),
+              transform: 'scale(1.1)'
+            }
+          }}
+        >
+          <ViewIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="تعديل المنتج" arrow>
+        <IconButton
+          size="small"
+          color="primary"
+          onClick={() => handleOpenDialog('edit', product)}
+          sx={{
+            borderRadius: 2,
+            '&:hover': {
+              backgroundColor: alpha('#2e7d32', 0.1),
+              transform: 'scale(1.1)'
+            }
+          }}
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="حذف المنتج" arrow>
+        <IconButton
+          size="small"
+          color="error"
+          onClick={() => handleDelete(product._id)}
+          sx={{
+            borderRadius: 2,
+            '&:hover': {
+              backgroundColor: alpha('#d32f2f', 0.1),
+              transform: 'scale(1.1)'
+            }
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+    </Box>
+  );
+
+  // Add the variants dialog
+  const renderVariantsDialog = () => (
+    <Dialog
+      open={openVariantsDialog}
+      onClose={handleCloseVariantsDialog}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          minHeight: '60vh',
+          background: 'linear-gradient(to bottom right, #ffffff, #f8f9fa)'
+        }
+      }}
+    >
+      <DialogTitle sx={{
+        borderBottom: '1px solid #e0e0e0',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        py: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            {editingVariant ? 'تعديل المتغير' : 'إضافة متغيرات للمنتج'}: {selectedProductForVariants?.hasVariants ? selectedProductForVariants?.name : ''}
+          </Typography>
+          <IconButton onClick={handleCloseVariantsDialog} size="small" sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{
+        p: 3,
+        mt: 0,
+        maxHeight: '70vh',
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '4px',
+          '&:hover': {
+            background: '#555',
+          },
+        },
+      }}>
+        <Box component="form" onSubmit={handleVariantSubmit} sx={{ mt: 2 }}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
+                label="رمز المتغير"
+                value={variantFormData.sku}
+                onChange={(e) => setVariantFormData(prev => ({ ...prev, sku: e.target.value }))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label="السعر"
+                value={variantFormData.price}
+                onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
+                type="number"
+                label="الكمية"
+                value={variantFormData.quantity}
+                onChange={(e) => setVariantFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#667eea',
+                    },
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* Variant Attributes */}
+            {selectedProductForVariants?.attributes?.map((attr, attrIndex) => (
+              <Grid item xs={12} md={4} key={attrIndex}>
+                <FormControl fullWidth>
+                  <InputLabel>{attr.name}</InputLabel>
+                  <Select
+                    value={variantFormData.attributes.get(attr.name) || ''}
+                    onChange={(e) => {
+                      const newAttributes = new Map(variantFormData.attributes);
+                      newAttributes.set(attr.name, e.target.value);
+                      setVariantFormData(prev => ({ ...prev, attributes: newAttributes }));
+                    }}
+                    label={attr.name}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#667eea',
+                      },
+                    }}
+                  >
+                    {attr.values.map((value) => (
+                      <MenuItem key={value} value={value}>
+                        {value}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            ))}
+
+            {/* Variant Images */}
+            <Grid item xs={12}>
+              <Box sx={{
+                border: '2px dashed #667eea',
+                borderRadius: 2,
+                p: 2,
+                textAlign: 'center',
+                bgcolor: 'rgba(102, 126, 234, 0.05)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  bgcolor: 'rgba(102, 126, 234, 0.1)',
+                }
+              }}>
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<ImageIcon />}
+                  sx={{
+                    borderColor: '#667eea',
+                    color: '#667eea',
+                    '&:hover': {
+                      borderColor: '#764ba2',
+                      color: '#764ba2',
+                    }
+                  }}
+                >
+                  صور المتغير
+                  <input
+                    type="file"
+                    hidden
+                    multiple
+                    accept="image/*"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files);
+                      setVariantFormData(prev => ({
+                        ...prev,
+                        images: [...prev.images, ...files]
+                      }));
+                    }}
+                  />
+                </Button>
+                <Box sx={{
+                  mt: 2,
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                  justifyContent: 'center'
+                }}>
+                  {variantFormData.images.map((img, imgIndex) => (
+                    <Box
+                      key={imgIndex}
+                      sx={{
+                        position: 'relative',
+                        transition: 'transform 0.2s ease',
+                        '&:hover': {
+                          transform: 'scale(1.05)',
+                        }
+                      }}
+                    >
+                      <img
+                        src={typeof img === 'string' ? img : URL.createObjectURL(img)}
+                        alt={`Variant ${imgIndex + 1}`}
+                        style={{
+                          width: 100,
+                          height: 100,
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                      <IconButton
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: -8,
+                          right: -8,
+                          bgcolor: 'rgba(0,0,0,0.7)',
+                          color: 'white',
+                          '&:hover': {
+                            bgcolor: 'rgba(0,0,0,0.9)',
+                            transform: 'scale(1.1)'
+                          },
+                          transition: 'all 0.2s ease'
+                        }}
+                        onClick={() => {
+                          setVariantFormData(prev => ({
+                            ...prev,
+                            images: prev.images.filter((_, i) => i !== imgIndex)
+                          }));
+                        }}
+                      >
+                        <CloseIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+
+          <DialogActions sx={{
+            mt: 3,
+            px: 3,
+            py: 2,
+            borderTop: '1px solid #e0e0e0',
+            bgcolor: '#f8f9fa'
+          }}>
+            <Button
+              onClick={handleCloseVariantsDialog}
+              sx={{
+                color: '#666',
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.05)',
+                }
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                }
+              }}
+            >
+              {editingVariant ? 'تحديث المتغير' : 'إضافة المتغير'}
+            </Button>
+          </DialogActions>
+        </Box>
+
+        {/* Existing Variants Section */}
+        {selectedProductForVariants?.productVariants?.length > 0 && (
+          <Box sx={{ mt: 4, p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600 }}>
+                المتغيرات الحالية للمنتج
+              </Typography>
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => handleOpenVariantsDialog(selectedProductForVariants)}
+                sx={{
+                  borderColor: '#667eea',
+                  color: '#667eea',
+                  '&:hover': {
+                    borderColor: '#764ba2',
+                    color: '#764ba2',
+                  }
+                }}
+              >
+                إضافة متغير جديد
+              </Button>
+            </Box>
+            <TableContainer component={Paper} elevation={1}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>SKU</TableCell>
+                    <TableCell>السعر</TableCell>
+                    <TableCell>الكمية</TableCell>
+                    <TableCell>السمات</TableCell>
+                    <TableCell align="right">الإجراءات</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {selectedProductForVariants.productVariants.map((variant) => (
+                    <TableRow key={variant._id}>
+                      <TableCell>{variant.sku}</TableCell>
+                      <TableCell>{variant.price} $</TableCell>
+                      <TableCell>{variant.quantity}</TableCell>
+                      <TableCell>
+                        {variant.attributes && Object.entries(variant.attributes).map(([key, value]) => (
+                          <Chip key={key} label={`${key}: ${value}`} size="small" sx={{ mr: 0.5, mb: 0.5 }} />
+                        ))}
+                      </TableCell>
+                      <TableCell align="right">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleOpenVariantsDialog(selectedProductForVariants, variant)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteVariant(selectedProductForVariants._id, variant._id)}
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Add the variants-only dialog
+  const renderVariantsOnlyDialog = () => (
+    <Dialog
+      open={openVariantsOnlyDialog}
+      onClose={handleCloseVariantsOnlyDialog}
+      maxWidth="md"
+      fullWidth
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          minHeight: '60vh',
+          background: 'linear-gradient(to bottom right, #ffffff, #f8f9fa)'
+        }
+      }}
+    >
+      <DialogTitle sx={{
+        borderBottom: '1px solid #e0e0e0',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        py: 2
+      }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+            إضافة متغيرات جديدة
+          </Typography>
+          <IconButton onClick={handleCloseVariantsOnlyDialog} size="small" sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
+
+      <DialogContent sx={{
+        p: 3,
+        mt: 0,
+        maxHeight: '70vh',
+        overflowY: 'auto',
+        '&::-webkit-scrollbar': {
+          width: '8px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: '#f1f1f1',
+          borderRadius: '4px',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          background: '#888',
+          borderRadius: '4px',
+          '&:hover': {
+            background: '#555',
+          },
+        },
+      }}>
+        <Box component="form" onSubmit={handleVariantSubmit} sx={{ mt: 2 }}>
+          <Grid container spacing={3}>
+            {/* Product Selection */}
+            <Grid item xs={12}>
+              <FormControl fullWidth required>
+                <InputLabel>اختر المنتج</InputLabel>
+                <Select
+                  value={selectedProductForVariantsOnly?._id || ''}
+                  onChange={(e) => {
+                    const product = products.find(p => p._id === e.target.value);
+                    setSelectedProductForVariantsOnly(product);
+                  }}
+                  label="اختر المنتج"
+                  sx={{
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#667eea',
+                    },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: '#667eea',
+                    },
+                  }}
+                >
+                  {products.map((product) => (
+                    <MenuItem key={product._id} value={product._id}>
+                      {product.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {selectedProductForVariantsOnly?.hasVariants && (
+              <Grid item xs={12}>
+                <Grid container spacing={3}>
+                  {/* Variant Details */}
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      label="رمز المتغير"
+                      value={variantFormData.sku}
+                      onChange={(e) => setVariantFormData(prev => ({ ...prev, sku: e.target.value }))}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: '#667eea',
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="السعر"
+                      value={variantFormData.price}
+                      onChange={(e) => setVariantFormData(prev => ({ ...prev, price: e.target.value }))}
+                      InputProps={{
+                        startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: '#667eea',
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="الكمية"
+                      value={variantFormData.quantity}
+                      onChange={(e) => setVariantFormData(prev => ({ ...prev, quantity: e.target.value }))}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '&:hover fieldset': {
+                            borderColor: '#667eea',
+                          },
+                        },
+                      }}
+                    />
+                  </Grid>
+
+                  {/* Variant Attributes */}
+                  {selectedProductForVariantsOnly?.attributes?.map((attr, attrIndex) => (
+                    <Grid item xs={12} md={4} key={attrIndex}>
+                      <FormControl fullWidth>
+                        <InputLabel>{attr.name}</InputLabel>
+                        <Select
+                          value={variantFormData.attributes.get(attr.name) || ''}
+                          onChange={(e) => {
+                            const newAttributes = new Map(variantFormData.attributes);
+                            newAttributes.set(attr.name, e.target.value);
+                            setVariantFormData(prev => ({ ...prev, attributes: newAttributes }));
+                          }}
+                          label={attr.name}
+                          sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#667eea',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#667eea',
+                            },
+                          }}
+                        >
+                          {attr.values.map((value) => (
+                            <MenuItem key={value} value={value}>
+                              {value}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  ))}
+
+                  {/* Variant Images */}
+                  <Grid item xs={12}>
+                    <Box sx={{
+                      border: '2px dashed #667eea',
+                      borderRadius: 2,
+                      p: 2,
+                      textAlign: 'center',
+                      bgcolor: 'rgba(102, 126, 234, 0.05)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        bgcolor: 'rgba(102, 126, 234, 0.1)',
+                      }
+                    }}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        startIcon={<ImageIcon />}
+                        sx={{
+                          borderColor: '#667eea',
+                          color: '#667eea',
+                          '&:hover': {
+                            borderColor: '#764ba2',
+                            color: '#764ba2',
+                          }
+                        }}
+                      >
+                        صور المتغير
+                        <input
+                          type="file"
+                          hidden
+                          multiple
+                          accept="image/*"
+                          onChange={(e) => {
+                            const files = Array.from(e.target.files);
+                            setVariantFormData(prev => ({
+                              ...prev,
+                              images: [...prev.images, ...files]
+                            }));
+                          }}
+                        />
+                      </Button>
+                      <Box sx={{
+                        mt: 2,
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 1,
+                        justifyContent: 'center'
+                      }}>
+                        {variantFormData.images.map((img, imgIndex) => (
+                          <Box
+                            key={imgIndex}
+                            sx={{
+                              position: 'relative',
+                              transition: 'transform 0.2s ease',
+                              '&:hover': {
+                                transform: 'scale(1.05)',
+                              }
+                            }}
+                          >
+                            <img
+                              src={typeof img === 'string' ? img : URL.createObjectURL(img)}
+                              alt={`Variant ${imgIndex + 1}`}
+                              style={{
+                                width: 100,
+                                height: 100,
+                                objectFit: 'cover',
+                                borderRadius: 8,
+                                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                              }}
+                            />
+                            <IconButton
+                              size="small"
+                              sx={{
+                                position: 'absolute',
+                                top: -8,
+                                right: -8,
+                                bgcolor: 'rgba(0,0,0,0.7)',
+                                color: 'white',
+                                '&:hover': {
+                                  bgcolor: 'rgba(0,0,0,0.9)',
+                                  transform: 'scale(1.1)'
+                                },
+                                transition: 'all 0.2s ease'
+                              }}
+                              onClick={() => {
+                                setVariantFormData(prev => ({
+                                  ...prev,
+                                  images: prev.images.filter((_, i) => i !== imgIndex)
+                                }));
+                              }}
+                            >
+                              <CloseIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Grid>
+            )}
+          </Grid>
+
+          <DialogActions sx={{
+            mt: 3,
+            px: 3,
+            py: 2,
+            borderTop: '1px solid #e0e0e0',
+            bgcolor: '#f8f9fa'
+          }}>
+            <Button
+              onClick={handleCloseVariantsOnlyDialog}
+              sx={{
+                color: '#666',
+                '&:hover': {
+                  bgcolor: 'rgba(0,0,0,0.05)',
+                }
+              }}
+            >
+              إلغاء
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={!selectedProductForVariantsOnly}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                }
+              }}
+            >
+              إضافة المتغير
+            </Button>
+          </DialogActions>
+        </Box>
+      </DialogContent>
+    </Dialog>
+  );
+
+  // Update the table cell to use the new actions
+  const renderTableCell = (product) => (
+    <TableCell>
+      {renderTableActions(product)}
+    </TableCell>
+  );
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -715,6 +1551,21 @@ const Products = () => {
               >
                 إضافة منتج جديد
               </Button>
+              {hasAnyProductWithVariants && (
+                <Button
+                  variant="contained"
+                  startIcon={<SettingsIcon />}
+                  onClick={handleOpenVariantsOnlyDialog}
+                  sx={{
+                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
+                    }
+                  }}
+                >
+                  إضافة متغيرات
+                </Button>
+              )}
             </Box>
           </Box>
         </Box>
@@ -1077,58 +1928,7 @@ const Products = () => {
                             </Box>
                           </TableCell>
                           <TableCell>
-                            <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-                              <Tooltip title="عرض التفاصيل" arrow>
-                                <IconButton
-                                  size="small"
-                                  color="info"
-                                  onClick={() => handleOpenDialog('view', product)}
-                                  sx={{
-                                    borderRadius: 2,
-                                    '&:hover': {
-                                      backgroundColor: alpha('#1976d2', 0.1),
-                                      transform: 'scale(1.1)'
-                                    }
-                                  }}
-                                >
-                                  <ViewIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Tooltip title="تعديل المنتج" arrow>
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  onClick={() => handleOpenDialog('edit', product)}
-                                  sx={{
-                                    borderRadius: 2,
-                                    '&:hover': {
-                                      backgroundColor: alpha('#2e7d32', 0.1),
-                                      transform: 'scale(1.1)'
-                                    }
-                                  }}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-
-                              <Tooltip title="حذف المنتج" arrow>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => handleDelete(product._id)}
-                                  sx={{
-                                    borderRadius: 2,
-                                    '&:hover': {
-                                      backgroundColor: alpha('#d32f2f', 0.1),
-                                      transform: 'scale(1.1)'
-                                    }
-                                  }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </Tooltip>
-                            </Box>
+                            {renderTableActions(product)}
                           </TableCell>
                         </motion.tr>
                       ))}
@@ -1151,421 +1951,715 @@ const Products = () => {
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`}
       />
 
+      {/* Modify the product form dialog */}
       <Dialog
         open={openDialog}
         onClose={handleCloseDialog}
-        maxWidth="lg"
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
             borderRadius: 3,
-            minHeight: '80vh'
+            minHeight: '80vh',
+            background: 'linear-gradient(to bottom right, #ffffff, #f8f9fa)'
           }
         }}
       >
-        <DialogTitle>
+        <DialogTitle sx={{
+          borderBottom: '1px solid #e0e0e0',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          color: 'white',
+          py: 2
+        }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6" component="div">
-              {dialogMode === 'add' ? 'إضافة منتج جديد' :
-                dialogMode === 'edit' ? 'تعديل المنتج' :
-                  'عرض تفاصيل المنتج'}
+            <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+              {dialogMode === 'add' ? 'إضافة منتج جديد' : 'تعديل المنتج'}
             </Typography>
-            <IconButton onClick={handleCloseDialog} size="small">
+            <IconButton onClick={handleCloseDialog} size="small" sx={{ color: 'white' }}>
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
 
-        <DialogContent sx={{ p: 0, mt: 0, maxHeight: '70vh', overflowY: 'auto', bgcolor: '#f7f8fa' }}>
+        <DialogContent sx={{
+          p: 3,
+          mt: 0,
+          maxHeight: '80vh',
+          overflowY: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: '#f1f1f1',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#888',
+            borderRadius: '4px',
+            '&:hover': {
+              background: '#555',
+            },
+          },
+        }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={3}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="اسم المنتج"
-                  value={formData.name}
-                  onChange={handleFormChange('name')}
-                  error={!!formErrors.name}
-                  helperText={formErrors.name}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  required
-                  label="العلامة التجارية"
-                  value={formData.brand}
-                  onChange={handleFormChange('brand')}
-                  error={!!formErrors.brand}
-                  helperText={formErrors.brand}
-                />
-              </Grid>
+              {/* Basic Information Section */}
               <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  required
-                  label="الوصف"
-                  multiline
-                  minRows={3}
-                  value={formData.description}
-                  onChange={handleFormChange('description')}
-                  error={!!formErrors.description}
-                  helperText={formErrors.description}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth required error={!!formErrors.category}>
-                  <InputLabel>الفئة</InputLabel>
-                  <Select
-                    value={formData.category}
-                    onChange={handleFormChange('category')}
-                    label="الفئة"
-                  >
-                    {categories.map((category) => (
-                      <MenuItem key={category._id} value={category._id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  {formErrors.category && (
-                    <FormHelperText>{formErrors.category}</FormHelperText>
-                  )}
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.hasVariants}
-                      onChange={(e) => handleFormChange('hasVariants')(e)}
-                    />
-                  }
-                  label="المنتج له متغيرات"
-                />
-              </Grid>
-
-              {/* Simple Product Fields */}
-              {!formData.hasVariants && (
-                <>
-                  <Grid xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      type="number"
-                      label="السعر"
-                      value={formData.price}
-                      onChange={handleFormChange('price')}
-                      error={!!formErrors.price}
-                      helperText={formErrors.price}
-                    />
-                  </Grid>
-                  <Grid xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      type="number"
-                      label="الكمية"
-                      value={formData.stock}
-                      onChange={handleFormChange('stock')}
-                      error={!!formErrors.stock}
-                      helperText={formErrors.stock}
-                    />
-                  </Grid>
-                  <Grid xs={12} md={4}>
-                    <TextField
-                      fullWidth
-                      required
-                      label="رمز المنتج"
-                      value={formData.sku}
-                      onChange={handleFormChange('sku')}
-                      error={!!formErrors.sku}
-                      helperText={formErrors.sku}
-                    />
-                  </Grid>
-                </>
-              )}
-
-              {/* Product Images */}
-              <Grid xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  صور المنتج
-                </Typography>
-                <Grid container spacing={2}>
-                  <Grid xs={12} md={6}>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      startIcon={<ImageIcon />}
-                    >
-                      صورة الغلاف
-                      <input
-                        type="file"
-                        hidden
-                        accept="image/*"
-                        onChange={handleImageCoverChange}
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <SettingsIcon /> المعلومات الأساسية
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        label="اسم المنتج"
+                        value={formData.name}
+                        onChange={handleFormChange('name')}
+                        error={!!formErrors.name}
+                        helperText={formErrors.name}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#667eea',
+                            },
+                          },
+                        }}
                       />
-                    </Button>
-                    {formData.imageCover && (
-                      <Box sx={{ mt: 1 }}>
-                        <img
-                          src={formData.imageCover}
-                          alt="Cover"
-                          style={{ maxWidth: '100%', maxHeight: 200 }}
-                        />
-                      </Box>
-                    )}
-                  </Grid>
-                  <Grid xs={12} md={6}>
-                    <Button
-                      variant="outlined"
-                      component="label"
-                      fullWidth
-                      startIcon={<ImageIcon />}
-                    >
-                      صور إضافية
-                      <input
-                        type="file"
-                        hidden
-                        multiple
-                        accept="image/*"
-                        onChange={handleImagesChange}
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        required
+                        label="العلامة التجارية"
+                        value={formData.brand}
+                        onChange={handleFormChange('brand')}
+                        error={!!formErrors.brand}
+                        helperText={formErrors.brand}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#667eea',
+                            },
+                          },
+                        }}
                       />
-                    </Button>
-                    <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                      {formData.images.map((img, index) => (
-                        <Box key={index} sx={{ position: 'relative' }}>
-                          <img
-                            src={img}
-                            alt={`Product ${index + 1}`}
-                            style={{ width: 100, height: 100, objectFit: 'cover' }}
-                          />
-                          <IconButton
-                            size="small"
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              right: 0,
-                              bgcolor: 'rgba(0,0,0,0.5)',
-                              color: 'white',
-                              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
-                            }}
-                            onClick={() => {
-                              setFormData(prev => ({
-                                ...prev,
-                                images: prev.images.filter((_, i) => i !== index)
-                              }));
-                            }}
-                          >
-                            <CloseIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      ))}
-                    </Box>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        required
+                        label="الوصف"
+                        multiline
+                        minRows={3}
+                        value={formData.description}
+                        onChange={handleFormChange('description')}
+                        error={!!formErrors.description}
+                        helperText={formErrors.description}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: '#667eea',
+                            },
+                          },
+                        }}
+                      />
+                    </Grid>
                   </Grid>
-                </Grid>
+                </Paper>
               </Grid>
 
-              {/* Variants Section */}
-              {formData.hasVariants && (
-                <Grid xs={12}>
-                  <Box sx={{ mb: 2 }}>
-                    <Typography variant="subtitle1" gutterBottom>
-                      المتغيرات
-                    </Typography>
-                    <Button
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      onClick={addVariant}
-                    >
-                      إضافة متغير
-                    </Button>
-                  </Box>
-                  {formData.variants.map((variant, index) => (
-                    <Paper key={index} sx={{ p: 2, mb: 2 }}>
-                      <Grid container spacing={2}>
-                        <Grid xs={12} md={3}>
-                          <TextField
-                            fullWidth
-                            required
-                            label="رمز المتغير"
-                            value={variant.sku}
-                            onChange={(e) => updateVariant(index, 'sku', e.target.value)}
-                            error={!!formErrors[`variant_${index}_sku`]}
-                            helperText={formErrors[`variant_${index}_sku`]}
+              {/* Pricing and Stock Section */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <PriceIcon /> السعر والمخزون
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={4}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.hasVariants}
+                            onChange={(e) => setFormData(prev => ({ ...prev, hasVariants: e.target.checked }))}
+                            color="primary"
                           />
-                        </Grid>
-                        <Grid xs={12} md={3}>
+                        }
+                        label="المنتج له متغيرات"
+                      />
+                    </Grid>
+                    {!formData.hasVariants && (
+                      <>
+                        <Grid item xs={12} md={4}>
                           <TextField
                             fullWidth
                             required
                             type="number"
                             label="السعر"
-                            value={variant.price}
-                            onChange={(e) => updateVariant(index, 'price', e.target.value)}
-                            error={!!formErrors[`variant_${index}_price`]}
-                            helperText={formErrors[`variant_${index}_price`]}
+                            value={formData.price}
+                            onChange={handleFormChange('price')}
+                            error={!!formErrors.price}
+                            helperText={formErrors.price}
+                            InputProps={{
+                              startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                            }}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                  borderColor: '#764ba2',
+                                },
+                              },
+                            }}
                           />
                         </Grid>
-                        <Grid xs={12} md={3}>
+                        <Grid item xs={12} md={4}>
                           <TextField
                             fullWidth
                             required
                             type="number"
-                            label="الكمية"
-                            value={variant.quantity}
-                            onChange={(e) => updateVariant(index, 'quantity', e.target.value)}
-                            error={!!formErrors[`variant_${index}_quantity`]}
-                            helperText={formErrors[`variant_${index}_quantity`]}
+                            label="المخزون"
+                            value={formData.stock}
+                            onChange={handleFormChange('stock')}
+                            error={!!formErrors.stock}
+                            helperText={formErrors.stock}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                  borderColor: '#764ba2',
+                                },
+                              },
+                            }}
                           />
                         </Grid>
-                        <Grid xs={12} md={3}>
+                        <Grid item xs={12} md={4}>
+                          <TextField
+                            fullWidth
+                            required
+                            label="رمز المنتج (SKU)"
+                            value={formData.sku}
+                            onChange={handleFormChange('sku')}
+                            error={!!formErrors.sku}
+                            helperText={formErrors.sku}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                  borderColor: '#764ba2',
+                                },
+                              },
+                            }}
+                          />
+                        </Grid>
+                      </>
+                    )}
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Category Section */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CategoryIcon /> التصنيف
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12}>
+                      <FormControl fullWidth required error={!!formErrors.category}>
+                        <InputLabel>الفئة</InputLabel>
+                        <Select
+                          value={formData.category}
+                          onChange={handleFormChange('category')}
+                          label="الفئة"
+                          sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#667eea',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                              borderColor: '#667eea',
+                            },
+                          }}
+                        >
+                          {categories.map((category) => (
+                            <MenuItem key={category._id} value={category._id}>
+                              {category.name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        {formErrors.category && (
+                          <FormHelperText>{formErrors.category}</FormHelperText>
+                        )}
+                      </FormControl>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Product Images Section */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ImageIcon /> صور المنتج
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{
+                        border: '2px dashed #764ba2',
+                        borderRadius: 2,
+                        p: 2,
+                        textAlign: 'center',
+                        bgcolor: 'rgba(118, 75, 162, 0.05)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(118, 75, 162, 0.1)',
+                        }
+                      }}>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          fullWidth
+                          startIcon={<ImageIcon />}
+                          sx={{
+                            borderColor: '#764ba2',
+                            color: '#764ba2',
+                            '&:hover': {
+                              borderColor: '#667eea',
+                              color: '#667eea',
+                            }
+                          }}
+                        >
+                          صورة الغلاف
+                          <input
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            onChange={handleImageCoverChange}
+                          />
+                        </Button>
+                        {formData.imageCover && (
+                          <Box sx={{ mt: 2 }}>
+                            <img
+                              src={formData.imageCover}
+                              alt="Cover"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: 200,
+                                borderRadius: 8,
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                              }}
+                            />
+                          </Box>
+                        )}
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <Box sx={{
+                        border: '2px dashed #764ba2',
+                        borderRadius: 2,
+                        p: 2,
+                        textAlign: 'center',
+                        bgcolor: 'rgba(118, 75, 162, 0.05)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          bgcolor: 'rgba(118, 75, 162, 0.1)',
+                        }
+                      }}>
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          fullWidth
+                          startIcon={<ImageIcon />}
+                          sx={{
+                            borderColor: '#764ba2',
+                            color: '#764ba2',
+                            '&:hover': {
+                              borderColor: '#667eea',
+                              color: '#667eea',
+                            }
+                          }}
+                        >
+                          صور إضافية
+                          <input
+                            type="file"
+                            hidden
+                            multiple
+                            accept="image/*"
+                            onChange={handleImagesChange}
+                          />
+                        </Button>
+                        <Box sx={{
+                          mt: 2,
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 1,
+                          justifyContent: 'center'
+                        }}>
+                          {formData.images.map((img, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                position: 'relative',
+                                transition: 'transform 0.2s ease',
+                                '&:hover': {
+                                  transform: 'scale(1.05)',
+                                }
+                              }}
+                            >
+                              <img
+                                src={img}
+                                alt={`Product ${index + 1}`}
+                                style={{
+                                  width: 100,
+                                  height: 100,
+                                  objectFit: 'cover',
+                                  borderRadius: 8,
+                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                }}
+                              />
+                              <IconButton
+                                size="small"
+                                sx={{
+                                  position: 'absolute',
+                                  top: -8,
+                                  right: -8,
+                                  bgcolor: 'rgba(0,0,0,0.7)',
+                                  color: 'white',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(0,0,0,0.9)',
+                                    transform: 'scale(1.1)'
+                                  },
+                                  transition: 'all 0.2s ease'
+                                }}
+                                onClick={() => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    images: prev.images.filter((_, i) => i !== index)
+                                  }));
+                                }}
+                              >
+                                <CloseIcon fontSize="small" />
+                              </IconButton>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
+              </Grid>
+
+              {/* Features Section */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <StarIcon /> المميزات
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          features: [...prev.features, { name: '', value: '' }]
+                        }));
+                      }}
+                      sx={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                        }
+                      }}
+                    >
+                      إضافة ميزة
+                    </Button>
+                  </Box>
+                  {formData.features.map((feature, index) => (
+                    <Paper
+                      key={index}
+                      sx={{
+                        p: 3,
+                        mb: 2,
+                        bgcolor: 'white',
+                        borderRadius: 2,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        }
+                      }}
+                    >
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={5}>
+                          <TextField
+                            fullWidth
+                            label="اسم الميزة"
+                            value={feature.name}
+                            onChange={(e) => {
+                              const newFeatures = [...formData.features];
+                              newFeatures[index] = { ...feature, name: e.target.value };
+                              setFormData(prev => ({ ...prev, features: newFeatures }));
+                            }}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                  borderColor: '#667eea',
+                                },
+                              },
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={5}>
+                          <TextField
+                            fullWidth
+                            label="قيمة الميزة"
+                            value={feature.value}
+                            onChange={(e) => {
+                              const newFeatures = [...formData.features];
+                              newFeatures[index] = { ...feature, value: e.target.value };
+                              setFormData(prev => ({ ...prev, features: newFeatures }));
+                            }}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                '&:hover fieldset': {
+                                  borderColor: '#667eea',
+                                },
+                              },
+                            }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={2}>
                           <Button
                             color="error"
-                            onClick={() => removeVariant(index)}
+                            onClick={() => {
+                              setFormData(prev => ({
+                                ...prev,
+                                features: prev.features.filter((_, i) => i !== index)
+                              }));
+                            }}
                             startIcon={<DeleteIcon />}
+                            sx={{
+                              height: '100%',
+                              '&:hover': {
+                                bgcolor: 'rgba(211, 47, 47, 0.1)',
+                              }
+                            }}
                           >
                             حذف
                           </Button>
                         </Grid>
-                        {/* Variant Attributes */}
-                        {formData.attributes.map((attr, attrIndex) => (
-                          <Grid xs={12} md={4} key={attrIndex}>
-                            <FormControl fullWidth>
-                              <InputLabel>{attr.name}</InputLabel>
-                              <Select
-                                value={variant.attributes[attr.name] || ''}
-                                onChange={(e) => {
-                                  const newAttributes = {
-                                    ...variant.attributes,
-                                    [attr.name]: e.target.value
-                                  };
-                                  updateVariant(index, 'attributes', newAttributes);
-                                }}
-                                label={attr.name}
-                              >
-                                {attr.values.map((value) => (
-                                  <MenuItem key={value} value={value}>
-                                    {value}
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          </Grid>
-                        ))}
-                        {/* Variant Images */}
-                        <Grid xs={12}>
-                          <Button
-                            variant="outlined"
-                            component="label"
-                            startIcon={<ImageIcon />}
-                          >
-                            صور المتغير
-                            <input
-                              type="file"
-                              hidden
-                              multiple
-                              accept="image/*"
-                              onChange={(e) => handleVariantImagesChange(index, e)}
-                            />
-                          </Button>
-                          <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                            {variant.images.map((img, imgIndex) => (
-                              <Box key={imgIndex} sx={{ position: 'relative' }}>
-                                <img
-                                  src={img}
-                                  alt={`Variant ${index + 1} - ${imgIndex + 1}`}
-                                  style={{ width: 100, height: 100, objectFit: 'cover' }}
-                                />
-                                <IconButton
-                                  size="small"
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 0,
-                                    right: 0,
-                                    bgcolor: 'rgba(0,0,0,0.5)',
-                                    color: 'white',
-                                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
-                                  }}
-                                  onClick={() => {
-                                    const newImages = variant.images.filter(
-                                      (_, i) => i !== imgIndex
-                                    );
-                                    updateVariant(index, 'images', newImages);
-                                  }}
-                                >
-                                  <CloseIcon fontSize="small" />
-                                </IconButton>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Grid>
                       </Grid>
                     </Paper>
                   ))}
-                </Grid>
-              )}
+                </Paper>
+              </Grid>
 
-              {/* Attributes Section */}
-              <Grid xs={12}>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle1" gutterBottom>
-                    السمات
-                  </Typography>
-                  <Button
-                    variant="outlined"
-                    startIcon={<AddIcon />}
-                    onClick={addAttribute}
-                  >
-                    إضافة سمة
-                  </Button>
-                </Box>
-                {formData.attributes.map((attr, index) => (
-                  <Paper key={index} sx={{ p: 2, mb: 2 }}>
-                    <Grid container spacing={2}>
-                      <Grid xs={12} md={5}>
+              {/* Specifications Section */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SettingsIcon /> المواصفات
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => {
+                        setFormData(prev => ({
+                          ...prev,
+                          specifications: [...prev.specifications, { group: '', items: [{ name: '', value: '' }] }]
+                        }));
+                      }}
+                      sx={{
+                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        '&:hover': {
+                          background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                        }
+                      }}
+                    >
+                      إضافة مجموعة مواصفات
+                    </Button>
+                  </Box>
+                  {formData.specifications.map((spec, specIndex) => (
+                    <Paper
+                      key={specIndex}
+                      sx={{
+                        p: 3,
+                        mb: 2,
+                        bgcolor: 'white',
+                        borderRadius: 2,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        }
+                      }}
+                    >
+                      <Box sx={{ mb: 2 }}>
                         <TextField
                           fullWidth
-                          label="اسم السمة"
-                          value={attr.name}
-                          onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                          label="اسم المجموعة"
+                          value={spec.group}
+                          onChange={(e) => {
+                            const newSpecs = [...formData.specifications];
+                            newSpecs[specIndex] = { ...spec, group: e.target.value };
+                            setFormData(prev => ({ ...prev, specifications: newSpecs }));
+                          }}
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              '&:hover fieldset': {
+                                borderColor: '#764ba2',
+                              },
+                            },
+                          }}
                         />
-                      </Grid>
-                      <Grid xs={12} md={5}>
-                        <TextField
-                          fullWidth
-                          label="القيم (مفصولة بفاصلة)"
-                          value={Array.isArray(attr.values) ? attr.values.join(',') : attr.values}
-                          onChange={(e) => updateAttribute(index, 'values', e.target.value)}
-                        />
-                      </Grid>
-                      <Grid xs={12} md={2}>
+                      </Box>
+                      {spec.items.map((item, itemIndex) => (
+                        <Box key={itemIndex} sx={{ mb: 2 }}>
+                          <Grid container spacing={3}>
+                            <Grid item xs={12} md={5}>
+                              <TextField
+                                fullWidth
+                                label="اسم المواصفة"
+                                value={item.name}
+                                onChange={(e) => {
+                                  const newSpecs = [...formData.specifications];
+                                  newSpecs[specIndex].items[itemIndex] = { ...item, name: e.target.value };
+                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    '&:hover fieldset': {
+                                      borderColor: '#764ba2',
+                                    },
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={5}>
+                              <TextField
+                                fullWidth
+                                label="قيمة المواصفة"
+                                value={item.value}
+                                onChange={(e) => {
+                                  const newSpecs = [...formData.specifications];
+                                  newSpecs[specIndex].items[itemIndex] = { ...item, value: e.target.value };
+                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
+                                }}
+                                sx={{
+                                  '& .MuiOutlinedInput-root': {
+                                    '&:hover fieldset': {
+                                      borderColor: '#764ba2',
+                                    },
+                                  },
+                                }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                              <Button
+                                color="error"
+                                onClick={() => {
+                                  const newSpecs = [...formData.specifications];
+                                  newSpecs[specIndex].items = spec.items.filter((_, i) => i !== itemIndex);
+                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
+                                }}
+                                startIcon={<DeleteIcon />}
+                                sx={{
+                                  height: '100%',
+                                  '&:hover': {
+                                    bgcolor: 'rgba(211, 47, 47, 0.1)',
+                                  }
+                                }}
+                              >
+                                حذف
+                              </Button>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      ))}
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<AddIcon />}
+                          onClick={() => {
+                            const newSpecs = [...formData.specifications];
+                            newSpecs[specIndex].items.push({ name: '', value: '' });
+                            setFormData(prev => ({ ...prev, specifications: newSpecs }));
+                          }}
+                          sx={{
+                            borderColor: '#764ba2',
+                            color: '#764ba2',
+                            '&:hover': {
+                              borderColor: '#667eea',
+                              color: '#667eea',
+                            }
+                          }}
+                        >
+                          إضافة مواصفة
+                        </Button>
                         <Button
                           color="error"
-                          onClick={() => removeAttribute(index)}
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              specifications: prev.specifications.filter((_, i) => i !== specIndex)
+                            }));
+                          }}
                           startIcon={<DeleteIcon />}
+                          sx={{
+                            '&:hover': {
+                              bgcolor: 'rgba(211, 47, 47, 0.1)',
+                            }
+                          }}
                         >
-                          حذف
+                          حذف المجموعة
                         </Button>
-                      </Grid>
-                    </Grid>
-                  </Paper>
-                ))}
+                      </Box>
+                    </Paper>
+                  ))}
+                </Paper>
               </Grid>
             </Grid>
 
-            <DialogActions sx={{ mt: 3 }}>
-              <Button onClick={handleCloseDialog}>إلغاء</Button>
-              {dialogMode !== 'view' && (
-                <Button type="submit" variant="contained" color="primary">
-                  {dialogMode === 'add' ? 'إضافة' : 'تحديث'}
-                </Button>
-              )}
+            <DialogActions sx={{
+              mt: 3,
+              px: 3,
+              py: 2,
+              borderTop: '1px solid #e0e0e0',
+              bgcolor: '#f8f9fa'
+            }}>
+              <Button
+                onClick={handleCloseDialog}
+                sx={{
+                  color: '#666',
+                  '&:hover': {
+                    bgcolor: 'rgba(0,0,0,0.05)',
+                  }
+                }}
+              >
+                إلغاء
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  }
+                }}
+              >
+                {dialogMode === 'add' ? 'إضافة' : 'تحديث'}
+              </Button>
             </DialogActions>
           </Box>
         </DialogContent>
       </Dialog>
+
+      {/* Add the variants dialog */}
+      {renderVariantsDialog()}
+
+      {/* Add the variants-only dialog */}
+      {renderVariantsOnlyDialog()}
     </Box>
   );
 };
