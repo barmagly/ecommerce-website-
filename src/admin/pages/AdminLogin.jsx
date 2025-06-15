@@ -113,8 +113,8 @@ const AdminLogin = () => {
                     src="https://www.pngall.com/wp-content/uploads/15/Login-PNG-HD-Image.png"
                     alt="Login"
                     sx={{
-                      width: '100%',
-                      maxWidth: 600, // Retaining a max-width for the image for better control
+                      width: '150%',
+                      maxWidth: '700px', // Retaining a max-width for the image for better control
                       height: '600px',
                       display: 'block',
                       margin: '100px auto', // Centering the image within its cell
@@ -139,9 +139,10 @@ const AdminLogin = () => {
                       alignItems: 'center',
                       bgcolor: theme.palette.background.paper,
                       borderRadius: 2,
-                      maxWidth: 500, // Retaining a max-width for the form for better control
+                      maxWidth: 700, // Retaining a max-width for the form for better control
                       mx: 'auto', // Centering the form within its cell
                       mt: 0,
+                      mr: '150px', // Added margin right of 100px
                     }}
                   >
                     <Avatar
