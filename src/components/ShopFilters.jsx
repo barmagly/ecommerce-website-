@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import "./ShopFilters.css";
 const API_URL = process.env.REACT_APP_API_URL
 
 export default function ShopFilters({ onFiltersApplied, categories = [], products = [] }) {
@@ -142,26 +143,6 @@ export default function ShopFilters({ onFiltersApplied, categories = [], product
           "تطبيق الفلاتر"
         )}
       </button>
-
-      <style jsx>{`
-        .filters-sidebar {
-          position: sticky;
-          top: 20px;
-        }
-        .form-select, .form-control {
-          border-color: #dee2e6;
-        }
-        .form-select:focus, .form-control:focus {
-          border-color: #dc3545;
-          box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
-        }
-        .form-range::-webkit-slider-thumb {
-          background: #dc3545;
-        }
-        .form-range::-moz-range-thumb {
-          background: #dc3545;
-        }
-      `}</style>
     </div>
   );
 } 

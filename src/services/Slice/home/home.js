@@ -1,14 +1,12 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
-
-const API_URL = `${process.env.REACT_APP_API_URL}/api/products`;
+import { frontendAPI } from "../../api";
 
 // get new products
 export const getNewArrivalProductsThunk = createAsyncThunk(
     "homeProducts/getNewArrivalProducts",
     async (_, thunkAPI) => {
         try {
-            const { data } = await axios.get(`${API_URL}/new-arrivals`);
+            const { data } = await frontendAPI.getNewArrivals();
             return data.data;
         } catch (error) {
             return thunkAPI.rejectWithValue(

@@ -23,6 +23,7 @@ import Carts from './pages/Carts';
 import Variants from './pages/Variants';
 import Settings from './pages/Settings';
 import AdminLogin from './pages/AdminLogin';
+import Profile from './pages/Profile';
 
 // Import layout and auth
 import AdminLayout from './components/AdminLayout';
@@ -114,7 +115,24 @@ const AdminAppContent = () => {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <ToastContainer />
-        <AppContent />
+        <AppContent>
+          <Routes>
+            <Route path="/" element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+            <Route path="products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
+            <Route path="orders" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+            <Route path="categories" element={<ProtectedRoute><Categories /></ProtectedRoute>} />
+            <Route path="coupons" element={<ProtectedRoute><Coupons /></ProtectedRoute>} />
+            <Route path="reviews" element={<ProtectedRoute><Reviews /></ProtectedRoute>} />
+            <Route path="carts" element={<ProtectedRoute><Carts /></ProtectedRoute>} />
+            <Route path="variants" element={<ProtectedRoute><Variants /></ProtectedRoute>} />
+            <Route path="settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+            <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="login" element={<AdminLogin />} />
+            <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+          </Routes>
+        </AppContent>
       </ThemeProvider>
     </AuthProvider>
   );

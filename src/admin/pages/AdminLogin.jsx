@@ -27,7 +27,6 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
-import { authAPI } from '../services/api';
 
 const AdminLogin = () => {
   const theme = useTheme();
@@ -63,41 +62,18 @@ const AdminLogin = () => {
     setError('');
   };
 
-  // Show loading if auth is still being checked
-  if (authLoading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
-          <CircularProgress size={60} sx={{ color: 'white' }} />
-          <Typography variant="h6" color="white">
-            جاري التحقق...
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
     try {
       await login(formData);
-      toast.success('تم تسجيل الدخول بنجاح!');
-      navigate('/admin/dashboard', { replace: true });
-    } catch (error) {
-      const errorMessage = error.message || 'حدث خطأ في تسجيل الدخول';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      toast.success('تم تسجيل الدخول بنجاح');
+      navigate('/admin/dashboard');
+    } catch (err) {
+      setError(err.message || 'فشل تسجيل الدخول');
+      toast.error(err.message || 'فشل تسجيل الدخول');
     } finally {
       setLoading(false);
     }
@@ -107,11 +83,11 @@ const AdminLogin = () => {
     <Box
       sx={{
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        bgcolor: theme.palette.background.default,
+        py: 4
       }}
     >
       <Container maxWidth="sm">
@@ -120,112 +96,94 @@ const AdminLogin = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card 
-            elevation={24}
+          <Paper
+            elevation={3}
             sx={{
-              borderRadius: 2,
-              overflow: 'hidden',
-              bgcolor: alpha(theme.palette.background.paper, 0.9),
-              backdropFilter: 'blur(10px)',
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              bgcolor: theme.palette.background.paper,
+              borderRadius: 2
             }}
           >
-            <CardContent sx={{ p: 4 }}>
-              <Box sx={{ textAlign: 'center', mb: 4 }}>
-                <Avatar
-                  sx={{
-                    width: 80,
-                    height: 80,
-                    mx: 'auto',
-                    mb: 2,
-                    bgcolor: theme.palette.primary.main,
-                  }}
-                >
-                  <AdminPanelSettings sx={{ fontSize: 40 }} />
-                </Avatar>
-                <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
-                  لوحة التحكم
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  قم بتسجيل الدخول للوصول إلى لوحة التحكم
-                </Typography>
-              </Box>
+            <Avatar
+              sx={{
+                bgcolor: theme.palette.primary.main,
+                width: 56,
+                height: 56,
+                mb: 2
+              }}
+            >
+              <AdminPanelSettings sx={{ fontSize: 32 }} />
+            </Avatar>
 
-              {error && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {error}
-                </Alert>
-              )}
+            <Typography component="h1" variant="h5" gutterBottom>
+              تسجيل دخول المدير
+            </Typography>
 
-              <form onSubmit={handleLogin}>
-                <TextField
-                  fullWidth
-                  label="البريد الإلكتروني"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  margin="normal"
-                  required
-                  autoComplete="email"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Security color="action" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+            {error && (
+              <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+                {error}
+              </Alert>
+            )}
 
-                <TextField
-                  fullWidth
-                  label="كلمة المرور"
-                  name="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={formData.password}
-                  onChange={handleChange}
-                  margin="normal"
-                  required
-                  autoComplete="current-password"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Security color="action" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
+            <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="email"
+                label="البريد الإلكتروني"
+                name="email"
+                autoComplete="email"
+                autoFocus
+                value={formData.email}
+                onChange={handleChange}
+                error={!!error}
+                dir="rtl"
+              />
 
-                <Button
-                  fullWidth
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={loading}
-                  startIcon={loading ? <CircularProgress size={20} /> : <LoginIcon />}
-                  sx={{
-                    mt: 3,
-                    mb: 2,
-                    py: 1.5,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontSize: '1.1rem',
-                  }}
-                >
-                  {loading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="كلمة المرور"
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                autoComplete="current-password"
+                value={formData.password}
+                onChange={handleChange}
+                error={!!error}
+                dir="rtl"
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+                disabled={loading || authLoading}
+                startIcon={loading || authLoading ? <CircularProgress size={20} /> : <LoginIcon />}
+              >
+                {loading || authLoading ? 'جاري تسجيل الدخول...' : 'تسجيل الدخول'}
+              </Button>
+            </Box>
+          </Paper>
         </motion.div>
       </Container>
     </Box>

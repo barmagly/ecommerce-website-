@@ -172,22 +172,24 @@ const Orders = () => {
     return methodMap[method] || method;
   };
 
-  // Filter orders based on search and filters
-  const filteredOrders = orders.filter(order => {
-    if (!order) return false;
+  // Filter and sort orders based on search and filters
+  const sortedAndFilteredOrders = orders
+    .filter(order => {
+      if (!order) return false;
 
-    const searchTermLower = searchTerm.toLowerCase();
-    const matchesSearch =
-      (order.name?.toLowerCase() || '').includes(searchTermLower) ||
-      (order.email?.toLowerCase() || '').includes(searchTermLower) ||
-      (order.phone || '').includes(searchTerm) ||
-      (order._id || '').includes(searchTerm);
+      const searchTermLower = searchTerm.toLowerCase();
+      const matchesSearch =
+        (order.name?.toLowerCase() || '').includes(searchTermLower) ||
+        (order.email?.toLowerCase() || '').includes(searchTermLower) ||
+        (order.phone || '').includes(searchTerm) ||
+        (order._id || '').includes(searchTerm);
 
-    const matchesStatus = selectedStatus === 'All' || order.status === selectedStatus;
-    const matchesPaymentStatus = selectedPaymentStatus === 'All' || order.paymentStatus === selectedPaymentStatus;
+      const matchesStatus = selectedStatus === 'All' || order.status === selectedStatus;
+      const matchesPaymentStatus = selectedPaymentStatus === 'All' || order.paymentStatus === selectedPaymentStatus;
 
-    return matchesSearch && matchesStatus && matchesPaymentStatus;
-  });
+      return matchesSearch && matchesStatus && matchesPaymentStatus;
+    })
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
 
   // Event handlers
   const handleViewOrder = (order) => {
@@ -537,7 +539,7 @@ const Orders = () => {
               </TableHead>
               <TableBody>
                 <AnimatePresence>
-                  {filteredOrders
+                  {sortedAndFilteredOrders
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((order, index) => (
                       <motion.tr
@@ -632,7 +634,7 @@ const Orders = () => {
 
           <TablePagination
             component="div"
-            count={filteredOrders.length}
+            count={sortedAndFilteredOrders.length}
             page={page}
             onPageChange={handleChangePage}
             rowsPerPage={rowsPerPage}
@@ -702,6 +704,22 @@ const Orders = () => {
                   </Typography>
                 </Box>
               </Grid>
+
+              {/* Instapay Image (Conditionally Rendered) */}
+              {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    صورة إثبات التحويل (Instapay)
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <img
+                      src={selectedOrder.image}
+                      alt="Instapay Proof"
+                      style={{ maxWidth: 400, maxHeight: 200, borderRadius: 8, border: '1px solid #ddd' }}
+                    />
+                  </Box>
+                </Grid>
+              )}
 
               {/* Order Items */}
               <Grid grid={{ xs: 12 }}>

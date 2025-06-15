@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = `${process.env.REACT_APP_API_URL}/api/reviews`;
+const API_URL = "http://localhost:5000/api/reviews";
 
 // Get product reviews
 export const getProductReviewsThunk = createAsyncThunk(
@@ -24,20 +24,8 @@ export const createReviewThunk = createAsyncThunk(
     async ({ productId, rating, comment }, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            if (!token) throw new Error("No token found");
-
-            // First check if user has purchased the product
-            const { data: purchaseCheck } = await axios.get(
-                `${API_URL}/check-purchase/${productId}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                    },
-                }
-            );
-
-            if (!purchaseCheck.hasPurchased) {
-                throw new Error("يمكنك فقط اضافة تقييم للمنتجات التي اشتريتها");
+            if (!token) {
+                throw new Error("Authentication required. Please log in to submit a review.");
             }
 
             const { data } = await axios.post(
@@ -46,14 +34,29 @@ export const createReviewThunk = createAsyncThunk(
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
                     },
                 }
             );
+
+            if (!data || data.status !== 'success') {
+                throw new Error(data?.message || "Failed to create review");
+            }
+
             return data;
         } catch (error) {
-            return thunkAPI.rejectWithValue(
-                error.response?.data?.message || error.message || "Failed to create review"
-            );
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                const errorMessage = error.response.data?.message || error.response.data?.error || "Failed to create review";
+                return thunkAPI.rejectWithValue(errorMessage);
+            } else if (error.request) {
+                // The request was made but no response was received
+                return thunkAPI.rejectWithValue("No response from server. Please check your connection.");
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                return thunkAPI.rejectWithValue(error.message || "Failed to create review");
+            }
         }
     }
 );
@@ -90,18 +93,35 @@ export const deleteReviewThunk = createAsyncThunk(
     async (reviewId, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            if (!token) throw new Error("No token found");
+            if (!token) {
+                throw new Error("Authentication required. Please log in.");
+            }
 
-            await axios.delete(`${API_URL}/${reviewId}`, {
+            const { data } = await axios.delete(`${API_URL}/${reviewId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            return reviewId;
+            
+            if (data.status === 'success') {
+                return reviewId;
+            } else {
+                throw new Error(data.message || "Failed to delete review");
+            }
         } catch (error) {
-            return thunkAPI.rejectWithValue(
-                error.response?.data?.message || "Failed to delete review"
-            );
+            // Handle different types of errors
+            if (error.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                const errorMessage = error.response.data?.message || error.response.data?.error || "Failed to delete review";
+                return thunkAPI.rejectWithValue(errorMessage);
+            } else if (error.request) {
+                // The request was made but no response was received
+                return thunkAPI.rejectWithValue("No response from server. Please check your connection.");
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                return thunkAPI.rejectWithValue(error.message || "Failed to delete review");
+            }
         }
     }
 );
@@ -128,7 +148,7 @@ const reviewSlice = createSlice({
             })
             .addCase(getProductReviewsThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.reviews = action.payload.reviews;
+                state.reviews = action.payload.reviews || [];
             })
             .addCase(getProductReviewsThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -141,7 +161,9 @@ const reviewSlice = createSlice({
             })
             .addCase(createReviewThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.reviews.unshift(action.payload.populatedReview);
+                if (action.payload.review) {
+                    state.reviews.unshift(action.payload.review);
+                }
             })
             .addCase(createReviewThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -154,11 +176,13 @@ const reviewSlice = createSlice({
             })
             .addCase(updateReviewThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                const index = state.reviews.findIndex(
-                    (review) => review._id === action.payload.review._id
-                );
-                if (index !== -1) {
-                    state.reviews[index] = action.payload.review;
+                if (action.payload.review) {
+                    const index = state.reviews.findIndex(
+                        (review) => review._id === action.payload.review._id
+                    );
+                    if (index !== -1) {
+                        state.reviews[index] = action.payload.review;
+                    }
                 }
             })
             .addCase(updateReviewThunk.rejected, (state, action) => {
@@ -184,4 +208,4 @@ const reviewSlice = createSlice({
 });
 
 export const { clearReviews } = reviewSlice.actions;
-export default reviewSlice;
+export default reviewSlice.reducer;

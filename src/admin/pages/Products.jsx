@@ -1034,8 +1034,8 @@ const Products = () => {
   // Modify the table actions to include variant management
   const renderTableActions = (product) => (
     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
-      <Tooltip title="إدارة المتغيرات" arrow>
-        {product.hasVariants && (
+      {product.hasVariants && (
+        <Tooltip title="إدارة المتغيرات" arrow>
           <IconButton
             size="small"
             color="secondary"
@@ -1050,8 +1050,8 @@ const Products = () => {
           >
             <SettingsIcon fontSize="small" />
           </IconButton>
-        )}
-      </Tooltip>
+        </Tooltip>
+      )}
       <Tooltip title="عرض التفاصيل" arrow>
         <IconButton
           size="small"

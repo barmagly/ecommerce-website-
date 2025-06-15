@@ -6,6 +6,8 @@ import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { createOrderThunk } from "../services/Slice/order/order";
+import { couponsAPI } from "../services/api";
+import { toast } from "react-toastify";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -48,6 +50,11 @@ export default function Checkout() {
   const [instapayImage, setInstapayImage] = useState(null);
   const [instapayNumber] = useState("01012345678");
   const [instapayStatus, setInstapayStatus] = useState("");
+
+  // Add state for coupon
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [discountedTotal, setDiscountedTotal] = useState(total);
+  const [couponLoading, setCouponLoading] = useState(false);
 
   // التحقق من صحة البريد الإلكتروني
   const validateEmail = (email) => {
@@ -129,6 +136,89 @@ export default function Checkout() {
       setInstapayImage(file);
       setInstapayStatus("بانتظار تأكيد الإدارة...");
     }
+  };
+
+  const handleApplyCoupon = async () => {
+    if (!form.coupon.trim()) {
+      toast.error('الرجاء إدخال كود الكوبون');
+      return;
+    }
+
+    setCouponLoading(true);
+    try {
+      const response = await couponsAPI.validate(form.coupon);
+      const { valid, coupon } = response.data.data;
+
+      if (valid) {
+        // Check if coupon applies to any products in cart
+        if (coupon.applyTo === 'products') {
+          const cartProductIds = cartItems.map(item => 
+            item?.variantId ? item?.variantId._id : item?.prdID._id
+          );
+          const hasApplicableProducts = coupon.products.some(productId => 
+            cartProductIds.includes(productId)
+          );
+          
+          if (!hasApplicableProducts) {
+            toast.error('هذا الكوبون لا ينطبق على المنتجات في سلة المشتريات');
+            setCouponLoading(false);
+            return;
+          }
+        }
+
+        // Check if coupon applies to any categories in cart
+        if (coupon.applyTo === 'categories') {
+          const cartCategoryIds = cartItems.map(item => 
+            item?.prdID?.category?._id
+          ).filter(Boolean);
+          
+          const hasApplicableCategories = coupon.categories.some(categoryId => 
+            cartCategoryIds.includes(categoryId)
+          );
+          
+          if (!hasApplicableCategories) {
+            toast.error('هذا الكوبون لا ينطبق على الفئات في سلة المشتريات');
+            setCouponLoading(false);
+            return;
+          }
+        }
+
+        // Calculate discount
+        let discountAmount = 0;
+        if (coupon.type === 'percentage') {
+          discountAmount = (total * coupon.discount) / 100;
+          if (coupon.maxDiscount && discountAmount > coupon.maxDiscount) {
+            discountAmount = coupon.maxDiscount;
+          }
+        } else {
+          discountAmount = coupon.discount;
+        }
+
+        // Check minimum amount requirement
+        if (coupon.minAmount && total < coupon.minAmount) {
+          toast.error(`يجب أن يكون إجمالي الطلب ${coupon.minAmount} ج.م على الأقل`);
+          setCouponLoading(false);
+          return;
+        }
+
+        setAppliedCoupon(coupon);
+        setDiscountedTotal(total - discountAmount);
+        toast.success('تم تطبيق الكوبون بنجاح');
+      } else {
+        toast.error('كود الكوبون غير صالح');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'حدث خطأ أثناء التحقق من الكوبون');
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setDiscountedTotal(total);
+    setForm(prev => ({ ...prev, coupon: '' }));
+    toast.info('تم إزالة الكوبون');
   };
 
   const validateForm = () => {
@@ -398,6 +488,16 @@ export default function Checkout() {
                     <span>الإجمالي الفرعي:</span>
                     <span>{total} ج.م</span>
                   </div>
+                  {appliedCoupon && (
+                    <div className="d-flex justify-content-between mb-2">
+                      <span>الخصم:</span>
+                      <span className="text-success">
+                        -{appliedCoupon.type === 'percentage' 
+                          ? `${appliedCoupon.discount}%` 
+                          : `${appliedCoupon.discount} ج.م`}
+                      </span>
+                    </div>
+                  )}
                   <div className="d-flex justify-content-between mb-2">
                     <span>الشحن:</span>
                     <span>مجاني</span>
@@ -405,23 +505,46 @@ export default function Checkout() {
                   <hr />
                   <div className="d-flex justify-content-between mb-3">
                     <span className="fw-bold">الإجمالي الكلي:</span>
-                    <span className="fw-bold text-danger">{total} ج.م</span>
+                    <span className="fw-bold text-danger">{discountedTotal} ج.م</span>
                   </div>
                   <div className="mb-3">
-                    <input
-                      name="coupon"
-                      className="form-control"
-                      placeholder="كود الخصم"
-                      value={form.coupon}
-                      onChange={handleChange}
-                    />
-                    <button
-                      className="btn btn-outline-dark w-100 mt-2"
-                      type="button"
-                      onClick={() => alert("تم تطبيق الكوبون (تجريبي)")}
-                    >
-                      تطبيق الكوبون
-                    </button>
+                    <div className="input-group">
+                      <input
+                        name="coupon"
+                        className="form-control"
+                        placeholder="كود الخصم"
+                        value={form.coupon}
+                        onChange={handleChange}
+                        disabled={!!appliedCoupon}
+                      />
+                      {!appliedCoupon ? (
+                        <button
+                          className="btn btn-outline-dark"
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading}
+                        >
+                          {couponLoading ? (
+                            <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          ) : (
+                            'تطبيق'
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-outline-danger"
+                          type="button"
+                          onClick={handleRemoveCoupon}
+                        >
+                          إزالة
+                        </button>
+                      )}
+                    </div>
+                    {appliedCoupon && (
+                      <div className="mt-2 text-success">
+                        تم تطبيق كوبون: {appliedCoupon.name}
+                      </div>
+                    )}
                   </div>
                   <div className="mb-3">
                     <label className="form-label fw-bold">طريقة الدفع</label>
@@ -491,6 +614,7 @@ export default function Checkout() {
                       <input
                         type="file"
                         accept="image/*"
+                        name="instapayImage"
                         className={`form-control mb-2 ${errors.instapay ? 'is-invalid' : ''}`}
                         onChange={handleInstapayImage}
                       />

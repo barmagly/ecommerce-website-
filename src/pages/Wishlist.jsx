@@ -49,8 +49,21 @@ export default function Wishlist() {
     }
   }, [dispatch, isAuthenticated]);
 
-  const handleRemove = (productId) => {
-    dispatch(removeWishlistThunk({ prdId: productId }));
+  const handleRemove = async (productId) => {
+    try {
+      await dispatch(removeWishlistThunk(productId)).unwrap();
+      toast.success('تم حذف المنتج من المفضلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 2000
+      });
+    } catch (error) {
+      toast.error(error.message || 'حدث خطأ أثناء حذف المنتج من المفضلة', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+    }
   };
 
   const handleAddToCart = (productId) => {

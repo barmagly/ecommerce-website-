@@ -1,13 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = process.env.REACT_APP_API_URL + "/api/auth";
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_KEY = `${API_URL}/api/auth`;
 
 export const googleLoginThunk = createAsyncThunk(
     "auth/googleLogin",
-    async ({ idToken, email, name }, thunkAPI) => {
+    async ({ idToken }, thunkAPI) => {
         try {
             const { data } = await axios.post(`${API_KEY}/google-login`,
-                { idToken, email, name },
+                { idToken },
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                }
             );
             return {
                 status: data.status,
@@ -15,7 +23,8 @@ export const googleLoginThunk = createAsyncThunk(
                 token: data.data?.token || data.token,
             };
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data || "error server");
+            console.error('Google login error:', error);
+            return thunkAPI.rejectWithValue(error.response?.data || "error server");
         }
     }
 );

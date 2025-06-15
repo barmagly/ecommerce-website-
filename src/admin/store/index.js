@@ -6,6 +6,7 @@ import usersReducer from './slices/usersSlice';
 import ordersReducer from './slices/ordersSlice';
 import authReducer from './slices/authSlice';
 import dashboardReducer from './slices/dashboardSlice';
+import settingsReducer from './slices/settingsSlice';
 
 export const store = configureStore({
   reducer: {
@@ -16,14 +17,12 @@ export const store = configureStore({
     orders: ordersReducer,
     auth: authReducer,
     dashboard: dashboardReducer,
+    settings: settingsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
     }),
 });
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
 
 export default store; 

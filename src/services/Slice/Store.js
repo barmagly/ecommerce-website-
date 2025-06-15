@@ -21,7 +21,7 @@ const Store = configureStore({
         userCart: cartSlice.reducer,
         order: orderSlice.reducer,
         variant: variantSlice.reducer,
-        reviews: reviewSlice.reducer,
+        reviews: reviewSlice,
         password: passwordReducer,
         home:homeSlice.reducer
     }

@@ -1,27 +1,47 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { dashboardAPI } from '../../services/api';
+import { usersAPI } from '../../services/api';
 
 // Async thunks
 export const fetchDashboardData = createAsyncThunk(
   'dashboard/fetchDashboardData',
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch, rejectWithValue }) => {
     try {
-      const response = await dashboardAPI.getOverview();
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch dashboard data');
-    }
-  }
-);
+      let overviewResponse = { data: { overview: {}, stats: {} } }; // Default empty structure
+      try {
+        overviewResponse = await dashboardAPI.getOverview();
+      } catch (overviewError) {
+        console.warn('Failed to fetch dashboard overview, using defaults:', overviewError);
+        // Continue even if overview fails, other data might still be fetchable
+      }
 
-export const fetchDashboardStats = createAsyncThunk(
-  'dashboard/fetchDashboardStats',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await dashboardAPI.getStats();
-      return response.data;
+      const usersResponse = await usersAPI.getAll();
+
+      // Ensure all overview fields are present, merging with defaults if backend omits any
+      const combinedOverview = {
+        totalUsers: usersResponse.data.users.length, // Always update totalUsers with actual count
+        totalProducts: overviewResponse.data.overview?.totalProducts || 0,
+        totalOrders: overviewResponse.data.overview?.totalOrders || 0,
+        totalRevenue: overviewResponse.data.overview?.totalRevenue || 0,
+        totalCategories: overviewResponse.data.overview?.totalCategories || 0,
+        totalCoupons: overviewResponse.data.overview?.totalCoupons || 0,
+        totalReviews: overviewResponse.data.overview?.totalReviews || 0,
+        totalCarts: overviewResponse.data.overview?.totalCarts || 0,
+        totalVariants: overviewResponse.data.overview?.totalVariants || 0,
+        totalSales: overviewResponse.data.overview?.totalSales || 0,
+        // Add any other expected overview fields here with default values
+      };
+
+      return {
+        overview: combinedOverview,
+        recentOrders: overviewResponse.data.stats?.recentOrders || [],
+        topProducts: overviewResponse.data.stats?.topProducts || [],
+        salesData: overviewResponse.data.stats?.salesData || [],
+        categoryData: overviewResponse.data.stats?.categoryData || [],
+      };
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch dashboard stats');
+      console.error('Error fetching dashboard data:', error);
+      return rejectWithValue(error.response?.data?.message || error.message || 'Failed to fetch dashboard data');
     }
   }
 );
@@ -37,6 +57,7 @@ const initialState = {
     totalReviews: 0,
     totalCarts: 0,
     totalVariants: 0,
+    totalSales: 0,
   },
   stats: {
     salesData: [],
@@ -59,44 +80,19 @@ const dashboardSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch dashboard data
       .addCase(fetchDashboardData.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchDashboardData.fulfilled, (state, action) => {
         state.loading = false;
-        state.overview = {
-          totalProducts: action.payload.summary.products,
-          totalCategories: action.payload.summary.categories,
-          totalUsers: action.payload.summary.users,
-          totalOrders: action.payload.summary.orders,
-          totalCoupons: 0,
-          totalReviews: 0,
-          totalCarts: 0,
-          totalVariants: 0
-        };
-        state.stats = {
-          totalProducts: action.payload.stats.totalProducts,
-          totalCategories: action.payload.stats.totalCategories,
-          totalUsers: action.payload.stats.totalUsers,
-          totalOrders: action.payload.stats.totalOrders
-        };
+        state.overview = action.payload.overview;
+        state.stats.recentOrders = action.payload.recentOrders;
+        state.stats.topProducts = action.payload.topProducts;
+        state.stats.salesData = action.payload.salesData;
+        state.stats.categoryData = action.payload.categoryData;
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Fetch dashboard stats
-      .addCase(fetchDashboardStats.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchDashboardStats.fulfilled, (state, action) => {
-        state.loading = false;
-        state.stats = action.payload;
-      })
-      .addCase(fetchDashboardStats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

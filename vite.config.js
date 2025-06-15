@@ -8,6 +8,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'src': path.resolve(__dirname, './src'),
     },
   },
   server: {
@@ -37,4 +38,11 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.svg'],
+  define: {
+    'process.env': {
+      NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+      VITE_API_URL: JSON.stringify(process.env.VITE_API_URL),
+      VITE_APP_NAME: JSON.stringify(process.env.VITE_APP_NAME)
+    }
+  }
 })

@@ -4,8 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCartThunk } from '../services/Slice/cart/cart';
 import { toast } from 'react-toastify';
 import './FlashSalesShowcase.css';
-import axios from 'axios';
-const API_URL = process.env.REACT_APP_API_URL + "/api/products/most-reviewed";
+import { frontendAPI } from '../services/api';
 
 // function getNext7Days() {
 //   const now = new Date();
@@ -33,7 +32,7 @@ export default function FlashSalesSection() {
   const isAuthenticated = !!token;
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState([]);
 
   // const [endDate, setEndDate] = useState(getNext7Days());
   // const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
@@ -55,8 +54,8 @@ export default function FlashSalesSection() {
     setError(null);
     async function fetchPro() {
       try {
-        const response = await axios.get(API_URL);
-        setProducts(response.data.data)
+        const response = await frontendAPI.getMostReviewed();
+        setProducts(response.data.data);
       } catch (err) {
         setError(err.response?.data?.message || "حدث خطأ اثناء جلب المنتجات");
         console.error("Get error:", err);
@@ -64,8 +63,8 @@ export default function FlashSalesSection() {
         setIsLoading(false);
       }
     }
-    fetchPro()
-  }, [])
+    fetchPro();
+  }, []);
 
   const handleAddToCart = (productId) => {
     if (!isAuthenticated) {
@@ -166,8 +165,8 @@ export default function FlashSalesSection() {
         <button className="btn btn-danger px-4 py-2 fw-bold mt-3 mt-md-0" onClick={() => navigate('/shop')}>عرض جميع المنتجات</button>
       </div>
       <div className="row g-4 ms-lg-5 mb-5">
-        {products?.map((product, idx) => (
-          <div key={product?.sku} className="col-12 col-md-3" data-aos="zoom-in-up">
+        {products?.map((product) => (
+          <div key={product?._id || product?.id} className="col-12 col-md-3" data-aos="zoom-in-up">
             <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center position-relative">
               {/* <span className="badge bg-danger position-absolute top-0 start-0 m-2">-{product.discount}%</span> */}
               <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>

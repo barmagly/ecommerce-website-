@@ -32,6 +32,7 @@ import {
   Switch,
   FormControlLabel,
   Alert,
+  Paper,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -49,6 +50,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
+import { couponsAPI, categoriesAPI } from '../services/api';
+import { productsAPI } from '../services/api';
 
 // Initial sample coupons
 const initialCoupons = [
@@ -125,11 +128,13 @@ const Coupons = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const [coupons, setCoupons] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
   const [filterType, setFilterType] = useState('');
   
   // Dialog states
@@ -151,31 +156,50 @@ const Coupons = () => {
     startDate: '',
     endDate: '',
     categories: [],
+    products: [],
+    applyTo: 'all'
   });
 
   const [errors, setErrors] = useState({});
 
-  // Load coupons from localStorage on component mount
+  // Load coupons, categories and products from API on component mount
   useEffect(() => {
-    loadCoupons();
+    fetchCoupons();
+    fetchCategories();
+    fetchProducts();
   }, []);
 
-  const loadCoupons = () => {
-    setLoading(true);
+  const fetchCategories = async () => {
     try {
-      const savedCoupons = localStorage.getItem('adminCoupons');
-      if (savedCoupons) {
-        setCoupons(JSON.parse(savedCoupons));
-      } else {
-        // Initialize with sample data
-        setCoupons(initialCoupons);
-        localStorage.setItem('adminCoupons', JSON.stringify(initialCoupons));
-      }
-    } catch (error) {
-      console.error('Error loading coupons:', error);
-      toast.error('فشل في تحميل الكوبونات');
+      const response = await categoriesAPI.getAll();
+      setCategories(response.data.categories || []);
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+      toast.error('Failed to load categories');
+    }
+  };
+
+  const fetchCoupons = async () => {
+    try {
+      setLoading(true);
+      const response = await couponsAPI.getAll();
+      setCoupons(response.data.coupons || []);
+      setError(null);
+    } catch (err) {
+      setError('Failed to fetch coupons');
+      toast.error('Failed to load coupons');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchProducts = async () => {
+    try {
+      const response = await productsAPI.getAll();
+      setProducts(response.data.products || []);
+    } catch (err) {
+      console.error('Failed to fetch products:', err);
+      toast.error('Failed to load products');
     }
   };
 
@@ -191,17 +215,15 @@ const Coupons = () => {
 
   // Filter coupons based on search and filters
   const filteredCoupons = coupons.filter(coupon => {
-    const matchesSearch = coupon.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coupon.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         coupon.description.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = !filterStatus || 
-      (filterStatus === 'active' && coupon.isActive) ||
-      (filterStatus === 'inactive' && !coupon.isActive);
+    const matchesSearch = searchTerm === '' || (
+      (coupon.code?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coupon.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+      (coupon.description?.toLowerCase() || '').includes(searchTerm.toLowerCase())
+    );
     
     const matchesType = !filterType || coupon.type === filterType;
     
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesType;
   });
 
   const handleChangePage = (event, newPage) => {
@@ -227,6 +249,8 @@ const Coupons = () => {
       startDate: '',
       endDate: '',
       categories: [],
+      products: [],
+      applyTo: 'all'
     });
     setErrors({});
   };
@@ -237,18 +261,20 @@ const Coupons = () => {
     
     if (mode === 'edit' && coupon) {
       setFormData({
-        code: coupon.code,
-        name: coupon.name,
-        description: coupon.description,
-        type: coupon.type,
-        value: coupon.value.toString(),
-        minAmount: coupon.minAmount ? coupon.minAmount.toString() : '',
-        maxDiscount: coupon.maxDiscount ? coupon.maxDiscount.toString() : '',
-        usageLimit: coupon.usageLimit ? coupon.usageLimit.toString() : '',
-        isActive: coupon.isActive,
-        startDate: coupon.startDate,
-        endDate: coupon.endDate,
+        code: coupon.code || '',
+        name: coupon.name || '',
+        description: coupon.description || '',
+        type: coupon.type || 'percentage',
+        value: coupon.discount?.toString() || '',
+        minAmount: coupon.minAmount?.toString() || '',
+        maxDiscount: coupon.maxDiscount?.toString() || '',
+        usageLimit: coupon.usageLimit?.toString() || '',
+        isActive: true,
+        startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
+        endDate: coupon.expire ? new Date(coupon.expire).toISOString().split('T')[0] : '',
         categories: coupon.categories || [],
+        products: coupon.products || [],
+        applyTo: coupon.applyTo || 'all'
       });
     } else {
       resetForm();
@@ -266,110 +292,120 @@ const Coupons = () => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.code.trim()) newErrors.code = 'كود الكوبون مطلوب';
-    if (!formData.name.trim()) newErrors.name = 'اسم الكوبون مطلوب';
-    if (!formData.description.trim()) newErrors.description = 'وصف الكوبون مطلوب';
-    if (!formData.value || parseFloat(formData.value) <= 0) newErrors.value = 'قيمة الخصم مطلوبة ويجب أن تكون أكبر من صفر';
-    if (formData.type === 'percentage' && parseFloat(formData.value) > 100) newErrors.value = 'نسبة الخصم يجب أن تكون أقل من أو تساوي 100%';
-    if (!formData.startDate) newErrors.startDate = 'تاريخ البداية مطلوب';
-    if (!formData.endDate) newErrors.endDate = 'تاريخ النهاية مطلوب';
-    if (formData.startDate && formData.endDate && new Date(formData.startDate) >= new Date(formData.endDate)) {
+    if (!formData.code?.trim()) {
+      newErrors.code = 'الكود مطلوب';
+    }
+
+    if (!formData.name?.trim()) {
+      newErrors.name = 'الاسم مطلوب';
+    }
+
+    if (!formData.description?.trim()) {
+      newErrors.description = 'الوصف مطلوب';
+    }
+
+    if (!formData.value?.trim()) {
+      newErrors.value = 'قيمة الخصم مطلوبة';
+    } else {
+      const value = parseFloat(formData.value);
+      if (isNaN(value) || value <= 0) {
+        newErrors.value = 'قيمة الخصم يجب أن تكون أكبر من صفر';
+      }
+      if (formData.type === 'percentage' && value > 100) {
+        newErrors.value = 'النسبة المئوية يجب أن تكون أقل من أو تساوي 100%';
+      }
+    }
+
+    if (formData.minAmount?.trim()) {
+      const minAmount = parseFloat(formData.minAmount);
+      if (isNaN(minAmount) || minAmount < 0) {
+        newErrors.minAmount = 'الحد الأدنى يجب أن يكون صفر أو أكبر';
+      }
+    }
+
+    if (formData.maxDiscount?.trim() && formData.type === 'percentage') {
+      const maxDiscount = parseFloat(formData.maxDiscount);
+      if (isNaN(maxDiscount) || maxDiscount <= 0) {
+        newErrors.maxDiscount = 'الحد الأقصى للخصم يجب أن يكون أكبر من صفر';
+      }
+    }
+
+    if (formData.usageLimit?.trim()) {
+      const usageLimit = parseInt(formData.usageLimit);
+      if (isNaN(usageLimit) || usageLimit <= 0) {
+        newErrors.usageLimit = 'حد الاستخدام يجب أن يكون أكبر من صفر';
+      }
+    }
+
+    if (!formData.startDate) {
+      newErrors.startDate = 'تاريخ البداية مطلوب';
+    }
+
+    if (!formData.endDate) {
+      newErrors.endDate = 'تاريخ النهاية مطلوب';
+    } else if (formData.startDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
       newErrors.endDate = 'تاريخ النهاية يجب أن يكون بعد تاريخ البداية';
+    }
+
+    if (formData.applyTo === 'categories' && (!formData.categories || formData.categories.length === 0)) {
+      newErrors.categories = 'يجب اختيار فئة واحدة على الأقل';
+    }
+
+    if (formData.applyTo === 'products' && (!formData.products || formData.products.length === 0)) {
+      newErrors.products = 'يجب اختيار منتج واحد على الأقل';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveCoupon = () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!validateForm()) return;
 
     try {
-      const selectedCategories = categories.filter(cat => formData.categories.includes(cat.id));
-      
       const couponData = {
-        code: formData.code.trim().toUpperCase(),
-        name: formData.name.trim(),
-        description: formData.description.trim(),
+        code: formData.code,
+        name: formData.name,
+        description: formData.description,
         type: formData.type,
-        value: parseFloat(formData.value),
+        discount: parseFloat(formData.value),
         minAmount: formData.minAmount ? parseFloat(formData.minAmount) : null,
         maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : null,
         usageLimit: formData.usageLimit ? parseInt(formData.usageLimit) : null,
-        usedCount: 0,
-        isActive: formData.isActive,
+        isActive: true,
         startDate: formData.startDate,
-        endDate: formData.endDate,
+        expire: formData.endDate || null,
         categories: formData.categories,
-        categoryNames: selectedCategories.map(cat => cat.name),
-        updatedAt: new Date().toISOString(),
+        products: formData.products,
+        applyTo: formData.applyTo
       };
 
-      let updatedCoupons;
-
-      if (dialogMode === 'add') {
-        // Check if coupon code already exists
-        const existingCoupon = coupons.find(c => c.code === couponData.code);
-        if (existingCoupon) {
-          setErrors({ code: 'كود الكوبون موجود بالفعل' });
-          return;
-        }
-
-        const newId = Math.max(...coupons.map(c => c.id), 0) + 1;
-        const newCoupon = {
-          ...couponData,
-          id: newId,
-          createdAt: new Date().toISOString(),
-        };
-        updatedCoupons = [...coupons, newCoupon];
-        toast.success('تم إضافة الكوبون بنجاح');
-      } else {
-        // Check if coupon code already exists (excluding current coupon)
-        const existingCoupon = coupons.find(c => c.code === couponData.code && c.id !== selectedCoupon.id);
-        if (existingCoupon) {
-          setErrors({ code: 'كود الكوبون موجود بالفعل' });
-          return;
-        }
-
-        updatedCoupons = coupons.map(coupon =>
-          coupon.id === selectedCoupon.id
-            ? { ...coupon, ...couponData, usedCount: coupon.usedCount }
-            : coupon
-        );
+      if (selectedCoupon) {
+        await couponsAPI.update(selectedCoupon._id, couponData);
         toast.success('تم تحديث الكوبون بنجاح');
+      } else {
+        await couponsAPI.create(couponData);
+        toast.success('تم إضافة الكوبون بنجاح');
       }
-
-      saveCoupons(updatedCoupons);
       handleCloseDialog();
-    } catch (error) {
-      console.error('Error saving coupon:', error);
-      toast.error('فشل في حفظ الكوبون');
+      fetchCoupons();
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      toast.error(err.response?.data?.message || (selectedCoupon ? 'فشل في تحديث الكوبون' : 'فشل في إضافة الكوبون'));
     }
   };
 
-  const handleDeleteCoupon = (couponId) => {
+  const handleDeleteCoupon = async (couponId) => {
     if (window.confirm('هل أنت متأكد من حذف هذا الكوبون؟')) {
       try {
-        const updatedCoupons = coupons.filter(coupon => coupon.id !== couponId);
-        saveCoupons(updatedCoupons);
-        toast.success('تم حذف الكوبون بنجاح');
+        await couponsAPI.delete(couponId);
+        toast.success('Coupon deleted successfully');
+        fetchCoupons();
       } catch (error) {
         console.error('Error deleting coupon:', error);
         toast.error('فشل في حذف الكوبون');
       }
-    }
-  };
-
-  const handleToggleStatus = (couponId, newStatus) => {
-    try {
-      const updatedCoupons = coupons.map(coupon =>
-        coupon.id === couponId ? { ...coupon, isActive: newStatus } : coupon
-      );
-      saveCoupons(updatedCoupons);
-      toast.success(newStatus ? 'تم تفعيل الكوبون' : 'تم إلغاء تفعيل الكوبون');
-    } catch (error) {
-      console.error('Error toggling coupon status:', error);
-      toast.error('فشل في تغيير حالة الكوبون');
     }
   };
 
@@ -429,46 +465,31 @@ const Coupons = () => {
         <Card sx={{ mb: 4, borderRadius: 3 }}>
           <CardContent>
             <Grid container spacing={3} alignItems="center">
-              <Grid item xs={12} md={3}>
+              <Grid item xs={12} md={4}>
                 <TextField
                   fullWidth
-                  placeholder="البحث في الكوبونات..."
+                  placeholder="بحث عن كوبون..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon color="action" />
+                        <SearchIcon />
                       </InputAdornment>
                     ),
                   }}
                 />
               </Grid>
               
-              <Grid item xs={12} md={2}>
+              <Grid item xs={12} md={3}>
                 <FormControl fullWidth>
-                  <InputLabel>الحالة</InputLabel>
-                  <Select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    label="الحالة"
-                  >
-                    <MenuItem value="">جميع الحالات</MenuItem>
-                    <MenuItem value="active">نشط</MenuItem>
-                    <MenuItem value="inactive">غير نشط</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              
-              <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
-                  <InputLabel>النوع</InputLabel>
+                  <InputLabel>نوع الخصم</InputLabel>
                   <Select
                     value={filterType}
                     onChange={(e) => setFilterType(e.target.value)}
-                    label="النوع"
+                    label="نوع الخصم"
                   >
-                    <MenuItem value="">جميع الأنواع</MenuItem>
+                    <MenuItem value="">الكل</MenuItem>
                     <MenuItem value="percentage">نسبة مئوية</MenuItem>
                     <MenuItem value="fixed">مبلغ ثابت</MenuItem>
                   </Select>
@@ -479,7 +500,7 @@ const Coupons = () => {
                 <Button
                   variant="outlined"
                   startIcon={<RefreshIcon />}
-                  onClick={loadCoupons}
+                  onClick={fetchCoupons}
                   fullWidth
                 >
                   تحديث
@@ -615,17 +636,18 @@ const Coupons = () => {
         transition={{ duration: 0.5, delay: 0.3 }}
       >
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
-          <TableContainer>
+          <TableContainer component={Paper}>
             <Table>
               <TableHead>
-                <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الكوبون</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>النوع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>القيمة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الاستخدام</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التواريخ</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الحالة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
+                <TableRow>
+                  <TableCell>الكود</TableCell>
+                  <TableCell>الاسم</TableCell>
+                  <TableCell>الوصف</TableCell>
+                  <TableCell>نوع الخصم</TableCell>
+                  <TableCell>قيمة الخصم</TableCell>
+                  <TableCell>تاريخ البداية</TableCell>
+                  <TableCell>تاريخ النهاية</TableCell>
+                  <TableCell>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -634,7 +656,7 @@ const Coupons = () => {
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((coupon, index) => (
                       <motion.tr
-                        key={coupon.id}
+                        key={coupon._id}
                         component={TableRow}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
@@ -650,100 +672,21 @@ const Coupons = () => {
                             <Typography variant="body2" color="text.secondary">
                               {coupon.name}
                             </Typography>
-                            {coupon.categoryNames && coupon.categoryNames.length > 0 && (
-                              <Box sx={{ mt: 0.5 }}>
-                                {coupon.categoryNames.slice(0, 2).map((category, idx) => (
-                                  <Chip
-                                    key={idx}
-                                    label={category}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ mr: 0.5, fontSize: '0.7rem' }}
-                                  />
-                                ))}
-                                {coupon.categoryNames.length > 2 && (
-                                  <Chip
-                                    label={`+${coupon.categoryNames.length - 2}`}
-                                    size="small"
-                                    variant="outlined"
-                                    sx={{ fontSize: '0.7rem' }}
-                                  />
-                                )}
-                              </Box>
-                            )}
                           </Box>
                         </TableCell>
-                        
+                        <TableCell>{coupon.description}</TableCell>
                         <TableCell>
                           <Chip
                             label={coupon.type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت'}
-                            color={coupon.type === 'percentage' ? 'secondary' : 'primary'}
+                            color={coupon.type === 'percentage' ? 'primary' : 'secondary'}
                             size="small"
-                            icon={coupon.type === 'percentage' ? <PercentIcon /> : <MoneyIcon />}
                           />
                         </TableCell>
-                        
                         <TableCell>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {coupon.type === 'percentage' ? `${coupon.value}%` : `$${coupon.value}`}
-                          </Typography>
-                          {coupon.minAmount && (
-                            <Typography variant="caption" color="text.secondary">
-                              حد أدنى: ${coupon.minAmount}
-                            </Typography>
-                          )}
+                          {coupon.type === 'percentage' ? `${coupon.discount}%` : `$${coupon.discount}`}
                         </TableCell>
-                        
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body2">
-                              {coupon.usedCount} / {coupon.usageLimit || '∞'}
-                            </Typography>
-                            <Box sx={{ 
-                              width: 60, 
-                              height: 4, 
-                              bgcolor: 'grey.300', 
-                              borderRadius: 2,
-                              mt: 0.5 
-                            }}>
-                              <Box sx={{
-                                width: coupon.usageLimit ? `${(coupon.usedCount / coupon.usageLimit) * 100}%` : '0%',
-                                height: '100%',
-                                bgcolor: coupon.usageLimit && coupon.usedCount >= coupon.usageLimit ? 'error.main' : 'primary.main',
-                                borderRadius: 2,
-                              }} />
-                            </Box>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              من: {new Date(coupon.startDate).toLocaleDateString('ar-SA')}
-                            </Typography>
-                            <br />
-                            <Typography variant="caption" color="text.secondary">
-                              إلى: {new Date(coupon.endDate).toLocaleDateString('ar-SA')}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        
-                        <TableCell>
-                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-                            <Chip
-                              label={isActive(coupon) ? 'نشط' : isExpired(coupon.endDate) ? 'منتهي' : 'غير نشط'}
-                              color={isActive(coupon) ? 'success' : isExpired(coupon.endDate) ? 'error' : 'default'}
-                              size="small"
-                            />
-                            <Switch
-                              checked={coupon.isActive}
-                              onChange={(e) => handleToggleStatus(coupon.id, e.target.checked)}
-                              size="small"
-                              disabled={isExpired(coupon.endDate)}
-                            />
-                          </Box>
-                        </TableCell>
-                        
+                        <TableCell>{new Date(coupon.startDate).toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(coupon.expire).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5 }}>
                             <Tooltip title="عرض">
@@ -770,7 +713,7 @@ const Coupons = () => {
                               <IconButton
                                 size="small"
                                 color="error"
-                                onClick={() => handleDeleteCoupon(coupon.id)}
+                                onClick={() => handleDeleteCoupon(coupon._id)}
                               >
                                 <DeleteIcon fontSize="small" />
                               </IconButton>
@@ -943,7 +886,7 @@ const Coupons = () => {
                   value={formData.minAmount}
                   onChange={handleFormChange('minAmount')}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    startAdornment: <InputAdornment position="start">ج.م</InputAdornment>,
                   }}
                 />
               </Grid>
@@ -957,7 +900,7 @@ const Coupons = () => {
                   onChange={handleFormChange('maxDiscount')}
                   disabled={formData.type === 'fixed'}
                   InputProps={{
-                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                    startAdornment: <InputAdornment position="start">ج.م</InputAdornment>,
                   }}
                 />
               </Grid>
@@ -1003,44 +946,82 @@ const Coupons = () => {
               
               <Grid item xs={12}>
                 <FormControl fullWidth>
-                  <InputLabel>الفئات المطبقة</InputLabel>
+                  <InputLabel>نطاق التطبيق</InputLabel>
                   <Select
-                    multiple
-                    value={formData.categories}
-                    onChange={handleFormChange('categories')}
-                    label="الفئات المطبقة"
-                    renderValue={(selected) => (
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                        {selected.map((value) => {
-                          const category = categories.find(cat => cat.id === value);
-                          return (
-                            <Chip key={value} label={category?.name} size="small" />
-                          );
-                        })}
-                      </Box>
-                    )}
+                    value={formData.applyTo}
+                    onChange={handleFormChange('applyTo')}
+                    label="نطاق التطبيق"
                   >
-                    {categories.map((category) => (
-                      <MenuItem key={category.id} value={category.id}>
-                        {category.name}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="all">جميع المنتجات</MenuItem>
+                    <MenuItem value="categories">فئات محددة</MenuItem>
+                    <MenuItem value="products">منتجات محددة</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              
-              <Grid item xs={12}>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={formData.isActive}
-                      onChange={handleFormChange('isActive')}
-                      color="primary"
-                    />
-                  }
-                  label="كوبون نشط"
-                />
-              </Grid>
+
+              {formData.applyTo === 'categories' && (
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>الفئات المطبقة</InputLabel>
+                    <Select
+                      multiple
+                      value={formData.categories}
+                      onChange={handleFormChange('categories')}
+                      label="الفئات المطبقة"
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const category = categories.find(cat => cat._id === value);
+                            return (
+                              <Chip key={value} label={category?.name} size="small" />
+                            );
+                          })}
+                        </Box>
+                      )}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category._id} value={category._id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
+
+              {formData.applyTo === 'products' && (
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>المنتجات المطبقة</InputLabel>
+                    <Select
+                      multiple
+                      value={formData.products}
+                      onChange={handleFormChange('products')}
+                      label="المنتجات المطبقة"
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {selected.map((value) => {
+                            const product = products.find(prod => prod._id === value);
+                            return (
+                              <Chip 
+                                key={value} 
+                                label={`${product?.name} - $${product?.price}`} 
+                                size="small" 
+                              />
+                            );
+                          })}
+                        </Box>
+                      )}
+                    >
+                      {products.map((product) => (
+                        <MenuItem key={product._id} value={product._id}>
+                          {product.name} - ${product.price}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
             </Grid>
           )}
         </DialogContent>
@@ -1052,7 +1033,7 @@ const Coupons = () => {
           {dialogMode !== 'view' && (
             <Button
               variant="contained"
-              onClick={handleSaveCoupon}
+              onClick={handleSubmit}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 '&:hover': {

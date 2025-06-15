@@ -11,7 +11,10 @@ import { useTheme } from '@mui/material/styles';
 import { useMediaQuery } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-const API_URL = process.env.REACT_APP_API_URL
+import "./Shop.css";
+
+const API_URL = "http://localhost:5000";
+
 export default function Shop() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -302,26 +305,6 @@ export default function Shop() {
             </div>
           </div>
         </div>
-        <style jsx>{`
-          .shop-page {
-            min-height: 100vh;
-          }
-          .shop-page .breadcrumb {
-            background: #fff;
-            border-radius: 10px;
-            margin-bottom: 24px;
-          }
-          .shop-page .row > .col-lg-3 {
-            border-left: 1.5px solid #eee;
-          }
-          @media (max-width: 991px) {
-            .shop-page .row > .col-lg-3 {
-              border-left: none;
-              border-bottom: 1.5px solid #eee;
-              margin-bottom: 24px;
-            }
-          }
-        `}</style>
       </div>
       <Footer />
     </>

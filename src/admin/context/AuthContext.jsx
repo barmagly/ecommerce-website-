@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { login as loginAction, logout as logoutAction, clearError } from '../store/slices/authSlice';
+import { login as loginAction, logout as logoutAction, clearError, fetchProfile } from '../store/slices/authSlice';
 
 const AuthContext = createContext(null);
 
@@ -21,16 +21,17 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     // Check if there's a token in localStorage on mount
     const storedToken = localStorage.getItem('adminToken');
-    if (storedToken && !isAuthenticated) {
-      // You might want to validate the token here
-      // For now, we'll just set it in the state
-      dispatch(loginAction({ token: storedToken })).unwrap()
+    if (storedToken) {
+      // Validate the token by attempting to fetch the admin profile
+      dispatch(fetchProfile())
+        .unwrap()
         .catch((error) => {
           console.error('Token validation error:', error);
           localStorage.removeItem('adminToken');
+          // The ProtectedRoute will handle redirection if isAuthenticated becomes false
         });
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch]);
 
   const login = async (credentials) => {
     try {
@@ -38,6 +39,12 @@ export const AuthProvider = ({ children }) => {
       dispatch(clearError());
       
       const result = await dispatch(loginAction(credentials)).unwrap();
+      
+      // Store the token in localStorage
+      if (result.token) {
+        localStorage.setItem('adminToken', result.token);
+      }
+      
       return result;
     } catch (error) {
       // Ensure the error is properly propagated
@@ -48,6 +55,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await dispatch(logoutAction()).unwrap();
+      localStorage.removeItem('adminToken');
       navigate('/admin/login');
     } catch (error) {
       console.error('Logout error:', error);

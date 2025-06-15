@@ -25,6 +25,9 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  CircularProgress,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
@@ -47,9 +50,13 @@ import {
   AccountCircle as AccountCircleIcon,
   Inventory as InventoryIcon,
   ShoppingCart as ShoppingCartIcon,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
+import { settingsAPI } from '../services/api';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSettings, updateSettings, resetSettings, setDirty } from '../store/slices/settingsSlice';
 
 // SEO Pages configuration
 const SITE_PAGES = [
@@ -82,127 +89,57 @@ function TabPanel({ children, value, index, ...other }) {
 }
 
 const Settings = () => {
+  const dispatch = useDispatch();
+  const { settings, loading, error, isDirty } = useSelector((state) => state.settings);
   const theme = useTheme();
   const [activeTab, setActiveTab] = useState(0);
-  const [isDirty, setIsDirty] = useState(false);
   const [selectedSEOPage, setSelectedSEOPage] = useState('home');
   
-  const [settings, setSettings] = useState({
-    // General Settings
-    siteName: 'المتجر الإلكتروني',
-    siteDescription: 'متجر إلكتروني متكامل للتجارة الإلكترونية',
-    contactEmail: 'info@store.com',
-    contactPhone: '+966-11-1234567',
-    address: 'الرياض، المملكة العربية السعودية',
-    
-    // SEO Settings
-    seoPages: SITE_PAGES.reduce((acc, page) => {
-      acc[page.id] = {
-        title: `${page.name} - المتجر الإلكتروني`,
-        description: `${page.name} في المتجر الإلكتروني - تجربة تسوق مميزة`,
-        keywords: 'تجارة إلكترونية، تسوق أونلاين، متجر إلكتروني',
-        ogTitle: '',
-        ogDescription: '',
-        ogImage: '',
-        robotsIndex: true,
-        robotsFollow: true,
-        canonicalUrl: '',
-      };
-      return acc;
-    }, {}),
-    
-    // Theme Settings
-    primaryColor: '#1976d2',
-    darkMode: false,
-    rtl: true,
-    fontFamily: 'Arial',
-    
-    // Security Settings
-    twoFactorAuth: false,
-    sessionTimeout: 30,
-    maxLoginAttempts: 5,
-    passwordPolicy: {
-      minLength: 8,
-      requireUppercase: true,
-      requireLowercase: true,
-      requireNumbers: true,
-      requireSymbols: false,
-    },
-    
-    // Notifications
-    emailNotifications: true,
-    smsNotifications: false,
-    pushNotifications: true,
-    orderNotifications: true,
-    reviewNotifications: true,
-    
-    // Analytics
-    googleAnalytics: '',
-    facebookPixel: '',
-    trackingEnabled: true,
-    
-    // Performance
-    cacheEnabled: true,
-    compressionEnabled: true,
-    lazyLoading: true,
-    imageOptimization: true,
-    
-    // Backup
-    autoBackup: true,
-    backupFrequency: 'daily',
-    backupRetention: 30,
-    
-    // Payment & Shipping
-    currency: 'SAR',
-    taxRate: 15,
-    freeShippingThreshold: 200,
-    shippingCalculation: 'weight',
-  });
-
-  // Load settings from localStorage
+  // Load settings from API
   useEffect(() => {
-    const savedSettings = localStorage.getItem('adminSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        setSettings(prev => ({ ...prev, ...parsedSettings }));
-      } catch (error) {
-        console.error('Error loading settings:', error);
-      }
-    }
-  }, []);
+    dispatch(fetchSettings());
+  }, [dispatch]);
 
   const handleSettingChange = (category, key, value) => {
-    setSettings(prev => ({
-      ...prev,
-      [category]: typeof prev[category] === 'object' ? 
-        { ...prev[category], [key]: value } : value
-    }));
-    setIsDirty(true);
+    dispatch(setDirty(true));
+    const updatedSettings = {
+      ...settings,
+      [category]: typeof settings[category] === 'object' ? 
+        { ...settings[category], [key]: value } : value
+    };
+    dispatch(updateSettings(updatedSettings));
   };
 
   const handleSEOChange = (pageId, field, value) => {
-    setSettings(prev => ({
-      ...prev,
+    dispatch(setDirty(true));
+    const updatedSettings = {
+      ...settings,
       seoPages: {
-        ...prev.seoPages,
+        ...settings.seoPages,
         [pageId]: {
-          ...prev.seoPages[pageId],
+          ...settings.seoPages[pageId],
           [field]: value
         }
       }
-    }));
-    setIsDirty(true);
+    };
+    dispatch(updateSettings(updatedSettings));
   };
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     try {
-      localStorage.setItem('adminSettings', JSON.stringify(settings));
-      setIsDirty(false);
+      await dispatch(updateSettings(settings)).unwrap();
       toast.success('تم حفظ الإعدادات بنجاح!');
     } catch (error) {
-      console.error('Error saving settings:', error);
       toast.error('حدث خطأ في حفظ الإعدادات!');
+    }
+  };
+
+  const handleResetSettings = async () => {
+    try {
+      await dispatch(resetSettings()).unwrap();
+      toast.success('تم إعادة تعيين الإعدادات بنجاح!');
+    } catch (error) {
+      toast.error('حدث خطأ في إعادة تعيين الإعدادات!');
     }
   };
 
@@ -230,8 +167,7 @@ const Settings = () => {
       reader.onload = (e) => {
         try {
           const importedSettings = JSON.parse(e.target.result);
-          setSettings(prev => ({ ...prev, ...importedSettings }));
-          setIsDirty(true);
+          dispatch(updateSettings(importedSettings));
           toast.success('تم استيراد الإعدادات بنجاح!');
         } catch (error) {
           console.error('Error importing settings:', error);
@@ -252,6 +188,26 @@ const Settings = () => {
     { label: 'الأداء', icon: <PerformanceIcon />, color: '#388e3c' },
     { label: 'النسخ الاحتياطي', icon: <BackupIcon />, color: '#f57c00' },
   ];
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  if (!settings) {
+    return null;
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -320,6 +276,18 @@ const Settings = () => {
                 >
                   استيراد
                   <input type="file" hidden accept=".json" onChange={handleImportSettings} />
+                </Button>
+                <Button
+                  variant="outlined"
+                  sx={{ 
+                    borderColor: 'rgba(255,255,255,0.5)', 
+                    color: 'white',
+                    '&:hover': { borderColor: 'white', bgcolor: 'rgba(255,255,255,0.1)' }
+                  }}
+                  startIcon={<RefreshIcon />}
+                  onClick={handleResetSettings}
+                >
+                  إعادة تعيين
                 </Button>
               </Box>
             </Box>
@@ -398,10 +366,7 @@ const Settings = () => {
                     fullWidth
                     label="اسم الموقع"
                     value={settings.siteName}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, siteName: e.target.value }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('siteName', 'siteName', e.target.value)}
                   />
                   
                   <TextField
@@ -410,30 +375,21 @@ const Settings = () => {
                     rows={3}
                     label="وصف الموقع"
                     value={settings.siteDescription}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, siteDescription: e.target.value }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('siteDescription', 'siteDescription', e.target.value)}
                   />
                   
                   <TextField
                     fullWidth
                     label="البريد الإلكتروني للتواصل"
                     value={settings.contactEmail}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, contactEmail: e.target.value }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('contactEmail', 'contactEmail', e.target.value)}
                   />
                   
                   <TextField
                     fullWidth
                     label="رقم الهاتف"
                     value={settings.contactPhone}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, contactPhone: e.target.value }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('contactPhone', 'contactPhone', e.target.value)}
                   />
                   
                   <TextField
@@ -442,10 +398,7 @@ const Settings = () => {
                     rows={2}
                     label="العنوان"
                     value={settings.address}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, address: e.target.value }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('address', 'address', e.target.value)}
                   />
                 </Stack>
               </Card>
@@ -464,11 +417,9 @@ const Settings = () => {
                     <Select
                       value={settings.currency}
                       label="العملة"
-                      onChange={(e) => {
-                        setSettings(prev => ({ ...prev, currency: e.target.value }));
-                        setIsDirty(true);
-                      }}
+                      onChange={(e) => handleSettingChange('currency', 'currency', e.target.value)}
                     >
+                      <MenuItem value="EGP">جنيه مصري (EGP)</MenuItem>
                       <MenuItem value="SAR">ريال سعودي (SAR)</MenuItem>
                       <MenuItem value="USD">دولار أمريكي (USD)</MenuItem>
                       <MenuItem value="EUR">يورو (EUR)</MenuItem>
@@ -480,10 +431,7 @@ const Settings = () => {
                     type="number"
                     label="معدل الضريبة (%)"
                     value={settings.taxRate}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, taxRate: parseFloat(e.target.value) }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('taxRate', 'taxRate', parseFloat(e.target.value))}
                   />
                   
                   <TextField
@@ -491,10 +439,7 @@ const Settings = () => {
                     type="number"
                     label="الحد الأدنى للشحن المجاني"
                     value={settings.freeShippingThreshold}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, freeShippingThreshold: parseFloat(e.target.value) }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('freeShippingThreshold', 'freeShippingThreshold', parseFloat(e.target.value))}
                   />
                   
                   <FormControl fullWidth>
@@ -502,10 +447,7 @@ const Settings = () => {
                     <Select
                       value={settings.shippingCalculation}
                       label="طريقة حساب الشحن"
-                      onChange={(e) => {
-                        setSettings(prev => ({ ...prev, shippingCalculation: e.target.value }));
-                        setIsDirty(true);
-                      }}
+                      onChange={(e) => handleSettingChange('shippingCalculation', 'shippingCalculation', e.target.value)}
                     >
                       <MenuItem value="weight">حسب الوزن</MenuItem>
                       <MenuItem value="price">حسب السعر</MenuItem>
@@ -682,8 +624,7 @@ const Settings = () => {
                             '&:hover': { bgcolor: color, opacity: 0.8 }
                           }}
                           onClick={() => {
-                            setSettings(prev => ({ ...prev, primaryColor: color }));
-                            setIsDirty(true);
+                            handleSettingChange('primaryColor', null, color);
                           }}
                         />
                       ))}
@@ -695,10 +636,7 @@ const Settings = () => {
                     <Select
                       value={settings.fontFamily}
                       label="خط النص"
-                      onChange={(e) => {
-                        setSettings(prev => ({ ...prev, fontFamily: e.target.value }));
-                        setIsDirty(true);
-                      }}
+                      onChange={(e) => handleSettingChange('fontFamily', null, e.target.value)}
                     >
                       <MenuItem value="Arial">Arial</MenuItem>
                       <MenuItem value="Tahoma">Tahoma</MenuItem>
@@ -712,10 +650,7 @@ const Settings = () => {
                       control={
                         <Switch
                           checked={settings.darkMode}
-                          onChange={(e) => {
-                            setSettings(prev => ({ ...prev, darkMode: e.target.checked }));
-                            setIsDirty(true);
-                          }}
+                          onChange={(e) => handleSettingChange('darkMode', null, e.target.checked)}
                         />
                       }
                       label="الوضع المظلم"
@@ -725,10 +660,7 @@ const Settings = () => {
                       control={
                         <Switch
                           checked={settings.rtl}
-                          onChange={(e) => {
-                            setSettings(prev => ({ ...prev, rtl: e.target.checked }));
-                            setIsDirty(true);
-                          }}
+                          onChange={(e) => handleSettingChange('rtl', null, e.target.checked)}
                         />
                       }
                       label="النص من اليمين لليسار"
@@ -783,10 +715,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.twoFactorAuth}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, twoFactorAuth: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('twoFactorAuth', null, e.target.checked)}
                       />
                     }
                     label="المصادقة الثنائية"
@@ -797,10 +726,7 @@ const Settings = () => {
                     type="number"
                     label="انتهاء الجلسة (دقيقة)"
                     value={settings.sessionTimeout}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, sessionTimeout: parseInt(e.target.value) }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('sessionTimeout', null, parseInt(e.target.value))}
                   />
                   
                   <TextField
@@ -808,10 +734,7 @@ const Settings = () => {
                     type="number"
                     label="حد أقصى لمحاولات تسجيل الدخول"
                     value={settings.maxLoginAttempts}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, maxLoginAttempts: parseInt(e.target.value) }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('maxLoginAttempts', null, parseInt(e.target.value))}
                   />
                 </Stack>
               </Card>
@@ -880,10 +803,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.emailNotifications}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, emailNotifications: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('emailNotifications', null, e.target.checked)}
                       />
                     }
                     label="إشعارات البريد الإلكتروني"
@@ -893,10 +813,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.smsNotifications}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, smsNotifications: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('smsNotifications', null, e.target.checked)}
                       />
                     }
                     label="إشعارات الرسائل النصية"
@@ -906,10 +823,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.pushNotifications}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, pushNotifications: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('pushNotifications', null, e.target.checked)}
                       />
                     }
                     label="الإشعارات المباشرة"
@@ -923,10 +837,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.orderNotifications}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, orderNotifications: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('orderNotifications', null, e.target.checked)}
                       />
                     }
                     label="إشعارات الطلبات"
@@ -936,10 +847,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.reviewNotifications}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, reviewNotifications: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('reviewNotifications', null, e.target.checked)}
                       />
                     }
                     label="إشعارات المراجعات"
@@ -963,10 +871,7 @@ const Settings = () => {
                 fullWidth
                 label="Google Analytics ID"
                 value={settings.googleAnalytics}
-                onChange={(e) => {
-                  setSettings(prev => ({ ...prev, googleAnalytics: e.target.value }));
-                  setIsDirty(true);
-                }}
+                onChange={(e) => handleSettingChange('googleAnalytics', null, e.target.value)}
                 placeholder="GA-XXXXXXXXX-X"
               />
               
@@ -974,10 +879,7 @@ const Settings = () => {
                 fullWidth
                 label="Facebook Pixel ID"
                 value={settings.facebookPixel}
-                onChange={(e) => {
-                  setSettings(prev => ({ ...prev, facebookPixel: e.target.value }));
-                  setIsDirty(true);
-                }}
+                onChange={(e) => handleSettingChange('facebookPixel', null, e.target.value)}
                 placeholder="XXXXXXXXXXXXXXX"
               />
               
@@ -985,10 +887,7 @@ const Settings = () => {
                 control={
                   <Switch
                     checked={settings.trackingEnabled}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, trackingEnabled: e.target.checked }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('trackingEnabled', null, e.target.checked)}
                   />
                 }
                 label="تفعيل التتبع"
@@ -1012,10 +911,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.cacheEnabled}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, cacheEnabled: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('cacheEnabled', null, e.target.checked)}
                       />
                     }
                     label="تفعيل التخزين المؤقت"
@@ -1025,10 +921,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.compressionEnabled}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, compressionEnabled: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('compressionEnabled', null, e.target.checked)}
                       />
                     }
                     label="ضغط الملفات"
@@ -1042,10 +935,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.lazyLoading}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, lazyLoading: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('lazyLoading', null, e.target.checked)}
                       />
                     }
                     label="التحميل التدريجي"
@@ -1055,10 +945,7 @@ const Settings = () => {
                     control={
                       <Switch
                         checked={settings.imageOptimization}
-                        onChange={(e) => {
-                          setSettings(prev => ({ ...prev, imageOptimization: e.target.checked }));
-                          setIsDirty(true);
-                        }}
+                        onChange={(e) => handleSettingChange('imageOptimization', null, e.target.checked)}
                       />
                     }
                     label="تحسين الصور"
@@ -1082,10 +969,7 @@ const Settings = () => {
                 control={
                   <Switch
                     checked={settings.autoBackup}
-                    onChange={(e) => {
-                      setSettings(prev => ({ ...prev, autoBackup: e.target.checked }));
-                      setIsDirty(true);
-                    }}
+                    onChange={(e) => handleSettingChange('autoBackup', null, e.target.checked)}
                   />
                 }
                 label="النسخ الاحتياطي التلقائي"
@@ -1096,10 +980,7 @@ const Settings = () => {
                 <Select
                   value={settings.backupFrequency}
                   label="تكرار النسخ الاحتياطي"
-                  onChange={(e) => {
-                    setSettings(prev => ({ ...prev, backupFrequency: e.target.value }));
-                    setIsDirty(true);
-                  }}
+                  onChange={(e) => handleSettingChange('backupFrequency', null, e.target.value)}
                 >
                   <MenuItem value="daily">يومياً</MenuItem>
                   <MenuItem value="weekly">أسبوعياً</MenuItem>
@@ -1112,10 +993,7 @@ const Settings = () => {
                 type="number"
                 label="مدة الاحتفاظ بالنسخ (أيام)"
                 value={settings.backupRetention}
-                onChange={(e) => {
-                  setSettings(prev => ({ ...prev, backupRetention: parseInt(e.target.value) }));
-                  setIsDirty(true);
-                }}
+                onChange={(e) => handleSettingChange('backupRetention', null, parseInt(e.target.value))}
               />
               
               <Box sx={{ display: 'flex', gap: 2, pt: 2 }}>

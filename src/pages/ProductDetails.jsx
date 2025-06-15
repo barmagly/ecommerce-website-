@@ -4,13 +4,15 @@ import { useDispatch, useSelector } from "react-redux";
 import { getProductsThunk } from "../services/Slice/product/product";
 import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { getVariantsThunk } from "../services/Slice/variant/variant";
-import { addToCartThunk } from "../services/Slice/cart/cart";
+import { addToCartThunk, getCartThunk } from "../services/Slice/cart/cart";
 import { handleAddToCart, handleAddToWishlist } from '../utils/authUtils';
 import { createReviewThunk, getProductReviewsThunk, updateReviewThunk, deleteReviewThunk } from "../services/Slice/review/review";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import axios from "axios";
 
+const API_URL = "http://localhost:5000";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 function StarRating({ rating, setRating, interactive }) {
@@ -48,13 +50,10 @@ export default function ProductDetails() {
   const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
   const { token, user: currentUser } = useSelector((state) => state.auth);
   const { user: profileUser } = useSelector((state) => state.userProfile);
+  const [product, setProduct] = useState(null);
+  const [productLoading, setProductLoading] = useState(true);
+  const [productError, setProductError] = useState(null);
 
-  console.log("Auth State:", useSelector((state) => state.auth));
-  console.log("Current User:", currentUser);
-  console.log("Profile User:", profileUser);
-  console.log("Reviews:", reviews);
-
-  const product = products?.find(p => p._id === id);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const [editingReview, setEditingReview] = useState(null);
@@ -67,7 +66,21 @@ export default function ProductDetails() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   useEffect(() => {
-    dispatch(getProductsThunk());
+    const fetchProduct = async () => {
+      try {
+        setProductLoading(true);
+        setProductError(null);
+        const response = await axios.get(`${API_URL}/api/products/${id}`);
+        setProduct(response.data);
+      } catch (err) {
+        setProductError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتج");
+        console.error("Error fetching product:", err);
+      } finally {
+        setProductLoading(false);
+      }
+    };
+
+    fetchProduct();
     if (id) {
       dispatch(getVariantsThunk({ prdId: id }));
       dispatch(getProductReviewsThunk(id));
@@ -173,7 +186,7 @@ export default function ProductDetails() {
     }
   };
 
-  if (loading) {
+  if (productLoading) {
     return (
       <>
         <Header />
@@ -187,13 +200,13 @@ export default function ProductDetails() {
     );
   }
 
-  if (error) {
+  if (productError) {
     return (
       <>
         <Header />
         <div className="container py-5 text-center">
           <div className="alert alert-danger" role="alert">
-            {error}
+            {productError}
           </div>
           <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>رجوع</button>
         </div>
@@ -207,7 +220,9 @@ export default function ProductDetails() {
       <>
         <Header />
         <div className="container py-5 text-center">
-          <h2 className="text-danger">المنتج غير موجود</h2>
+          <div className="alert alert-warning" role="alert">
+            المنتج غير موجود
+          </div>
           <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>رجوع</button>
         </div>
         <Footer />
@@ -224,6 +239,8 @@ export default function ProductDetails() {
       productId: id,
       variantId: selectedVariant?._id // This will be undefined for products without variants
     }, navigate);
+    // Refresh cart data after adding item
+    dispatch(getCartThunk());
   };
 
   const handleAddToWishlistClick = () => {
@@ -237,30 +254,42 @@ export default function ProductDetails() {
       return;
     }
 
-    if (reviewForm.comment) {
-      setIsSubmittingReview(true);
-      setReviewError(null);
+    if (!reviewForm.comment.trim()) {
+      setReviewError("يرجى إضافة تعليق للتقييم");
+      return;
+    }
 
-      try {
-        await dispatch(createReviewThunk({
-          productId: id,
-          rating: reviewForm.rating,
-          comment: reviewForm.comment
-        })).unwrap();
+    if (reviewForm.rating < 1 || reviewForm.rating > 5) {
+      setReviewError("يرجى اختيار تقييم صحيح (من 1 إلى 5)");
+      return;
+    }
 
+    setIsSubmittingReview(true);
+    setReviewError(null);
+
+    try {
+      const result = await dispatch(createReviewThunk({
+        productId: id,
+        rating: reviewForm.rating,
+        comment: reviewForm.comment.trim()
+      })).unwrap();
+
+      if (result.status === 'success') {
         setReviewForm({ rating: 5, comment: "" });
+        // Refresh product data
         dispatch(getProductsThunk());
         if (id) {
           dispatch(getVariantsThunk({ prdId: id }));
           dispatch(getProductReviewsThunk(id));
         }
-      } catch (error) {
-        setReviewError(error || "حدث خطأ أثناء إضافة التقييم");
-      } finally {
-        setIsSubmittingReview(false);
+      } else {
+        throw new Error(result.message || "حدث خطأ أثناء إضافة التقييم");
       }
-    } else {
-      setReviewError("يرجى إضافة تعليق للتقييم");
+    } catch (error) {
+      console.error("Review submission error:", error);
+      setReviewError(error || "حدث خطأ أثناء إضافة التقييم");
+    } finally {
+      setIsSubmittingReview(false);
     }
   };
 
@@ -323,11 +352,62 @@ export default function ProductDetails() {
   const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
 
   const isReviewOwner = (reviewUserId) => {
-    console.log("Checking review ownership:");
-    console.log("Current User ID:", profileUser?._id);
-    console.log("Review User ID:", reviewUserId);
-    console.log("Is Owner:", profileUser?._id === reviewUserId);
-    return profileUser?._id === reviewUserId;
+    return currentUser && reviewUserId === currentUser._id;
+  };
+
+  const renderReviews = () => {
+    if (reviewsLoading) {
+      return (
+        <div className="text-center py-4">
+          <div className="spinner-border text-primary" role="status">
+            <span className="visually-hidden">Loading reviews...</span>
+          </div>
+        </div>
+      );
+    }
+
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="text-center py-4">
+          <p>No reviews yet. Be the first to review this product!</p>
+        </div>
+      );
+    }
+
+    return reviews.map((review) => {
+      if (!review) return null;
+      
+      return (
+        <div key={review._id} className="review-item mb-4 p-3 border rounded">
+          <div className="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 className="mb-1">{review.user?.name || 'Anonymous'}</h6>
+              <StarRating rating={review.rating} interactive={false} />
+            </div>
+            {isReviewOwner(review.user?._id) && (
+              <div className="btn-group">
+                <button
+                  className="btn btn-sm btn-outline-primary"
+                  onClick={() => handleEditReview(review)}
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn btn-sm btn-outline-danger"
+                  onClick={() => handleDeleteReview(review._id)}
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+          </div>
+          <p className="mt-2 mb-0">{review.comment}</p>
+          <small className="text-muted">
+            {new Date(review.createdAt).toLocaleDateString()}
+          </small>
+        </div>
+      );
+    });
   };
 
   return (
@@ -578,102 +658,7 @@ export default function ProductDetails() {
                       <i className="fas fa-star text-warning ms-2"></i> التقييمات
                     </h4>
                     <div className="mb-4">
-                      {reviewsLoading ? (
-                        <div className="text-center py-4">
-                          <div className="spinner-border text-primary" role="status">
-                            <span className="visually-hidden">جاري التحميل...</span>
-                          </div>
-                        </div>
-                      ) : reviews.length === 0 ? (
-                        <div className="alert alert-info text-center py-4">
-                          <i className="fas fa-info-circle ms-2"></i>
-                          لا توجد تقييمات بعد.
-                        </div>
-                      ) : (
-                        reviews.map((r, i) => (
-                          <div key={i} className="border-bottom pb-4 mb-4">
-                            {editingReview === r._id ? (
-                              <form onSubmit={handleUpdateReview} className="mt-3">
-                                <div className="row g-3 mb-3">
-                                  <div className="col-md-6 mb-2 mb-md-0 text-center">
-                                    <StarRating
-                                      rating={editForm.rating}
-                                      setRating={r => setEditForm(f => ({ ...f, rating: r }))}
-                                      interactive={true}
-                                    />
-                                  </div>
-                                  <div className="col-md-6">
-                                    <textarea
-                                      name="comment"
-                                      className="form-control"
-                                      placeholder="تعليقك"
-                                      value={editForm.comment}
-                                      onChange={e => setEditForm(f => ({ ...f, comment: e.target.value }))}
-                                      required
-                                      rows="3"
-                                      style={{ resize: 'none' }}
-                                    />
-                                  </div>
-                                </div>
-                                <div className="text-center">
-                                  <button
-                                    className="btn btn-danger px-4 me-2"
-                                    type="submit"
-                                    disabled={isSubmittingReview}
-                                  >
-                                    {isSubmittingReview ? (
-                                      <>
-                                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                        جاري الحفظ...
-                                      </>
-                                    ) : (
-                                      'حفظ التغييرات'
-                                    )}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-outline-secondary px-4"
-                                    onClick={handleCancelEdit}
-                                  >
-                                    إلغاء
-                                  </button>
-                                </div>
-                              </form>
-                            ) : (
-                              <>
-                                <div className="d-flex align-items-center gap-3 mb-2">
-                                  <div className="d-flex align-items-center gap-2">
-                                    <StarRating rating={r.rating} />
-                                    <span className="fw-bold" style={{ color: '#333' }}>{r.userId?.name || 'مستخدم'}</span>
-                                  </div>
-                                  <span className="text-muted small">{new Date(r.createdAt).toLocaleDateString('ar-EG')}</span>
-                                </div>
-                                <div className="text-muted" style={{ fontSize: '1.05em', lineHeight: 1.6 }}>{r.comment}</div>
-                                {profileUser && profileUser._id === r.userId?._id && (
-                                  <div className="mt-3 text-end">
-                                    <button
-                                      className="btn btn-sm btn-outline-primary ms-2"
-                                      onClick={() => handleEditReview(r)}
-                                      style={{ borderRadius: '8px', padding: '0.5rem 1rem' }}
-                                    >
-                                      <i className="fas fa-edit me-1"></i>
-                                      تعديل
-                                    </button>
-                                    <button
-                                      className="btn btn-sm btn-outline-danger"
-                                      onClick={() => handleDeleteReview(r._id)}
-                                      style={{ borderRadius: '8px', padding: '0.5rem 1rem' }}
-                                    >
-                                      <i className="fas fa-trash me-1"></i>
-                                      حذف
-                                    </button>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ))
-                      )}
+                      {renderReviews()}
                     </div>
                     <form onSubmit={handleReviewSubmit} className="border rounded-4 p-4 bg-light mt-4">
                       <h6 className="fw-bold mb-3 text-center" style={{ color: '#333' }}>أضف تقييمك</h6>

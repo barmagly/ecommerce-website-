@@ -1,0 +1,21 @@
+.shop-page {
+  min-height: 100vh;
+}
+
+.shop-page .breadcrumb {
+  background: #fff;
+  border-radius: 10px;
+  margin-bottom: 24px;
+}
+
+.shop-page .row > .col-lg-3 {
+  border-left: 1.5px solid #eee;
+}
+
+@media (max-width: 991px) {
+  .shop-page .row > .col-lg-3 {
+    border-left: none;
+    border-bottom: 1.5px solid #eee;
+    margin-bottom: 24px;
+  }
+} 

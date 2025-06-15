@@ -23,12 +23,11 @@ export default function Login() {
 
     try {
       const res = await dispatch(loginThunk({ email: loginEmail, password: password }));
-      console.log(res);
-      if (res.payload.status == "success") {
+      if (res.payload?.status === "success") {
         toast.success("تم تسجيل الدخول بنجاح");
         navigate("/");
       } else {
-        toast.error(res.payload.message || "حدث خطأ أثناء تسجيل الدخول");
+        toast.error(res.payload?.message || "حدث خطأ أثناء تسجيل الدخول");
       }
     } catch (error) {
       toast.error("حدث خطأ أثناء تسجيل الدخول");
@@ -38,34 +37,30 @@ export default function Login() {
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     try {
       const idToken = credentialResponse.credential;
+      if (!idToken) {
+        toast.error("فشل في الحصول على بيانات Google");
+        return;
+      }
+
       const res = await dispatch(googleLoginThunk({
-        idToken: idToken,
-        email: user?.email,
-        name: user?.name
+        idToken: idToken
       }));
-      console.log(res);
-      if (res.payload.status === "success") {
+
+      if (res.payload?.status === "success") {
         toast.success("تم تسجيل الدخول بنجاح");
         navigate("/");
       } else {
-        toast.error(res.payload.message || "حدث خطأ أثناء تسجيل الدخول");
+        toast.error(res.payload?.message || "حدث خطأ أثناء تسجيل الدخول");
       }
     } catch (error) {
-      toast.error("حدث خطأ أثناء تسجيل الدخول");
+      console.error("Google login error:", error);
+      toast.error("حدث خطأ أثناء تسجيل الدخول باستخدام Google");
     }
   };
 
   const handleGoogleLoginFailure = (error) => {
-    console.log(`Google Login Failed ${error}`);
-    toast.error("فشل تسجيل الدخول باستخدام Google", {
-      position: "top-right",
-      autoClose: 3000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      theme: "light",
-    });
+    console.error("Google Login Failed:", error);
+    toast.error("فشل تسجيل الدخول باستخدام Google");
   };
 
   return (
@@ -156,6 +151,7 @@ export default function Login() {
                   text="signin_with"
                   shape="rectangular"
                   locale="ar"
+                  context="signin"
                 />
               </div>
             </div>

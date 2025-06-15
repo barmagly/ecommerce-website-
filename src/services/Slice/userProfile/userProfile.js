@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = `${process.env.REACT_APP_API_URL}/api/auth`;
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_KEY = `${API_URL}/api/auth`;
 
 export const getUserProfileThunk = createAsyncThunk(
     "userProfile/getUserProfile",
@@ -12,7 +13,7 @@ export const getUserProfileThunk = createAsyncThunk(
                 throw new Error("No token found");
             }
 
-            const { data } = await axios.get(`${API_URL}/profile`, {
+            const { data } = await axios.get(`${API_KEY}/profile`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -35,7 +36,7 @@ export const updateUserProfileThunk = createAsyncThunk(
                 return thunkAPI.rejectWithValue({ message: "No token provided" });
             }
 
-            const { data } = await axios.patch(`${API_URL}/profile`, formData, {
+            const { data } = await axios.patch(`${API_KEY}/profile`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
@@ -58,7 +59,7 @@ export const updateUserPasswordThunk = createAsyncThunk(
             }
 
             const { data } = await axios.patch(
-                `${API_URL}/password`,
+                `${API_KEY}/password`,
                 {
                     currentPassword,
                     newPassword
@@ -87,7 +88,7 @@ export const addAddressToBookThunk = createAsyncThunk(
             }
 
             const { data } = await axios.post(
-                `${API_URL}/address-book`,
+                `${API_KEY}/address-book`,
                 {
                     label, details, city
                 },
@@ -114,7 +115,7 @@ export const getAddressToBookThunk = createAsyncThunk(
             }
 
             const { data } = await axios.get(
-                `${API_URL}/address-book`,
+                `${API_KEY}/address-book`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -138,7 +139,7 @@ export const updateAddressToBookThunk = createAsyncThunk(
             }
 
             const { data } = await axios.patch(
-                `${API_URL}/address-book/${_id}`,
+                `${API_KEY}/address-book/${_id}`,
                 {
                     label, details, city
                 },
@@ -165,7 +166,7 @@ export const deleteAddressToBookThunk = createAsyncThunk(
             }
 
             const { data } = await axios.delete(
-                `${API_URL}/address-book/${_id}`,
+                `${API_KEY}/address-book/${_id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -189,7 +190,7 @@ export const addPaymentOptionsThunk = createAsyncThunk(
             }
 
             const { data } = await axios.post(
-                `${API_URL}/payment-options`,
+                `${API_KEY}/payment-options`,
                 {
                     cardType, cardNumber, cardholderName
                 },
@@ -216,7 +217,7 @@ export const getPaymentOptionsThunk = createAsyncThunk(
             }
 
             const { data } = await axios.get(
-                `${API_URL}/payment-options`,
+                `${API_KEY}/payment-options`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,
@@ -240,7 +241,7 @@ export const updatePaymentOptionsThunk = createAsyncThunk(
             }
 
             const { data } = await axios.patch(
-                `${API_URL}/payment-options/${_id}`,
+                `${API_KEY}/payment-options/${_id}`,
                 {
                     cardType, cardNumber, cardholderName
                 },
@@ -267,7 +268,7 @@ export const deletePaymentOptionsThunk = createAsyncThunk(
             }
 
             const { data } = await axios.delete(
-                `${API_URL}/payment-options/${_id}`,
+                `${API_KEY}/payment-options/${_id}`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`,

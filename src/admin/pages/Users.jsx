@@ -78,7 +78,7 @@ const Users = () => {
     try {
       setLoading(true);
       const response = await usersAPI.getAll();
-      // The backend returns { users: [...] } format
+      // The backend returns an object with a 'users' key
       setUsers(response.data.users || []);
       setError(null);
     } catch (err) {
@@ -406,229 +406,339 @@ const Users = () => {
         </Grid>
 
         {/* Users Table */}
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
-                    <TableCell sx={{ fontWeight: 600 }}>المستخدم</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>معلومات الاتصال</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الدور</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الحالة</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>تاريخ التسجيل</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>الإجراءات</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredUsers.map((user) => (
-                    <TableRow 
-                      key={user._id}
-                      sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
-                    >
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Avatar sx={{ width: 40, height: 40, mr: 2 }}>
-                            {user.name.split(' ').map(n => n[0]).join('')}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight={600}>
-                              {user.name}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              ID: {user._id}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        <Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <EmailIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                            <Typography variant="body2">{user.email}</Typography>
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
-                            <PhoneIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                            <Typography variant="body2">{user.phone}</Typography>
-                          </Box>
-                          {user.addresses.length > 0 && (
+        <Grid container spacing={3}>
+          <Grid grid={{ xs: 12, md: 8 }}>
+            <Card>
+              <CardContent>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                  <Typography variant="h6">Users Table</Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleOpenDialog('add')}
+                  >
+                    Add User
+                  </Button>
+                </Box>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: alpha(theme.palette.primary.main, 0.05) }}>
+                        <TableCell sx={{ fontWeight: 600 }}>المستخدم</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>معلومات الاتصال</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>الدور</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>الحالة</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>تاريخ التسجيل</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>الإجراءات</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredUsers.map((user) => (
+                        <TableRow 
+                          key={user._id}
+                          sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
+                        >
+                          <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                              <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
-                              <Typography variant="caption" color="text.secondary">
-                                {user.addresses[0]}
-                              </Typography>
+                              <Avatar sx={{ width: 40, height: 40, mr: 2 }}>
+                                {user.name.split(' ').map(n => n[0]).join('')}
+                              </Avatar>
+                              <Box>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                  {user.name}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">
+                                  ID: {user._id}
+                                </Typography>
+                              </Box>
                             </Box>
-                          )}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {getRoleBadge(user.role)}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(user.status)}
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2">
-                          {new Date(user.createdAt).toLocaleDateString('ar-SA')}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title="عرض التفاصيل">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleOpenDialog('view', user)}
-                            >
-                              <ViewIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="تعديل">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleOpenDialog('edit', user)}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title={user.status === 'active' ? "حظر" : "إلغاء الحظر"}>
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleToggleStatus(user._id, user.status)}
-                              color={user.status === 'active' ? "error" : "success"}
-                            >
-                              {user.status === 'active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="حذف">
-                            <IconButton 
-                              size="small" 
-                              onClick={() => handleDelete(user._id)}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </CardContent>
-        </Card>
+                          </TableCell>
+                          <TableCell>
+                            <Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                <EmailIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                <Typography variant="body2">{user.email}</Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5 }}>
+                                <PhoneIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                <Typography variant="body2">{user.phone}</Typography>
+                              </Box>
+                              {user.addresses.length > 0 && (
+                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                  <LocationIcon sx={{ fontSize: 16, mr: 1, color: 'text.secondary' }} />
+                                  <Typography variant="caption" color="text.secondary">
+                                    {user.addresses[0]}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            {getRoleBadge(user.role)}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(user.status)}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {new Date(user.createdAt).toLocaleDateString('ar-SA')}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', gap: 1 }}>
+                              <Tooltip title="عرض التفاصيل">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleOpenDialog('view', user)}
+                                >
+                                  <ViewIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="تعديل">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleOpenDialog('edit', user)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={user.status === 'active' ? "حظر" : "إلغاء الحظر"}>
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleToggleStatus(user._id, user.status)}
+                                  color={user.status === 'active' ? "error" : "success"}
+                                >
+                                  {user.status === 'active' ? <BlockIcon fontSize="small" /> : <CheckCircleIcon fontSize="small" />}
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="حذف">
+                                <IconButton 
+                                  size="small" 
+                                  onClick={() => handleDelete(user._id)}
+                                  color="error"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid grid={{ xs: 12, md: 4 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Filters
+                </Typography>
+                <Grid container spacing={3} sx={{ mt: 1 }}>
+                  <Grid grid={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="الاسم الكامل"
+                      name="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      disabled={dialogMode === 'view'}
+                    />
+                  </Grid>
+                  <Grid grid={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="البريد الإلكتروني"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      disabled={dialogMode === 'view'}
+                    />
+                  </Grid>
+                  <Grid grid={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="رقم الهاتف"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      disabled={dialogMode === 'view'}
+                    />
+                  </Grid>
+                  <Grid grid={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth disabled={dialogMode === 'view'}>
+                      <InputLabel>الدور</InputLabel>
+                      <Select
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                        label="الدور"
+                      >
+                        <MenuItem value="user">مستخدم</MenuItem>
+                        <MenuItem value="admin">مدير</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Grid>
+                  <Grid grid={{ xs: 12 }}>
+                    <TextField
+                      fullWidth
+                      label="العناوين"
+                      multiline
+                      rows={3}
+                      name="addresses"
+                      value={formData.addresses}
+                      onChange={(e) => setFormData({ ...formData, addresses: e.target.value })}
+                      disabled={dialogMode === 'view'}
+                      helperText="اكتب كل عنوان في سطر منفصل أو افصل بينها بفاصلة"
+                    />
+                  </Grid>
+                  {dialogMode !== 'add' && (
+                    <Grid grid={{ xs: 12 }}>
+                      <FormControl fullWidth disabled={dialogMode === 'view'}>
+                        <InputLabel>الحالة</InputLabel>
+                        <Select
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          label="الحالة"
+                        >
+                          <MenuItem value="active">نشط</MenuItem>
+                          <MenuItem value="blocked">محظور</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  )}
+                  {dialogMode === 'view' && selectedUser && (
+                    <Grid grid={{ xs: 12 }}>
+                      <Alert severity="info">
+                        المستخدم لديه {selectedUser.wishlist.length} منتج في قائمة الأمنيات
+                      </Alert>
+                    </Grid>
+                  )}
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
 
         {/* User Dialog */}
-        <Dialog 
-          open={openDialog} 
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            {dialogMode === 'add' && 'إضافة مستخدم جديد'}
-            {dialogMode === 'edit' && 'تعديل المستخدم'}
-            {dialogMode === 'view' && 'تفاصيل المستخدم'}
-          </DialogTitle>
-          <DialogContent>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="الاسم الكامل"
-                  name="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  disabled={dialogMode === 'view'}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="البريد الإلكتروني"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  disabled={dialogMode === 'view'}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <TextField
-                  fullWidth
-                  label="رقم الهاتف"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  disabled={dialogMode === 'view'}
-                />
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <FormControl fullWidth disabled={dialogMode === 'view'}>
-                  <InputLabel>الدور</InputLabel>
-                  <Select
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    label="الدور"
-                  >
-                    <MenuItem value="user">مستخدم</MenuItem>
-                    <MenuItem value="admin">مدير</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="العناوين"
-                  multiline
-                  rows={3}
-                  name="addresses"
-                  value={formData.addresses}
-                  onChange={(e) => setFormData({ ...formData, addresses: e.target.value })}
-                  disabled={dialogMode === 'view'}
-                  helperText="اكتب كل عنوان في سطر منفصل أو افصل بينها بفاصلة"
-                />
-              </Grid>
-              {dialogMode !== 'add' && (
-                <Grid item xs={12}>
-                  <FormControl fullWidth disabled={dialogMode === 'view'}>
-                    <InputLabel>الحالة</InputLabel>
-                    <Select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      label="الحالة"
-                    >
-                      <MenuItem value="active">نشط</MenuItem>
-                      <MenuItem value="blocked">محظور</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-              )}
-              {dialogMode === 'view' && selectedUser && (
-                <Grid item xs={12}>
-                  <Alert severity="info">
-                    المستخدم لديه {selectedUser.wishlist.length} منتج في قائمة الأمنيات
-                  </Alert>
-                </Grid>
-              )}
-            </Grid>
-          </DialogContent>
-          <DialogActions sx={{ p: 3 }}>
-            <Button onClick={handleCloseDialog}>
-              {dialogMode === 'view' ? 'إغلاق' : 'إلغاء'}
-            </Button>
-            {dialogMode !== 'view' && (
-              <Button 
-                variant="contained" 
-                onClick={handleSubmit}
-                disabled={loading}
-                startIcon={loading && <CircularProgress size={20} />}
+        <Grid grid={{ xs: 12, md: 4 }}>
+          <Card>
+            <CardContent>
+              <Dialog 
+                open={openDialog} 
+                onClose={handleCloseDialog}
+                maxWidth="md"
+                fullWidth
               >
-                {dialogMode === 'add' ? 'إضافة' : 'حفظ التغييرات'}
-              </Button>
-            )}
-          </DialogActions>
-        </Dialog>
+                <DialogTitle>
+                  {dialogMode === 'add' && 'إضافة مستخدم جديد'}
+                  {dialogMode === 'edit' && 'تعديل المستخدم'}
+                  {dialogMode === 'view' && 'تفاصيل المستخدم'}
+                </DialogTitle>
+                <DialogContent>
+                  <Grid container spacing={3} sx={{ mt: 1 }}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="الاسم الكامل"
+                        name="name"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="البريد الإلكتروني"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="رقم الهاتف"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <FormControl fullWidth disabled={dialogMode === 'view'}>
+                        <InputLabel>الدور</InputLabel>
+                        <Select
+                          value={formData.role}
+                          onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                          label="الدور"
+                        >
+                          <MenuItem value="user">مستخدم</MenuItem>
+                          <MenuItem value="admin">مدير</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth
+                        label="العناوين"
+                        multiline
+                        rows={3}
+                        name="addresses"
+                        value={formData.addresses}
+                        onChange={(e) => setFormData({ ...formData, addresses: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                        helperText="اكتب كل عنوان في سطر منفصل أو افصل بينها بفاصلة"
+                      />
+                    </Grid>
+                    {dialogMode !== 'add' && (
+                      <Grid item xs={12}>
+                        <FormControl fullWidth disabled={dialogMode === 'view'}>
+                          <InputLabel>الحالة</InputLabel>
+                          <Select
+                            value={formData.status}
+                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                            label="الحالة"
+                          >
+                            <MenuItem value="active">نشط</MenuItem>
+                            <MenuItem value="blocked">محظور</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Grid>
+                    )}
+                    {dialogMode === 'view' && selectedUser && (
+                      <Grid item xs={12}>
+                        <Alert severity="info">
+                          المستخدم لديه {selectedUser.wishlist.length} منتج في قائمة الأمنيات
+                        </Alert>
+                      </Grid>
+                    )}
+                  </Grid>
+                </DialogContent>
+                <DialogActions sx={{ p: 3 }}>
+                  <Button onClick={handleCloseDialog}>
+                    {dialogMode === 'view' ? 'إغلاق' : 'إلغاء'}
+                  </Button>
+                  {dialogMode !== 'view' && (
+                    <Button 
+                      variant="contained" 
+                      onClick={handleSubmit}
+                      disabled={loading}
+                      startIcon={loading && <CircularProgress size={20} />}
+                    >
+                      {dialogMode === 'add' ? 'إضافة' : 'حفظ التغييرات'}
+                    </Button>
+                  )}
+                </DialogActions>
+              </Dialog>
+            </CardContent>
+          </Card>
+        </Grid>
       </motion.div>
     </Box>
   );

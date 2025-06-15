@@ -57,56 +57,7 @@ import {
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
-
-// Initial sample reviews
-const initialReviews = [
-  {
-    id: 1,
-    productId: 1,
-    productName: 'iPhone 15 Pro',
-    userId: 1,
-    userName: 'أحمد محمد',
-    userAvatar: 'https://via.placeholder.com/40x40?text=أ',
-    rating: 5,
-    title: 'منتج ممتاز جداً',
-    comment: 'جهاز رائع بمواصفات عالية وأداء سريع. الكاميرا مذهلة والبطارية تدوم طويلاً. أنصح بالشراء بقوة.',
-    images: ['https://via.placeholder.com/200x200?text=Review1'],
-    status: 'approved',
-    isVerified: true,
-    helpfulCount: 15,
-    notHelpfulCount: 2,
-    replies: [{
-      id: 1,
-      author: 'فريق الدعم',
-      message: 'شكراً لك على المراجعة الإيجابية!',
-      date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      isAdmin: true
-    }],
-    reportCount: 0,
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 2,
-    productId: 2,
-    productName: 'Samsung Galaxy S24',
-    userId: 2,
-    userName: 'فاطمة علي',
-    userAvatar: 'https://via.placeholder.com/40x40?text=ف',
-    rating: 4,
-    title: 'جيد لكن يحتاج تحسينات',
-    comment: 'الهاتف جيد بشكل عام لكن البطارية تنفد بسرعة مع الاستخدام المكثف.',
-    images: [],
-    status: 'pending',
-    isVerified: false,
-    helpfulCount: 8,
-    notHelpfulCount: 1,
-    replies: [],
-    reportCount: 0,
-    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    updatedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
+import { reviewsAPI } from '../services/api';
 
 const Reviews = () => {
   const theme = useTheme();
@@ -128,15 +79,31 @@ const Reviews = () => {
     loadReviews();
   }, []);
 
-  const loadReviews = () => {
+  const loadReviews = async () => {
     setLoading(true);
     try {
-      const savedReviews = localStorage.getItem('adminReviews');
-      if (savedReviews) {
-        setReviews(JSON.parse(savedReviews));
-      } else {
-        setReviews(initialReviews);
-        localStorage.setItem('adminReviews', JSON.stringify(initialReviews));
+      const response = await reviewsAPI.getAll();
+      if (response.data.status === 'success') {
+        setReviews(response.data.reviews.map(review => ({
+          id: review._id,
+          productId: review.product?._id || null,
+          productName: review.product?.name || 'Deleted Product',
+          userId: review.user?._id || null,
+          userName: review.user?.name || 'Deleted User',
+          userAvatar: review.user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.user?.name || 'U')}&background=random`,
+          rating: review.rating || 0,
+          title: review.comment?.split('\n')[0] || 'No Title',
+          comment: review.comment || '',
+          images: review.images || [],
+          status: review.status || 'pending',
+          isVerified: review.isVerified || false,
+          helpfulCount: review.helpfulCount || 0,
+          notHelpfulCount: review.notHelpfulCount || 0,
+          replies: review.replies || [],
+          reportCount: review.reportCount || 0,
+          createdAt: review.createdAt || new Date().toISOString(),
+          updatedAt: review.updatedAt || new Date().toISOString(),
+        })));
       }
     } catch (error) {
       console.error('Error loading reviews:', error);
@@ -146,13 +113,73 @@ const Reviews = () => {
     }
   };
 
-  const saveReviews = (updatedReviews) => {
+  const handleUpdateReviewStatus = async (reviewId, newStatus) => {
     try {
-      localStorage.setItem('adminReviews', JSON.stringify(updatedReviews));
-      setReviews(updatedReviews);
+      const response = await reviewsAPI.updateStatus(reviewId, newStatus);
+      if (response.data.status === 'success') {
+        setReviews(prevReviews =>
+          prevReviews.map(review =>
+            review.id === reviewId ? { ...review, status: newStatus } : review
+          )
+        );
+        toast.success('تم تحديث حالة المراجعة بنجاح');
+      }
     } catch (error) {
-      console.error('Error saving reviews:', error);
-      toast.error('فشل في حفظ البيانات');
+      console.error('Error updating review status:', error);
+      toast.error('فشل في تحديث حالة المراجعة');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm("هل أنت متأكد من حذف هذا التقييم؟")) return;
+
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error('يرجى تسجيل الدخول أولاً');
+            return;
+        }
+
+        const response = await reviewsAPI.delete(reviewId);
+        if (response.data.status === 'success') {
+            setReviews(prevReviews => prevReviews.filter(review => review.id !== reviewId));
+            toast.success(response.data.message || 'تم حذف المراجعة بنجاح');
+        } else {
+            throw new Error(response.data.message || 'فشل في حذف المراجعة');
+        }
+    } catch (error) {
+        console.error('Error deleting review:', error);
+        // Show more specific error messages based on the error type
+        if (error.response) {
+            // Server responded with an error
+            const errorMessage = error.response.data?.message || error.response.data?.error || 'فشل في حذف المراجعة';
+            toast.error(errorMessage);
+        } else if (error.request) {
+            // No response received
+            toast.error('لا يمكن الاتصال بالخادم. يرجى التحقق من اتصالك بالإنترنت');
+        } else {
+            // Other errors
+            toast.error(error.message || 'فشل في حذف المراجعة');
+        }
+    }
+  };
+
+  const handleAddReply = async (reviewId, replyText) => {
+    try {
+      const response = await reviewsAPI.addReply(reviewId, { reply: replyText });
+      if (response.data.status === 'success') {
+        setReviews(prevReviews =>
+          prevReviews.map(review =>
+            review.id === reviewId
+              ? { ...review, replies: [...review.replies, response.data.reply] }
+              : review
+          )
+        );
+        toast.success('تم إضافة الرد بنجاح');
+      }
+    } catch (error) {
+      console.error('Error adding reply:', error);
+      toast.error('فشل في إضافة الرد');
     }
   };
 
@@ -186,61 +213,6 @@ const Reviews = () => {
     setReplyText('');
   };
 
-  const handleUpdateReviewStatus = (reviewId, newStatus) => {
-    try {
-      const updatedReviews = reviews.map(review =>
-        review.id === reviewId 
-          ? { ...review, status: newStatus, updatedAt: new Date().toISOString() }
-          : review
-      );
-      saveReviews(updatedReviews);
-      toast.success(`تم تغيير حالة المراجعة بنجاح`);
-    } catch (error) {
-      toast.error('فشل في تحديث حالة المراجعة');
-    }
-  };
-
-  const handleDeleteReview = (reviewId) => {
-    if (window.confirm('هل أنت متأكد من حذف هذه المراجعة؟')) {
-      try {
-        const updatedReviews = reviews.filter(review => review.id !== reviewId);
-        saveReviews(updatedReviews);
-        toast.success('تم حذف المراجعة بنجاح');
-      } catch (error) {
-        toast.error('فشل في حذف المراجعة');
-      }
-    }
-  };
-
-  const handleAddReply = () => {
-    if (!replyText.trim()) {
-      toast.error('يرجى كتابة الرد');
-      return;
-    }
-
-    try {
-      const newReply = {
-        id: Date.now(),
-        author: 'الإدارة',
-        message: replyText.trim(),
-        date: new Date().toISOString(),
-        isAdmin: true
-      };
-
-      const updatedReviews = reviews.map(review =>
-        review.id === selectedReview.id
-          ? { ...review, replies: [...review.replies, newReply] }
-          : review
-      );
-
-      saveReviews(updatedReviews);
-      handleCloseDialog();
-      toast.success('تم إضافة الرد بنجاح');
-    } catch (error) {
-      toast.error('فشل في إضافة الرد');
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'success';
@@ -252,23 +224,28 @@ const Reviews = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'approved': return 'موافق عليها';
-      case 'pending': return 'في الانتظار';
-      case 'rejected': return 'مرفوضة';
+      case 'approved': return 'تمت الموافقة';
+      case 'pending': return 'قيد المراجعة';
+      case 'rejected': return 'مرفوض';
       default: return status;
     }
   };
 
   const getRatingColor = (rating) => {
-    if (rating >= 4) return 'success';
-    if (rating >= 3) return 'warning';
-    return 'error';
+    switch (rating) {
+      case 5: return '#2e7d32';
+      case 4: return '#388e3c';
+      case 3: return '#f57c00';
+      case 2: return '#d32f2f';
+      case 1: return '#c62828';
+      default: return '#757575';
+    }
   };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('ar-SA', {
       year: 'numeric',
-      month: 'short',
+      month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
@@ -820,7 +797,7 @@ const Reviews = () => {
           {dialogMode === 'reply' && (
             <Button
               variant="contained"
-              onClick={handleAddReply}
+              onClick={() => handleAddReply(selectedReview.id, replyText)}
               disabled={!replyText.trim()}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

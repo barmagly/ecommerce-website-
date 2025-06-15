@@ -10,48 +10,51 @@ const api = axios.create({
     },
 });
 
-// Add request interceptor to add auth token and handle content type
-api.interceptors.request.use((config) => {
-    console.log('Making request to:', config.url, {
-        method: config.method,
-        headers: config.headers,
-        data: config.data instanceof FormData ? '[FormData]' : config.data
-    });
-
-    const token = localStorage.getItem('adminToken');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-
-    // If the request data is FormData, remove the Content-Type header
-    // to let the browser set it with the boundary
-    if (config.data instanceof FormData) {
-        delete config.headers['Content-Type'];
-    }
-
-    return config;
+// Create user API instance
+const userApi = axios.create({
+    baseURL: API_BASE_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
 });
 
-// Add response interceptor to handle errors
+// Request interceptor for admin API
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        console.log('Making request to:', config.url, config);
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Request interceptor for user API
+userApi.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
+
+// Response interceptor for admin API
 api.interceptors.response.use(
     (response) => {
-        console.log('Response from:', response.config.url, {
-            status: response.status,
-            data: response.data
-        });
+        console.log('Response from:', response.config.url, response);
         return response;
     },
     (error) => {
-        console.error('API Error:', {
-            url: error.config?.url,
-            method: error.config?.method,
-            status: error.response?.status,
-            data: error.response?.data,
-            message: error.message
-        });
-
         if (error.response?.status === 401) {
-            // Handle unauthorized access
             localStorage.removeItem('adminToken');
             window.location.href = '/admin/login';
         }
@@ -59,24 +62,36 @@ api.interceptors.response.use(
     }
 );
 
-// Auth API
-export const authAPI = {
-    login: (credentials) => api.post('/api/auth/login', credentials),
-    logout: () => {
-        localStorage.removeItem('adminToken');
-        window.location.href = '/admin/login';
-    },
-    getProfile: () => api.get('/api/auth/admin/profile'),
-    updateProfile: (profileData) => api.put('/api/auth/admin/profile', profileData),
-    updatePassword: (passwordData) => api.put('/api/auth/admin/profile/password', passwordData),
+// Response interceptor for user API
+userApi.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Frontend API
+export const frontendAPI = {
+    getNewArrivals: () => api.get('/api/products/new-arrivals'),
+    getBestSellers: () => api.get('/api/products/best-sellers'),
+    getMostReviewed: () => api.get('/api/products/most-reviewed'),
+    getFlashSales: () => api.get('/api/products/flash-sales'),
+    // Wishlist endpoints
+    getWishlist: () => userApi.get('/api/auth/wishlist'),
+    addToWishlist: (productId) => userApi.post(`/api/auth/wishlist/${productId}`),
+    removeFromWishlist: (productId) => userApi.delete(`/api/auth/wishlist/${productId}`),
 };
 
 // Dashboard API
 export const dashboardAPI = {
     getOverview: () => api.get('/api/dashboard'),
     getStats: () => api.get('/api/dashboard'),
-    getRecentOrders: () => api.get('/api/dashboard/recent-orders'),
-    getTopProducts: () => api.get('/api/dashboard/top-products'),
+    getRecentOrders: () => api.get('/api/dashboard'),
+    getTopProducts: () => api.get('/api/dashboard'),
     getSalesData: () => api.get('/api/dashboard'),
     getCategoryData: () => api.get('/api/dashboard'),
 };
@@ -141,27 +156,6 @@ export const categoriesAPI = {
     delete: (id) => api.delete(`/api/categories/${id}`),
 };
 
-// Users API
-export const usersAPI = {
-    getAll: () => api.get('/api/dashboard/users'),
-    getOne: (id) => api.get(`/api/dashboard/users/${id}`),
-    create: (data) => {
-        // If data contains files, use FormData
-        if (data instanceof FormData) {
-            return api.post('/api/dashboard/users', data);
-        }
-        return api.post('/api/dashboard/users', data);
-    },
-    update: (id, data) => {
-        // If data contains files, use FormData
-        if (data instanceof FormData) {
-            return api.put(`/api/dashboard/users/${id}`, data);
-        }
-        return api.put(`/api/dashboard/users/${id}`, data);
-    },
-    delete: (id) => api.delete(`/api/dashboard/users/${id}`),
-};
-
 // Orders API
 export const ordersAPI = {
     getAll: () => api.get('/api/orders'),
@@ -193,51 +187,11 @@ export const couponsAPI = {
     validate: (code) => api.get(`/api/coupons/validate/${code}`),
 };
 
-// Profile API
-export const profileAPI = {
-    get: (id) => api.get(`/auth/profile/${id}`),
-    update: (id, data) => {
-        // Profile updates often include files, so use FormData
-        if (data instanceof FormData) {
-            return api.put(`/auth/profile/${id}`, data);
-        }
-        return api.put(`/auth/profile/${id}`, data);
-    },
-};
-
-// Reviews API
-export const reviewsAPI = {
-    getAll: () => api.get('/api/reviews'),
-    getOne: (id) => api.get(`/api/reviews/${id}`),
-    create: (data) => api.post('/api/reviews', data),
-    update: (id, data) => api.patch(`/api/reviews/${id}`, data),
-    delete: (id) => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            return Promise.reject(new Error('No authentication token found'));
-        }
-        return api.delete(`/api/reviews/${id}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-    },
-    addReply: (id, data) => api.post(`/api/reviews/${id}/replies`, data),
-    updateStatus: (id, status) => api.patch(`/api/reviews/${id}/status`, { status }),
-};
-
 // Carts API
 export const cartsAPI = {
     getAll: () => api.get('/api/cart/admin/all'),
     getOne: (id) => api.get(`/api/cart/${id}`),
     delete: (id) => api.delete(`/api/cart/${id}`),
-};
-
-// Settings API
-export const settingsAPI = {
-    getSettings: () => api.get('/api/settings'),
-    updateSettings: (settings) => api.put('/api/settings', settings),
-    resetSettings: () => api.post('/api/settings/reset')
 };
 
 export default api; 

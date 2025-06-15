@@ -8,23 +8,24 @@ export default function MainSlider() {
   const [current, setCurrent] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const dispatch = useDispatch();
-  const { products: slides, loading, error } = useSelector(state => state.home)
+  const { products: slides = [], loading, error } = useSelector(state => state.home);
+
   const prevSlide = () => {
-    if (!isTransitioning) {
+    if (!isTransitioning && slides.length > 0) {
       setIsTransitioning(true);
       setCurrent((current - 1 + slides.length) % slides.length);
     }
   };
 
   const nextSlide = () => {
-    if (!isTransitioning) {
+    if (!isTransitioning && slides.length > 0) {
       setIsTransitioning(true);
       setCurrent((current + 1) % slides.length);
     }
   };
 
   const goToSlide = (index) => {
-    if (!isTransitioning) {
+    if (!isTransitioning && slides.length > 0) {
       setIsTransitioning(true);
       setCurrent(index);
     }
@@ -36,37 +37,42 @@ export default function MainSlider() {
     }, 500);
     return () => clearTimeout(timer);
   }, [current]);
-  const slide = slides[current];
 
   useEffect(() => {
-    dispatch(getNewArrivalProductsThunk())
-  }, [dispatch])
+    dispatch(getNewArrivalProductsThunk());
+  }, [dispatch]);
 
   if (loading) {
     return (
-      <>
-        <div className="container py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
-          </div>
+      <div className="container py-5 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">جاري التحميل...</span>
         </div>
-      </>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <div className="container py-5">
-          <div className="alert alert-danger" role="alert">
-            {error}
-          </div>
+      <div className="container py-5">
+        <div className="alert alert-danger" role="alert">
+          {error}
         </div>
-      </>
+      </div>
     );
   }
 
+  if (!slides || slides.length === 0) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="alert alert-info" role="alert">
+          لا توجد منتجات جديدة متاحة حالياً
+        </div>
+      </div>
+    );
+  }
 
+  const slide = slides[current];
 
   return (
     <div className="main-slider-section">
@@ -82,11 +88,11 @@ export default function MainSlider() {
 
         <div className="slider-content">
           <div className="main-card-image">
-            <img src={slide?.imageCover} alt={slide?.name} />
+            <img src={slide?.imageCover} alt={slide?.name || 'منتج جديد'} />
           </div>
           <div className="main-card-text">
-            <h6 className="slide-title">{slide?.brand}</h6>
-            <h2 className="slide-subtitle">{slide?.name}</h2>
+            <h6 className="slide-title">{slide?.brand || 'العلامة التجارية'}</h6>
+            <h2 className="slide-subtitle">{slide?.name || 'اسم المنتج'}</h2>
             <Link
               to={`/product/${slide?._id}`}
               className={`shop-now-link bg-primary text-white`}
@@ -107,7 +113,7 @@ export default function MainSlider() {
       </div>
 
       <div className="slider-indicators">
-        {slides?.map((_, index) => (
+        {slides.map((_, index) => (
           <button
             key={index}
             className={`indicator-dot ${current === index ? 'active' : ''}`}

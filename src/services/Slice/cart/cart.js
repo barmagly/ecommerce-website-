@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_URL = process.env.REACT_APP_API_URL + "/api";
+const API_URL = "http://localhost:5000/api";
 export const getCartThunk = createAsyncThunk(
     "product/getCart",
     async (_, thunkAPI) => {
@@ -11,10 +11,9 @@ export const getCartThunk = createAsyncThunk(
                     Authorization: `Bearer ${token}`,
                 }
             });
-            console.log("data in slice", data);
-            return data[0] || [];
+            return data[0] || { cartItems: [], total: 0 };
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data || "error server");
+            return thunkAPI.rejectWithValue(error.response?.data || "error server");
         }
     }
 );
@@ -66,7 +65,10 @@ function calculateTotal(cartItems) {
 const cartSlice = createSlice({
     name: "product",
     initialState: {
-        products: [],
+        products: {
+            cartItems: [],
+            total: 0
+        },
         loading: false,
         error: null,
     },
@@ -76,57 +78,62 @@ const cartSlice = createSlice({
         },
         decreaseQ(state, action) {
             const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
-            console.log("item in decreaseQ", item);
-            item.quantity -= 1
-            authFetch(`${API_URL}/cart/cartOP`, {
-                method: "PATCH",
-                body: JSON.stringify({
-                    prdID: item.prdID?._id,
-                    variantId: item.variantId?._id,
-                    quantity: -1,
-                }),
-            });
-            state.products.total = calculateTotal(state.products.cartItems);
+            if (item) {
+                item.quantity -= 1
+                authFetch(`${API_URL}/cart/cartOP`, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        prdID: item.prdID?._id,
+                        variantId: item.variantId?._id,
+                        quantity: -1,
+                    }),
+                });
+                state.products.total = calculateTotal(state.products.cartItems);
+            }
         },
         increaseQ(state, action) {
             const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
-            item.quantity += 1
-            authFetch(`${API_URL}/cart/cartOP`, {
-                method: "PATCH",
-                body: JSON.stringify({
-                    prdID: item.prdID?._id,
-                    variantId: item.variantId?._id,
-                    quantity: 1,
-                }),
-            });
-            state.products.total = calculateTotal(state.products.cartItems);
+            if (item) {
+                item.quantity += 1
+                authFetch(`${API_URL}/cart/cartOP`, {
+                    method: "PATCH",
+                    body: JSON.stringify({
+                        prdID: item.prdID?._id,
+                        variantId: item.variantId?._id,
+                        quantity: 1,
+                    }),
+                });
+                state.products.total = calculateTotal(state.products.cartItems);
+            }
         },
         deleteItem(state, action) {
             if (state.products.cartItems.length > 1) {
                 const item = state.products.cartItems.find(item => item.variantId?._id === action.payload.variantId && item.prdID?._id === action.payload.prdID)
-                authFetch(
-                    `${API_URL}/cart/cartOP`,
-                    {
-                        method: "PATCH",
-                        body: JSON.stringify({ prdID: item.prdID?._id, variantId: item.variantId?._id, quantity: 0 }),
-                    }
-                );
-                state.products.cartItems = state.products.cartItems.filter(item => item.variantId?._id !== action.payload.variantId || item.prdID?._id !== action.payload.prdID)
-                state.products.total = calculateTotal(state.products.cartItems);
+                if (item) {
+                    authFetch(
+                        `${API_URL}/cart/cartOP`,
+                        {
+                            method: "PATCH",
+                            body: JSON.stringify({ prdID: item.prdID?._id, variantId: item.variantId?._id, quantity: 0 }),
+                        }
+                    );
+                    state.products.cartItems = state.products.cartItems.filter(item => item.variantId?._id !== action.payload.variantId || item.prdID?._id !== action.payload.prdID)
+                    state.products.total = calculateTotal(state.products.cartItems);
+                }
             }
             else {
                 authFetch(`${API_URL}/cart/${state.products._id}`, {
                     method: "DELETE",
                 });
-                state.products = [];
+                state.products = { cartItems: [], total: 0 };
             }
         },
         deleteAllCart(state, action) {
             authFetch(`${API_URL}/cart/${state.products._id}`, {
                 method: "DELETE",
             });
-            state.items = [];
-        },
+            state.products = { cartItems: [], total: 0 };
+        }
     },
     extraReducers: (builder) => {
         builder
@@ -148,17 +155,14 @@ const cartSlice = createSlice({
                 state.loading = true;
                 state.error = null;
             })
-            // .addCase(addToCartThunk.fulfilled, (state, action) => {
-            //     state.loading = false;
-            //     console.log(state.products);
-
-            //     const existingProduct = state.products.find(p => p.product._id === action.payload.product._id);
-            //     if (existingProduct) {
-            //         existingProduct.quantity += 1;
-            //     } else {
-            //         state.products.push({ product: action.payload.product, quantity: 1 });
-            //     }
-            // })
+            .addCase(addToCartThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                // Refresh cart data after adding item
+                if (action.payload.status === 'success') {
+                    // The cart data will be updated when getCartThunk is called
+                    return;
+                }
+            })
             .addCase(addToCartThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || "Failed to add product to cart";

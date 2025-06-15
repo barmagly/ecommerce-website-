@@ -17,8 +17,7 @@ const InvoicePrint = React.forwardRef(({ order }, ref) => {
   if (!order) return null;
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ar-EG', {
-      calendar: 'gregory',
+    return new Date(dateString).toLocaleDateString('en-GB', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -26,8 +25,7 @@ const InvoicePrint = React.forwardRef(({ order }, ref) => {
   };
 
   const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('ar-EG', {
-      calendar: 'gregory',
+    return new Date(dateString).toLocaleTimeString('en-GB', {
       hour: '2-digit',
       minute: '2-digit',
     });

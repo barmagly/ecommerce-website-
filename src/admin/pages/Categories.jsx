@@ -292,7 +292,7 @@ const Categories = () => {
         <Card sx={{ mb: 4, borderRadius: 3 }}>
           <CardContent>
             <Grid container spacing={3} alignItems="center">
-              <Grid xs={12} md={8}>
+              <Grid grid={{ xs: 12, md: 8 }}>
                 <TextField
                   fullWidth
                   placeholder="البحث في الفئات..."
@@ -308,7 +308,7 @@ const Categories = () => {
                 />
               </Grid>
 
-              <Grid xs={12} md={2}>
+              <Grid grid={{ xs: 12, md: 2 }}>
                 <Button
                   variant="outlined"
                   startIcon={<RefreshIcon />}
@@ -319,7 +319,7 @@ const Categories = () => {
                 </Button>
               </Grid>
 
-              <Grid xs={12} md={2}>
+              <Grid grid={{ xs: 12, md: 2 }}>
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
@@ -465,7 +465,7 @@ const Categories = () => {
 
         <DialogContent sx={{ p: 3, mt: 2 }}>
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid grid={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="اسم الفئة"
@@ -482,7 +482,7 @@ const Categories = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid grid={{ xs: 12 }}>
               <TextField
                 fullWidth
                 label="رابط الفئة"
@@ -495,7 +495,7 @@ const Categories = () => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid grid={{ xs: 12 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Button
                   variant="outlined"

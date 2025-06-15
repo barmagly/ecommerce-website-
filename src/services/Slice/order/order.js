@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
-const API_KEY = `${process.env.REACT_APP_API_URL}/api/orders`;
+const API_URL = "http://localhost:5000/api/orders";
 
 export const getOrdersThunk = createAsyncThunk(
     "order/getOrders",
     async (_, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.get(API_KEY, {
+            const { data } = await axios.get(API_URL, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -27,7 +27,7 @@ export const createOrderThunk = createAsyncThunk(
     async (formData, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            const { data } = await axios.post(`${API_KEY}/upload`, formData, {
+            const { data } = await axios.post(`${API_URL}/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",

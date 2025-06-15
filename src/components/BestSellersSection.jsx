@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './FlashSalesShowcase.css';
-import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { addToCartThunk } from '../services/Slice/cart/cart';
-const API_URL = process.env.REACT_APP_API_URL + "/api/products/best-sellers";
+import { frontendAPI } from '../services/api';
 
 export default function BestSellersSection() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [products, setProducts] = useState([])
+  const [products, setProducts] = useState([]);
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
 
@@ -21,8 +20,8 @@ export default function BestSellersSection() {
     setError(null);
     async function fetchPro() {
       try {
-        const response = await axios.get(API_URL);
-        setProducts(response.data.data)
+        const response = await frontendAPI.getBestSellers();
+        setProducts(response.data.data);
       } catch (err) {
         setError(err.response?.data?.message || "حدث خطأ اثناء جلب المنتجات");
         console.error("Get error:", err);
@@ -30,8 +29,8 @@ export default function BestSellersSection() {
         setIsLoading(false);
       }
     }
-    fetchPro()
-  }, [])
+    fetchPro();
+  }, []);
   
   const handleAddToCart = (productId) => {
     if (!isAuthenticated) {
@@ -88,8 +87,8 @@ export default function BestSellersSection() {
         <button className="btn btn-danger px-5 py-3 fw-bold mt-4" onClick={() => navigate('/shop')}>عرض الكل</button>
       </div>
       <div className="row g-4 ms-lg-5 mb-5">
-        {products?.map((product, idx) => (
-          <div key={product?.sku} className="col-12 col-md-3" data-aos="zoom-in">
+        {products?.map((product) => (
+          <div key={product?._id || product?.id} className="col-12 col-md-3" data-aos="zoom-in">
             <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
               <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                 <img src={product?.image} alt={product?.name} className="mb-3" style={{ width: '100%', height: '250px', objectFit: 'cover', borderRadius: '12px', cursor: 'pointer' }} />

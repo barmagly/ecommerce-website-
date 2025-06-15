@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCartThunk } from "../services/Slice/cart/cart";
-import { addUserWishlistThunk } from "../services/Slice/wishlist/wishlist";
+import { addToCartThunk, getCartThunk } from "../services/Slice/cart/cart";
+import { addUserWishlistThunk, removeWishlistThunk } from "../services/Slice/wishlist/wishlist";
 import { toast } from 'react-toastify';
 import { FaStar } from "react-icons/fa";
+import "./ShopProducts.css";
 
-const API_URL = process.env.REACT_APP_API_URL + "/api/products";
+const API_URL = "http://localhost:5000";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 export default function ShopProducts({ products = [] }) {
@@ -14,24 +15,73 @@ export default function ShopProducts({ products = [] }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const wishlist = useSelector(state => state.userWishlist.wishlist);
+  const { token } = useSelector(state => state.auth);
+  const isAuthenticated = !!token;
 
   const handleAddToCart = async (e, productId) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.info("يرجى تسجيل الدخول لإضافة المنتج إلى السلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
     try {
       await dispatch(addToCartThunk({ productId, quantity: 1 }));
-      toast.success("تمت إضافة المنتج إلى السلة");
+      dispatch(getCartThunk());
+      toast.success("تمت إضافة المنتج إلى السلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 2000
+      });
     } catch (error) {
-      toast.error("حدث خطأ أثناء إضافة المنتج إلى السلة");
+      toast.error(error.message || "حدث خطأ أثناء إضافة المنتج إلى السلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
     }
   };
 
   const handleWishlistClick = async (e, productId) => {
     e.stopPropagation();
+    const userToken = localStorage.getItem('token');
+    if (!userToken) {
+      toast.info("يرجى تسجيل الدخول لإضافة المنتج إلى المفضلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      navigate('/login');
+      return;
+    }
+
+    const isInWishlist = wishlist?.some(w => w._id === productId);
     try {
-      await dispatch(addUserWishlistThunk(productId));
-      toast.success("تمت إضافة المنتج إلى المفضلة");
+      if (isInWishlist) {
+        await dispatch(removeWishlistThunk(productId));
+        toast.success("تم حذف المنتج من المفضلة", {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      } else {
+        await dispatch(addUserWishlistThunk(productId));
+        toast.success("تمت إضافة المنتج إلى المفضلة", {
+          position: "top-center",
+          rtl: true,
+          autoClose: 2000
+        });
+      }
     } catch (error) {
-      toast.error("حدث خطأ أثناء إضافة المنتج إلى المفضلة");
+      toast.error(error.message || "حدث خطأ أثناء تحديث المفضلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
     }
   };
 
@@ -147,37 +197,6 @@ export default function ShopProducts({ products = [] }) {
           </div>
         </div>
       ))}
-      <style jsx>{`
-        .product-card-pro {
-          box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-          border-radius: 18px;
-          border: 1px solid #eee;
-          background: #fff;
-          min-height: 420px;
-          position: relative;
-        }
-        .product-card-pro.active, .product-card-pro:active, .product-card-pro:focus {
-          box-shadow: 0 8px 32px rgba(219,68,68,0.18) !important;
-          border: 1.5px solid #DB4444 !important;
-        }
-        .product-card-pro .product-img-main {
-          transition: transform 0.3s;
-        }
-        .product-card-pro.active .product-img-main,
-        .product-card-pro:hover .product-img-main {
-          transform: scale(1.08) rotate(-2deg);
-        }
-        .product-actions {
-          opacity: 0;
-          pointer-events: none;
-          transition: opacity 0.2s;
-        }
-        .product-card-pro.active .product-actions,
-        .product-card-pro:hover .product-actions {
-          opacity: 1;
-          pointer-events: auto;
-        }
-      `}</style>
     </div>
   );
 } 

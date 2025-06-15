@@ -122,13 +122,7 @@ const menuItems = [
     color: '#7b1fa2',
     gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
   },
-  {
-    text: 'الإعدادات',
-    icon: <SettingsIcon />,
-    path: '/admin/settings',
-    color: '#5d4037',
-    gradient: 'linear-gradient(135deg, #5d4037 0%, #4e342e 100%)'
-  },
+
 ];
 
 // Animated Menu Item Component
@@ -198,6 +192,7 @@ const AnimatedMenuItem = ({ item, isActive, onClick, index }) => {
                 fontWeight: isActive ? 700 : 500,
                 fontSize: '1rem',
                 color: isActive ? 'white' : 'text.primary',
+                textAlign: 'center',
               },
             }}
           />
@@ -487,9 +482,7 @@ function AdminLayout({ children }) {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
           }} />
           <Box>
-            <Typography variant="subtitle2" fontWeight="bold">
-              {user?.name || 'أحمد محمد'}
-            </Typography>
+           
             <Typography variant="caption" color="text.secondary">
               {user?.role || 'مدير النظام'}
             </Typography>
@@ -497,13 +490,15 @@ function AdminLayout({ children }) {
         </MenuItem>
         <Divider />
         <MenuItem
-          onClick={() => window.location.href = '/admin/settings'}
-          sx={{ borderRadius: 2, mx: 1, my: 0.5 }}>
-          <SettingsIcon sx={{ mr: 2, color: 'primary.main' }} />
-          الإعدادات
+          onClick={() => navigate('/admin/profile')}
+          sx={{ borderRadius: 2, mx: 1, my: 0.5 }}
+        >
+          <AccountCircleIcon sx={{ mr: 2, color: 'primary.main' }} />
+          الملف الشخصي
         </MenuItem>
+      
         <MenuItem
-          onClick={() => window.open('/settings', '_blank')}
+          onClick={() => window.open('/', '_blank')}
           sx={{ borderRadius: 2, mx: 1, my: 0.5 }}
         >
           <HomeIcon sx={{ mr: 2, color: 'success.main' }} />

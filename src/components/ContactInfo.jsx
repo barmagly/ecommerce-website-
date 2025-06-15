@@ -1,33 +1,89 @@
 import React from "react";
-import { TileLayer } from "react-leaflet";
+import { FaPhone, FaEnvelope, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
 
 export default function ContactInfo() {
   return (
-    <div className="bg-white p-4 rounded shadow-sm">
-      <div className="mb-5" data-aos="fade-right">
-        <div className="d-flex align-items-center mb-4">
-          <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/8fw22gxw_expires_30_days.png" alt="اتصل بنا" className="me-3" style={{width: '40px', height: '40px'}} />
+    <div className="contact-info bg-white p-5 rounded-3 shadow-sm h-100">
+      <h3 className="mb-4 fw-bold">معلومات التواصل</h3>
+      
+      <div className="contact-item mb-4" data-aos="fade-right">
+        <div className="d-flex align-items-center mb-3">
+          <div className="icon-wrapper me-3">
+            <FaPhone className="text-primary" size={24} />
+          </div>
           <h5 className="mb-0 fw-bold">اتصل بنا</h5>
         </div>
         <div className="ps-5">
-          <p className="mb-2">نحن متاحون على مدار الساعة طوال أيام الأسبوع.</p>
-          <p className="mb-0">هاتف: +20 123 456 789</p>
+          <p className="mb-2 text-muted">نحن متاحون على مدار الساعة طوال أيام الأسبوع</p>
+          <p className="mb-0 fw-bold">+20 123 456 789</p>
         </div>
       </div>
 
-      <hr className="my-4" />
-
-      <div data-aos="fade-left">
-        <div className="d-flex align-items-center mb-4">
-          <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/q3kcus2e_expires_30_days.png" alt="اكتب لنا" className="me-3" style={{width: '40px', height: '40px'}} />
+      <div className="contact-item mb-4" data-aos="fade-left">
+        <div className="d-flex align-items-center mb-3">
+          <div className="icon-wrapper me-3">
+            <FaEnvelope className="text-primary" size={24} />
+          </div>
           <h5 className="mb-0 fw-bold">اكتب لنا</h5>
         </div>
         <div className="ps-5">
-          <p className="mb-2">املأ النموذج وسنرد عليك خلال 24 ساعة.</p>
-          <p className="mb-1">البريد الإلكتروني: info@example.com</p>
-          <p className="mb-0">الدعم الفني: support@example.com</p>
+          <p className="mb-2 text-muted">سنرد عليك خلال 24 ساعة</p>
+          <p className="mb-1 fw-bold">info@example.com</p>
+          <p className="mb-0 fw-bold">support@example.com</p>
         </div>
       </div>
+
+      <div className="contact-item mb-4" data-aos="fade-right">
+        <div className="d-flex align-items-center mb-3">
+          <div className="icon-wrapper me-3">
+            <FaClock className="text-primary" size={24} />
+          </div>
+          <h5 className="mb-0 fw-bold">ساعات العمل</h5>
+        </div>
+        <div className="ps-5">
+          <p className="mb-1 fw-bold">السبت - الخميس: 9 صباحاً - 5 مساءً</p>
+          <p className="mb-0 fw-bold">الجمعة: مغلق</p>
+        </div>
+      </div>
+
+      <div className="contact-item" data-aos="fade-left">
+        <div className="d-flex align-items-center mb-3">
+          <div className="icon-wrapper me-3">
+            <FaMapMarkerAlt className="text-primary" size={24} />
+          </div>
+          <h5 className="mb-0 fw-bold">موقعنا</h5>
+        </div>
+        <div className="ps-5">
+          <p className="mb-0 fw-bold">123 شارع الرئيسي، القاهرة، مصر</p>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .contact-info {
+          transition: all 0.3s ease;
+        }
+        .contact-info:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
+        }
+        .contact-item {
+          transition: all 0.3s ease;
+          padding: 1rem;
+          border-radius: 0.5rem;
+        }
+        .contact-item:hover {
+          background-color: #f8f9fa;
+        }
+        .icon-wrapper {
+          width: 48px;
+          height: 48px;
+          background-color: rgba(13,110,253,0.1);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      `}</style>
     </div>
   );
 } 
