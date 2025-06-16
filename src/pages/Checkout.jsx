@@ -95,8 +95,9 @@ export default function Checkout() {
   };
 
   const handleChange = e => {
+    const { name, value } = e.target;
 
-    setForm(prev => ({ ...prev, coupon: e.target.value }));
+    setForm(prev => ({ ...prev, [name]: value }));
 
     // // مسح رسالة الخطأ عند التعديل
     // if (errors[name]) {
