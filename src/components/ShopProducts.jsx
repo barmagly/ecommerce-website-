@@ -7,7 +7,6 @@ import { toast } from 'react-toastify';
 import { FaStar } from "react-icons/fa";
 import "./ShopProducts.css";
 
-const API_URL = "http://localhost:5000";
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 export default function ShopProducts({ products = [] }) {
@@ -164,7 +163,7 @@ export default function ShopProducts({ products = [] }) {
             <div className="flex-grow-1 d-flex flex-column align-items-center">
               <span className="text-muted small">{item.brand || 'بدون ماركة'}</span>
               <h6 className="fw-bold text-center mb-1" style={{ minHeight: 32 }}>{item.name}</h6>
-              <div className="mb-1">
+              <div className="mb-1 d-flex align-items-center justify-content-between g-2">
                 <StarRating rating={item.ratings?.average || 0} />
                 {item.ratings?.count > 0 && (
                   <small className="text-muted ms-1">({item.ratings.count})</small>

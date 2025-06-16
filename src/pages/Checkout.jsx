@@ -95,13 +95,13 @@ export default function Checkout() {
   };
 
   const handleChange = e => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
 
-    // مسح رسالة الخطأ عند التعديل
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    setForm(prev => ({ ...prev, coupon: e.target.value }));
+
+    // // مسح رسالة الخطأ عند التعديل
+    // if (errors[name]) {
+    //   setErrors(prev => ({ ...prev, [name]: '' }));
+    // }
   };
 
   const handleCardChange = e => {
@@ -139,7 +139,7 @@ export default function Checkout() {
   };
 
   const handleApplyCoupon = async () => {
-    if (!form.coupon.trim()) {
+    if (!form.coupon?.trim()) {
       toast.error('الرجاء إدخال كود الكوبون');
       return;
     }

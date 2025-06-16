@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/reviews";
+const API_URL = process.env.REACT_APP_API_URL +'/api/reviews';
 
 // Get product reviews
 export const getProductReviewsThunk = createAsyncThunk(
@@ -24,8 +24,20 @@ export const createReviewThunk = createAsyncThunk(
     async ({ productId, rating, comment }, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
-            if (!token) {
-                throw new Error("Authentication required. Please log in to submit a review.");
+            if (!token) throw new Error("No token found");
+
+            // First check if user has purchased the product
+            const { data: purchaseCheck } = await axios.get(
+                `${API_URL}/check-purchase/${productId}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            
+            if (!purchaseCheck.hasPurchased) {
+                throw new Error("يمكنك فقط اضافة تقييم للمنتجات التي اشتريتها");
             }
 
             const { data } = await axios.post(

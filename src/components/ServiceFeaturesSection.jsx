@@ -5,7 +5,7 @@ const features = [
   {
     icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/bqlwzzr2_expires_30_days.png',
     title: 'توصيل سريع ومجاني',
-    desc: 'توصيل مجاني لجميع الطلبات فوق ١٤٠ ر.س'
+    desc: 'توصيل مجاني لجميع الطلبات فوق ١٤٠ ج.م'
   },
   {
     icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/swx9cswz_expires_30_days.png',

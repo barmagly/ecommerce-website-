@@ -107,7 +107,7 @@ const Products = () => {
   const [selectedProductForVariants, setSelectedProductForVariants] = useState(null);
   const [variantFormData, setVariantFormData] = useState({
     sku: '',
-    attributes: new Map(),
+    // attributes: new Map(),
     price: '',
     quantity: 0,
     images: [],
@@ -224,7 +224,7 @@ const Products = () => {
         })) || [],
         variants: product.productVariants?.map(variant => ({
           sku: variant.sku,
-          attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
+          // attributes: variant.attributes ? new Map(Object.entries(variant.attributes)) : new Map(),
           price: variant.price?.toString(),
           quantity: variant.quantity?.toString(),
           images: variant.images?.map(img => img.url || img) || []
@@ -357,7 +357,7 @@ const Products = () => {
       if (formData.hasVariants && generatedVariants.length > 0) {
         const variantsData = generatedVariants.map(variant => ({
           sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
-          attributes: Object.fromEntries(variant.attributes), // Convert Map to object
+          // attributes: Object.fromEntries(variant.attributes), // Convert Map to object
           price: parseFloat(variant.price) || 0,
           quantity: parseInt(variant.quantity) || 0,
           sold: parseInt(variant.sold) || 0,
@@ -445,9 +445,9 @@ const Products = () => {
             formDataToSend.append(`variants[${index}][inStock]`, variant.quantity > 0);
 
             // Handle variant attributes
-            Object.entries(Object.fromEntries(variant.attributes)).forEach(([key, value]) => {
-              formDataToSend.append(`variants[${index}][attributes][${key}]`, value);
-            });
+            // Object.entries(Object.fromEntries(variant.attributes)).forEach(([key, value]) => {
+            //   formDataToSend.append(`variants[${index}][attributes][${key}]`, value);
+            // });
 
             // Handle variant images
             variant.images.forEach((img, imgIndex) => {
@@ -534,7 +534,7 @@ const Products = () => {
         if (formData.hasVariants && generatedVariants.length > 0) {
           const variantsData = generatedVariants.map(variant => ({
             sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
-            attributes: Object.fromEntries(variant.attributes), // Convert Map to object
+            // attributes: Object.fromEntries(variant.attributes), // Convert Map to object
             price: parseFloat(variant.price) || 0,
             quantity: parseInt(variant.quantity) || 0,
             sold: parseInt(variant.sold) || 0,
@@ -932,10 +932,10 @@ const Products = () => {
         toast.error('الكمية لا يمكن أن تكون سالبة');
         return;
       }
-      if (variantFormData.attributes.size === 0) {
-        toast.error('يجب تحديد خصائص المتغير');
-        return;
-      }
+      // if (variantFormData.attributes.size === 0) {
+      //   toast.error('يجب تحديد خصائص المتغير');
+      //   return;
+      // }
 
       const variantPayload = {
         sku: variantFormData.sku,

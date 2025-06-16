@@ -51,21 +51,29 @@ export default function Cart() {
 
   if (loading) {
     return (
-      <div className="text-center py-5">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">جاري التحميل...</span>
+      <>
+        <Header />
+        <div className="text-center py-5">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">جاري التحميل...</span>
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
+      <>
+        <Header />
+        <div className="text-center py-5">
+          <div className="alert alert-danger" role="alert">
+            {error}
+          </div>
         </div>
-      </div>
+        <Footer />
+      </>
     );
   }
 
@@ -113,12 +121,13 @@ export default function Cart() {
                     <div className="card-body">
                       <h5 className="card-title">{item.prdID?.name}</h5>
                       <p className="card-text">
-                        السعر: {item.prdID?.price} ر.س
+                        السعر: {item.prdID?.price} ج.م
                       </p>
                       <div className="d-flex align-items-center">
                         <button
                           className="btn btn-outline-secondary btn-sm"
                           onClick={() => decreaseQuantity(item.variantId?._id, item.prdID?._id)}
+                          disabled={item.quantity <= 1}
                         >
                           -
                         </button>
@@ -126,11 +135,12 @@ export default function Cart() {
                         <button
                           className="btn btn-outline-secondary btn-sm"
                           onClick={() => increaseQuantity(item.variantId?._id, item.prdID?._id)}
+                          disabled={item.quantity >= item.prdID?.stock}
                         >
                           +
                         </button>
                         <button
-                          className="btn btn-danger btn-sm ms-3"
+                          className="btn btn-danger btn-sm me-3"
                           onClick={() => handleRemove(item.variantId?._id, item.prdID?._id)}
                         >
                           حذف
@@ -148,7 +158,7 @@ export default function Cart() {
                 <h5 className="card-title">ملخص الطلب</h5>
                 <div className="d-flex justify-content-between mb-3">
                   <span>المجموع:</span>
-                  <span>{products.total} ر.س</span>
+                  <span>{products.total} ج.م</span>
                 </div>
                 <button
                   className="btn btn-primary w-100"

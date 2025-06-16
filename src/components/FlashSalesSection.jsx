@@ -177,7 +177,7 @@ export default function FlashSalesSection() {
               </Link>
               <div className="d-flex align-items-center gap-3 mt-2">
                 <span className="text-danger fw-bold">{product.price} ج.م</span>
-                {/* <span className="fw-bold text-decoration-line-through">{product.oldPrice} ر.س</span> */}
+                {/* <span className="fw-bold text-decoration-line-through">{product.oldPrice} ج.م</span> */}
               </div>
               <div className="d-flex align-items-center gap-2 mt-2">
                 <span>{'⭐'.repeat(product?.ratings?.average)}</span>

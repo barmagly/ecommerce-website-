@@ -166,11 +166,11 @@ export default function Header() {
                               height: '100%',
                               objectFit: 'cover'
                             }}
-                            onError={(e) => {
-                              console.error("Error loading profile image");
-                              e.target.onerror = null;
-                              e.target.src = "/images/default-avatar.png";
-                            }}
+                            // onError={(e) => {
+                            //   console.error("Error loading profile image");
+                            //   e.target.onerror = null;
+                            //   e.target.src = "/images/default-avatar.png";
+                            // }}
                           />
                         ) : (
                           <i className="fas fa-user"></i>
@@ -238,11 +238,11 @@ export default function Header() {
                           height: '50px',
                           objectFit: 'cover'
                         }}
-                        onError={(e) => {
-                          console.error("Error loading profile image");
-                          e.target.onerror = null;
-                          e.target.src = "/images/default-avatar.png";
-                        }}
+                        // onError={(e) => {
+                        //   console.error("Error loading profile image");
+                        //   e.target.onerror = null;
+                        //   e.target.src = "/images/default-avatar.png";
+                        // }}
                       />
                     ) : (
                       <div className="btn-icon">

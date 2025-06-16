@@ -242,7 +242,7 @@ const Variants = () => {
     });
   };
 
-  const formatCurrency = (amount) => { return `${amount.toLocaleString()} ر.س`; };
+  const formatCurrency = (amount) => { return `${amount.toLocaleString()} ج.م`; };
 
   if (loading) {
     return (

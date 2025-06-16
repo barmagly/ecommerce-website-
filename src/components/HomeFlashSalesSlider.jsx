@@ -154,8 +154,8 @@ export default function HomeFlashSalesSlider() {
               <img src={product.image} alt={product.name} style={{ width: '100%', height: 200, objectFit: 'contain', marginBottom: 12, borderRadius: 8 }} />
               <div className="fw-bold mb-2" style={{ fontSize: 16 }}>{product.name}</div>
               <div className="mb-2">
-                <span style={{ color: '#E94560', fontWeight: 'bold', fontSize: 18, marginLeft: 8 }}>{product.price} ر.س</span>
-                <span style={{ textDecoration: 'line-through', color: '#888', fontSize: 16 }}>{product.oldPrice} ر.س</span>
+                <span style={{ color: '#E94560', fontWeight: 'bold', fontSize: 18, marginLeft: 8 }}>{product.price} ج.م</span>
+                <span style={{ textDecoration: 'line-through', color: '#888', fontSize: 16 }}>{product.oldPrice} ج.م</span>
               </div>
               <div className="d-flex align-items-center gap-2 mb-2">
                 <span>{'⭐'.repeat(Math.floor(product.rating))}{product.rating % 1 ? '⭐️' : ''}</span>

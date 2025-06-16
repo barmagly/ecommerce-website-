@@ -58,8 +58,8 @@ export default function FlashSalesShowcase() {
           <div className="mt-2">
             <span className="fw-bold">ذراع تحكم ألعاب HAVIT HV-G92</span>
             <div className="d-flex align-items-center gap-3 mt-2">
-              <span className="text-danger fw-bold">١٢٠ ر.س</span>
-              <span className="fw-bold">١٦٠ ر.س</span>
+              <span className="text-danger fw-bold">١٢٠ ج.م</span>
+              <span className="fw-bold">١٦٠ ج.م</span>
             </div>
             <div className="d-flex align-items-center gap-2 mt-2">
               <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/5bb131cw_expires_30_days.png" className="flashsales-rating" alt="rating" />
@@ -80,8 +80,8 @@ export default function FlashSalesShowcase() {
           <div className="mt-2">
             <span className="fw-bold">لوحة مفاتيح AK-900 سلكية</span>
             <div className="d-flex align-items-center gap-3 mt-2">
-              <span className="text-danger fw-bold">٩٦٠ ر.س</span>
-              <span className="fw-bold">١١٦٠ ر.س</span>
+              <span className="text-danger fw-bold">٩٦٠ ج.م</span>
+              <span className="fw-bold">١١٦٠ ج.م</span>
             </div>
             <div className="d-flex align-items-center gap-2 mt-2">
               <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/agxt7a5e_expires_30_days.png" className="flashsales-rating" alt="rating" />
@@ -102,8 +102,8 @@ export default function FlashSalesShowcase() {
           <div className="mt-2">
             <span className="fw-bold">شاشة ألعاب IPS LCD</span>
             <div className="d-flex align-items-center gap-3 mt-2">
-              <span className="text-danger fw-bold">٣٧٠ ر.س</span>
-              <span className="fw-bold">٤٠٠ ر.س</span>
+              <span className="text-danger fw-bold">٣٧٠ ج.م</span>
+              <span className="fw-bold">٤٠٠ ج.م</span>
             </div>
             <div className="d-flex align-items-center gap-2 mt-2">
               <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/gf1axtvb_expires_30_days.png" className="flashsales-rating" alt="rating" />
@@ -124,8 +124,8 @@ export default function FlashSalesShowcase() {
           <div className="mt-2">
             <span className="fw-bold">كرسي مريح S-Series</span>
             <div className="d-flex align-items-center gap-3 mt-2">
-              <span className="text-danger fw-bold">٣٧٥ ر.س</span>
-              <span className="fw-bold">٤٠٠ ر.س</span>
+              <span className="text-danger fw-bold">٣٧٥ ج.م</span>
+              <span className="fw-bold">٤٠٠ ج.م</span>
             </div>
             <div className="d-flex align-items-center gap-2 mt-2">
               <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/vd722l4x_expires_30_days.png" className="flashsales-rating" alt="rating" />

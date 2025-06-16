@@ -135,7 +135,7 @@ const Carts = () => {
   };
 
   const formatCurrency = (amount) => {
-    return `${amount.toLocaleString('ar-SA')} ر.س`;
+    return `${amount.toLocaleString('ar-SA')} ج.م`;
   };
 
   const getTimeAgo = (dateString) => {

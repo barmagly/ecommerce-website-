@@ -9,7 +9,7 @@ export default function OrderConfirmation() {
   useEffect(() => {
     // تحقق من وجود طلب مؤكد
     if (!localStorage.getItem("orderConfirmed")) {
-      navigate("/");
+      navigate("/orders");
       return;
     }
     setTimeout(() => setConfirmed(true), 2000);

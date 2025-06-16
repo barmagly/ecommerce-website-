@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL 
 
 // Create axios instance with default config
 const api = axios.create({
@@ -102,22 +102,22 @@ export const productsAPI = {
     delete: (id) => api.delete(`/api/products/${id}`),
 
     // Product Variants API
-    getVariants: (productId) => api.get(`/products/${productId}/variants`),
+    getVariants: (productId) => api.get(`/api/products/${productId}/variants`),
     createVariant: (productId, data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
-            return api.post(`/products/${productId}/variants`, data);
+            return api.post(`/api/products/${productId}/variants`, data);
         }
-        return api.post(`/products/${productId}/variants`, data);
+        return api.post(`/api/products/${productId}/variants`, data);
     },
     updateVariant: (productId, variantId, data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
-            return api.patch(`/products/${productId}/variants/${variantId}`, data);
+            return api.patch(`/api/products/${productId}/variants/${variantId}`, data);
         }
-        return api.patch(`/products/${productId}/variants/${variantId}`, data);
+        return api.patch(`/api/products/${productId}/variants/${variantId}`, data);
     },
-    deleteVariant: (productId, variantId) => api.delete(`/products/${productId}/variants/${variantId}`),
+    deleteVariant: (productId, variantId) => api.delete(`/api/products/${productId}/variants/${variantId}`),
 };
 
 // Categories API
@@ -195,13 +195,13 @@ export const couponsAPI = {
 
 // Profile API
 export const profileAPI = {
-    get: (id) => api.get(`/auth/profile/${id}`),
+    get: (id) => api.get(`/api/auth/profile/${id}`),
     update: (id, data) => {
         // Profile updates often include files, so use FormData
         if (data instanceof FormData) {
-            return api.put(`/auth/profile/${id}`, data);
+            return api.put(`/api/auth/profile/${id}`, data);
         }
-        return api.put(`/auth/profile/${id}`, data);
+        return api.put(`/api/auth/profile/${id}`, data);
     },
 };
 
