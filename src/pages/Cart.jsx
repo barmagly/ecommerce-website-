@@ -53,6 +53,20 @@ export default function Cart() {
       });
       return;
     }
+
+    // التحقق من نطاق الشحن للمنتجات
+    const hasNagHamadiOnlyProducts = products.cartItems.some(item => 
+      item.prdID?.shippingAddress?.type === 'nag_hamadi'
+    );
+
+    if (hasNagHamadiOnlyProducts) {
+      toast.info('بعض المنتجات متاحة للشحن في نجع حمادي فقط. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 5000
+      });
+    }
+
     navigate('/checkout', { state: { cartItems: products.cartItems, total: products.total } });
   };
 
@@ -140,6 +154,9 @@ export default function Cart() {
                       <p className="card-text">
                         السعر: {item.prdID?.price} ج.م
                       </p>
+                      <div className="text-muted small mb-2">
+                        الشحن: {item.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item.prdID?.deliveryDays || 2} يوم
+                      </div>
                       <div className="d-flex align-items-center">
                         <button
                           className="btn btn-outline-secondary btn-sm"

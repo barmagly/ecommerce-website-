@@ -59,6 +59,7 @@ import {
   Settings as SettingsIcon,
   Close as CloseIcon,
   Info as InfoIcon,
+  LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -98,7 +99,11 @@ const Products = () => {
     images: [],
     features: [],
     specifications: [],
-    attributes: [] // Initialize attributes as an empty array
+    attributes: [], // Initialize attributes as an empty array
+    shippingAddressType: 'nag_hamadi',
+    shippingAddressDetails: '',
+    shippingCost: 0,
+    deliveryDays: 2
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -266,7 +271,12 @@ const Products = () => {
           price: variant.price?.toString(),
           quantity: variant.quantity?.toString(),
           images: variant.images?.map(img => img.url || img) || []
-        })) || []
+        })) || [],
+        // إضافة معالجة عنوان الشحن
+        shippingAddressType: product.shippingAddress?.type || 'nag_hamadi',
+        shippingAddressDetails: product.shippingAddress?.details || '',
+        shippingCost: product.shippingCost || 0,
+        deliveryDays: product.deliveryDays || 2
       };
       
       console.log('Original product data:', product);
@@ -460,6 +470,12 @@ const Products = () => {
           formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
         });
 
+        // إضافة بيانات الشحن
+        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
+        formDataToSend.append('shippingCost', formData.shippingCost);
+        formDataToSend.append('deliveryDays', formData.deliveryDays);
+
         // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
           const variantsData = generatedVariants.map(variant => ({
@@ -567,6 +583,12 @@ const Products = () => {
           formDataToSend.append(`attributes[${index}][name]`, attr.name);
           formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
         });
+
+        // إضافة بيانات الشحن
+        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
+        formDataToSend.append('shippingCost', formData.shippingCost);
+        formDataToSend.append('deliveryDays', formData.deliveryDays);
 
         // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
@@ -2676,6 +2698,56 @@ const Products = () => {
                       </>
                     )}
                   </Grid>
+                  
+                  {/* معلومات الشحن */}
+                  <Grid item xs={12}>
+                    <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(255, 152, 0, 0.05)', borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ mb: 2, color: '#ff9800', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocalShippingIcon /> معلومات الشحن
+                      </Typography>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth required>
+                            <InputLabel>نطاق الشحن</InputLabel>
+                            <Select
+                              value={formData.shippingAddressType}
+                              onChange={handleFormChange('shippingAddressType')}
+                              label="نطاق الشحن"
+                              sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' } }}
+                            >
+                              <MenuItem value="nag_hamadi">نجع حمادي فقط</MenuItem>
+                              <MenuItem value="other_governorates">جميع محافظات مصر</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="مصاريف الشحن (جنيه)"
+                            value={formData.shippingCost}
+                            onChange={handleFormChange('shippingCost')}
+                            InputProps={{ endAdornment: <InputAdornment position="end">ج.م</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="عدد أيام التوصيل"
+                            value={formData.deliveryDays}
+                            onChange={handleFormChange('deliveryDays')}
+                            InputProps={{ endAdornment: <InputAdornment position="end">يوم</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  </Grid>
+                  
                   {/* السمات والمتغيرات إذا كان المنتج متغير */}
                   {formData.hasVariants && (
                     <>
