@@ -3,7 +3,8 @@ import { useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { getProductsThunk } from "../services/Slice/product/product";
 
 const sampleResults = [
   {
@@ -34,8 +35,13 @@ export default function SearchResults() {
   const [query, setQuery] = useState(q);
   const [results, setResults] = useState([]);
   const products = useSelector(state => state.product.products || []);
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    // Fetch products if not already loaded
+    if (!products || products.length === 0) {
+      dispatch(getProductsThunk());
+    }
     setQuery(q);
     if (q.trim()) {
       setResults(
@@ -46,7 +52,7 @@ export default function SearchResults() {
     } else {
       setResults(products);
     }
-  }, [q, products]);
+  }, [q, products, dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
