@@ -33,12 +33,26 @@ export default function Header() {
   const { user, token } = useSelector((state) => state.auth);
   const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
   const isAuthenticated = !!token;
+  const products = useSelector(state => state.product.products || []);
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getUserProfileThunk());
     }
   }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (search.trim()) {
+      setSuggestions(
+        products
+          .filter(item => item.name && item.name.toLowerCase().includes(search.toLowerCase()))
+          .slice(0, 5)
+      );
+    } else {
+      setSuggestions([]);
+    }
+  }, [search, products]);
 
   useEffect(() => {
   }, [profileUser, loading, error]);
@@ -125,6 +139,41 @@ export default function Header() {
                 >
                   <i className="fas fa-search"></i>
                 </button>
+                {search && suggestions.length > 0 && (
+                  <ul className="search-suggestions-list" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    left: 0,
+                    zIndex: 1000,
+                    background: '#fff',
+                    border: '1px solid #eee',
+                    borderTop: 'none',
+                    borderRadius: '0 0 16px 16px',
+                    boxShadow: '0 4px 16px #0001',
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    maxHeight: 300,
+                    overflowY: 'auto',
+                    textAlign: 'right'
+                  }}>
+                    {suggestions.map(item => (
+                      <li
+                        key={item._id}
+                        style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}
+                        onMouseDown={() => navigate(`/product/${item._id}`)}
+                      >
+                        <img
+                          src={item.images?.[0]?.url || item.imageCover || 'https://via.placeholder.com/40x40?text=No+Image'}
+                          alt={item.name}
+                          style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 8, marginLeft: 8 }}
+                        />
+                        <span>{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </form>
               <div className="d-flex align-items-center gap-3">
                 {isAuthenticated ? (
