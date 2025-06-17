@@ -167,6 +167,40 @@ html, body {
   }
 }
 
+@media (max-width: 480px) {
+  .container, .container-fluid {
+    padding-left: 2vw !important;
+    padding-right: 2vw !important;
+  }
+  h1, h2, h3, .display-5 {
+    font-size: 1.1rem !important;
+    text-align: center;
+    word-break: break-word;
+  }
+  .row > [class^='col-'] {
+    flex: 0 0 100%;
+    max-width: 100%;
+    margin-bottom: 12px;
+  }
+  img, .img-fluid {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  .btn, .btn-danger, .btn-light {
+    font-size: 0.95rem !important;
+    padding: 8px 0 !important;
+    border-radius: 8px !important;
+    width: 100%;
+    min-height: 32px;
+  }
+  .mb-4, .my-5, .mb-5, .py-5 {
+    margin-bottom: 1rem !important;
+    margin-top: 1rem !important;
+    padding-top: 1rem !important;
+    padding-bottom: 1rem !important;
+  }
+}
+
 .flashsales-section-bg {
   background: linear-gradient(135deg, #fff8f8 0%, #ffe6e6 100%) !important;
   border-radius: 32px !important;
