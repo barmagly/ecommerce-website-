@@ -493,6 +493,7 @@ export default function Header() {
           padding: 0.5rem 1rem;
         }
         
+        /* Enhanced Mobile Responsive Styles */
         @media (max-width: 991px) {
           .navbar {
             padding-top: 0.5rem;
@@ -501,6 +502,183 @@ export default function Header() {
           
           .custom-sidebar {
             width: 280px;
+          }
+          
+          .navbar-brand img {
+            height: 80px !important;
+            width: 80px !important;
+          }
+          
+          .search-form {
+            min-width: 200px !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .bg-gradient-primary .container {
+            padding: 0.5rem 1rem;
+          }
+          
+          .bg-gradient-primary span {
+            font-size: 0.85rem;
+            margin-left: 8px !important;
+          }
+          
+          .bg-gradient-primary .btn {
+            font-size: 0.8rem !important;
+            padding: 0.25rem 0.75rem !important;
+          }
+          
+          .navbar-brand img {
+            height: 70px !important;
+            width: 70px !important;
+          }
+          
+          .custom-sidebar {
+            width: 100%;
+            max-width: 320px;
+          }
+          
+          .search-form {
+            min-width: 100% !important;
+            margin-bottom: 1rem;
+          }
+          
+          .search-input {
+            border-radius: 25px;
+            padding: 10px 40px 10px 15px;
+            font-size: 0.9rem;
+          }
+          
+          .btn-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 0.9rem;
+          }
+          
+          .offcanvas-body {
+            padding: 1rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.75rem 0;
+            font-size: 1rem;
+            border-bottom: 1px solid #eee;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 8px;
+          }
+        }
+        
+        @media (max-width: 576px) {
+          .bg-gradient-primary {
+            padding: 0.5rem 0;
+          }
+          
+          .bg-gradient-primary .row {
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+          }
+          
+          .bg-gradient-primary span {
+            font-size: 0.8rem;
+            margin-left: 0 !important;
+            display: block;
+            margin-bottom: 0.5rem;
+          }
+          
+          .navbar-brand img {
+            height: 60px !important;
+            width: 60px !important;
+          }
+          
+          .custom-sidebar {
+            width: 100%;
+            max-width: 300px;
+          }
+          
+          .search-input {
+            padding: 8px 35px 8px 12px;
+            font-size: 0.85rem;
+          }
+          
+          .btn-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+          }
+          
+          .offcanvas-body {
+            padding: 0.75rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.6rem 0;
+            font-size: 0.95rem;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .container {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+          }
+          
+          .navbar-brand img {
+            height: 55px !important;
+            width: 55px !important;
+          }
+          
+          .search-input {
+            padding: 6px 30px 6px 10px;
+            font-size: 0.8rem;
+          }
+          
+          .btn-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 0.75rem;
+          }
+          
+          .offcanvas-body {
+            padding: 0.5rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.5rem 0.6rem;
+            font-size: 0.8rem;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .navbar-brand img {
+            height: 50px !important;
+            width: 50px !important;
+          }
+          
+          .search-input {
+            padding: 5px 25px 5px 8px;
+            font-size: 0.75rem;
+          }
+          
+          .btn-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
           }
         }
       `}</style>
