@@ -101,8 +101,8 @@ export default function Footer() {
         }
         
         .footer-logo {
-          height: 80px;
-          width: 80px;
+          height: 160px;
+          width: 160px;
           transition: transform 0.3s ease;
         }
         
@@ -214,8 +214,8 @@ export default function Footer() {
           }
           
           .footer-logo {
-            height: 70px;
-            width: 70px;
+            height: 200px;
+            width: 200px;
           }
         }
         
@@ -231,8 +231,8 @@ export default function Footer() {
           }
           
           .footer-logo {
-            height: 60px;
-            width: 60px;
+            height: 120px;
+            width: 120px;
             margin: 0 auto 1rem;
             display: block;
           }
@@ -306,8 +306,8 @@ export default function Footer() {
           }
           
           .footer-logo {
-            height: 50px;
-            width: 50px;
+            height: 100px;
+            width: 100px;
           }
           
           .footer-title {
@@ -352,8 +352,8 @@ export default function Footer() {
           }
           
           .footer-logo {
-            height: 45px;
-            width: 45px;
+            height: 90px;
+            width: 90px;
           }
           
           .footer-title {
@@ -392,8 +392,8 @@ export default function Footer() {
           }
           
           .footer-logo {
-            height: 40px;
-            width: 40px;
+            height: 80px;
+            width: 80px;
           }
           
           .footer-title {

@@ -102,7 +102,7 @@ export default function Header() {
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
           <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src="/images/logo.png" alt="Logo" style={{ height: '110px', width: '110px', marginLeft: '8px' }} />
+            <img src="/images/logo.png" alt="Logo" style={{ height: '150px', width: '150px', marginLeft: '8px' }} />
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
@@ -265,7 +265,7 @@ export default function Header() {
           <div className="offcanvas offcanvas-end d-lg-none custom-sidebar" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div className="offcanvas-header border-bottom">
               <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                <img src="/images/logo.png" alt="Logo" style={{ height: '90px', width: '90px' }} />
+                <img src="/images/logo.png" alt="Logo" style={{ height: '180px', width: '180px' }} />
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
@@ -505,8 +505,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 80px !important;
-            width: 80px !important;
+            height: 160px !important;
+            width: 160px !important;
           }
           
           .search-form {
@@ -530,8 +530,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 70px !important;
-            width: 70px !important;
+            height: 140px !important;
+            width: 140px !important;
           }
           
           .custom-sidebar {
@@ -592,8 +592,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 60px !important;
-            width: 60px !important;
+            height: 300px ;
+            width: 300px ;
           }
           
           .custom-sidebar {
