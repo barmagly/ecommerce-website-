@@ -90,6 +90,8 @@ const Products = () => {
     category: '',
     hasVariants: false,
     price: '',
+    supplierName: '',
+    supplierPrice: '',
     stock: '',
     sku: '',
     imageCover: '',
@@ -150,6 +152,7 @@ const Products = () => {
     try {
       setLoading(true);
       const response = await productsAPI.getAll();
+      console.log('Fetched products:', response.data.products);
       setProducts(response.data.products || []);
       setHasAnyProductWithVariants(response.data.products.some(p => p.hasVariants));
       setError(null);
@@ -202,7 +205,12 @@ const Products = () => {
 
   const handleOpenDialog = (mode = 'add', product = null) => {
     if (product) {
-      console.log('Editing product:', product);
+      console.log('Editing product - Full product data:', product);
+      console.log('Supplier data from DB:', {
+        supplierName: product.supplierName,
+        supplierPrice: product.supplierPrice
+      });
+      
       // Map the product data to match our form structure
       const mappedProduct = {
         name: product.name || '',
@@ -210,6 +218,8 @@ const Products = () => {
         brand: product.brand || '',
         category: (product.category && product.category._id) ? product.category._id : (product.category || ''),
         price: product.price?.toString() || '',
+        supplierName: product.supplierName || '',
+        supplierPrice: product.supplierPrice?.toString() || '',
         hasVariants: product.hasVariants || false,
         stock: product.stock?.toString() || '',
         sku: product.sku || '',
@@ -230,6 +240,8 @@ const Products = () => {
           images: variant.images?.map(img => img.url || img) || []
         })) || []
       };
+      
+      console.log('Mapped product data:', mappedProduct);
       setFormData(mappedProduct);
       setDialogMode('edit');
     } else {
@@ -289,6 +301,21 @@ const Products = () => {
         hasErrors = true;
       }
 
+      if (!formData.supplierName || formData.supplierName.trim().length < 2) {
+        setFormErrors(prev => ({ ...prev, supplierName: 'اسم المورد يجب أن يكون 2 أحرف على الأقل' }));
+        hasErrors = true;
+      }
+
+      if (!formData.supplierPrice || formData.supplierPrice < 0) {
+        setFormErrors(prev => ({ ...prev, supplierPrice: 'سعر المورد يجب أن يكون أكبر من 0' }));
+        hasErrors = true;
+      }
+
+      if (parseFloat(formData.supplierPrice) >= parseFloat(formData.price)) {
+        setFormErrors(prev => ({ ...prev, supplierPrice: 'سعر المورد يجب أن يكون أقل من السعر النهائي' }));
+        hasErrors = true;
+      }
+
       if (!formData.stock || formData.stock < 0) {
         setFormErrors(prev => ({ ...prev, stock: 'المخزون يجب أن يكون أكبر من 0' }));
         hasErrors = true;
@@ -304,89 +331,38 @@ const Products = () => {
 
     try {
       setLoading(true);
-      const formDataToSend = new FormData();
-
-      // إضافة البيانات الأساسية
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('brand', formData.brand);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('hasVariants', formData.hasVariants);
-
-      // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
-      if (!formData.hasVariants) {
-        formDataToSend.append('price', formData.price);
-        formDataToSend.append('stock', formData.stock);
-        formDataToSend.append('sku', formData.sku);
-      } else {
-        // إضافة قيم افتراضية للمنتج المتغير
-        formDataToSend.append('price', '0');
-        formDataToSend.append('stock', '0');
-        formDataToSend.append('sku', 'VAR-' + Date.now());
-      }
-
-      // إضافة الصور
-      if (formData.imageCover) {
-        formDataToSend.append('imageCover', formData.imageCover);
-      }
-      // Format images as objects with url, alt, and isPrimary properties
-      const formattedImages = formData.images.map((image, index) => ({
-        url: image,
-        alt: `Product image ${index + 1}`,
-        isPrimary: index === 0
-      }));
-      formDataToSend.append('images', JSON.stringify(formattedImages));
-
-      // إضافة المميزات
-      formData.features.forEach((feature, index) => {
-        formDataToSend.append(`features[${index}][name]`, feature.name);
-        formDataToSend.append(`features[${index}][value]`, feature.value);
-      });
-
-      // إضافة المواصفات
-      formData.specifications.forEach((spec, specIndex) => {
-        formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
-        spec.items.forEach((item, itemIndex) => {
-          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
-          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
-        });
-      });
-
-      // إضافة السمات
-      formData.attributes.forEach((attr, index) => {
-        formDataToSend.append(`attributes[${index}][name]`, attr.name);
-        formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
-      });
-
-      // إضافة المتغيرات إذا كانت موجودة
-      if (formData.hasVariants && generatedVariants.length > 0) {
-        const variantsData = generatedVariants.map(variant => ({
-          sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
-          // attributes: Object.fromEntries(variant.attributes), // Convert Map to object
-          price: parseFloat(variant.price) || 0,
-          quantity: parseInt(variant.quantity) || 0,
-          sold: parseInt(variant.sold) || 0,
-          inStock: variant.quantity > 0,
-          images: variant.images.map((img, index) => ({
-            url: img,
-            alt: `Variant image ${index + 1}`,
-            isPrimary: index === 0
-          })),
-          optionField: variant.optionField || ''
-        }));
-        formDataToSend.append('productVariants', JSON.stringify(variantsData));
-      }
 
       if (selectedProduct) {
         const formDataToSend = new FormData();
 
-        // Basic fields comparison
-        const fieldsToCompare = ['name', 'description', 'brand', 'category', 'hasVariants', 'price', 'stock', 'sku'];
-        fieldsToCompare.forEach(field => {
-          if (formData[field] !== selectedProduct[field]) {
-            formDataToSend.append(field, formData[field]);
-          }
-        });
+        // إضافة جميع البيانات الأساسية للتعديل
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('brand', formData.brand);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('hasVariants', formData.hasVariants);
+
+        // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
+        if (!formData.hasVariants) {
+          formDataToSend.append('price', formData.price);
+          formDataToSend.append('supplierName', formData.supplierName);
+          formDataToSend.append('supplierPrice', formData.supplierPrice);
+          formDataToSend.append('stock', formData.stock);
+          formDataToSend.append('sku', formData.sku);
+          
+          // Debug: Log supplier data
+          console.log('Sending supplier data:', {
+            supplierName: formData.supplierName,
+            supplierPrice: formData.supplierPrice
+          });
+        } else {
+          // إضافة قيم افتراضية للمنتج المتغير
+          formDataToSend.append('price', '0');
+          formDataToSend.append('supplierName', '');
+          formDataToSend.append('supplierPrice', '0');
+          formDataToSend.append('stock', '0');
+          formDataToSend.append('sku', 'VAR-' + Date.now());
+        }
 
         // Handle imageCover
         if (formData.imageCover) {
@@ -415,65 +391,53 @@ const Products = () => {
           });
         }
 
-        // Handle features - format as individual fields
-        if (JSON.stringify(formData.features) !== JSON.stringify(selectedProduct.features)) {
-          formData.features.forEach((feature) => {
-            formDataToSend.append(`features[${feature.name}]`, feature.value);
-          });
-        }
+        // إضافة المميزات
+        formData.features.forEach((feature, index) => {
+          formDataToSend.append(`features[${index}][name]`, feature.name);
+          formDataToSend.append(`features[${index}][value]`, feature.value);
+        });
 
-        // Handle specifications
-        if (JSON.stringify(formData.specifications) !== JSON.stringify(selectedProduct.specifications)) {
-          formData.specifications.forEach((spec, specIndex) => {
-            formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
-            spec.items.forEach((item, itemIndex) => {
-              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
-              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
-            });
+        // إضافة المواصفات
+        formData.specifications.forEach((spec, specIndex) => {
+          formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
+          spec.items.forEach((item, itemIndex) => {
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
           });
-        }
+        });
 
-        // Handle attributes - format as individual fields
-        if (JSON.stringify(formData.attributes) !== JSON.stringify(selectedProduct.attributes)) {
-          formData.attributes.forEach((attr) => {
-            formDataToSend.append(`attributes[${attr.name}]`, attr.values.join(','));
-          });
-        }
+        // إضافة السمات
+        formData.attributes.forEach((attr, index) => {
+          formDataToSend.append(`attributes[${index}][name]`, attr.name);
+          formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
+        });
 
-        // Handle variants
+        // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
-          generatedVariants.forEach((variant, index) => {
-            formDataToSend.append(`variants[${index}][sku]`, variant.sku || ('VAR-' + Date.now()));
-            formDataToSend.append(`variants[${index}][price]`, parseFloat(variant.price) || 0);
-            formDataToSend.append(`variants[${index}][quantity]`, parseInt(variant.quantity) || 0);
-            formDataToSend.append(`variants[${index}][sold]`, parseInt(variant.sold) || 0);
-            formDataToSend.append(`variants[${index}][inStock]`, variant.quantity > 0);
-
-            // Handle variant attributes
-            // Object.entries(Object.fromEntries(variant.attributes)).forEach(([key, value]) => {
-            //   formDataToSend.append(`variants[${index}][attributes][${key}]`, value);
-            // });
-
-            // Handle variant images
-            variant.images.forEach((img, imgIndex) => {
-              if (img instanceof File) {
-                formDataToSend.append(`variants[${index}][images]`, img);
-              } else {
-                const imageUrl = typeof img === 'string' ? img : img.url;
-                formDataToSend.append(`variants[${index}][images]`, imageUrl);
-              }
-            });
-          });
-        }
-
-        // Only proceed if there are changes
-        if (formDataToSend.entries().next().done) {
-          toast.info('لم يتم إجراء أي تغييرات على المنتج');
-          handleCloseDialog();
-          return;
+          const variantsData = generatedVariants.map(variant => ({
+            sku: variant.sku || ('VAR-' + Date.now()),
+            price: parseFloat(variant.price) || 0,
+            quantity: parseInt(variant.quantity) || 0,
+            sold: parseInt(variant.sold) || 0,
+            inStock: variant.quantity > 0,
+            images: variant.images.map((img, index) => ({
+              url: img,
+              alt: `Variant image ${index + 1}`,
+              isPrimary: index === 0
+            })),
+            optionField: variant.optionField || ''
+          }));
+          formDataToSend.append('productVariants', JSON.stringify(variantsData));
         }
 
         const response = await productsAPI.update(selectedProduct._id, formDataToSend);
+        
+        // Debug: Log FormData contents
+        console.log('FormData contents:');
+        for (let [key, value] of formDataToSend.entries()) {
+          console.log(key, value);
+        }
+        
         if (response.data.status === 'success') {
           toast.success('تم تحديث المنتج بنجاح');
           handleCloseDialog();
@@ -493,11 +457,21 @@ const Products = () => {
         // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
         if (!formData.hasVariants) {
           formDataToSend.append('price', formData.price);
+          formDataToSend.append('supplierName', formData.supplierName);
+          formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
+          
+          // Debug: Log supplier data
+          console.log('Sending supplier data:', {
+            supplierName: formData.supplierName,
+            supplierPrice: formData.supplierPrice
+          });
         } else {
           // إضافة قيم افتراضية للمنتج المتغير
           formDataToSend.append('price', '0');
+          formDataToSend.append('supplierName', '');
+          formDataToSend.append('supplierPrice', '0');
           formDataToSend.append('stock', '0');
           formDataToSend.append('sku', 'VAR-' + Date.now());
         }
@@ -506,13 +480,24 @@ const Products = () => {
         if (formData.imageCover) {
           formDataToSend.append('imageCover', formData.imageCover);
         }
-        // Format images as objects with url, alt, and isPrimary properties
-        const formattedImages = formData.images.map((image, index) => ({
-          url: image,
-          alt: `Product image ${index + 1}`,
-          isPrimary: index === 0
-        }));
-        formDataToSend.append('images', JSON.stringify(formattedImages));
+        
+        // Handle images properly for new products
+        if (formData.images && formData.images.length > 0) {
+          formData.images.forEach((image, index) => {
+            if (image instanceof File) {
+              // If it's a File object, append it directly
+              formDataToSend.append('images', image);
+            } else if (typeof image === 'string') {
+              // If it's a string URL, format it as an object
+              const imageObj = {
+                url: image,
+                alt: `Product image ${index + 1}`,
+                isPrimary: index === 0
+              };
+              formDataToSend.append('images', JSON.stringify(imageObj));
+            }
+          });
+        }
 
         // إضافة المميزات
         formData.features.forEach((feature, index) => {
@@ -555,6 +540,13 @@ const Products = () => {
         }
 
         const response = await productsAPI.create(formDataToSend);
+        
+        // Debug: Log FormData contents (create)
+        console.log('FormData contents (create):');
+        for (let [key, value] of formDataToSend.entries()) {
+          console.log(key, value);
+        }
+        
         if (response.data.status === 'success') {
           toast.success('تم إضافة المنتج بنجاح');
           handleCloseDialog();
@@ -2224,13 +2216,16 @@ const Products = () => {
                       textAlign: 'center'
                     }
                   }}>
-                    <TableCell sx={{ width: '25%' }}>المنتج</TableCell>
-                    <TableCell sx={{ width: '15%' }}>السعر والخصم</TableCell>
-                    <TableCell sx={{ width: '12%' }}>الفئة</TableCell>
-                    <TableCell sx={{ width: '10%' }}>المخزون</TableCell>
-                    <TableCell sx={{ width: '12%' }}>التقييم والمراجعات</TableCell>
+                    <TableCell sx={{ width: '20%' }}>المنتج</TableCell>
+                    <TableCell sx={{ width: '12%' }}>السعر النهائي</TableCell>
+                    <TableCell sx={{ width: '10%' }}>المورد</TableCell>
+                    <TableCell sx={{ width: '10%' }}>سعر المورد</TableCell>
+                    <TableCell sx={{ width: '10%' }}>الربح الصافي</TableCell>
+                    <TableCell sx={{ width: '10%' }}>الفئة</TableCell>
+                    <TableCell sx={{ width: '8%' }}>المخزون</TableCell>
+                    <TableCell sx={{ width: '10%' }}>التقييم والمراجعات</TableCell>
                     <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
-                    <TableCell sx={{ width: '16%' }}>الإجراءات</TableCell>
+                    <TableCell sx={{ width: '10%' }}>الإجراءات</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -2301,6 +2296,54 @@ const Products = () => {
                                 </Typography>
                               )}
                             </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              maxWidth: '120px'
+                            }}>
+                              {(() => {
+                                console.log('Product supplier data:', {
+                                  name: product.name,
+                                  supplierName: product.supplierName,
+                                  supplierPrice: product.supplierPrice
+                                });
+                                return product.supplierName || 'غير محدد';
+                              })()}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              maxWidth: '120px'
+                            }}>
+                              {product.supplierPrice ? `${product.supplierPrice} جنية` : 'غير محدد'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box sx={{ 
+                              p: 1, 
+                              bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                              borderRadius: 1, 
+                              border: '1px solid rgba(76, 175, 80, 0.3)',
+                              textAlign: 'center'
+                            }}>
+                              <Typography variant="body2" color="success.main" fontWeight="bold">
+                                {product.price && product.supplierPrice ? 
+                                  `${(parseFloat(product.price) - parseFloat(product.supplierPrice)).toFixed(2)} جنية` : 
+                                  'غير محدد'
+                                }
+                              </Typography>
+                              {product.price && product.supplierPrice && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {((parseFloat(product.price) - parseFloat(product.supplierPrice)) / parseFloat(product.price) * 100).toFixed(1)}%
+                                </Typography>
+                              )}
+                            </Box>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{
@@ -2514,12 +2557,12 @@ const Products = () => {
                     </Grid>
                     {!formData.hasVariants && (
                       <>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                           <TextField
                             fullWidth
                             required
                             type="number"
-                            label="السعر"
+                            label="السعر النهائي"
                             value={formData.price}
                             onChange={handleFormChange('price')}
                             error={!!formErrors.price}
@@ -2528,7 +2571,33 @@ const Products = () => {
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            label="اسم المورد"
+                            value={formData.supplierName}
+                            onChange={handleFormChange('supplierName')}
+                            error={!!formErrors.supplierName}
+                            helperText={formErrors.supplierName}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="سعر المورد"
+                            value={formData.supplierPrice}
+                            onChange={handleFormChange('supplierPrice')}
+                            error={!!formErrors.supplierPrice}
+                            helperText={formErrors.supplierPrice}
+                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
                           <TextField
                             fullWidth
                             required
@@ -2541,7 +2610,7 @@ const Products = () => {
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={6}>
                           <TextField
                             fullWidth
                             required
@@ -2552,6 +2621,29 @@ const Products = () => {
                             helperText={formErrors.sku}
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Box sx={{ 
+                            p: 2, 
+                            bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                            borderRadius: 1, 
+                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                          }}>
+                            <Typography variant="body2" color="success.main" fontWeight="bold">
+                              الربح الصافي:
+                            </Typography>
+                            <Typography variant="h6" color="success.main" fontWeight="bold">
+                              ${formData.price && formData.supplierPrice ? (parseFloat(formData.price) - parseFloat(formData.supplierPrice)).toFixed(2) : '0.00'}
+                            </Typography>
+                            {formData.price && formData.supplierPrice && (
+                              <Typography variant="caption" color="text.secondary">
+                                (نسبة الربح: {((parseFloat(formData.price) - parseFloat(formData.supplierPrice)) / parseFloat(formData.price) * 100).toFixed(1)}%)
+                              </Typography>
+                            )}
+                          </Box>
                         </Grid>
                       </>
                     )}
