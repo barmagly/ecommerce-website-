@@ -1,29 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { addToCartThunk } from '../services/Slice/cart/cart';
 import { toast } from 'react-toastify';
 import './FlashSalesShowcase.css';
 import { frontendAPI } from '../services/api';
-
-// function getNext7Days() {
-//   const now = new Date();
-//   const end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-//   return end;
-// }
-
-// function getTimeLeft(endDate) {
-//   const now = new Date();
-//   let diff = Math.max(0, endDate - now);
-//   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-//   diff -= days * (1000 * 60 * 60 * 24);
-//   const hours = Math.floor(diff / (1000 * 60 * 60));
-//   diff -= hours * (1000 * 60 * 60);
-//   const minutes = Math.floor(diff / (1000 * 60));
-//   diff -= minutes * (1000 * 60);
-//   const seconds = Math.floor(diff / 1000);
-//   return { days, hours, minutes, seconds };
-// }
 
 export default function FlashSalesSection() {
   const dispatch = useDispatch();
@@ -35,21 +16,8 @@ export default function FlashSalesSection() {
   const [products, setProducts] = useState([]);
   const [isShowingAllProducts, setIsShowingAllProducts] = useState(false);
   const scrollContainerRef = useRef(null);
-
-  // const [endDate, setEndDate] = useState(getNext7Days());
-  // const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
-  // const { products, loading, error } = useSelector(state => state.home)
-  // useEffect(() => {
-  //   const timer = setInterval(() => {
-  //     const t = getTimeLeft(endDate);
-  //     setTimeLeft(t);
-  //     if (t.days === 0 && t.hours === 0 && t.minutes === 0 && t.seconds === 0) {
-  //       setEndDate(getNext7Days());
-  //     }
-  //   }, 1000);
-  //   return () => clearInterval(timer);
-  // }, [endDate]);
-
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isScrolling, setIsScrolling] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -58,7 +26,6 @@ export default function FlashSalesSection() {
       try {
         const response = await frontendAPI.getMostReviewed();
         console.log('Most Reviewed Products:', response.data);
-        // تأكد من أن البيانات موجودة
         if (response.data && response.data.data) {
           setProducts(response.data.data);
           setIsShowingAllProducts(false);
@@ -66,7 +33,6 @@ export default function FlashSalesSection() {
           setProducts(response.data);
           setIsShowingAllProducts(false);
         } else {
-          // إذا لم تكن هناك منتجات في الأعلى تقييماً، جلب جميع المنتجات
           try {
             const allProductsResponse = await frontendAPI.getAllProducts();
             console.log('All Products:', allProductsResponse.data);
@@ -124,17 +90,119 @@ export default function FlashSalesSection() {
       });
   };
 
-  const scrollProducts = (direction) => {
-    if (scrollContainerRef.current) {
+  const scrollToNext = useCallback(() => {
+    console.log('scrollToNext called', { 
+      hasRef: !!scrollContainerRef.current, 
+      isScrolling, 
+      productsLength: products.length 
+    });
+    
+    if (scrollContainerRef.current && !isScrolling && products.length > 0) {
+      setIsScrolling(true);
       const container = scrollContainerRef.current;
-      const scrollAmount = 300; // مقدار التمرير
+      const cardWidth = 300;
+      const maxScroll = container.scrollWidth - container.clientWidth;
       
-      if (direction === 'left') {
-        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-      } else {
-        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+      let newScrollLeft = container.scrollLeft + cardWidth;
+      
+      console.log('Scroll details:', {
+        currentScroll: container.scrollLeft,
+        newScrollLeft,
+        maxScroll,
+        cardWidth,
+        scrollWidth: container.scrollWidth,
+        clientWidth: container.clientWidth
+      });
+      
+      // إذا وصلنا للنهاية، نعود للبداية
+      if (newScrollLeft >= maxScroll) {
+        newScrollLeft = 0;
       }
+      
+      container.scrollTo({ 
+        left: newScrollLeft, 
+        behavior: 'smooth' 
+      });
+      
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 800);
     }
+  }, [isScrolling, products.length]);
+
+  const scrollToPrev = useCallback(() => {
+    console.log('scrollToPrev called', { 
+      hasRef: !!scrollContainerRef.current, 
+      isScrolling, 
+      productsLength: products.length 
+    });
+    
+    if (scrollContainerRef.current && !isScrolling && products.length > 0) {
+      setIsScrolling(true);
+      const container = scrollContainerRef.current;
+      const cardWidth = 300;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      
+      let newScrollLeft = container.scrollLeft - cardWidth;
+      
+      console.log('Scroll details:', {
+        currentScroll: container.scrollLeft,
+        newScrollLeft,
+        maxScroll,
+        cardWidth,
+        scrollWidth: container.scrollWidth,
+        clientWidth: container.clientWidth
+      });
+      
+      // إذا وصلنا للبداية، نذهب للنهاية
+      if (newScrollLeft <= 0) {
+        newScrollLeft = maxScroll;
+      }
+      
+      container.scrollTo({ 
+        left: newScrollLeft, 
+        behavior: 'smooth' 
+      });
+      
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 800);
+    }
+  }, [isScrolling, products.length]);
+
+  // التمرير التلقائي
+  useEffect(() => {
+    if (!isAutoScrolling || isScrolling || products.length === 0) return;
+
+    const interval = setInterval(() => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const cardWidth = 300;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        let newScrollLeft = container.scrollLeft + cardWidth;
+        
+        // إذا وصلنا للنهاية، نعود للبداية
+        if (newScrollLeft >= maxScroll) {
+          newScrollLeft = 0;
+        }
+        
+        container.scrollTo({ 
+          left: newScrollLeft, 
+          behavior: 'smooth' 
+        });
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [isAutoScrolling, isScrolling, products.length]);
+
+  const handleMouseEnter = () => {
+    setIsAutoScrolling(false);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsAutoScrolling(true);
   };
 
   return (
@@ -201,15 +269,70 @@ export default function FlashSalesSection() {
           </span>
           {products.length > 0 && (
             <span className="text-muted fs-6">
-              ({products.length} منتج{isShowingAllProducts ? ' - جميع المنتجات المتاحة' : ''})
+              ({products.length} منتج{!isShowingAllProducts ? ' - جميع المنتجات المتاحة' : ''})
             </span>
           )}
         </div>
-        <button className="btn btn-danger px-4 py-2 fw-bold mt-3 mt-md-0" onClick={() => navigate('/shop')}>عرض جميع المنتجات</button>
       </div>
       
       {/* قائمة قابلة للتمرير */}
-      <div className="scrollable-products-container ms-lg-5 mb-5">
+      <div 
+        className="scrollable-products-container ms-lg-5 mb-5 position-relative"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {/* أزرار التمرير */}
+        <button 
+          className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
+          onClick={scrollToPrev}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            position: 'absolute',
+            left: '-25px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '2px solid #db4444',
+            color: '#db4444',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <i className="fas fa-chevron-right"></i>
+        </button>
+        <button 
+          className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
+          onClick={scrollToNext}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{
+            position: 'absolute',
+            right: '-25px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 10,
+            width: '50px',
+            height: '50px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'rgba(255, 255, 255, 0.95)',
+            border: '2px solid #db4444',
+            color: '#db4444',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          <i className="fas fa-chevron-left"></i>
+        </button>
+
         {products.length === 0 && !isLoading ? (
           <div className="text-center py-5">
             <div className="alert alert-info" role="alert">
@@ -227,58 +350,177 @@ export default function FlashSalesSection() {
         ) : (
           <>
             <div className="scrollable-products-wrapper" ref={scrollContainerRef}>
-              {products?.map((product) => (
-                <div key={product?._id || product?.id} className="scrollable-product-card" data-aos="zoom-in-up">
-                  <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center position-relative">
+              {products?.map((product, index) => (
+                <div 
+                  key={product?._id || product?.id} 
+                  className="scrollable-product-card" 
+                  data-aos="zoom-in"
+                  style={{
+                    animation: `slideInUpDown ${1.6 + index * 0.1}s ease-out`
+                  }}
+                >
+                  <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
                     <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
                       <img 
-                        src={product?.imageCover} 
-                        alt={product?.name} 
-                        className="mb-3 flashsales-product-img" 
-                        style={{ 
-                          width: '100%', 
-                          height: '220px', 
-                          objectFit: 'contain', 
-                          borderRadius: '16px', 
-                          cursor: 'pointer',
-                          backgroundColor: '#f8f9fa',
-                          padding: '20px'
-                        }} 
+                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'} 
+                        alt={product?.name || 'Product'} 
+                        className="img-fluid mb-3"
+                        style={{ height: '200px', objectFit: 'contain' }}
                       />
                     </Link>
-                    <div className="card-body d-flex flex-column align-items-center justify-content-center text-center w-100">
-                      <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <h6 className="fw-bold mt-2 mb-3" style={{ cursor: 'pointer', textAlign: 'center', fontSize: '1.1rem' }}>{product.name}</h6>
-                      </Link>
-                      <div className="d-flex align-items-center gap-3 mt-2 mb-2">
-                        <span className="text-danger fw-bold fs-5">{product.price} ج.م</span>
+                    <div className="text-center w-100">
+                      <h6 className="fw-bold mb-2">{product?.name || 'Product Name'}</h6>
+                      <div className="d-flex justify-content-center align-items-center gap-2 mb-2">
+                        <span className="text-danger fw-bold">{product?.price || 0} ج.م</span>
+                        {product?.originalPrice && product?.originalPrice > product?.price && (
+                          <span className="text-muted text-decoration-line-through">{product?.originalPrice} ج.م</span>
+                        )}
                       </div>
-                      <div className="d-flex align-items-center gap-2 mt-2 mb-3">
-                        <span className="fs-6">{'⭐'.repeat(product?.ratings?.average)}</span>
-                        <span className="fw-bold text-muted">({product.ratings?.count})</span>
+                      <div className="d-flex justify-content-center align-items-center gap-1 mb-3">
+                        {[...Array(5)].map((_, i) => (
+                          <i 
+                            key={i} 
+                            className={`fas fa-star ${i < Math.floor(product?.ratings?.average || 5) ? 'text-warning' : 'text-muted'}`}
+                            style={{ fontSize: '0.8rem' }}
+                          ></i>
+                        ))}
+                        <span className="text-muted small">({product?.ratings?.count || 0})</span>
                       </div>
-                      <button className="btn btn-dark w-100 mt-auto" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
                     </div>
+                    <button 
+                      className="btn btn-danger w-100 mt-auto" 
+                      onClick={() => handleAddToCart(product?._id)}
+                      style={{ transition: 'all 0.3s ease' }}
+                    >
+                      <i className="fas fa-shopping-cart me-2"></i>
+                      أضف إلى السلة
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
-            
-            {/* أزرار التمرير */}
-            {products.length > 4 && (
-              <>
-                <button className="scroll-btn scroll-left" onClick={() => scrollProducts('left')}>
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-                <button className="scroll-btn scroll-right" onClick={() => scrollProducts('right')}>
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-              </>
-            )}
           </>
         )}
       </div>
-      <div className="flashsales-divider mb-5"></div>
+
+      <style jsx>{`
+        .scrollable-products-container {
+          position: relative;
+          overflow: visible;
+          padding: 0 30px;
+        }
+        
+        .scrollable-products-wrapper {
+          display: flex;
+          gap: 20px;
+          overflow-x: auto;
+          scroll-behavior: smooth;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding: 10px 0;
+          direction: ltr;
+        }
+        
+        .scrollable-products-wrapper::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .scrollable-product-card {
+          flex: 0 0 280px;
+          min-width: 280px;
+          max-width: 280px;
+          margin: 0;
+          direction: ltr;
+        }
+        
+        .scroll-btn {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.95);
+          border: 2px solid #db4444;
+          color: #db4444;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+          border-radius: 50%;
+          z-index: 30;
+          width: 50px;
+          height: 50px;
+          font-size: 1.2rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .scroll-left { 
+          left: -25px;
+        }
+        
+        .scroll-right { 
+          right: -25px;
+        }
+        
+        .scroll-btn:hover {
+          background: #db4444 !important;
+          color: white !important;
+          transform: translateY(-50%) scale(1.1) !important;
+          box-shadow: 0 8px 24px rgba(219, 68, 68, 0.3) !important;
+          animation: glowEffect 2s ease-in-out infinite;
+        }
+
+        @keyframes slideInUpDown {
+          0% {
+            opacity: 0;
+            transform: translateY(50px) scale(0.8);
+          }
+          50% {
+            opacity: 0.7;
+            transform: translateY(-15px) scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes floatAnimation {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes glowEffect {
+          0%, 100% {
+            box-shadow: 0 8px 32px rgba(219, 68, 68, 0.1);
+          }
+          50% {
+            box-shadow: 0 12px 48px rgba(219, 68, 68, 0.3);
+          }
+        }
+        
+        .flashsales-card {
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          animation: floatAnimation 3s ease-in-out infinite;
+        }
+        
+        .flashsales-card:hover {
+          transform: translateY(-12px) scale(1.03);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+          animation: none;
+        }
+
+        .scrollable-product-card {
+          transition: all 0.3s ease;
+        }
+
+        .scrollable-product-card:hover {
+          transform: scale(1.02);
+        }
+      `}</style>
     </div>
   );
 } 

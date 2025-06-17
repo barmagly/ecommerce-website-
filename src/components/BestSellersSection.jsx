@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import './FlashSalesShowcase.css';
 import { useDispatch, useSelector } from 'react-redux';
@@ -16,6 +16,9 @@ export default function BestSellersSection() {
   const { token } = useSelector((state) => state.auth);
   const isAuthenticated = !!token;
   const scrollContainerRef = useRef(null);
+  const [isAutoScrolling, setIsAutoScrolling] = useState(true);
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [lastScrollDirection, setLastScrollDirection] = useState('right'); // 'left' or 'right'
 
   useEffect(() => {
     setIsLoading(true);
@@ -90,17 +93,158 @@ export default function BestSellersSection() {
       });
   };
 
-  const scrollProducts = (direction) => {
-    if (scrollContainerRef.current) {
+  const scrollToNext = useCallback(() => {
+    if (scrollContainerRef.current && !isScrolling && products.length > 0) {
+      setIsScrolling(true);
       const container = scrollContainerRef.current;
-      const scrollAmount = 300; // مقدار التمرير
+      const cardWidth = 300; // عرض البطاقة + المسافة بينها
+      const maxScroll = container.scrollWidth - container.clientWidth;
       
-      if (direction === 'left') {
-        container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+      // استخدام آخر اتجاه تم استخدامه
+      if (lastScrollDirection === 'right') {
+        // التمرير للبطاقة التالية مع انيميشن
+        let newScrollLeft = container.scrollLeft + cardWidth;
+        
+        // إذا وصلنا للنهاية، نعود للبداية
+        if (newScrollLeft >= maxScroll) {
+          newScrollLeft = 0;
+        }
+        
+        container.scrollTo({ 
+          left: newScrollLeft, 
+          behavior: 'smooth' 
+        });
       } else {
-        container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        // التمرير لليسار
+        let newScrollLeft = container.scrollLeft - cardWidth;
+        
+        // إذا وصلنا للبداية، نذهب للنهاية
+        if (newScrollLeft <= 0) {
+          newScrollLeft = maxScroll;
+        }
+        
+        container.scrollTo({ 
+          left: newScrollLeft, 
+          behavior: 'smooth' 
+        });
       }
+      
+      // إعادة تفعيل التمرير بعد انتهاء الانيميشن
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 800);
     }
+  }, [isScrolling, products.length, lastScrollDirection]);
+
+  const scrollToPrev = useCallback(() => {
+    if (scrollContainerRef.current && !isScrolling && products.length > 0) {
+      setIsScrolling(true);
+      setLastScrollDirection('left'); // تحديث اتجاه التمرير
+      const container = scrollContainerRef.current;
+      const cardWidth = 300;
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      
+      // التمرير للبطاقة السابقة مع انيميشن
+      let newScrollLeft = container.scrollLeft - cardWidth;
+      
+      // إذا وصلنا للبداية، نذهب للنهاية
+      if (newScrollLeft <= 0) {
+        newScrollLeft = maxScroll;
+      }
+      
+      container.scrollTo({ 
+        left: newScrollLeft, 
+        behavior: 'smooth' 
+      });
+      
+      // إعادة تفعيل التمرير بعد انتهاء الانيميشن
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 800);
+    }
+  }, [isScrolling, products.length]);
+
+  const scrollToNextManual = useCallback(() => {
+    if (scrollContainerRef.current && !isScrolling && products.length > 0) {
+      setIsScrolling(true);
+      setLastScrollDirection('right'); // تحديث اتجاه التمرير
+      const container = scrollContainerRef.current;
+      const cardWidth = 300; // عرض البطاقة + المسافة بينها
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      
+      // التمرير للبطاقة التالية مع انيميشن
+      let newScrollLeft = container.scrollLeft + cardWidth;
+      
+      // إذا وصلنا للنهاية، نعود للبداية
+      if (newScrollLeft >= maxScroll) {
+        newScrollLeft = 0;
+      }
+      
+      container.scrollTo({ 
+        left: newScrollLeft, 
+        behavior: 'smooth' 
+      });
+      
+      // إعادة تفعيل التمرير بعد انتهاء الانيميشن
+      setTimeout(() => {
+        setIsScrolling(false);
+      }, 800);
+    }
+  }, [isScrolling, products.length]);
+
+  // التمرير التلقائي كل 3 ثواني (حلقة مغلقة مستمرة)
+  useEffect(() => {
+    if (!isAutoScrolling || isScrolling || products.length === 0) return;
+
+    // بدء التمرير التلقائي فوراً
+    const startAutoScroll = () => {
+      // التمرير الدائري المستمر
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const cardWidth = 300;
+        const maxScroll = container.scrollWidth - container.clientWidth;
+        
+        // التمرير للأمام بشكل مستمر
+        let newScrollLeft = container.scrollLeft + cardWidth;
+        
+        // إذا وصلنا للنهاية، نعود للبداية بدون توقف
+        if (newScrollLeft >= maxScroll) {
+          newScrollLeft = 0;
+        }
+        
+        container.scrollTo({ 
+          left: newScrollLeft, 
+          behavior: 'smooth' 
+        });
+      }
+    };
+
+    // بدء التمرير فوراً
+    startAutoScroll();
+
+    const interval = setInterval(startAutoScroll, 3000);
+
+    return () => clearInterval(interval);
+  }, [isAutoScrolling, isScrolling, products.length]);
+
+  // إضافة تأثير بصري للتمرير التلقائي
+  useEffect(() => {
+    if (isAutoScrolling && scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.style.setProperty('--auto-scroll-active', 'true');
+    } else if (scrollContainerRef.current) {
+      const container = scrollContainerRef.current;
+      container.style.setProperty('--auto-scroll-active', 'false');
+    }
+  }, [isAutoScrolling]);
+
+  // إيقاف التمرير التلقائي عند التفاعل مع الماوس
+  const handleMouseEnter = () => {
+    setIsAutoScrolling(false);
+  };
+  
+  const handleMouseLeave = () => {
+    setIsAutoScrolling(true);
   };
 
   return (
@@ -171,11 +315,44 @@ export default function BestSellersSection() {
             </span>
           )}
         </div>
-        <button className="btn btn-danger px-5 py-3 fw-bold mt-4" onClick={() => navigate('/shop')}>عرض الكل</button>
+        <div className="d-flex align-items-center gap-2">
+          <button 
+            className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
+            onClick={scrollToPrev}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transition: 'all 0.3s ease',
+              transform: 'translateY(-50%)',
+              position: 'relative',
+              zIndex: 10
+            }}
+          >
+            <i className="fas fa-chevron-right"></i>
+          </button>
+          <button 
+            className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
+            onClick={scrollToNextManual}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transition: 'all 0.3s ease',
+              transform: 'translateY(-50%)',
+              position: 'relative',
+              zIndex: 10
+            }}
+          >
+            <i className="fas fa-chevron-left"></i>
+          </button>
+        </div>
       </div>
       
       {/* قائمة قابلة للتمرير */}
-      <div className="scrollable-products-container ms-lg-5 mb-5">
+      <div 
+        className="scrollable-products-container ms-lg-5 mb-5"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         {products.length === 0 && !isLoading ? (
           <div className="text-center py-5">
             <div className="alert alert-info" role="alert">
@@ -193,58 +370,120 @@ export default function BestSellersSection() {
         ) : (
           <>
             <div className="scrollable-products-wrapper" ref={scrollContainerRef}>
-              {products?.map((product) => (
-                <div key={product?._id || product?.id} className="scrollable-product-card" data-aos="zoom-in">
+              {products?.map((product, index) => (
+                <div 
+                  key={product?._id || product?.id} 
+                  className="scrollable-product-card" 
+                  data-aos="zoom-in"
+                  style={{
+                    animation: `slideInUpDown ${0.6 + index * 0.1}s ease-out`
+                  }}
+                >
                   <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
                     <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
                       <img 
-                        src={product?.image || product?.imageCover} 
-                        alt={product?.name} 
-                        className="mb-3 flashsales-product-img" 
-                        style={{ 
-                          width: '100%', 
-                          height: '220px', 
-                          objectFit: 'contain', 
-                          borderRadius: '16px', 
-                          cursor: 'pointer',
-                          backgroundColor: '#f8f9fa',
-                          padding: '20px'
-                        }} 
+                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'} 
+                        alt={product?.name || 'Product'} 
+                        className="img-fluid mb-3"
+                        style={{ height: '200px', objectFit: 'contain' }}
                       />
                     </Link>
-                    <div className="card-body d-flex flex-column align-items-center justify-content-center text-center w-100">
-                      <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                        <h6 className="fw-bold mt-2 mb-3" style={{ cursor: 'pointer', textAlign: 'center', fontSize: '1.1rem' }}>{product?.name}</h6>
-                      </Link>
-                      <div className="d-flex align-items-center gap-3 mt-2 mb-2">
-                        <span className="text-danger fw-bold fs-5">{product?.price} ج.م</span>
+                    <div className="text-center w-100">
+                      <h6 className="fw-bold mb-2">{product?.name || 'Product Name'}</h6>
+                      <div className="d-flex justify-content-center align-items-center gap-2 mb-2">
+                        <span className="text-danger fw-bold">{product?.price || 0} ج.م</span>
+                        {product?.originalPrice && product?.originalPrice > product?.price && (
+                          <span className="text-muted text-decoration-line-through">{product?.originalPrice} ج.م</span>
+                        )}
                       </div>
-                      <div className="d-flex align-items-center gap-2 mt-2 mb-3">
-                        {/* <img src="https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/0rblkmcb_expires_30_days.png" style={{ width: '100px', height: '20px' }} alt="rating" /> */}
-                        {/* <span className="fw-bold">({product?.totalSold})</span> */}
+                      <div className="d-flex justify-content-center align-items-center gap-1 mb-3">
+                        {[...Array(5)].map((_, i) => (
+                          <i 
+                            key={i} 
+                            className={`fas fa-star ${i < Math.floor(product?.ratings?.average || 5) ? 'text-warning' : 'text-muted'}`}
+                            style={{ fontSize: '0.8rem' }}
+                          ></i>
+                        ))}
+                        <span className="text-muted small">({product?.ratings?.count || 0})</span>
                       </div>
-                      <button className="btn btn-dark w-100 mt-auto" onClick={() => handleAddToCart(product.id)}>أضف إلى السلة</button>
                     </div>
+                    <button 
+                      className="btn btn-danger w-100 mt-auto" 
+                      onClick={() => handleAddToCart(product?._id)}
+                      style={{ transition: 'all 0.3s ease' }}
+                    >
+                      <i className="fas fa-shopping-cart me-2"></i>
+                      أضف إلى السلة
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
-            
-            {/* أزرار التمرير */}
-            {products.length > 4 && (
-              <>
-                <button className="scroll-btn scroll-left" onClick={() => scrollProducts('left')}>
-                  <i className="fas fa-chevron-right"></i>
-                </button>
-                <button className="scroll-btn scroll-right" onClick={() => scrollProducts('right')}>
-                  <i className="fas fa-chevron-left"></i>
-                </button>
-              </>
-            )}
           </>
         )}
       </div>
-      <div className="flashsales-divider mb-5"></div>
+
+      <style jsx>{`
+        @keyframes slideInUpDown {
+          0% {
+            opacity: 0;
+            transform: translateY(50px) scale(0.8);
+          }
+          50% {
+            opacity: 0.7;
+            transform: translateY(-15px) scale(1.05);
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        @keyframes floatAnimation {
+          0%, 100% {
+            transform: translateY(0px);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+
+        @keyframes glowEffect {
+          0%, 100% {
+            box-shadow: 0 8px 32px rgba(219, 68, 68, 0.1);
+          }
+          50% {
+            box-shadow: 0 12px 48px rgba(219, 68, 68, 0.3);
+          }
+        }
+        
+        .scroll-btn:hover {
+          background: #db4444 !important;
+          color: white !important;
+          transform: translateY(-50%) scale(1.1) !important;
+          box-shadow: 0 8px 24px rgba(219, 68, 68, 0.3) !important;
+          animation: glowEffect 2s ease-in-out infinite;
+        }
+        
+        .flashsales-card {
+          transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+          animation: floatAnimation 3s ease-in-out infinite;
+        }
+        
+        .flashsales-card:hover {
+          transform: translateY(-12px) scale(1.03);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2);
+          animation: none;
+        }
+
+        .scrollable-product-card {
+          transition: all 0.3s ease;
+        }
+
+        .scrollable-product-card:hover {
+          transform: scale(1.02);
+        }
+      `}</style>
     </div>
   );
 } 
