@@ -117,10 +117,10 @@ export default function HomeBestSellers() {
         </div>
         <div className="d-flex align-items-center gap-2">
           <button className="btn btn-light rounded-circle p-3">
-            <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-left"></i>
           </button>
           <button className="btn btn-light rounded-circle p-3">
-            <i className="fas fa-chevron-left"></i>
+            <i className="fas fa-chevron-right"></i>
           </button>
         </div>
       </div>
