@@ -28,9 +28,7 @@ export default function Footer() {
               <li className="mb-2">
                 <Link to="/" className="text-white text-decoration-none">الرئيسية</Link>
               </li>
-              <li className="mb-2">
-                <Link to="/about" className="text-white text-decoration-none">من نحن</Link>
-              </li>
+             
               <li className="mb-2">
                 <Link to="/shop" className="text-white text-decoration-none">المتجر</Link>
               </li>
@@ -65,7 +63,7 @@ export default function Footer() {
               </li>
               <li className="mb-2">
                 <i className="fas fa-phone me-2"></i>
-                +20 123 456 789
+                01276218191
               </li>
               <li className="mb-2">
                 <i className="fas fa-envelope me-2"></i>

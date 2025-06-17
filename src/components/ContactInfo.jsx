@@ -15,7 +15,7 @@ export default function ContactInfo() {
         </div>
         <div className="ps-5">
           <p className="mb-2 text-muted">نحن متاحون على مدار الساعة طوال أيام الأسبوع</p>
-          <p className="mb-0 fw-bold">+20 123 456 789</p>
+          <p className="mb-0 fw-bold">01276218191</p>
         </div>
       </div>
 
@@ -29,7 +29,6 @@ export default function ContactInfo() {
         <div className="ps-5">
           <p className="mb-2 text-muted">سنرد عليك خلال 24 ساعة</p>
           <p className="mb-1 fw-bold">support@mizanoo.com</p>
-          <p className="mb-0 fw-bold">support@example.com</p>
         </div>
       </div>
 
@@ -54,7 +53,7 @@ export default function ContactInfo() {
           <h5 className="mb-0 fw-bold">موقعنا</h5>
         </div>
         <div className="ps-5">
-          <p className="mb-0 fw-bold">123 شارع الرئيسي، القاهرة، مصر</p>
+          <p className="mb-0 fw-bold">مصر,قنا,نجع حمادي</p>
         </div>
       </div>
 

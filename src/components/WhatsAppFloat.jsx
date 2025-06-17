@@ -1,6 +1,6 @@
 import React from "react";
 
-const whatsappNumber = "20123456789"; // Replace with your WhatsApp number (no +)
+const whatsappNumber = "201276218191"; // Replace with your WhatsApp number (no +)
 
 export default function WhatsAppFloat() {
   return (
@@ -13,11 +13,7 @@ export default function WhatsAppFloat() {
         title="تواصل معنا على واتساب"
         aria-label="تواصل معنا على واتساب"
       >
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/1200px-WhatsApp.svg.png"
-          alt="WhatsApp"
-          style={{ width: 38, height: 38, display: 'block' }}
-        />
+        <i className="fab fa-whatsapp"></i>
       </a>
       <style>{`
         .whatsapp-float {
@@ -33,22 +29,27 @@ export default function WhatsAppFloat() {
           display: flex;
           align-items: center;
           justify-content: center;
-          transition: box-shadow 0.2s, transform 0.2s;
+          transition: all 0.3s ease;
+          text-decoration: none;
+          color: white;
+          font-size: 32px;
         }
         .whatsapp-float:hover {
           box-shadow: 0 8px 32px rgba(0,0,0,0.28);
-          transform: scale(1.08);
+          transform: scale(1.1);
+          color: white;
+          text-decoration: none;
+        }
+        .whatsapp-float:active {
+          transform: scale(0.95);
         }
         @media (max-width: 600px) {
           .whatsapp-float {
             left: 16px;
             bottom: 16px;
-            width: 52px;
-            height: 52px;
-          }
-          .whatsapp-float img {
-            width: 28px;
-            height: 28px;
+            width: 56px;
+            height: 56px;
+            font-size: 28px;
           }
         }
       `}</style>
