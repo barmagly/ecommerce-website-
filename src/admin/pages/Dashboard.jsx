@@ -39,7 +39,7 @@ const StatCard = ({ title, value, icon, color }) => (
             backgroundColor: `${color}15`,
             borderRadius: '50%',
             p: 1,
-            mr: 2,
+            ml: 2,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -210,7 +210,7 @@ const Dashboard = () => {
           <Table>
             <TableHead>
               <TableRow>
-                <TableCell>المنتج</TableCell>
+                <TableCell align='right' sx={{pr:4}}>المنتج</TableCell>
                 <TableCell>الفئة</TableCell>
                 <TableCell>المبيعات</TableCell>
                 <TableCell>الكمية المباعة</TableCell>
@@ -222,7 +222,7 @@ const Dashboard = () => {
                   <TableRow key={product._id}>
                     <TableCell>
                       <Box display="flex" alignItems="center">
-                        <Avatar src={product.imageCover} variant="rounded" sx={{ mr: 1 }} />
+                        <Avatar src={product.imageCover} variant="rounded" sx={{ ml: 1 }} />
                         {product.name}
                       </Box>
                     </TableCell>

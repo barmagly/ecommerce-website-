@@ -42,6 +42,28 @@ export default function MainSlider() {
     dispatch(getNewArrivalProductsThunk());
   }, [dispatch]);
 
+  useEffect(() => {
+    let slideInterval;
+
+    const startSliding = () => {
+      slideInterval = setInterval(() => {
+        if (!isTransitioning && slides.length > 0) {
+          nextSlide();
+        }
+      }, 1500); 
+    };
+
+    if (!loading && !error && slides.length > 0) {
+      startSliding();
+    }
+
+    return () => {
+      if (slideInterval) {
+        clearInterval(slideInterval);
+      }
+    };
+  }, [loading, error, slides, isTransitioning, nextSlide]);
+
   if (loading) {
     return (
       <div className="container py-5 text-center">

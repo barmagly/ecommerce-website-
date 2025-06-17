@@ -96,11 +96,11 @@ const Users = () => {
   // Filter users based on search and filters
   const filteredUsers = (users || []).filter(user => {
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (user.phone || '').includes(searchTerm);
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.phone || '').includes(searchTerm);
     const matchesRole = roleFilter === '' || user.role === roleFilter;
     const matchesStatus = statusFilter === '' || user.status === statusFilter;
-    
+
     return matchesSearch && matchesRole && matchesStatus;
   });
 
@@ -275,7 +275,7 @@ const Users = () => {
                 />
               </Grid>
               <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>الدور</InputLabel>
                   <Select
                     value={roleFilter}
@@ -288,8 +288,8 @@ const Users = () => {
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+              {/* <Grid item xs={12} md={2}>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>الحالة</InputLabel>
                   <Select
                     value={statusFilter}
@@ -301,20 +301,22 @@ const Users = () => {
                     <MenuItem value="blocked">محظور</MenuItem>
                   </Select>
                 </FormControl>
-              </Grid>
+              </Grid> */}
               <Grid item xs={12} md={4}>
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2 }} >
                   <Button
+                    size='large'
                     variant="contained"
-                    startIcon={<AddIcon />}
+                    startIcon={<AddIcon sx={{ ml: 1 }} />}
                     onClick={() => handleOpenDialog('add')}
                     sx={{ flexGrow: 1 }}
                   >
                     إضافة مستخدم
                   </Button>
                   <Button
+                    size='large'
                     variant="outlined"
-                    startIcon={<RefreshIcon />}
+                    startIcon={<RefreshIcon  sx={{ ml: 1 }}/>}
                     onClick={() => window.location.reload()}
                   >
                     تحديث
@@ -327,10 +329,10 @@ const Users = () => {
 
         {/* Stats Cards */}
         <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ bgcolor: alpha('#1976d2', 0.1), border: '1px solid', borderColor: alpha('#1976d2', 0.2) }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#1976d2">
                       {users.length}
@@ -339,17 +341,17 @@ const Users = () => {
                       إجمالي المستخدمين
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: alpha('#1976d2', 0.1), color: '#1976d2' }}>
+                  <Avatar sx={{ bgcolor: alpha('#1976d2', 0.1), color: '#1976d2', position: 'absolute', top: 0, left: 0 }}>
                     <PersonIcon />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ bgcolor: alpha('#2e7d32', 0.1), border: '1px solid', borderColor: alpha('#2e7d32', 0.2) }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#2e7d32">
                       {users.filter(u => u.status === 'active').length}
@@ -358,17 +360,17 @@ const Users = () => {
                       المستخدمين النشطين
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: alpha('#2e7d32', 0.1), color: '#2e7d32' }}>
+                  <Avatar sx={{ bgcolor: alpha('#2e7d32', 0.1), color: '#2e7d32', position: 'absolute', top: 0, left: 0 }}>
                     <VerifiedIcon />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3} >
             <Card sx={{ bgcolor: alpha('#d32f2f', 0.1), border: '1px solid', borderColor: alpha('#d32f2f', 0.2) }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#d32f2f">
                       {users.filter(u => u.role === 'admin').length}
@@ -377,17 +379,17 @@ const Users = () => {
                       المديرين
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: alpha('#d32f2f', 0.1), color: '#d32f2f' }}>
+                  <Avatar sx={{ bgcolor: alpha('#d32f2f', 0.1), color: '#d32f2f', position: 'absolute', top: 0, left: 0 }}>
                     <AdminIcon />
                   </Avatar>
                 </Box>
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ bgcolor: alpha('#f57c00', 0.1), border: '1px solid', borderColor: alpha('#f57c00', 0.2) }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold" color="#f57c00">
                       {users.filter(u => u.status === 'blocked').length}
@@ -396,7 +398,7 @@ const Users = () => {
                       المحظورين
                     </Typography>
                   </Box>
-                  <Avatar sx={{ bgcolor: alpha('#f57c00', 0.1), color: '#f57c00' }}>
+                  <Avatar sx={{ bgcolor: alpha('#f57c00', 0.1), color: '#f57c00', position: 'absolute', top: 0, left: 0 }}>
                     <BlockIcon />
                   </Avatar>
                 </Box>
@@ -434,7 +436,7 @@ const Users = () => {
                     </TableHead>
                     <TableBody>
                       {filteredUsers.map((user) => (
-                        <TableRow 
+                        <TableRow
                           key={user._id}
                           sx={{ '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.04) } }}
                         >
@@ -487,24 +489,24 @@ const Users = () => {
                           <TableCell>
                             <Box sx={{ display: 'flex', gap: 1 }}>
                               <Tooltip title="عرض التفاصيل">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={() => handleOpenDialog('view', user)}
                                 >
                                   <ViewIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="تعديل">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={() => handleOpenDialog('edit', user)}
                                 >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title={user.status === 'active' ? "حظر" : "إلغاء الحظر"}>
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={() => handleToggleStatus(user._id, user.status)}
                                   color={user.status === 'active' ? "error" : "success"}
                                 >
@@ -512,8 +514,8 @@ const Users = () => {
                                 </IconButton>
                               </Tooltip>
                               <Tooltip title="حذف">
-                                <IconButton 
-                                  size="small" 
+                                <IconButton
+                                  size="small"
                                   onClick={() => handleDelete(user._id)}
                                   color="error"
                                 >
@@ -530,7 +532,7 @@ const Users = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid grid={{ xs: 12, md: 4 }}>
+          {/* <Grid grid={{ xs: 12, md: 4 }}>
             <Card>
               <CardContent>
                 <Typography variant="h6" gutterBottom>
@@ -619,15 +621,15 @@ const Users = () => {
                 </Grid>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         {/* User Dialog */}
         <Grid grid={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
-              <Dialog 
-                open={openDialog} 
+              <Dialog
+                open={openDialog}
                 onClose={handleCloseDialog}
                 maxWidth="md"
                 fullWidth
@@ -725,8 +727,8 @@ const Users = () => {
                     {dialogMode === 'view' ? 'إغلاق' : 'إلغاء'}
                   </Button>
                   {dialogMode !== 'view' && (
-                    <Button 
-                      variant="contained" 
+                    <Button
+                      variant="contained"
                       onClick={handleSubmit}
                       disabled={loading}
                       startIcon={loading && <CircularProgress size={20} />}
