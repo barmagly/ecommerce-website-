@@ -80,6 +80,7 @@ export const frontendAPI = {
     getBestSellers: () => api.get('/api/products/best-sellers'),
     getMostReviewed: () => api.get('/api/products/most-reviewed'),
     getFlashSales: () => api.get('/api/products/flash-sales'),
+    getAllProducts: () => api.get('/api/products'),
     // Wishlist endpoints
     getWishlist: () => userApi.get('/api/auth/wishlist'),
     addToWishlist: (productId) => userApi.post(`/api/auth/wishlist/${productId}`),

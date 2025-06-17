@@ -61,7 +61,7 @@ export default function Footer() {
             <ul className="list-unstyled">
               <li className="mb-2">
                 <i className="fas fa-map-marker-alt me-2"></i>
-                القاهرة، مصر
+              نجع حمادي, قنا, مصر 
               </li>
               <li className="mb-2">
                 <i className="fas fa-phone me-2"></i>
@@ -69,7 +69,7 @@ export default function Footer() {
               </li>
               <li className="mb-2">
                 <i className="fas fa-envelope me-2"></i>
-                info@example.com
+                support@mizanoo.com
               </li>
             </ul>
           </div>

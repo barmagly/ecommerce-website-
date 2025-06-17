@@ -28,7 +28,7 @@ export default function ContactInfo() {
         </div>
         <div className="ps-5">
           <p className="mb-2 text-muted">سنرد عليك خلال 24 ساعة</p>
-          <p className="mb-1 fw-bold">info@example.com</p>
+          <p className="mb-1 fw-bold">support@mizanoo.com</p>
           <p className="mb-0 fw-bold">support@example.com</p>
         </div>
       </div>

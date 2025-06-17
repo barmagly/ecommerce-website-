@@ -68,6 +68,8 @@ const Users = () => {
     name: '',
     email: '',
     phone: '',
+    password: '',
+    confirmPassword: '',
     role: 'user',
     status: 'active',
     addresses: '',
@@ -112,15 +114,19 @@ const Users = () => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        password: '',
+        confirmPassword: '',
         role: user.role,
         status: user.status,
-        addresses: user.addresses.join(', '),
+        addresses: Array.isArray(user.addresses) ? user.addresses.join(', ') : user.addresses || '',
       });
     } else {
       setFormData({
         name: '',
         email: '',
         phone: '',
+        password: '',
+        confirmPassword: '',
         role: 'user',
         status: 'active',
         addresses: '',
@@ -136,6 +142,8 @@ const Users = () => {
       name: '',
       email: '',
       phone: '',
+      password: '',
+      confirmPassword: '',
       role: 'user',
       status: 'active',
       addresses: '',
@@ -144,18 +152,66 @@ const Users = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate passwords for new users
+    if (dialogMode === 'add') {
+      if (!formData.password) {
+        toast.error('كلمة المرور مطلوبة للمستخدمين الجدد');
+        return;
+      }
+      if (formData.password.length < 6) {
+        toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+        return;
+      }
+    }
+    
+    // Validate password change for existing users
+    if (dialogMode === 'edit' && formData.password) {
+      if (formData.password.length < 6) {
+        toast.error('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        return;
+      }
+      if (formData.password !== formData.confirmPassword) {
+        toast.error('كلمة المرور وتأكيد كلمة المرور غير متطابقين');
+        return;
+      }
+    }
+    
     try {
+      const submitData = {
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        role: formData.role,
+        status: formData.status,
+      };
+      
+      // Process addresses
+      if (formData.addresses) {
+        const addressArray = formData.addresses.split(',').map(addr => addr.trim()).filter(addr => addr);
+        submitData.addresses = addressArray;
+      }
+      
+      // Only include password if it's provided
+      if (formData.password) {
+        submitData.password = formData.password;
+      }
+      
       if (selectedUser) {
-        await usersAPI.update(selectedUser._id, formData);
-        toast.success('User updated successfully');
+        await usersAPI.update(selectedUser._id, submitData);
+        toast.success('تم تحديث المستخدم بنجاح');
       } else {
-        await usersAPI.create(formData);
-        toast.success('User created successfully');
+        await usersAPI.create(submitData);
+        toast.success('تم إنشاء المستخدم بنجاح');
       }
       handleCloseDialog();
       fetchUsers();
     } catch (err) {
-      toast.error(selectedUser ? 'Failed to update user' : 'Failed to create user');
+      toast.error(selectedUser ? 'فشل في تحديث المستخدم' : 'فشل في إنشاء المستخدم');
     }
   };
 
@@ -670,6 +726,30 @@ const Users = () => {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         disabled={dialogMode === 'view'}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label={dialogMode === 'add' ? "كلمة المرور" : "كلمة المرور الجديدة (اختياري)"}
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                        helperText={dialogMode === 'edit' ? "اتركها فارغة إذا كنت لا تريد تغيير كلمة المرور" : "يجب أن تكون 6 أحرف على الأقل"}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        label="تأكيد كلمة المرور"
+                        type="password"
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        disabled={dialogMode === 'view'}
+                        helperText={dialogMode === 'edit' ? "اتركها فارغة إذا كنت لا تريد تغيير كلمة المرور" : "أعد إدخال كلمة المرور للتأكيد"}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>

@@ -1,7 +1,7 @@
 .flashsales-section {
   background: #fff;
-  padding-top: 40px;
-  padding-bottom: 0;
+  padding-top: 60px;
+  padding-bottom: 60px;
 }
 .flashsales-header {
   margin-bottom: 60px !important;
@@ -26,20 +26,25 @@
 }
 .flashsales-products {
   margin-bottom: 60px !important;
-  gap: 30px !important;
+  gap: 40px !important;
 }
 .flashsales-card {
-  background: #f3f3f3 !important;
-  border-radius: 16px !important;
+  background: #ffffff !important;
+  border-radius: 20px !important;
   min-width: 270px;
   max-width: 320px;
-  box-shadow: 0 2px 8px #eee;
-  margin-right: 30px !important;
-  transition: all 0.3s ease-in-out;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  margin-right: 0 !important;
+  margin-bottom: 20px !important;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  position: relative;
 }
 .flashsales-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 16px #ddd;
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-color: #DB4444;
 }
 .flashsales-discount {
   background: #DB4444 !important;
@@ -50,10 +55,16 @@
   border: none !important;
 }
 .flashsales-product-img {
-  width: 190px;
-  height: 180px;
-  border-radius: 12px;
-  object-fit: fill;
+  width: 100%;
+  height: 220px;
+  border-radius: 16px;
+  object-fit: contain;
+  background: #f8f9fa;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+.flashsales-card:hover .flashsales-product-img {
+  transform: scale(1.05);
 }
 .flashsales-icon {
   width: 34px;
@@ -69,15 +80,50 @@
   background: #DB4444 !important;
   color: #F9F9F9 !important;
   font-size: 1.1rem;
-  border-radius: 8px !important;
+  border-radius: 12px !important;
   border: none !important;
+  padding: 12px 24px !important;
+  transition: all 0.3s ease;
+}
+.flashsales-viewall:hover {
+  background: #c0392b !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(219, 68, 68, 0.3);
 }
 .flashsales-divider {
-  background: #000;
-  height: 2px;
+  background: linear-gradient(90deg, transparent, #DB4444, transparent);
+  height: 3px;
   width: 100%;
   margin-bottom: 78px !important;
+  border-radius: 2px;
 }
+
+/* تحسينات إضافية للبطاقات */
+.flashsales-card .card-body {
+  padding: 20px;
+}
+
+.flashsales-card .btn-dark {
+  background: #2c3e50 !important;
+  border: none !important;
+  border-radius: 12px !important;
+  padding: 12px 20px !important;
+  font-weight: 600 !important;
+  transition: all 0.3s ease;
+}
+
+.flashsales-card .btn-dark:hover {
+  background: #34495e !important;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(44, 62, 80, 0.3);
+}
+
+/* تحسين المسافات بين المنتجات */
+.row.g-4 {
+  --bs-gutter-x: 2rem;
+  --bs-gutter-y: 2rem;
+}
+
 @media (max-width: 991px) {
   .flashsales-header, .flashsales-products {
     margin-left: 0 !important;
@@ -87,29 +133,44 @@
     min-width: 220px;
     max-width: 100%;
   }
+  .row.g-4 {
+    --bs-gutter-x: 1.5rem;
+    --bs-gutter-y: 1.5rem;
+  }
 }
 @media (max-width: 600px) {
-  .flashsales-header {
+  .flashsales-section,
+  .bestsellers-section,
+  .categories-3d-section,
+  .service-features-section {
+    padding: 10px 0 !important;
+    min-height: unset;
+  }
+  .flashsales-header,
+  .bestsellers-header {
     flex-direction: column !important;
-    gap: 1.2rem !important;
-    margin-bottom: 32px !important;
+    gap: 1rem !important;
+    margin-bottom: 20px !important;
     align-items: center !important;
     text-align: center;
   }
-  .flashsales-header > div, .flashsales-header > button, .flashsales-header > .d-flex {
+  .flashsales-header > div,
+  .bestsellers-header > div,
+  .flashsales-header > button,
+  .bestsellers-header > button {
     width: 100%;
     justify-content: center !important;
     align-items: center !important;
     text-align: center;
   }
-  .flashsales-header .display-5, .flashsales-header .fw-bold {
-    font-size: 1.5rem !important;
+  .display-5 {
+    font-size: 1.2rem !important;
     text-align: center;
     width: 100%;
+    margin-bottom: 0.5rem;
   }
   .flashsales-header .d-flex.align-items-center.gap-3,
-  .flashsales-header .d-flex.align-items-center.gap-2,
-  .flashsales-header .d-flex.align-items-center {
+  .bestsellers-header .d-flex.align-items-center.gap-3 {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     justify-content: center !important;
@@ -119,62 +180,484 @@
     overflow-x: auto;
     margin-bottom: 10px;
   }
-  .flashsales-header .text-center, .flashsales-header .text-black {
-    min-width: 60px;
-    font-size: 1rem !important;
-    padding: 0 2px;
-  }
-  .flashsales-header .fw-bold.fs-2 {
-    font-size: 1.1rem !important;
-  }
-  .flashsales-products {
-    flex-direction: column !important;
-    gap: 12px !important;
-    margin-bottom: 24px !important;
-  }
-  .flashsales-card {
+  .flashsales-card,
+  .bestsellers-section .flashsales-card {
     min-width: 90vw;
     max-width: 98vw;
-    margin-right: 0 !important;
-    margin-left: 0 !important;
-    margin-bottom: 12px !important;
+    margin: 0 auto 18px auto !important;
     padding: 10px 6px !important;
+    border-radius: 14px !important;
+    box-shadow: 0 2px 8px #eee;
   }
   .flashsales-product-img {
-    width: 120px;
-    height: 100px;
-  }
-  .flashsales-icon {
-    width: 24px;
-    height: 24px;
-  }
-  .flashsales-rating {
-    width: 60px;
-    height: 14px;
-  }
-  .flashsales-viewall {
-    font-size: 1rem;
-    padding: 10px 18px !important;
-  }
-  .flashsales-divider {
-    margin-bottom: 32px !important;
-  }
-  .flashsales-timer-row {
-    flex-direction: row !important;
-    flex-wrap: nowrap !important;
-    overflow-x: auto !important;
-    gap: 0.3rem !important;
-    justify-content: center !important;
-    align-items: center !important;
     width: 100%;
-    margin-bottom: 10px;
+    height: 140px;
+    padding: 10px;
+    border-radius: 10px;
   }
-  .flashsales-timer-row .text-center, .flashsales-timer-row .text-black {
-    min-width: 48px;
-    font-size: 0.95rem !important;
-    padding: 0 1px;
+  .card-body {
+    padding: 8px !important;
   }
-  .flashsales-timer-row .fw-bold.fs-2 {
+  .btn,
+  .btn-dark,
+  .btn-danger {
+    font-size: 1rem !important;
+    padding: 10px 0 !important;
+    border-radius: 10px !important;
+    width: 100%;
+    min-height: 38px;
+  }
+  .scrollable-product-card {
+    flex: 0 0 90vw;
+    min-width: 90vw;
+    max-width: 98vw;
+  }
+  .scroll-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 0.95rem;
+    top: 98%;
+    left: 0 !important;
+    right: 0 !important;
+    transform: none;
+    margin: 0 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+    border-radius: 50%;
+    z-index: 30;
+  }
+  .scroll-left { left: 0 !important; }
+  .scroll-right { right: 0 !important; }
+  .section-spacer { height: 12px; }
+  .alert, .alert-info, .alert-warning, .alert-success, .alert-danger {
+    font-size: 0.95rem;
+    padding: 0.7rem 0.7rem;
+    border-radius: 10px;
+  }
+  .service-feature-card {
+    padding: 10px 4px !important;
+    border-radius: 12px !important;
+  }
+  .service-icon-wrapper {
+    width: 60px;
+    height: 60px;
+  }
+  .service-icon {
+    width: 36px !important;
+    height: 36px !important;
+  }
+}
+
+/* تحسين تجاوب الخطوط للعناوين الكبيرة */
+@media (max-width: 400px) {
+  .display-5 {
     font-size: 1rem !important;
   }
+  .flashsales-card,
+  .bestsellers-section .flashsales-card {
+    min-width: 98vw;
+    max-width: 99vw;
+  }
+}
+
+/* تحسينات مكون الخدمات */
+.service-features-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+  padding: 60px 0;
+}
+
+.service-feature-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.service-feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #db4444, #c0392b);
+  transform: scaleX(0);
+  transition: transform 0.3s ease;
+}
+
+.service-feature-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-color: #db4444;
+}
+
+.service-feature-card:hover::before {
+  transform: scaleX(1);
+}
+
+.service-feature-card:hover .service-icon {
+  transform: scale(1.1);
+}
+
+.service-icon-wrapper {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 50%;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.service-feature-card:hover .service-icon-wrapper {
+  background: linear-gradient(135deg, #db4444 0%, #c0392b 100%);
+  transform: scale(1.05);
+}
+
+.service-icon {
+  filter: grayscale(100%);
+  transition: all 0.3s ease;
+}
+
+.service-feature-card:hover .service-icon {
+  filter: grayscale(0%) brightness(0) invert(1);
+}
+
+@media (max-width: 768px) {
+  .service-features-section {
+    padding: 40px 0;
+  }
+  
+  .service-feature-card {
+    margin-bottom: 20px;
+  }
+  
+  .service-icon-wrapper {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .service-icon {
+    width: 60px !important;
+    height: 60px !important;
+  }
+}
+
+/* مسافات بين الأقسام */
+.section-spacer {
+  height: 40px;
+  background: transparent;
+}
+
+@media (max-width: 768px) {
+  .section-spacer {
+    height: 20px;
+  }
+}
+
+/* تحسينات إضافية للصفحة الرئيسية */
+.home-bg-animated {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  z-index: -1;
+  opacity: 0.8;
+}
+
+/* تحسين تأثيرات التمرير */
+[data-aos] {
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* تحسين مظهر البطاقات عند التمرير */
+.flashsales-card[data-aos] {
+  transition-delay: 0.1s;
+}
+
+.flashsales-card[data-aos]:nth-child(2) {
+  transition-delay: 0.2s;
+}
+
+.flashsales-card[data-aos]:nth-child(3) {
+  transition-delay: 0.3s;
+}
+
+.flashsales-card[data-aos]:nth-child(4) {
+  transition-delay: 0.4s;
+}
+
+/* قوائم قابلة للتمرير */
+.scrollable-products-container {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+  margin-bottom: 2rem;
+}
+
+.scrollable-products-wrapper {
+  display: flex;
+  gap: 2rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding: 1rem 0;
+}
+
+.scrollable-products-wrapper::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollable-product-card {
+  flex: 0 0 280px;
+  min-width: 280px;
+  max-width: 280px;
+}
+
+/* أزرار التمرير */
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #db4444;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+  z-index: 20;
+  border: 2px solid #db4444;
+  opacity: 0.95;
+}
+
+.scroll-btn:hover {
+  background: #db4444;
+  color: #fff;
+  transform: translateY(-50%) scale(1.12);
+  box-shadow: 0 12px 40px rgba(219, 68, 68, 0.25);
+  border-color: #db4444;
+  opacity: 1;
+}
+
+.scroll-btn:active {
+  transform: translateY(-50%) scale(0.97);
+}
+
+.scroll-left {
+  left: -70px;
+}
+
+.scroll-right {
+  right: -70px;
+}
+
+@media (max-width: 1200px) {
+  .scroll-left {
+    left: -40px;
+  }
+  .scroll-right {
+    right: -40px;
+  }
+}
+
+@media (max-width: 900px) {
+  .scroll-left {
+    left: -20px;
+  }
+  .scroll-right {
+    right: -20px;
+  }
+  .scroll-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .scroll-left {
+    left: 0;
+  }
+  .scroll-right {
+    right: 0;
+  }
+  .scroll-btn {
+    width: 38px;
+    height: 38px;
+    font-size: 1rem;
+    top: 95%;
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  }
+}
+
+/* تحسين مظهر البطاقات في القائمة القابلة للتمرير */
+.scrollable-product-card .flashsales-card {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* تحسين الاستجابة للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .scrollable-product-card {
+    flex: 0 0 250px;
+    min-width: 250px;
+    max-width: 250px;
+  }
+  
+  .scroll-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+  
+  .scroll-left {
+    left: -20px;
+  }
+  
+  .scroll-right {
+    right: -20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .scrollable-product-card {
+    flex: 0 0 220px;
+    min-width: 220px;
+    max-width: 220px;
+  }
+  
+  .scroll-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+  }
+  
+  .scroll-left {
+    left: -17px;
+  }
+  
+  .scroll-right {
+    right: -17px;
+  }
+}
+
+/* تحسين عرض عدد المنتجات في العنوان */
+.display-5 + .fs-6 {
+  margin-top: 0.5rem;
+  opacity: 0.8;
+  font-weight: 500;
+}
+
+/* تحسين رسالة عدم وجود منتجات */
+.alert-info {
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border: 1px solid #bbdefb;
+  color: #1976d2;
+  border-radius: 12px;
+  padding: 1.5rem;
+  font-weight: 500;
+}
+
+/* تحسين الرسائل التحذيرية */
+.alert-warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #fce4ec 100%);
+  border: 1px solid #ffcc02;
+  color: #f57c00;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.alert-warning i {
+  color: #ff9800;
+}
+
+/* تحسين الرسائل الناجحة */
+.alert-success {
+  background: linear-gradient(135deg, #e8f5e8 0%, #f1f8e9 100%);
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+  border-radius: 12px;
+  padding: 1rem 1.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.alert-success i {
+  color: #4caf50;
+}
+
+/* تحسين زر إعادة المحاولة */
+.btn-outline-primary {
+  border-color: #1976d2;
+  color: #1976d2;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background: #1976d2;
+  border-color: #1976d2;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+}
+
+/* تحسين زر إعادة المحاولة في حالة الخطأ */
+.btn-outline-danger {
+  border-color: #dc3545;
+  color: #dc3545;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-danger:hover {
+  background: #dc3545;
+  border-color: #dc3545;
+  color: #ffffff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* تحسين عرض النص الصغير في رسائل الخطأ */
+.alert-danger small {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+/* تحسين عرض الأيقونات في الرسائل */
+.alert i {
+  font-size: 1.1rem;
+  vertical-align: middle;
+}
+
+.alert-success i {
+  color: #4caf50;
+}
+
+.alert-warning i {
+  color: #ff9800;
+}
+
+.alert-info i {
+  color: #2196f3;
+}
+
+.alert-danger i {
+  color: #f44336;
 } 
