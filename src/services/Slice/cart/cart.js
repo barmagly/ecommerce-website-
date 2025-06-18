@@ -194,23 +194,52 @@ const cartSlice = createSlice({
             })
             .addCase(getCartThunk.fulfilled, (state, action) => {
                 state.loading = false;
+                state.error = null;
                 // Filter out cart items with missing or null prdID
                 if (action.payload && action.payload.cartItems) {
-                    const filteredCartItems = action.payload.cartItems.filter(item => item.prdID && typeof item.prdID === 'object');
-                    if (filteredCartItems.length < action.payload.cartItems.length && typeof window !== 'undefined' && window.toast) {
-                        window.toast.info('تم حذف بعض المنتجات من السلة لأنها لم تعد متوفرة');
+                    const filteredCartItems = action.payload.cartItems.filter(item => 
+                        item.prdID && 
+                        typeof item.prdID === 'object' && 
+                        item.quantity > 0
+                    );
+                    
+                    // Check if any items were filtered out
+                    if (filteredCartItems.length < action.payload.cartItems.length) {
+                        console.log('🧹 Filtered out invalid cart items:', {
+                            before: action.payload.cartItems.length,
+                            after: filteredCartItems.length
+                        });
+                        if (typeof window !== 'undefined' && window.toast) {
+                            window.toast.info('تم تحديث السلة - بعض المنتجات لم تعد متوفرة', {
+                                position: "top-center",
+                                rtl: true,
+                                autoClose: 3000
+                            });
+                        }
                     }
+                    
                     state.products = {
                         ...action.payload,
-                        cartItems: filteredCartItems
+                        cartItems: filteredCartItems,
+                        total: calculateTotal(filteredCartItems)
                     };
                 } else {
-                    state.products = action.payload;
+                    state.products = {
+                        cartItems: [],
+                        total: 0
+                    };
                 }
             })
             .addCase(getCartThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload?.message || "getProducts failed";
+                state.error = action.payload?.message || "فشل في تحميل السلة";
+                if (typeof window !== 'undefined' && window.toast) {
+                    window.toast.error(state.error, {
+                        position: "top-center",
+                        rtl: true,
+                        autoClose: 3000
+                    });
+                }
             })
             // Add to Cart
             .addCase(addToCartThunk.pending, (state) => {

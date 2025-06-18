@@ -42,18 +42,22 @@ export default function Login() {
         return;
       }
 
+      console.log("🔄 Processing Google login with idToken:", idToken.substring(0, 50) + "...");
+
       const res = await dispatch(googleLoginThunk({
         idToken: idToken
       }));
 
       if (res.payload?.status === "success") {
+        console.log("✅ Google login successful:", res.payload);
         toast.success("تم تسجيل الدخول بنجاح");
         navigate("/");
       } else {
+        console.error("❌ Google login failed:", res.payload);
         toast.error(res.payload?.message || "حدث خطأ أثناء تسجيل الدخول");
       }
     } catch (error) {
-      console.error("Google login error:", error);
+      console.error("❌ Google login error:", error);
       toast.error("حدث خطأ أثناء تسجيل الدخول باستخدام Google");
     }
   };

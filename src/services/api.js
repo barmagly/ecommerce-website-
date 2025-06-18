@@ -185,7 +185,7 @@ export const couponsAPI = {
     create: (data) => api.post('/api/coupons', data),
     update: (id, data) => api.patch(`/api/coupons/${id}`, data),
     delete: (id) => api.delete(`/api/coupons/${id}`),
-    validate: (code) => api.get(`/api/coupons/validate/${code}`),
+    validate: (code) => userApi.get(`/api/coupons/validate/${code}`),
 };
 
 // Carts API

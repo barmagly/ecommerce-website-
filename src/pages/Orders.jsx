@@ -4,31 +4,44 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from '../components/ProtectedRoute';
-import { getOrdersThunk } from "../services/Slice/order/order";
+import { getOrdersThunk, updateOrderStatusThunk, updateOrderStatusLocally, loadLocalUpdates, removeOrderLocally, cleanupOldLocalUpdates, cleanupOldDeletedOrders } from "../services/Slice/order/order";
+import { toast } from 'react-toastify';
 
 const statusTabs = [
   { key: "all", label: "جميع الطلبات" },
   { key: "pending", label: "قيد الانتظار" },
-  { key: "processing", label: "قيد المعالجة" },
+  { key: "confirmed", label: "مؤكدة" },
   { key: "shipped", label: "تم الشحن" },
   { key: "delivered", label: "تم التوصيل" },
-  { key: "cancelled", label: "ملغي" },
+  { key: "cancelled", label: "ملغية" }
 ];
 
 export default function Orders() {
   const dispatch = useDispatch();
-  const { orders, loading, error } = useSelector((state) => state.order);
+  const orderState = useSelector((state) => state.order);
+  const { orders = [], loading = false, error = null } = orderState || {};
   const [activeTab, setActiveTab] = useState("all");
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [hideCancelledOrders, setHideCancelledOrders] = useState(true);
 
   useEffect(() => {
     dispatch(getOrdersThunk());
+    dispatch(loadLocalUpdates());
+    dispatch(cleanupOldLocalUpdates());
+    dispatch(cleanupOldDeletedOrders());
   }, [dispatch]);
 
-  const filteredOrders = activeTab === "all"
-    ? orders
-    : orders.filter(order => order.status === activeTab);
+  const filteredOrders = orders.filter(order => {
+    if (activeTab === "all") {
+      return hideCancelledOrders ? order.status !== 'cancelled' : true;
+    } else if (activeTab === "cancelled") {
+      return order.status === 'cancelled';
+    } else {
+      return order.status === activeTab;
+    }
+  });
 
   // Sort orders by createdAt date (newest first)
   const sortedOrders = [...filteredOrders].sort((a, b) => 
@@ -53,21 +66,36 @@ export default function Orders() {
     });
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, isLocalUpdate = false) => {
+    const baseClass = "badge rounded-pill px-3 py-2";
+    let statusClass = "";
+    
     switch (status) {
-      case 'delivered':
-        return 'badge bg-success';
-      case 'shipped':
-        return 'badge bg-info';
-      case 'processing':
-        return 'badge bg-primary';
-      case 'pending':
-        return 'badge bg-warning text-dark';
-      case 'cancelled':
-        return 'badge bg-danger';
+      case "pending":
+        statusClass = "bg-warning text-dark";
+        break;
+      case "confirmed":
+        statusClass = "bg-success text-white";
+        break;
+      case "shipped":
+        statusClass = "bg-info text-white";
+        break;
+      case "delivered":
+        statusClass = "bg-primary text-white";
+        break;
+      case "cancelled":
+        statusClass = "bg-danger text-white";
+        break;
       default:
-        return 'badge bg-secondary';
+        statusClass = "bg-secondary text-white";
     }
+    
+    // إضافة مؤشر للتحديث المحلي
+    if (isLocalUpdate) {
+      statusClass += " border border-warning";
+    }
+    
+    return `${baseClass} ${statusClass}`;
   };
 
   const getStatusLabel = (status) => {
@@ -87,14 +115,64 @@ export default function Orders() {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm('هل أنت متأكد من إلغاء هذا الطلب؟')) return;
+    
+    try {
+      setIsUpdating(true);
+      await dispatch(updateOrderStatusThunk({ orderId, status: 'cancelled' })).unwrap();
+      toast.success('تم إلغاء الطلب بنجاح');
+      setShowModal(false);
+    } catch (error) {
+      console.error('Error canceling order:', error);
+      toast.error(error || 'فشل في إلغاء الطلب');
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  const canModifyOrder = (status) => {
+    return status === 'pending';
+  };
+
+  const handleRemoveCancelledOrder = (orderId) => {
+    if (!window.confirm('هل أنت متأكد من إزالة هذا الطلب من القائمة؟')) return;
+    
+    try {
+      // إزالة من localStorage
+      const localOrders = JSON.parse(localStorage.getItem('localOrderUpdates') || '{}');
+      delete localOrders[orderId];
+      localStorage.setItem('localOrderUpdates', JSON.stringify(localOrders));
+      
+      // إضافة إلى قائمة الطلبات المحذوفة
+      const deletedOrders = JSON.parse(localStorage.getItem('deletedOrders') || '[]');
+      deletedOrders.push({
+        orderId,
+        deletedAt: new Date().toISOString()
+      });
+      localStorage.setItem('deletedOrders', JSON.stringify(deletedOrders));
+      
+      // إزالة من Redux store
+      dispatch(removeOrderLocally(orderId));
+      
+      toast.success('تم إزالة الطلب من القائمة');
+    } catch (error) {
+      console.error('Error removing order:', error);
+      toast.error('فشل في إزالة الطلب');
+    }
+  };
+
   if (loading) {
     return (
       <ProtectedRoute>
         <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
           <Header />
-          <div className="container py-5 text-center">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">جاري التحميل...</span>
+          <Breadcrumb title="طلباتي" />
+          <div className="container py-5">
+            <div className="text-center">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">جاري التحميل...</span>
+              </div>
             </div>
           </div>
           <Footer />
@@ -108,9 +186,10 @@ export default function Orders() {
       <ProtectedRoute>
         <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
           <Header />
+          <Breadcrumb title="طلباتي" />
           <div className="container py-5">
             <div className="alert alert-danger" role="alert">
-              {error}
+              {typeof error === 'object' ? error.message || 'حدث خطأ ما' : error}
             </div>
           </div>
           <Footer />
@@ -127,7 +206,59 @@ export default function Orders() {
           <Breadcrumb items={[
             { label: "الطلبات", to: "/orders" }
           ]} />
-          <h2 className="fw-bold mb-4">الطلبات</h2>
+          <div className="d-flex justify-content-between align-items-center mb-4">
+            <h2 className="fw-bold mb-0">الطلبات</h2>
+            {activeTab === "all" && (
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  id="hideCancelled"
+                  checked={hideCancelledOrders}
+                  onChange={(e) => setHideCancelledOrders(e.target.checked)}
+                />
+                <label className="form-check-label" htmlFor="hideCancelled">
+                  إخفاء الطلبات الملغية
+                </label>
+              </div>
+            )}
+          </div>
+          
+          {/* Order Statistics */}
+          <div className="row mb-4">
+            <div className="col-md-3">
+              <div className="card bg-primary text-white">
+                <div className="card-body text-center">
+                  <h5 className="card-title">إجمالي الطلبات</h5>
+                  <h3>{orders.length}</h3>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3">
+              <div className="card bg-warning text-white">
+                <div className="card-body text-center">
+                  <h5 className="card-title">قيد الانتظار</h5>
+                  <h3>{orders.filter(o => o.status === 'pending').length}</h3>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3">
+              <div className="card bg-success text-white">
+                <div className="card-body text-center">
+                  <h5 className="card-title">مؤكدة</h5>
+                  <h3>{orders.filter(o => o.status === 'confirmed').length}</h3>
+                </div>
+              </div>
+            </div>
+            <div className="col-md-3">
+              <div className="card bg-danger text-white">
+                <div className="card-body text-center">
+                  <h5 className="card-title">ملغية</h5>
+                  <h3>{orders.filter(o => o.status === 'cancelled').length}</h3>
+                </div>
+              </div>
+            </div>
+          </div>
           <ul className="nav nav-tabs mb-4">
             {statusTabs.map(tab => (
               <li className="nav-item" key={tab.key}>
@@ -143,7 +274,21 @@ export default function Orders() {
           <div className="card shadow-sm border-0">
             <div className="card-body">
               {sortedOrders.length === 0 ? (
-                <div className="text-center py-5">لا توجد طلبات في هذا القسم.</div>
+                <div className="text-center py-5">
+                  {activeTab === "cancelled" ? (
+                    <div>
+                      <i className="fas fa-trash text-muted" style={{ fontSize: '3rem' }}></i>
+                      <h5 className="mt-3">لا توجد طلبات ملغية</h5>
+                      <p className="text-muted">لم تقم بإلغاء أي طلبات بعد</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <i className="fas fa-box text-muted" style={{ fontSize: '3rem' }}></i>
+                      <h5 className="mt-3">لا توجد طلبات في هذا القسم</h5>
+                      <p className="text-muted">لم يتم العثور على طلبات تطابق المعايير المحددة</p>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="table-responsive">
                   <table className="table table-bordered text-center align-middle">
@@ -152,10 +297,13 @@ export default function Orders() {
                         <th>رقم الطلب</th>
                         <th>تاريخ الطلب</th>
                         <th>الحالة</th>
+                        <th>المدينة</th>
+                        <th>مصاريف الشحن</th>
+                        <th>مدة التوصيل</th>
                         <th>عدد المنتجات</th>
                         <th>الإجمالي</th>
                         <th>طريقة الدفع</th>
-                        <th>تفاصيل</th>
+                        <th>إجراءات</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -164,15 +312,50 @@ export default function Orders() {
                           <td>#{order._id.slice(-6)}</td>
                           <td>{formatDate(order.createdAt)}</td>
                           <td>
-                            <span className={getStatusBadge(order.status)}>
+                            <span className={getStatusBadge(order.status, order.isLocalUpdate)}>
                               {getStatusLabel(order.status)}
                             </span>
+                            {order.isLocalUpdate && (
+                              <div className="small text-muted mt-1">
+                                <i className="fas fa-info-circle text-warning"></i>
+                                تحديث محلي
+                              </div>
+                            )}
                           </td>
+                          <td>{order.city || 'نجع حمادي'}</td>
+                          <td>{order.shippingCost || 0} ج.م</td>
+                          <td>{order.deliveryDays || 2} يوم</td>
                           <td>{order.cartItems?.length || 0}</td>
                           <td>{order.total} ج.م</td>
                           <td>{order.paymentMethod}</td>
                           <td>
-                            <button className="btn btn-outline-primary btn-sm" onClick={() => handleShowDetails(order)}>عرض</button>
+                            <div className="btn-group">
+                              <button 
+                                className="btn btn-outline-primary btn-sm" 
+                                onClick={() => handleShowDetails(order)}
+                              >
+                                عرض
+                              </button>
+                              {canModifyOrder(order.status) && (
+                                <button 
+                                  className="btn btn-outline-danger btn-sm" 
+                                  onClick={() => handleCancelOrder(order._id)}
+                                  disabled={isUpdating}
+                                  title="إلغاء الطلب"
+                                >
+                                  {isUpdating ? 'جاري الإلغاء...' : 'إلغاء'}
+                                </button>
+                              )}
+                              {order.status === 'cancelled' && (
+                                <button 
+                                  className="btn btn-outline-danger btn-sm" 
+                                  onClick={() => handleRemoveCancelledOrder(order._id)}
+                                  title="إزالة من القائمة"
+                                >
+                                  <i className="fas fa-trash"></i>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -199,12 +382,24 @@ export default function Orders() {
                       <ul className="list-unstyled mb-3">
                         <li><strong>رقم الطلب:</strong> #{selectedOrder._id.slice(-6)}</li>
                         <li><strong>تاريخ الطلب:</strong> {formatDate(selectedOrder.createdAt)}</li>
-                        <li><strong>الحالة:</strong> <span className={getStatusBadge(selectedOrder.status)}>
+                        <li><strong>الحالة:</strong> <span className={getStatusBadge(selectedOrder.status, selectedOrder.isLocalUpdate)}>
                           {getStatusLabel(selectedOrder.status)}
                         </span></li>
                         <li><strong>طريقة الدفع:</strong> {selectedOrder.paymentMethod}</li>
                         <li><strong>حالة الدفع:</strong> {selectedOrder.paymentStatus}</li>
+                        <li><strong>مصاريف الشحن:</strong> {selectedOrder.shippingCost || 0} ج.م</li>
+                        <li><strong>مدة التوصيل:</strong> {selectedOrder.deliveryDays || 2} يوم</li>
                         <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
+                      </ul>
+                      <h6 className="fw-bold mb-3">معلومات العميل</h6>
+                      <ul className="list-unstyled mb-3">
+                        <li><strong>الاسم:</strong> {selectedOrder.name}</li>
+                        <li><strong>البريد الإلكتروني:</strong> {selectedOrder.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}</li>
+                        <li><strong>رقم الهاتف:</strong> {selectedOrder.phone}</li>
+                        <li><strong>العنوان:</strong> {selectedOrder.address}</li>
+                        <li><strong>المدينة:</strong> {selectedOrder.city || 'نجع حمادي'}</li>
+                        <li><strong>الرمز البريدي:</strong> {selectedOrder.postalCode}</li>
+                        <li><strong>الدولة:</strong> {selectedOrder.country}</li>
                       </ul>
                     </div>
                     <div className="col-md-6">
@@ -273,6 +468,28 @@ export default function Orders() {
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>إغلاق</button>
+                  {canModifyOrder(selectedOrder.status) && (
+                    <button 
+                      type="button" 
+                      className="btn btn-danger"
+                      onClick={() => handleCancelOrder(selectedOrder._id)}
+                      disabled={isUpdating}
+                    >
+                      {isUpdating ? 'جاري الإلغاء...' : 'إلغاء الطلب'}
+                    </button>
+                  )}
+                  {selectedOrder.status === 'cancelled' && (
+                    <button 
+                      type="button" 
+                      className="btn btn-outline-secondary"
+                      onClick={() => {
+                        handleRemoveCancelledOrder(selectedOrder._id);
+                        handleCloseModal();
+                      }}
+                    >
+                      إزالة من القائمة
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

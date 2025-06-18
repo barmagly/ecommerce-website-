@@ -44,7 +44,7 @@ export default function Cart() {
     dispatch(increaseQ({ variantId, prdID }));
   };
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (!products?.cartItems?.length) {
       toast.error('سلة المشتريات فارغة', {
         position: "top-center",
@@ -54,20 +54,33 @@ export default function Cart() {
       return;
     }
 
-    // التحقق من نطاق الشحن للمنتجات
-    const hasNagHamadiOnlyProducts = products.cartItems.some(item => 
-      item.prdID?.shippingAddress?.type === 'nag_hamadi'
-    );
+    try {
+      // Refresh cart data before proceeding
+      await dispatch(getCartThunk()).unwrap();
+      
+      // التحقق من نطاق الشحن للمنتجات
+      const hasNagHamadiOnlyProducts = products.cartItems.some(item => 
+        item.prdID?.shippingAddress?.type === 'nag_hamadi'
+      );
 
-    if (hasNagHamadiOnlyProducts) {
-      toast.info('بعض المنتجات متاحة للشحن في نجع حمادي فقط. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
+      if (hasNagHamadiOnlyProducts) {
+        toast.info('بعض المنتجات متاحة للشحن في نجع حمادي فقط. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
+          position: "top-center",
+          rtl: true,
+          autoClose: 5000
+        });
+      }
+
+      // Navigate to checkout with fresh cart data
+      navigate('/checkout');
+    } catch (error) {
+      console.error('Failed to proceed to checkout:', error);
+      toast.error('حدث خطأ أثناء الانتقال إلى صفحة إتمام الشراء. حاول مرة أخرى.', {
         position: "top-center",
         rtl: true,
-        autoClose: 5000
+        autoClose: 3000
       });
     }
-
-    navigate('/checkout', { state: { cartItems: products.cartItems, total: products.total } });
   };
 
   useEffect(() => {
@@ -134,7 +147,9 @@ export default function Cart() {
         <div className="row">
           <div className="col-12 col-lg-8">
             {products.cartItems.map((item) => (
-              <div key={item._id} className="card mb-3">
+              <div key={item._id} className={`card mb-3 ${
+                item.prdID?.shippingAddress?.type === 'nag_hamadi' ? 'border-warning' : ''
+              }`}>
                 <div className="row g-0">
                   <div className="col-md-4">
                     <img
@@ -157,6 +172,13 @@ export default function Cart() {
                       <div className="text-muted small mb-2">
                         الشحن: {item.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item.prdID?.deliveryDays || 2} يوم
                       </div>
+                      {item.prdID?.shippingAddress?.type === 'nag_hamadi' && (
+                        <div className="alert alert-warning py-2 mb-2">
+                          <small>
+                            🚚 <strong>متاح للشحن في نجع حمادي فقط</strong>
+                          </small>
+                        </div>
+                      )}
                       <div className="d-flex align-items-center">
                         <button
                           className="btn btn-outline-secondary btn-sm"

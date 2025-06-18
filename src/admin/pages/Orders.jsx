@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -77,9 +77,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { fetchOrders, updateOrderStatus, deleteOrder } from '../store/slices/ordersSlice';
 
+const POLLING_INTERVAL = 30000; // Poll every 30 seconds
+
 const Orders = () => {
   const theme = useTheme();
   const dispatch = useDispatch();
+  const pollingInterval = useRef(null);
 
   const { items: orders, loading, error, stats } = useSelector(state => state.orders || { items: [], loading: false, error: null, stats: { total: 0, statusCounts: {}, paymentStatusCounts: {} } });
   const [page, setPage] = useState(0);
@@ -87,6 +90,7 @@ const Orders = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedPaymentStatus, setSelectedPaymentStatus] = useState('All');
+  const [actionLoading, setActionLoading] = useState({ id: null, type: null });
 
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [orderDetailsOpen, setOrderDetailsOpen] = useState(false);
@@ -117,9 +121,31 @@ const Orders = () => {
     deliveredAt: '',
   });
 
-  useEffect(() => {
+  // Start polling for orders
+  const startPolling = useCallback(() => {
+    if (pollingInterval.current) return;
+    
+    // Initial fetch
     dispatch(fetchOrders());
+    
+    // Set up polling
+    pollingInterval.current = setInterval(() => {
+      dispatch(fetchOrders());
+    }, POLLING_INTERVAL);
   }, [dispatch]);
+
+  // Stop polling
+  const stopPolling = useCallback(() => {
+    if (pollingInterval.current) {
+      clearInterval(pollingInterval.current);
+      pollingInterval.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    startPolling();
+    return () => stopPolling();
+  }, [startPolling, stopPolling]);
 
   // Utility functions
   const getStatusLabel = (status) => {
@@ -203,14 +229,30 @@ const Orders = () => {
     setEditOrderOpen(true);
   };
 
-  const handleUpdateOrderStatus = (orderId, newStatus) => {
-    dispatch(updateOrderStatus({ id: orderId, status: newStatus }));
-    setMenuAnchorEl(null);
+  const handleUpdateOrderStatus = async (orderId, newStatus) => {
+    try {
+      setActionLoading({ id: orderId, type: 'status' });
+      await dispatch(updateOrderStatus({ id: orderId, status: newStatus })).unwrap();
+      toast.success('تم تحديث حالة الطلب بنجاح');
+    } catch (error) {
+      toast.error(error.message || 'فشل تحديث حالة الطلب');
+    } finally {
+      setActionLoading({ id: null, type: null });
+      setMenuAnchorEl(null);
+    }
   };
 
-  const handleDeleteOrder = (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
-      dispatch(deleteOrder(orderId));
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
+
+    try {
+      setActionLoading({ id: orderId, type: 'delete' });
+      await dispatch(deleteOrder(orderId)).unwrap();
+      toast.success('تم حذف الطلب بنجاح');
+    } catch (error) {
+      toast.error(error.message || 'فشل حذف الطلب');
+    } finally {
+      setActionLoading({ id: null, type: null });
       setMenuAnchorEl(null);
     }
   };
@@ -530,149 +572,100 @@ const Orders = () => {
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
                   <TableCell sx={{ fontWeight: 'bold' }} align='center'>رقم الطلب</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>تاريخ الطلب</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align='center'>العميل</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>المجموع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>سعر المورد</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الربح الصافي</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>المدينة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>مصاريف الشحن</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>مدة التوصيل</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجمالي</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align='center'>حالة الطلب</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }} align='center'>حالة الدفع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>طريقة الدفع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>التاريخ</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجراءات</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>إجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                <AnimatePresence>
-                  {sortedAndFilteredOrders
+                {loading && !orders.length ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      <CircularProgress />
+                    </TableCell>
+                  </TableRow>
+                ) : error ? (
+                  <TableRow>
+                    <TableCell colSpan={8}>
+                      <Alert severity="error">{error}</Alert>
+                    </TableCell>
+                  </TableRow>
+                ) : !sortedAndFilteredOrders.length ? (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">
+                      لا توجد طلبات
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sortedAndFilteredOrders
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((order, index) => (
-                      <motion.tr
+                    .map((order) => (
+                      <TableRow
                         key={order._id}
-                        component={TableRow}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        transition={{ duration: 0.3, delay: index * 0.05 }}
-                        sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
+                        sx={{
+                          '&:last-child td, &:last-child th': { border: 0 },
+                          backgroundColor: order.isNew ? alpha(theme.palette.info.light, 0.1) : 'inherit',
+                        }}
                       >
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
                             #{order._id.slice(-6)}
                           </Typography>
                         </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                            <Avatar
-                              src={order.image}
-                              sx={{ bgcolor: 'primary.main' }}
-                            >
-                              <PersonIcon />
-                            </Avatar>
-                            <Box>
-                              <Typography variant="subtitle2" fontWeight="bold" textAlign={'right'}>
-                                {order.name}
-                              </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {order.email}
-                              </Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {order.total} جنيه
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {(() => {
-                              const supplierTotal = order.cartItems?.reduce((total, item) => {
-                                return total + (item.supplierPrice || 0) * item.quantity;
-                              }, 0) || 0;
-                              return `${supplierTotal.toFixed(2)} جنيه`;
-                            })()}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ 
-                            p: 1, 
-                            bgcolor: 'rgba(76, 175, 80, 0.1)', 
-                            borderRadius: 1, 
-                            border: '1px solid rgba(76, 175, 80, 0.3)',
-                            textAlign: 'center'
-                          }}>
-                            <Typography variant="body2" color="success.main" fontWeight="bold">
-                              {(() => {
-                                const supplierTotal = order.cartItems?.reduce((total, item) => {
-                                  return total + (item.supplierPrice || 0) * item.quantity;
-                                }, 0) || 0;
-                                const profit = parseFloat(order.total) - supplierTotal;
-                                return `${profit.toFixed(2)} جنيه`;
-                              })()}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {(() => {
-                                const supplierTotal = order.cartItems?.reduce((total, item) => {
-                                  return total + (item.supplierPrice || 0) * item.quantity;
-                                }, 0) || 0;
-                                const profit = parseFloat(order.total) - supplierTotal;
-                                const percentage = (profit / parseFloat(order.total)) * 100;
-                                return `${percentage.toFixed(1)}%`;
-                              })()}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          {renderStatusBadge(order.status)}
-                        </TableCell>
-
-                        <TableCell>
-                          {renderStatusBadge(order.paymentStatus)}
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {getPaymentMethodLabel(order.paymentMethod)}
-                          </Typography>
-                        </TableCell>
-
                         <TableCell>
                           <Typography variant="body2" color="text.secondary">
                             {new Date(order.createdAt).toLocaleDateString('ar-EG')}
                           </Typography>
                         </TableCell>
-
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
-                            <Tooltip title="عرض التفاصيل">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handleOpenDialog(order)}
-                              >
-                                <ViewIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-
-                            <Tooltip title="حذف">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteOrder(order._id)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
+                          <div style={{ maxWidth: 200 }}>
+                            <Typography variant="body2" noWrap>
+                              {order.name}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary" noWrap>
+                              {order.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
+                            </Typography>
+                            <Typography variant="caption" display="block" noWrap>
+                              {order.phone}
+                            </Typography>
+                          </div>
                         </TableCell>
-                      </motion.tr>
-                    ))}
-                </AnimatePresence>
+                        <TableCell>{order.city || 'نجع حمادي'}</TableCell>
+                        <TableCell>{order.shippingCost || 0} ج.م</TableCell>
+                        <TableCell>{order.deliveryDays || 2} يوم</TableCell>
+                        <TableCell>{order.total} ج.م</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={getStatusLabel(order.status)}
+                            color={getStatusColor(order.status)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={getPaymentStatusLabel(order.paymentStatus)}
+                            color={getPaymentStatusColor(order.paymentStatus)}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={(event) => handleMenuClick(event, order._id)}
+                            disabled={!!actionLoading.id}
+                          >
+                            <MoreIcon />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                )}
               </TableBody>
             </Table>
           </TableContainer>
@@ -708,226 +701,83 @@ const Orders = () => {
           تفاصيل الطلب
         </DialogTitle>
 
-        <DialogContent sx={{ p: 3, mt: 2 }}>
-          {selectedOrder && (
-            <Grid container spacing={3}>
-              {/* Customer Information */}
-              <Grid grid={{ xs: 12, md: 6 }}>
-                <Typography variant="h6" gutterBottom>
-                  معلومات العميل
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    الاسم: {selectedOrder.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    البريد الإلكتروني: {selectedOrder.email}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    رقم الهاتف: {selectedOrder.phone}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {/* Shipping Information */}
-              <Grid grid={{ xs: 12, md: 6 }}>
-                <Typography variant="h6" gutterBottom>
-                  معلومات الشحن
-                </Typography>
-                <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    العنوان: {selectedOrder.address}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    المدينة: {selectedOrder.city}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    الرمز البريدي: {selectedOrder.postalCode}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    الدولة: {selectedOrder.country}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {/* Instapay Image (Conditionally Rendered) */}
-              {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
-                <Grid item xs={12} md={6}>
-                  <Typography variant="h6" gutterBottom>
-                    صورة إثبات التحويل (Instapay)
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    <img
-                      src={selectedOrder.image}
-                      alt="Instapay Proof"
-                      style={{ maxWidth: 400, maxHeight: 200, borderRadius: 8, border: '1px solid #ddd' }}
-                    />
-                  </Box>
-                </Grid>
-              )}
-
-              {/* Order Items */}
-              <Grid grid={{ xs: 12 }}>
-                <Typography variant="h6" gutterBottom>
-                  المنتجات
-                </Typography>
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>المنتج</TableCell>
-                        <TableCell>السعر النهائي</TableCell>
-                        <TableCell>سعر المورد</TableCell>
-                        <TableCell>الربح الصافي</TableCell>
-                        <TableCell>الكمية</TableCell>
-                        <TableCell>المجموع</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {selectedOrder.cartItems.map((item) => (
-                        <TableRow key={item._id}>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar
-                                src={item.image}
-                                sx={{ width: 40, height: 40 }}
-                              >
-                                <ShoppingCartIcon />
-                              </Avatar>
-                              <Typography variant="body2">
-                                {item.name}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>{item.price} جنيه</TableCell>
-                          <TableCell>{item.supplierPrice || 'غير محدد'} جنيه</TableCell>
-                          <TableCell>
-                            <Box sx={{ 
-                              p: 1, 
-                              bgcolor: 'rgba(76, 175, 80, 0.1)', 
-                              borderRadius: 1, 
-                              border: '1px solid rgba(76, 175, 80, 0.3)',
-                              textAlign: 'center'
-                            }}>
-                              <Typography variant="body2" color="success.main" fontWeight="bold">
-                                {item.supplierPrice ? 
-                                  `${(parseFloat(item.price) - parseFloat(item.supplierPrice)).toFixed(2)} جنيه` : 
-                                  'غير محدد'
-                                }
-                              </Typography>
-                              {item.supplierPrice && (
-                                <Typography variant="caption" color="text.secondary">
-                                  {((parseFloat(item.price) - parseFloat(item.supplierPrice)) / parseFloat(item.price) * 100).toFixed(1)}%
-                                </Typography>
-                              )}
-                            </Box>
-                          </TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.price * item.quantity} جنيه</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Grid>
-
-              {/* Supplier Summary */}
-              <Grid grid={{ xs: 12 }}>
-                <Paper elevation={1} sx={{ p: 3, bgcolor: 'rgba(76, 175, 80, 0.05)' }}>
-                  <Typography variant="h6" gutterBottom color="success.main">
-                    ملخص المورد والربح
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12} md={4}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
-                        <Typography variant="h6" color="primary.main" fontWeight="bold">
-                          إجمالي المبيعات
-                        </Typography>
-                        <Typography variant="h4" color="primary.main" fontWeight="bold">
-                          {selectedOrder.total} جنيه
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
-                        <Typography variant="h6" color="warning.main" fontWeight="bold">
-                          إجمالي سعر المورد
-                        </Typography>
-                        <Typography variant="h4" color="warning.main" fontWeight="bold">
-                          {(() => {
-                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
-                              return total + (item.supplierPrice || 0) * item.quantity;
-                            }, 0);
-                            return `${supplierTotal.toFixed(2)} جنيه`;
-                          })()}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                    <Grid item xs={12} md={4}>
-                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
-                        <Typography variant="h6" color="success.main" fontWeight="bold">
-                          الربح الصافي
-                        </Typography>
-                        <Typography variant="h4" color="success.main" fontWeight="bold">
-                          {(() => {
-                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
-                              return total + (item.supplierPrice || 0) * item.quantity;
-                            }, 0);
-                            const profit = parseFloat(selectedOrder.total) - supplierTotal;
-                            return `${profit.toFixed(2)} جنيه`;
-                          })()}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          نسبة الربح: {(() => {
-                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
-                              return total + (item.supplierPrice || 0) * item.quantity;
-                            }, 0);
-                            const profit = parseFloat(selectedOrder.total) - supplierTotal;
-                            const percentage = (profit / parseFloat(selectedOrder.total)) * 100;
-                            return `${percentage.toFixed(1)}%`;
-                          })()}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Grid>
-
-              {/* Order Status */}
-              <Grid grid={{ xs: 12 }}>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <FormControl fullWidth>
-                    <InputLabel>حالة الطلب</InputLabel>
-                    <Select
-                      value={selectedOrder.status}
-                      onChange={(e) => handleStatusChange(e.target.value)}
-                      label="حالة الطلب"
-                    >
-                      <MenuItem value="pending">قيد الانتظار</MenuItem>
-                      <MenuItem value="processing">قيد المعالجة</MenuItem>
-                      <MenuItem value="shipped">تم الشحن</MenuItem>
-                      <MenuItem value="delivered">تم التوصيل</MenuItem>
-                      <MenuItem value="cancelled">ملغي</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth>
-                    <InputLabel>حالة الدفع</InputLabel>
-                    <Select
-                      value={selectedOrder.paymentStatus}
-                      onChange={(e) => handlePaymentStatusChange(e.target.value)}
-                      label="حالة الدفع"
-                    >
-                      <MenuItem value="pending">قيد الانتظار</MenuItem>
-                      <MenuItem value="paid">مدفوع</MenuItem>
-                      <MenuItem value="failed">فشل</MenuItem>
-                      <MenuItem value="refunded">مسترد</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Grid>
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" gutterBottom>
+                معلومات الطلب
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText
+                    primary="رقم الطلب"
+                    secondary={`#${selectedOrder?._id?.slice(-6)}`}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="تاريخ الطلب"
+                    secondary={new Date(selectedOrder?.createdAt).toLocaleDateString('ar-EG')}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="المدينة"
+                    secondary={selectedOrder?.city || 'نجع حمادي'}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="مصاريف الشحن"
+                    secondary={`${selectedOrder?.shippingCost || 0} ج.م`}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="مدة التوصيل"
+                    secondary={`${selectedOrder?.deliveryDays || 2} يوم`}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="الإجمالي"
+                    secondary={`${selectedOrder?.total} ج.م`}
+                  />
+                </ListItem>
+              </List>
             </Grid>
-          )}
+            <Grid item xs={12} md={6}>
+              <Typography variant="subtitle1" gutterBottom>
+                معلومات العميل
+              </Typography>
+              <List dense>
+                <ListItem>
+                  <ListItemText
+                    primary="الاسم"
+                    secondary={selectedOrder?.name}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="البريد الإلكتروني"
+                    secondary={selectedOrder?.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="رقم الهاتف"
+                    secondary={selectedOrder?.phone}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="العنوان"
+                    secondary={selectedOrder?.address}
+                  />
+                </ListItem>
+              </List>
+            </Grid>
+          </Grid>
         </DialogContent>
 
         <DialogActions sx={{ p: 3 }}>

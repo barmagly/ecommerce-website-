@@ -19,11 +19,11 @@ const Store = configureStore({
         userProfile: userProfileSlice,
         userWishlist: userWishlistSlice.reducer,
         userCart: cartSlice.reducer,
-        order: orderSlice.reducer,
+        order: orderSlice,
         variant: variantSlice.reducer,
         reviews: reviewSlice,
         password: passwordReducer,
-        home:homeSlice.reducer
+        home: homeSlice.reducer
     }
 });
 

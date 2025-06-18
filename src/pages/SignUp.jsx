@@ -75,22 +75,28 @@ export default function SignUp() {
   const handleGoogleLoginSuccess = async (credentialResponse) => {
     try {
       const idToken = credentialResponse.credential;
+      if (!idToken) {
+        toast.error("فشل في الحصول على بيانات Google");
+        return;
+      }
+
+      console.log("🔄 Processing Google signup with idToken:", idToken.substring(0, 50) + "...");
+
       const res = await dispatch(googleLoginThunk({
-        idToken: idToken,
-        email: user?.email,
-        name: user?.name
+        idToken: idToken
       }));
 
-      console.log("Google login response:", res);
       if (res.payload?.status === "success") {
-        toast.success("تم تسجيل الدخول بنجاح");
+        console.log("✅ Google signup successful:", res.payload);
+        toast.success("تم إنشاء الحساب بنجاح");
         navigate("/");
       } else {
-        toast.error(res.payload?.message || "حدث خطأ أثناء تسجيل الدخول");
+        console.error("❌ Google signup failed:", res.payload);
+        toast.error(res.payload?.message || "حدث خطأ أثناء إنشاء الحساب");
       }
     } catch (error) {
-      console.error("Google login error:", error);
-      toast.error("حدث خطأ أثناء تسجيل الدخول");
+      console.error("❌ Google signup error:", error);
+      toast.error("حدث خطأ أثناء إنشاء الحساب باستخدام Google");
     }
   };
 

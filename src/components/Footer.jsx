@@ -69,7 +69,7 @@ export default function Footer() {
                 </li>
                 <li className="mb-2 contact-item">
                   <i className="fas fa-phone me-2"></i>
-                  01276218191
+                  01092474959
                 </li>
                 <li className="mb-2 contact-item">
                   <i className="fas fa-envelope me-2"></i>

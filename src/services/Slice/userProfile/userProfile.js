@@ -297,13 +297,45 @@ const userProfileSlice = createSlice({
             })
             .addCase(getUserProfileThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.user = action.payload.data;
-                // console.log("Profile state updated:", state.user);
+                state.error = null;
+                if (action.payload && action.payload.data) {
+                    state.user = action.payload.data;
+                    console.log("✅ Profile data saved to state:", state.user);
+                } else if (action.payload) {
+                    state.user = action.payload;
+                    console.log("✅ Profile data saved directly to state:", state.user);
+                } else {
+                    console.warn("⚠️ No profile data received");
+                    state.user = null;
+                }
+                
+                if (state.user && state.user.profileImg) {
+                    console.log("🖼️ Profile image found:", state.user.profileImg);
+                } else {
+                    console.log("⚠️ No profile image found");
+                }
             })
             .addCase(getUserProfileThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload?.message || "Failed to fetch profile";
-                // console.error("Profile fetch failed:", state.error);
+                state.error = action.payload?.message || "فشل في جلب بيانات الملف الشخصي";
+                console.error("❌ Profile fetch failed:", state.error);
+            })
+            .addCase(updateUserProfileThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateUserProfileThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+                if (action.payload && action.payload.data) {
+                    state.user = action.payload.data;
+                    console.log("✅ Profile updated successfully:", state.user);
+                }
+            })
+            .addCase(updateUserProfileThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload?.message || "فشل في تحديث الملف الشخصي";
+                console.error("❌ Profile update failed:", state.error);
             });
     }
 });

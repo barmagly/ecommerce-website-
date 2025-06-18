@@ -30,17 +30,48 @@ export default function Header() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [search, setSearch] = useState("");
-  const { user, token } = useSelector((state) => state.auth);
+  const { user: authUser, token } = useSelector((state) => state.auth);
   const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
   const isAuthenticated = !!token;
   const products = useSelector(state => state.product.products || []);
   const [suggestions, setSuggestions] = useState([]);
 
+  // استخدام بيانات Google إذا كانت متوفرة، وإلا استخدم بيانات userProfile
+  const currentUser = authUser || profileUser;
+
+  // دالة مساعدة لبناء URL صورة البروفايل
+  const getProfileImageUrl = (profileImg) => {
+    if (!profileImg) return "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
+    // إذا كانت صورة Google، استخدمها مباشرة
+    if (profileImg.startsWith('https://lh3.googleusercontent.com')) {
+      return profileImg;
+    }
+    if (profileImg.startsWith('http')) {
+      return profileImg;
+    }
+    // إذا كان URL نسبي، أضف الـ base URL
+    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    return `${baseUrl}${profileImg.startsWith('/') ? '' : '/'}${profileImg}`;
+  };
+
+  // جلب بيانات userProfile فقط إذا لم تكن بيانات Google متوفرة
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && token && !authUser) {
+      console.log('🔄 Fetching user profile...');
       dispatch(getUserProfileThunk());
     }
-  }, [dispatch, isAuthenticated]);
+  }, [dispatch, isAuthenticated, token, authUser]);
+
+  useEffect(() => {
+    console.log('👤 Auth user data:', authUser);
+    console.log('👤 Profile user data:', profileUser);
+    console.log('👤 Current user data:', currentUser);
+    console.log('🔄 Loading state:', loading);
+    console.log('❌ Error state:', error);
+    if (currentUser?.profileImg) {
+      console.log('🖼️ Profile image URL:', getProfileImageUrl(currentUser.profileImg));
+    }
+  }, [authUser, profileUser, currentUser, loading, error]);
 
   useEffect(() => {
     if (search.trim()) {
@@ -53,10 +84,6 @@ export default function Header() {
       setSuggestions([]);
     }
   }, [search, products]);
-
-  useEffect(() => {
-  }, [profileUser, loading, error]);
-
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -199,28 +226,33 @@ export default function Header() {
                         id="userDropdown"
                         data-bs-toggle="dropdown"
                         aria-expanded="false"
-                        title={profileUser?.name || "حسابي"}
+                        title={currentUser?.name || "حسابي"}
                       >
                         {loading ? (
                           <div className="spinner-border spinner-border-sm text-primary" role="status">
                             <span className="visually-hidden">Loading...</span>
                           </div>
-                        ) : profileUser?.profileImg ? (
-                          <img
-                            src={profileUser.profileImg}
-                            alt={profileUser.name || "User"}
-                            className="rounded-circle"
-                            style={{
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover'
-                            }}
-                            // onError={(e) => {
-                            //   console.error("Error loading profile image");
-                            //   e.target.onerror = null;
-                            //   e.target.src = "/images/default-avatar.png";
-                            // }}
-                          />
+                        ) : currentUser?.profileImg ? (
+                          <>
+                            <img
+                              src={getProfileImageUrl(currentUser.profileImg)}
+                              alt={currentUser.name || "User"}
+                              className="rounded-circle"
+                              style={{
+                                width: '50px',
+                                height: '50px',
+                                objectFit: 'cover'
+                              }}
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
+                              }}
+                              onLoad={() => {
+                                console.log("✅ Profile image loaded successfully:", getProfileImageUrl(currentUser.profileImg));
+                              }}
+                            />
+                            <i className="fas fa-user" style={{ display: 'none' }}></i>
+                          </>
                         ) : (
                           <i className="fas fa-user"></i>
                         )}
@@ -229,7 +261,7 @@ export default function Header() {
                         <li>
                           <div className="dropdown-item-text">
                             <small className="text-muted">مرحباً،</small>
-                            <div className="fw-bold">{profileUser?.name || "المستخدم"}</div>
+                            <div className="fw-bold">{currentUser?.name || "المستخدم"}</div>
                           </div>
                         </li>
                         <li><hr className="dropdown-divider" /></li>
@@ -277,21 +309,20 @@ export default function Header() {
                       <div className="spinner-border spinner-border-sm text-primary" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
-                    ) : profileUser?.profileImg ? (
+                    ) : currentUser?.profileImg ? (
                       <img
-                        src={profileUser.profileImg}
-                        alt={profileUser.name || "User"}
+                        src={getProfileImageUrl(currentUser.profileImg)}
+                        alt={currentUser.name || "User"}
                         className="rounded-circle"
                         style={{
                           width: '50px',
                           height: '50px',
                           objectFit: 'cover'
                         }}
-                        // onError={(e) => {
-                        //   console.error("Error loading profile image");
-                        //   e.target.onerror = null;
-                        //   e.target.src = "/images/default-avatar.png";
-                        // }}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
+                        }}
                       />
                     ) : (
                       <div className="btn-icon">
@@ -300,7 +331,7 @@ export default function Header() {
                     )}
                     <div>
                       <small className="text-muted d-block">مرحباً،</small>
-                      <div className="fw-bold">{profileUser?.name || "المستخدم"}</div>
+                      <div className="fw-bold">{currentUser?.name || "المستخدم"}</div>
                     </div>
                   </div>
                 </div>

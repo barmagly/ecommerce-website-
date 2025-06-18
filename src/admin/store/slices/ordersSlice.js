@@ -28,9 +28,9 @@ export const fetchOrderById = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   'orders/updateOrderStatus',
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, status }, { rejectWithValue, getState }) => {
     try {
-      const response = await ordersAPI.updateStatus(id, status);
+      const response = await ordersAPI.update(id, { status });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
@@ -78,6 +78,7 @@ const initialState = {
     recentOrders: [],
     topCustomers: [],
   },
+  lastUpdate: null,
 };
 
 const ordersSlice = createSlice({
@@ -100,20 +101,35 @@ const ordersSlice = createSlice({
     clearSelectedOrder: (state) => {
       state.selectedOrder = null;
     },
+    markOrderAsRead: (state, action) => {
+      const order = state.items.find(o => o._id === action.payload);
+      if (order) {
+        order.isNew = false;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
       // Fetch Orders
       .addCase(fetchOrders.pending, (state) => {
-        state.loading = true;
+        state.loading = state.items.length === 0; // Only show loading on initial fetch
         state.error = null;
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
         state.loading = false;
+        
+        // Compare with existing orders to mark new ones
+        const existingIds = new Set(state.items.map(order => order._id));
+        action.payload.orders = action.payload.orders.map(order => ({
+          ...order,
+          isNew: !existingIds.has(order._id) && (!state.lastUpdate || new Date(order.createdAt) > state.lastUpdate)
+        }));
+        
         state.items = action.payload.orders;
         state.totalOrders = action.payload.count;
+        state.lastUpdate = new Date();
 
-        // Calculate status counts from orders array
+        // Calculate status counts
         const statusCounts = {
           pending: 0,
           processing: 0,
@@ -129,6 +145,7 @@ const ordersSlice = createSlice({
         });
 
         state.stats = {
+          ...state.stats,
           total: action.payload.count,
           statusCounts
         };
@@ -152,52 +169,50 @@ const ordersSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      // Update Order Status
-      .addCase(updateOrderStatus.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+      // Update Order Status - Optimistic Update
+      .addCase(updateOrderStatus.pending, (state, action) => {
+        const { id, status } = action.meta.arg;
+        const orderIndex = state.items.findIndex(order => order._id === id);
+        if (orderIndex !== -1) {
+          const oldStatus = state.items[orderIndex].status;
+          // Update status counts
+          state.stats.statusCounts[oldStatus]--;
+          state.stats.statusCounts[status]++;
+          // Update order status
+          state.items[orderIndex].status = status;
+        }
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
-        state.loading = false;
-        const index = state.items.findIndex(order => order.id === action.payload.id);
-        if (index !== -1) {
-          state.items[index] = action.payload;
-        }
-        if (state.selectedOrder?.id === action.payload.id) {
-          state.selectedOrder = action.payload;
-        }
-        // Update stats
-        const oldStatus = state.items[index]?.status;
-        if (oldStatus) {
-          state.stats.statusCounts[oldStatus]--;
-        }
-        state.stats.statusCounts[action.payload.status]++;
-      })
-      .addCase(updateOrderStatus.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-      })
-      // Delete Order
-      .addCase(deleteOrder.pending, (state) => {
-        state.loading = true;
+        // The optimistic update is already done, just clear any error
         state.error = null;
       })
-      .addCase(deleteOrder.fulfilled, (state, action) => {
-        state.loading = false;
-        const deletedOrder = state.items.find(order => order.id === action.payload);
-        if (deletedOrder) {
-          state.stats.statusCounts[deletedOrder.status]--;
+      .addCase(updateOrderStatus.rejected, (state, action) => {
+        // Revert the optimistic update
+        state.error = action.payload;
+        // Re-fetch orders to ensure consistency
+        fetchOrders();
+      })
+      // Delete Order - Optimistic Update
+      .addCase(deleteOrder.pending, (state, action) => {
+        const id = action.meta.arg;
+        const orderIndex = state.items.findIndex(order => order._id === id);
+        if (orderIndex !== -1) {
+          const order = state.items[orderIndex];
+          // Update status counts
+          state.stats.statusCounts[order.status]--;
+          // Remove order
+          state.items.splice(orderIndex, 1);
           state.totalOrders--;
-          state.totalRevenue -= deletedOrder.total;
-        }
-        state.items = state.items.filter(order => order.id !== action.payload);
-        if (state.selectedOrder?.id === action.payload) {
-          state.selectedOrder = null;
         }
       })
+      .addCase(deleteOrder.fulfilled, (state) => {
+        // The optimistic update is already done, just clear any error
+        state.error = null;
+      })
       .addCase(deleteOrder.rejected, (state, action) => {
-        state.loading = false;
+        // Revert the optimistic update by re-fetching
         state.error = action.payload;
+        fetchOrders();
       });
   },
 });
@@ -208,6 +223,7 @@ export const {
   setFilters,
   setPagination,
   clearSelectedOrder,
+  markOrderAsRead,
 } = ordersSlice.actions;
 
 export default ordersSlice.reducer; 

@@ -62,7 +62,7 @@ export const registerThunk = createAsyncThunk(
 const authSlice = createSlice({
     name: "auth",
     initialState: {
-        user: null,
+        user: JSON.parse(localStorage.getItem("user")) || null,
         token: localStorage.getItem("token") || null,
         loading: false,
         error: null,
@@ -72,6 +72,7 @@ const authSlice = createSlice({
             state.user = null;
             state.token = null;
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
         }
     },
     extraReducers: (builder) => {
@@ -85,6 +86,10 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 localStorage.setItem("token", action.payload.token);
+                if (action.payload.user) {
+                    localStorage.setItem("user", JSON.stringify(action.payload.user));
+                }
+                console.log("✅ Google login successful, user data:", action.payload.user);
             })
             .addCase(googleLoginThunk.rejected, (state, action) => {
                 state.loading = false;
@@ -99,6 +104,9 @@ const authSlice = createSlice({
                 state.user = action.payload.user;
                 state.token = action.payload.token;
                 localStorage.setItem("token", action.payload.token);
+                if (action.payload.user) {
+                    localStorage.setItem("user", JSON.stringify(action.payload.user));
+                }
             })
             .addCase(loginThunk.rejected, (state, action) => {
                 state.loading = false;

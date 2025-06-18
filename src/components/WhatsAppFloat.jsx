@@ -1,6 +1,6 @@
 import React from "react";
 
-const whatsappNumber = "201276218191"; // Replace with your WhatsApp number (no +)
+const whatsappNumber = "201092474959"; // Replace with your WhatsApp number (no +)
 
 export default function WhatsAppFloat() {
   return (

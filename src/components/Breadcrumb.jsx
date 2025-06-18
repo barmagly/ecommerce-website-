@@ -1,7 +1,10 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function Breadcrumb({ items }) {
+export default function Breadcrumb({ items, title }) {
+  // إذا تم تمرير title فقط، أنشئ items تلقائياً
+  const breadcrumbItems = items || (title ? [{ to: "#", label: title }] : []);
+
   return (
     <nav aria-label="breadcrumb" className="mb-4">
       <div style={{background: "#f8f9fa", borderRadius: 8, border: "1px solid #eee", padding: "12px 20px", display: "inline-block", minWidth: 220}}>
@@ -12,12 +15,12 @@ export default function Breadcrumb({ items }) {
               <span className="ms-1">الرئيسية</span>
             </Link>
           </li>
-          {items.map((item, idx) => (
+          {breadcrumbItems.map((item, idx) => (
             <React.Fragment key={item.to}>
               <li className="breadcrumb-separator mx-2" style={{color: '#888', fontSize: '1em'}}>
                 <i className="fas fa-angle-left"></i>
               </li>
-              {idx < items.length - 1 ? (
+              {idx < breadcrumbItems.length - 1 ? (
                 <li className="breadcrumb-item d-flex align-items-center">
                   <Link to={item.to} className="text-decoration-none">{item.label}</Link>
                 </li>

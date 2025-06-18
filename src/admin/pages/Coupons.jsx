@@ -183,9 +183,19 @@ const Coupons = () => {
     try {
       setLoading(true);
       const response = await couponsAPI.getAll();
-      setCoupons(response.data.coupons || []);
+      console.log('Coupons API response:', response.data);
+      
+      // Ensure coupons have _id field
+      const couponsWithId = (response.data.coupons || []).map(coupon => ({
+        ...coupon,
+        _id: coupon._id || coupon.id // Use _id if available, otherwise use id
+      }));
+      
+      console.log('Processed coupons:', couponsWithId);
+      setCoupons(couponsWithId);
       setError(null);
     } catch (err) {
+      console.error('Failed to fetch coupons:', err);
       setError('Failed to fetch coupons');
       toast.error('Failed to load coupons');
     } finally {
@@ -256,22 +266,24 @@ const Coupons = () => {
   };
 
   const handleOpenDialog = (mode, coupon = null) => {
+    console.log('Opening dialog with mode:', mode, 'and coupon:', coupon);
     setDialogMode(mode);
     setSelectedCoupon(coupon);
     
     if (mode === 'edit' && coupon) {
+      console.log('Setting form data for edit mode with coupon:', coupon);
       setFormData({
         code: coupon.code || '',
         name: coupon.name || '',
         description: coupon.description || '',
         type: coupon.type || 'percentage',
-        value: coupon.discount?.toString() || '',
+        value: (coupon.discount || coupon.value)?.toString() || '',
         minAmount: coupon.minAmount?.toString() || '',
         maxDiscount: coupon.maxDiscount?.toString() || '',
         usageLimit: coupon.usageLimit?.toString() || '',
         isActive: true,
         startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
-        endDate: coupon.expire ? new Date(coupon.expire).toISOString().split('T')[0] : '',
+        endDate: (coupon.expire || coupon.endDate) ? new Date(coupon.expire || coupon.endDate).toISOString().split('T')[0] : '',
         categories: coupon.categories || [],
         products: coupon.products || [],
         applyTo: coupon.applyTo || 'all'
@@ -290,6 +302,8 @@ const Coupons = () => {
   };
 
   const validateForm = () => {
+    console.log('validateForm called');
+    console.log('formData:', formData);
     const newErrors = {};
 
     if (!formData.code?.trim()) {
@@ -298,10 +312,6 @@ const Coupons = () => {
 
     if (!formData.name?.trim()) {
       newErrors.name = 'الاسم مطلوب';
-    }
-
-    if (!formData.description?.trim()) {
-      newErrors.description = 'الوصف مطلوب';
     }
 
     if (!formData.value?.trim()) {
@@ -355,13 +365,25 @@ const Coupons = () => {
       newErrors.products = 'يجب اختيار منتج واحد على الأقل';
     }
 
+    console.log('Validation errors:', newErrors);
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    const isValid = Object.keys(newErrors).length === 0;
+    console.log('Form is valid:', isValid);
+    return isValid;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    console.log('handleSubmit called');
+    console.log('Form data:', formData);
+    console.log('Errors:', errors);
+    
+    if (!validateForm()) {
+      console.log('Form validation failed');
+      return;
+    }
+    
+    console.log('Form validation passed');
 
     try {
       const couponData = {
@@ -381,10 +403,15 @@ const Coupons = () => {
         applyTo: formData.applyTo
       };
 
-      if (selectedCoupon) {
+      console.log('Submitting coupon data:', couponData);
+      console.log('Selected coupon:', selectedCoupon);
+
+      if (selectedCoupon && selectedCoupon._id) {
+        console.log('Updating coupon with ID:', selectedCoupon._id);
         await couponsAPI.update(selectedCoupon._id, couponData);
         toast.success('تم تحديث الكوبون بنجاح');
       } else {
+        console.log('Creating new coupon');
         await couponsAPI.create(couponData);
         toast.success('تم إضافة الكوبون بنجاح');
       }
@@ -392,6 +419,7 @@ const Coupons = () => {
       fetchCoupons();
     } catch (err) {
       console.error('Error submitting form:', err);
+      console.error('Error response:', err.response?.data);
       toast.error(err.response?.data?.message || (selectedCoupon ? 'فشل في تحديث الكوبون' : 'فشل في إضافة الكوبون'));
     }
   };
@@ -684,10 +712,10 @@ const Coupons = () => {
                           />
                         </TableCell>
                         <TableCell align='center'>
-                          {coupon.type === 'percentage' ? `${coupon.discount}%` : `$${coupon.discount}`}
+                          {coupon.type === 'percentage' ? `${coupon.discount || coupon.value}%` : `$${coupon.discount || coupon.value}`}
                         </TableCell>
                         <TableCell align='center'>{new Date(coupon.startDate).toLocaleDateString()}</TableCell>
-                        <TableCell align='center'>{new Date(coupon.expire).toLocaleDateString()}</TableCell>
+                        <TableCell align='center'>{new Date(coupon.expire || coupon.endDate).toLocaleDateString()}</TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                             <Tooltip title="عرض">
@@ -787,7 +815,7 @@ const Coupons = () => {
                 
                 <Typography variant="subtitle2" color="text.secondary">قيمة الخصم</Typography>
                 <Typography variant="h6" color="primary">
-                  {selectedCoupon.type === 'percentage' ? `${selectedCoupon.value}%` : `$${selectedCoupon.value}`}
+                  {selectedCoupon.type === 'percentage' ? `${selectedCoupon.discount || selectedCoupon.value}%` : `$${selectedCoupon.discount || selectedCoupon.value}`}
                 </Typography>
               </Grid>
               
@@ -799,7 +827,7 @@ const Coupons = () => {
                 
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>الصلاحية</Typography>
                 <Typography variant="body1">
-                  من {new Date(selectedCoupon.startDate).toLocaleDateString('ar-SA')} إلى {new Date(selectedCoupon.endDate).toLocaleDateString('ar-SA')}
+                  من {new Date(selectedCoupon.startDate).toLocaleDateString('ar-SA')} إلى {new Date(selectedCoupon.expire || selectedCoupon.endDate).toLocaleDateString('ar-SA')}
                 </Typography>
               </Grid>
             </Grid>
@@ -872,7 +900,7 @@ const Coupons = () => {
                   InputProps={{
                     endAdornment: (
                       <InputAdornment position="end">
-                        {formData.type === 'percentage' ? '%' : '$'}
+                        {formData.type === 'percentage' ? '%' : 'ج.م'}
                       </InputAdornment>
                     ),
                   }}
@@ -1034,7 +1062,10 @@ const Coupons = () => {
           {dialogMode !== 'view' && (
             <Button
               variant="contained"
-              onClick={handleSubmit}
+              onClick={(e) => {
+                console.log('Save button clicked');
+                handleSubmit(e);
+              }}
               sx={{
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 '&:hover': {

@@ -15,7 +15,7 @@ export default function ContactInfo() {
         </div>
         <div className="ps-5">
           <p className="mb-2 text-muted">نحن متاحون على مدار الساعة طوال أيام الأسبوع</p>
-          <p className="mb-0 fw-bold">01276218191</p>
+          <p className="mb-0 fw-bold">01092474959</p>
         </div>
       </div>
 

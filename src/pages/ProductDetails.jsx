@@ -450,6 +450,36 @@ export default function ProductDetails() {
               )}
             </div>
 
+            {/* عرض نطاق التوصيل */}
+            {product.shippingAddress && (
+              <div className="mb-3">
+                <div className="d-flex align-items-center gap-2 mb-2">
+                  <span className={`badge ${product.shippingAddress.type === 'nag_hamadi' ? 'bg-warning' : 'bg-success'}`} style={{ fontSize: '1em' }}>
+                    {product.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي فقط' : '🚚 جميع المحافظات'}
+                  </span>
+                  <span className="text-muted small">
+                    {product.shippingAddress.type === 'nag_hamadi' 
+                      ? 'هذا المنتج متاح للشحن في نجع حمادي فقط' 
+                      : 'هذا المنتج متاح للشحن في جميع محافظات مصر'}
+                  </span>
+                </div>
+                
+                {/* معلومات إضافية عن التوصيل */}
+                <div className="bg-light p-3 rounded">
+                  <div className="row text-center">
+                    <div className="col-6">
+                      <div className="text-muted small">تكلفة الشحن</div>
+                      <div className="fw-bold text-success">{product.shippingCost || 0} ج.م</div>
+                    </div>
+                    <div className="col-6">
+                      <div className="text-muted small">وقت التوصيل</div>
+                      <div className="fw-bold text-primary">{product.deliveryDays || 2} يوم</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {variants && variants.length > 1 && (
               <div className="mb-3 d-flex align-items-center gap-2">
                 <button

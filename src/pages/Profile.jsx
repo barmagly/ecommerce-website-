@@ -21,8 +21,29 @@ import { getOrdersThunk } from "../services/Slice/order/order";
 
 export default function Profile() {
   const dispatch = useDispatch();
-  const { user, loading, error } = useSelector((state) => state.userProfile);
+  const { user } = useSelector((state) => state.auth);
   const { orders, loading: ordersLoading, error: ordersError } = useSelector((state) => state.order);
+  const { wishlist = [] } = useSelector((state) => state.wishlist || {});
+  const { addresses, loading, error } = useSelector((state) => state.userProfile);
+  const { paymentMethods } = useSelector((state) => state.userProfile);
+
+  // دالة للتحقق من نوع المستخدم
+  const isGoogleUser = () => {
+    // التحقق من وجود token في localStorage
+    const token = localStorage.getItem('token');
+    const googleToken = localStorage.getItem('googleToken');
+    
+    // إذا كان لديه googleToken، فهو مستخدم Google
+    if (googleToken) return true;
+    
+    // إذا كان لديه profileImg من Google، فهو مستخدم Google
+    if (user?.profileImg?.startsWith('https://lh3.googleusercontent.com')) return true;
+    
+    // إذا كان لديه email من Google (عادة ينتهي بـ @gmail.com)
+    if (user?.email?.endsWith('@gmail.com') && token) return true;
+    
+    return false;
+  };
 
   // الملف الشخصي
   const [input1, setInput1] = useState("");
@@ -43,7 +64,7 @@ export default function Profile() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // دفتر العناوين
-  const [addresses, setAddresses] = useState([]);
+  const [localAddresses, setLocalAddresses] = useState([]);
   const [newAddress, setNewAddress] = useState({ label: "", city: "", details: "" });
   const [editId, setEditId] = useState(null);
   const [addressLoading, setAddressLoading] = useState(false);
@@ -107,7 +128,7 @@ export default function Profile() {
     dispatch(getAddressToBookThunk()).unwrap()
       .then((result) => {
         if (result.status === 'success') {
-          setAddresses(result.data);
+          setLocalAddresses(result.data);
         }
       })
       .catch((error) => {
@@ -132,13 +153,24 @@ export default function Profile() {
 
   useEffect(() => {
     if (user) {
-      // Split the full name into first and last name
-      const nameParts = user.name.split(' ');
-      setInput1(nameParts[0] || ''); // First name
-      setInput2(nameParts.slice(1).join(' ') || ''); // Last name
+      setInput1(user.name?.split(' ')[0] || '');
+      setInput2(user.name?.split(' ').slice(1).join(' ') || '');
       setInput3(user.email || '');
-      setImagePreview(user.profileImg);
-      setInput4(user?.addresses)
+      setInput4(user.addresses?.[0] || '');
+      // تحديث صورة البروفايل
+      if (user.profileImg) {
+        let imageUrl;
+        // إذا كانت صورة Google، استخدمها مباشرة
+        if (user.profileImg.startsWith('https://lh3.googleusercontent.com')) {
+          imageUrl = user.profileImg;
+        } else if (user.profileImg.startsWith('http')) {
+          imageUrl = user.profileImg;
+        } else {
+          imageUrl = `${process.env.REACT_APP_API_URL}${user.profileImg}`;
+        }
+        setImagePreview(imageUrl);
+        console.log("🖼️ Profile image URL:", imageUrl);
+      }
     }
   }, [user]);
 
@@ -194,7 +226,7 @@ export default function Profile() {
         // Refresh addresses
         const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
         if (addressesResult.status === 'success') {
-          setAddresses(addressesResult.data);
+          setLocalAddresses(addressesResult.data);
         }
         setNewAddress({ label: "", city: "", details: "" });
       }
@@ -237,7 +269,7 @@ export default function Profile() {
         // Refresh addresses
         const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
         if (addressesResult.status === 'success') {
-          setAddresses(addressesResult.data);
+          setLocalAddresses(addressesResult.data);
         }
         setEditId(null);
         setNewAddress({ label: "", city: "", details: "" });
@@ -267,7 +299,7 @@ export default function Profile() {
         // Refresh addresses
         const addressesResult = await dispatch(getAddressToBookThunk()).unwrap();
         if (addressesResult.status === 'success') {
-          setAddresses(addressesResult.data);
+          setLocalAddresses(addressesResult.data);
         }
       }
     } catch (error) {
@@ -443,17 +475,25 @@ export default function Profile() {
         formData.append("addresses", input4)
       }
 
+      console.log('📤 Sending profile update with data:', {
+        name: `${input1} ${input2}`.trim(),
+        email: input3,
+        hasImage: !!profileImage,
+        address: input4
+      });
 
       const result = await dispatch(updateUserProfileThunk(formData)).unwrap();
 
       if (result.status === 'success') {
         setUpdateSuccess(true);
         // Refresh profile data
-        dispatch(getUserProfileThunk());
+        await dispatch(getUserProfileThunk());
         // Reset form state
         setProfileImage(null);
+        console.log('✅ Profile updated successfully');
       }
     } catch (error) {
+      console.error('❌ Profile update failed:', error);
       setUpdateError(error.message || 'حدث خطأ أثناء تحديث الملف الشخصي');
     } finally {
       setUpdateLoading(false);
@@ -554,25 +594,38 @@ export default function Profile() {
                     style={{ width: '150px', height: '150px' }}
                   >
                     <img
-                      src={imagePreview}
+                      src={imagePreview || (user?.profileImg ? (() => {
+                        if (user.profileImg.startsWith('https://lh3.googleusercontent.com')) {
+                          return user.profileImg;
+                        } else if (user.profileImg.startsWith('http')) {
+                          return user.profileImg;
+                        } else {
+                          return `${process.env.REACT_APP_API_URL}${user.profileImg}`;
+                        }
+                      })() : 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740')}
                       alt="صورة الملف الشخصي"
                       className="w-100 h-100"
                       style={{ objectFit: 'cover' }}
-                    />
-                    <div
-                      className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white"
-                      style={{
-                        opacity: 0,
-                        transition: 'opacity 0.3s ease',
-                        cursor: 'pointer'
+                      onError={(e) => {
+                        e.target.src = 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740';
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
-                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
-                      onClick={() => document.getElementById('profileImage').click()}
-                    >
-                      <i className="fas fa-camera mb-2" style={{ fontSize: '1.5rem' }}></i>
-                      <span style={{ fontSize: '0.9rem' }}>تغيير الصورة</span>
-                    </div>
+                    />
+                    {!isGoogleUser() && (
+                      <div
+                        className="position-absolute top-0 start-0 w-100 h-100 d-flex flex-column justify-content-center align-items-center bg-dark bg-opacity-50 text-white"
+                        style={{
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease',
+                          cursor: 'pointer'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                        onMouseLeave={(e) => e.currentTarget.style.opacity = 0}
+                        onClick={() => document.getElementById('profileImage').click()}
+                      >
+                        <i className="fas fa-camera mb-2" style={{ fontSize: '1.5rem' }}></i>
+                        <span style={{ fontSize: '0.9rem' }}>تغيير الصورة</span>
+                      </div>
+                    )}
                   </div>
                   <input
                     type="file"
@@ -580,6 +633,7 @@ export default function Profile() {
                     accept="image/*"
                     className="d-none"
                     onChange={handleImageChange}
+                    disabled={isGoogleUser()}
                   />
                 </div>
               </div>
@@ -731,7 +785,7 @@ export default function Profile() {
                 </div>
               )}
               <ul className="list-group mb-4">
-                {addresses.map(addr => (
+                {localAddresses.map(addr => (
                   <li key={addr._id} className="list-group-item d-flex justify-content-between align-items-center">
                     <div>
                       <div className="fw-bold">{addr.label} - {addr.city}</div>
@@ -1177,7 +1231,7 @@ export default function Profile() {
               <div className="list-group mb-4 shadow-sm">
                 <div className="list-group-item fw-bold bg-light">إدارة حسابي</div>
                 <button className={`list-group-item list-group-item-action${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}>الملف الشخصي</button>
-                {!user?.isGoogleUser && (
+                {!isGoogleUser() && (
                   <button className={`list-group-item list-group-item-action${activeSection === "password" ? " text-danger active" : ""}`} onClick={() => setActiveSection("password")}>تغيير كلمة المرور</button>
                 )}
                 <button className={`list-group-item list-group-item-action${activeSection === "address" ? " active" : ""}`} onClick={() => setActiveSection("address")}>دفتر العناوين</button>
