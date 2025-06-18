@@ -237,7 +237,7 @@ const Variants = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
+    return new Date(dateString).toLocaleDateString('ar-EG', {
       year: 'numeric', month: 'short', day: 'numeric'
     });
   };
@@ -270,7 +270,7 @@ const Variants = () => {
 
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.1 }}>
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -283,8 +283,8 @@ const Variants = () => {
               </CardContent>
             </Card>
           </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
+
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -297,8 +297,8 @@ const Variants = () => {
               </CardContent>
             </Card>
           </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
+
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -311,8 +311,8 @@ const Variants = () => {
               </CardContent>
             </Card>
           </Grid>
-          
-          <Grid item xs={12} sm={6} md={3}>
+
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ background: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)', color: 'white', borderRadius: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -340,7 +340,7 @@ const Variants = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>النوع</InputLabel>
                   <Select value={filterType} onChange={(e) => setFilterType(e.target.value)} label="النوع">
                     <MenuItem value="">جميع الأنواع</MenuItem>
@@ -353,7 +353,7 @@ const Variants = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>الفئة</InputLabel>
                   <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} label="الفئة">
                     <MenuItem value="">جميع الفئات</MenuItem>
@@ -365,11 +365,11 @@ const Variants = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <Button variant="outlined" startIcon={<RefreshIcon />} onClick={loadVariants} fullWidth>تحديث</Button>
+                <Button variant="outlined" startIcon={<RefreshIcon sx={{ml: 1}}/>} onClick={loadVariants} fullWidth>تحديث</Button>
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog('add')} fullWidth
+                <Button variant="contained" startIcon={<AddIcon sx={{ml: 1}}/>} onClick={() => handleOpenDialog('add')} fullWidth
                   sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}>
                   إضافة خيار
@@ -386,13 +386,13 @@ const Variants = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الخيار</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>النوع والفئة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>القيم</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>المخزون</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الحالة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التاريخ</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الخيار</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>النوع والفئة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>القيم</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>المخزون</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الحالة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>التاريخ</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -415,21 +415,21 @@ const Variants = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <Chip label={getTypeText(variant.type)} size="small" color="primary" sx={{ mb: 0.5 }} />
-                            <Typography variant="body2" color="text.secondary">{variant.category}</Typography>
+                            <Typography variant="body2" color="text.secondary" textAlign={'center'}>{variant.category}</Typography>
                           </Box>
                         </TableCell>
                         
                         <TableCell>
-                          <Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                             <Typography variant="h6" fontWeight="bold" color="primary">{variant.values.length}</Typography>
                             <Typography variant="caption" color="text.secondary">قيمة</Typography>
                           </Box>
                         </TableCell>
                         
                         <TableCell>
-                          <Typography variant="body2" fontWeight="bold">
+                          <Typography variant="body2" fontWeight="bold" align='center'>
                             {variant.values.reduce((sum, v) => sum + v.stock, 0)}
                           </Typography>
                         </TableCell>
@@ -442,11 +442,11 @@ const Variants = () => {
                         </TableCell>
                         
                         <TableCell>
-                          <Typography variant="caption" color="text.secondary">{formatDate(variant.createdAt)}</Typography>
+                          <Typography variant="caption" color="text.secondary" textAlign={'center'}>{formatDate(variant.createdAt)}</Typography>
                         </TableCell>
                         
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Box sx={{ display: 'flex', gap: 0.5 , justifyContent: 'center' }}>
                             <Tooltip title="عرض">
                               <IconButton size="small" color="info" onClick={() => handleOpenDialog('view', variant)}>
                                 <ViewIcon fontSize="small" />

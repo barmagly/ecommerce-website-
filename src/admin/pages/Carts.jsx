@@ -187,7 +187,7 @@ const Carts = () => {
         <Button
           variant="contained"
           color="primary"
-          startIcon={<RefreshIcon />}
+          startIcon={<RefreshIcon sx={{ml: 1}}/>}
           onClick={handleRefresh}
         >
           تحديث
@@ -196,11 +196,11 @@ const Carts = () => {
 
       {/* Metrics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} size={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <CartIcon color="primary" sx={{ mr: 1 }} />
+                <CartIcon color="primary" sx={{ ml: 1 }} />
                 <Box>
                   <Typography variant="h6">{carts.length}</Typography>
                   <Typography color="textSecondary">إجمالي السلات</Typography>
@@ -209,14 +209,14 @@ const Carts = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid item xs={12} sm={6} md={3} size={3}>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <MoneyIcon color="primary" sx={{ mr: 1 }} />
+                <MoneyIcon color="primary" sx={{ ml: 1 }} />
                 <Box>
                   <Typography variant="h6">
-                    {formatCurrency(carts.reduce((total, cart) => total + (cart.total || 0), 0))}
+                    {carts.reduce((total, cart) => total + (cart.total || 0), 0).toFixed()}
                   </Typography>
                   <Typography color="textSecondary">إجمالي المبيعات</Typography>
                 </Box>
@@ -257,11 +257,11 @@ const Carts = () => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>المستخدم</TableCell>
-              <TableCell>المنتجات</TableCell>
-              <TableCell>المبلغ</TableCell>
-              <TableCell>آخر تحديث</TableCell>
-              <TableCell>الإجراءات</TableCell>
+              <TableCell align='center'>المستخدم</TableCell>
+              <TableCell align='center'>المنتجات</TableCell>
+              <TableCell align='center'>المبلغ</TableCell>
+              <TableCell align='center'>آخر تحديث</TableCell>
+              <TableCell align='center'>الإجراءات</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -273,7 +273,7 @@ const Carts = () => {
                       {cart.userID?.name?.[0]}
                     </Avatar>
                     <Box>
-                      <Typography variant="body2">{cart.userID?.name}</Typography>
+                      <Typography variant="body2" textAlign={'right'}>{cart.userID?.name}</Typography>
                       <Typography variant="caption" color="textSecondary">
                         {cart.userID?.email}
                       </Typography>
@@ -281,7 +281,7 @@ const Carts = () => {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <Box display="flex" flexDirection="column" alignItems="flex-start">
+                  <Box display="flex" flexDirection="column" alignItems="center">
                     {cart.cartItems && cart.cartItems.length > 0 ? (
                       cart.cartItems.slice(0, 2).map((item, index) => (
                         <Typography variant="body2" key={index}>
@@ -298,16 +298,16 @@ const Carts = () => {
                     )}
                   </Box>
                 </TableCell>
-                <TableCell>{formatCurrency(cart.total || 0)}</TableCell>
+                <TableCell align='center'>جنيه {cart.total || 0}</TableCell>
                 <TableCell>
-                  <Tooltip title={formatDate(cart.updatedAt)}>
-                    <Typography variant="body2">
+                  <Tooltip title={cart.updatedAt}>
+                    <Typography variant="body2" textAlign={'center'}>
                       {getTimeAgo(cart.updatedAt)}
                     </Typography>
                   </Tooltip>
                 </TableCell>
                 <TableCell>
-                  <Box display="flex" gap={1}>
+                  <Box display="flex" gap={1} justifyContent="center">
                     <Tooltip title="عرض التفاصيل">
                       <IconButton
                         size="small"

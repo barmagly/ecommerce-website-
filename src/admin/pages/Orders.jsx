@@ -384,8 +384,8 @@ const Orders = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={3}>
+        <Grid container spacing={3} sx={{ mb: 4 }} >
+          <Grid item xs={12} md={3} size={3}>
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -398,7 +398,7 @@ const Orders = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} size={3}>
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -411,7 +411,7 @@ const Orders = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} size={3}>
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -424,7 +424,7 @@ const Orders = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid item xs={12} md={3} size={3}>
             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -503,16 +503,17 @@ const Orders = () => {
                   </Select>
                 </FormControl>
               </Grid>
-            </Grid>
             <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
               <Button
+              size='large'
                 variant="outlined"
-                startIcon={<RefreshIcon />}
+                startIcon={<RefreshIcon sx={{ml: 1}}/>}
                 onClick={() => dispatch(fetchOrders())}
               >
                 تحديث
               </Button>
             </Box>
+            </Grid>
           </CardContent>
         </Card>
       </motion.div>
@@ -528,16 +529,16 @@ const Orders = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>رقم الطلب</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>العميل</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>المجموع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>سعر المورد</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الربح الصافي</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>حالة الطلب</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>حالة الدفع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>طريقة الدفع</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التاريخ</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>رقم الطلب</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>العميل</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>المجموع</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>سعر المورد</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الربح الصافي</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>حالة الطلب</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>حالة الدفع</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>طريقة الدفع</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>التاريخ</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -569,7 +570,7 @@ const Orders = () => {
                               <PersonIcon />
                             </Avatar>
                             <Box>
-                              <Typography variant="subtitle2" fontWeight="bold">
+                              <Typography variant="subtitle2" fontWeight="bold" textAlign={'right'}>
                                 {order.name}
                               </Typography>
                               <Typography variant="body2" color="text.secondary">

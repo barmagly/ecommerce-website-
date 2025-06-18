@@ -154,7 +154,7 @@ const Products = () => {
   const filterProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === '' || product.category === filterCategory;
+    const matchesCategory = filterCategory === '' || product.category._id === filterCategory;
     const matchesStatus = filterStatus === '' || product.stock === 0 ;
 
     return matchesSearch && matchesCategory && matchesStatus;
@@ -2060,8 +2060,8 @@ const Products = () => {
                   // startAdornment={<FilterIcon sx={{ mr: 1, color: 'text.secondary' }} />}
                   >
                     <MenuItem value="">جميع الحالات</MenuItem>
-                    <MenuItem value="نشط">نشط</MenuItem>
-                    <MenuItem value="غير نشط">غير نشط</MenuItem>
+                    {/* <MenuItem value="نشط">نشط</MenuItem>
+                    <MenuItem value="غير نشط">غير نشط</MenuItem> */}
                     <MenuItem value="نفد المخزون">نفد المخزون</MenuItem>
                   </Select>
                 </FormControl>
@@ -2086,8 +2086,8 @@ const Products = () => {
         </Card>
 
         {/* Enhanced Statistics Cards */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Grid container spacing={3} sx={{ mb: 3 }} >
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2099,17 +2099,17 @@ const Products = () => {
                 '&:hover': { transform: 'translateY(-4px)' }
               }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#1976d2">
                         {products.length}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">إجمالي المنتجات</Typography>
-                      {/* <Typography variant="caption" color="success.main">
+                      <Typography variant="caption" color="success.main">
                         +{products.filter(p => p.featured).length} منتج مميز
-                      </Typography> */}
+                      </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48 }}>
+                    <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
                       <InventoryIcon />
                     </Avatar>
                   </Box>
@@ -2118,7 +2118,7 @@ const Products = () => {
             </motion.div>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          {/* <Grid item xs={12} sm={6} md={3} >
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2129,7 +2129,7 @@ const Products = () => {
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
               }}>
-                {/* <CardContent>
+                <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#2e7d32">
@@ -2144,12 +2144,12 @@ const Products = () => {
                       <StarIcon />
                     </Avatar>
                   </Box>
-                </CardContent> */}
+                </CardContent>
               </Card>
             </motion.div>
-          </Grid>
+          </Grid> */}
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2161,7 +2161,7 @@ const Products = () => {
                 '&:hover': { transform: 'translateY(-4px)' }
               }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#ed6c02">
                         {products.filter(p => p.stock <= 10).length}
@@ -2171,7 +2171,7 @@ const Products = () => {
                         {products.filter(p => p.stock === 0).length} نفد المخزون
                       </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#ed6c02', color: 'white', width: 48, height: 48 }}>
+                    <Avatar sx={{ bgcolor: '#ed6c02', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
                       <Alert />
                     </Avatar>
                   </Box>
@@ -2180,7 +2180,7 @@ const Products = () => {
             </motion.div>
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -2192,17 +2192,17 @@ const Products = () => {
                 '&:hover': { transform: 'translateY(-4px)' }
               }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#9c27b0">
-                        ${products.reduce((total, p) => total + (p.price * p.stock), 0).toFixed(0)}
+                        {products.reduce((total, p) => total + (p.price * p.stock), 0).toFixed().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">قيمة المخزون</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        متوسط السعر: {products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed(2) : '0.00'}
+                        متوسط السعر: {products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00'}
                       </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48 }}>
+                    <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
                       <PriceIcon />
                     </Avatar>
                   </Box>
@@ -2222,14 +2222,14 @@ const Products = () => {
                   قائمة المنتجات ({filterProducts.length})
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button
+                  {/* <Button
                     size="small"
                     variant="outlined"
                     startIcon={<RefreshIcon />}
                     onClick={fetchProducts}
                   >
                     تحديث
-                  </Button>
+                  </Button> */}
                   <Button
                     size="small"
                     variant="outlined"
@@ -2290,23 +2290,6 @@ const Products = () => {
                 </TableHead>
                 <TableBody>
                   <AnimatePresence>
-                    {/* {products
-                      .filter(product => {
-                        const matchesSearch = !searchTerm || 
-                          product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
-                        
-                        const matchesCategory = !filterCategory || 
-                          (typeof product.category === 'object' ? product.category.name : product.category) === filterCategory;
-                        
-                        const matchesStatus = !filterStatus || 
-                          (filterStatus === 'نشط' && product.stock > 0) ||
-                          (filterStatus === 'غير نشط' && product.stock === 0) ||
-                          (filterStatus === 'نفد المخزون' && product.stock === 0);
-                        
-                        return matchesSearch && matchesCategory && matchesStatus;
-                      }) */}
                     {filterProducts
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((product, index) => (
@@ -2332,7 +2315,8 @@ const Products = () => {
                                   whiteSpace: 'nowrap',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
-                                  maxWidth: '200px'
+                                  maxWidth: '200px',
+                                  textAlign: 'right'
                                 }}>
                                   {product.name}
                                 </Typography>
@@ -2444,22 +2428,6 @@ const Products = () => {
 
       <TablePagination
         component="div"
-        // count={products.filter(product => {
-        //   const matchesSearch = !searchTerm || 
-        //     product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        //     product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        //     product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
-          
-        //   const matchesCategory = !filterCategory || 
-        //     (typeof product.category === 'object' ? product.category.name : product.category) === filterCategory;
-          
-        //   const matchesStatus = !filterStatus || 
-        //     (filterStatus === 'نشط' && product.stock > 0) ||
-        //     (filterStatus === 'غير نشط' && product.stock === 0) ||
-        //     (filterStatus === 'نفد المخزون' && product.stock === 0);
-          
-        //   return matchesSearch && matchesCategory && matchesStatus;
-        // }).length}
         count={filterProducts.length}
         page={page}
         onPageChange={handleChangePage}

@@ -482,7 +482,7 @@ const Coupons = () => {
               </Grid>
               
               <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>نوع الخصم</InputLabel>
                   <Select
                     value={filterType}
@@ -498,8 +498,9 @@ const Coupons = () => {
               
               <Grid item xs={12} md={2}>
                 <Button
+                size='large'
                   variant="outlined"
-                  startIcon={<RefreshIcon />}
+                  startIcon={<RefreshIcon sx={{ml: 1}}/>}
                   onClick={fetchCoupons}
                   fullWidth
                 >
@@ -510,7 +511,7 @@ const Coupons = () => {
               <Grid item xs={12} md={1.5}>
                 <Button
                   variant="outlined"
-                  startIcon={<CategoryIcon />}
+                  startIcon={<CategoryIcon sx={{ml: 1}}/>}
                   onClick={() => navigate('/admin/categories')}
                   fullWidth
                   color="secondary"
@@ -522,7 +523,7 @@ const Coupons = () => {
               <Grid item xs={12} md={1.5}>
                 <Button
                   variant="contained"
-                  startIcon={<AddIcon />}
+                  startIcon={<AddIcon sx={{ml: 1}}/>}
                   onClick={() => handleOpenDialog('add')}
                   fullWidth
                   sx={{
@@ -547,81 +548,81 @@ const Coupons = () => {
         transition={{ duration: 0.5, delay: 0.2 }}
       >
         <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">
                       {coupons.length}
                     </Typography>
                     <Typography variant="h6">إجمالي الكوبونات</Typography>
                   </Box>
-                  <CouponIcon sx={{ fontSize: 40 }} />
+                  <CouponIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">
                       {coupons.filter(c => isActive(c)).length}
                     </Typography>
                     <Typography variant="h6">كوبونات نشطة</Typography>
                   </Box>
-                  <CouponIcon sx={{ fontSize: 40 }} />
+                  <CouponIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">
                       {coupons.filter(c => isExpired(c.endDate)).length}
                     </Typography>
                     <Typography variant="h6">كوبونات منتهية</Typography>
                   </Box>
-                  <DateIcon sx={{ fontSize: 40 }} />
+                  <DateIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">
                       {coupons.reduce((sum, c) => sum + c.usedCount, 0)}
                     </Typography>
                     <Typography variant="h6">إجمالي الاستخدامات</Typography>
                   </Box>
-                  <PercentIcon sx={{ fontSize: 40 }} />
+                  <PercentIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0  }} />
                 </Box>
               </CardContent>
             </Card>
@@ -640,14 +641,14 @@ const Coupons = () => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>الكود</TableCell>
-                  <TableCell>الاسم</TableCell>
-                  <TableCell>الوصف</TableCell>
-                  <TableCell>نوع الخصم</TableCell>
-                  <TableCell>قيمة الخصم</TableCell>
-                  <TableCell>تاريخ البداية</TableCell>
-                  <TableCell>تاريخ النهاية</TableCell>
-                  <TableCell>الإجراءات</TableCell>
+                  <TableCell align='center'>الكود</TableCell>
+                  {/* <TableCell>الاسم</TableCell>
+                  <TableCell>الوصف</TableCell> */}
+                  <TableCell align='center'>نوع الخصم</TableCell>
+                  <TableCell align='center'>قيمة الخصم</TableCell>
+                  <TableCell align='center'>تاريخ البداية</TableCell>
+                  <TableCell align='center'>تاريخ النهاية</TableCell>
+                  <TableCell align='center'>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -665,7 +666,7 @@ const Coupons = () => {
                         hover
                       >
                         <TableCell>
-                          <Box>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                             <Typography variant="subtitle2" fontWeight="bold">
                               {coupon.code}
                             </Typography>
@@ -674,21 +675,21 @@ const Coupons = () => {
                             </Typography>
                           </Box>
                         </TableCell>
-                        <TableCell>{coupon.description}</TableCell>
-                        <TableCell>
+                        {/* <TableCell>{coupon.description}</TableCell> */}
+                        <TableCell align='center'>
                           <Chip
                             label={coupon.type === 'percentage' ? 'نسبة مئوية' : 'مبلغ ثابت'}
                             color={coupon.type === 'percentage' ? 'primary' : 'secondary'}
                             size="small"
                           />
                         </TableCell>
-                        <TableCell>
+                        <TableCell align='center'>
                           {coupon.type === 'percentage' ? `${coupon.discount}%` : `$${coupon.discount}`}
                         </TableCell>
-                        <TableCell>{new Date(coupon.startDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{new Date(coupon.expire).toLocaleDateString()}</TableCell>
+                        <TableCell align='center'>{new Date(coupon.startDate).toLocaleDateString()}</TableCell>
+                        <TableCell align='center'>{new Date(coupon.expire).toLocaleDateString()}</TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
                             <Tooltip title="عرض">
                               <IconButton
                                 size="small"
@@ -781,8 +782,8 @@ const Coupons = () => {
               </Grid>
               
               <Grid item xs={12} md={6}>
-                <Typography variant="subtitle2" color="text.secondary">الوصف</Typography>
-                <Typography variant="body1" paragraph>{selectedCoupon.description}</Typography>
+                {/* <Typography variant="subtitle2" color="text.secondary">الوصف</Typography> */}
+                {/* <Typography variant="body1" paragraph>{selectedCoupon.description}</Typography> */}
                 
                 <Typography variant="subtitle2" color="text.secondary">قيمة الخصم</Typography>
                 <Typography variant="h6" color="primary">
@@ -830,7 +831,7 @@ const Coupons = () => {
                 />
               </Grid>
               
-              <Grid item xs={12}>
+              {/* <Grid item xs={12}>
                 <TextField
                   fullWidth
                   label="وصف الكوبون"
@@ -842,7 +843,7 @@ const Coupons = () => {
                   rows={3}
                   required
                 />
-              </Grid>
+              </Grid> */}
               
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth>

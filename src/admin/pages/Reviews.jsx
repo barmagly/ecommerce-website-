@@ -290,74 +290,74 @@ const Reviews = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
       >
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+        <Grid container spacing={3} sx={{ mb: 4 }} >
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">{reviews.length}</Typography>
                     <Typography variant="h6">إجمالي المراجعات</Typography>
                   </Box>
-                  <ReviewsIcon sx={{ fontSize: 40 }} />
+                  <ReviewsIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">{approvedReviews}</Typography>
                     <Typography variant="h6">مراجعات موافق عليها</Typography>
                   </Box>
-                  <ApproveIcon sx={{ fontSize: 40 }} />
+                  <ApproveIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">{pendingReviews}</Typography>
                     <Typography variant="h6">في الانتظار</Typography>
                   </Box>
-                  <TrendingIcon sx={{ fontSize: 40 }} />
+                  <TrendingIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
           </Grid>
           
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ 
               background: 'linear-gradient(135deg, #e91e63 0%, #c2185b 100%)',
               color: 'white',
               borderRadius: 3
             }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                   <Box>
                     <Typography variant="h4" fontWeight="bold">{averageRating}</Typography>
                     <Typography variant="h6">متوسط التقييم</Typography>
                   </Box>
-                  <StarIcon sx={{ fontSize: 40 }} />
+                  <StarIcon sx={{ fontSize: 40, position: 'absolute', top: 0, left: 0 }} />
                 </Box>
               </CardContent>
             </Card>
@@ -391,7 +391,7 @@ const Reviews = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>الحالة</InputLabel>
                   <Select
                     value={filterStatus}
@@ -407,7 +407,7 @@ const Reviews = () => {
               </Grid>
               
               <Grid item xs={12} md={2}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 120 }} fullWidth>
                   <InputLabel>التقييم</InputLabel>
                   <Select
                     value={filterRating}
@@ -427,7 +427,7 @@ const Reviews = () => {
               <Grid item xs={12} md={2}>
                 <Button
                   variant="outlined"
-                  startIcon={<RefreshIcon />}
+                  startIcon={<RefreshIcon sx={{ml: 1}}/>}
                   onClick={loadReviews}
                   fullWidth
                 >
@@ -438,7 +438,7 @@ const Reviews = () => {
               <Grid item xs={12} md={2}>
                 <Button
                   variant="contained"
-                  startIcon={<FilterIcon />}
+                  startIcon={<FilterIcon sx={{ml: 1}} />}
                   fullWidth
                   sx={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

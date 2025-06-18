@@ -405,7 +405,7 @@ const Users = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3} size={3}>
+          {/* <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ bgcolor: alpha('#2e7d32', 0.1), border: '1px solid', borderColor: alpha('#2e7d32', 0.2) }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
@@ -423,7 +423,7 @@ const Users = () => {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
           <Grid item xs={12} sm={6} md={3} size={3} >
             <Card sx={{ bgcolor: alpha('#d32f2f', 0.1), border: '1px solid', borderColor: alpha('#d32f2f', 0.2) }}>
               <CardContent>
@@ -443,7 +443,7 @@ const Users = () => {
               </CardContent>
             </Card>
           </Grid>
-          <Grid item xs={12} sm={6} md={3} size={3}>
+          {/* <Grid item xs={12} sm={6} md={3} size={3}>
             <Card sx={{ bgcolor: alpha('#f57c00', 0.1), border: '1px solid', borderColor: alpha('#f57c00', 0.2) }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
@@ -461,7 +461,7 @@ const Users = () => {
                 </Box>
               </CardContent>
             </Card>
-          </Grid>
+          </Grid> */}
         </Grid>
 
         {/* Users Table */}

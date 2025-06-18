@@ -310,8 +310,9 @@ const Categories = () => {
 
               <Grid grid={{ xs: 12, md: 2 }}>
                 <Button
+                  size='large'
                   variant="outlined"
-                  startIcon={<RefreshIcon />}
+                  startIcon={<RefreshIcon sx={{ ml: 1 }} />}
                   onClick={fetchCategories}
                   fullWidth
                 >
@@ -321,8 +322,9 @@ const Categories = () => {
 
               <Grid grid={{ xs: 12, md: 2 }}>
                 <Button
+                  size='large'
                   variant="contained"
-                  startIcon={<AddIcon />}
+                  startIcon={<AddIcon sx={{ ml: 1 }} />}
                   onClick={() => handleOpenDialog()}
                   fullWidth
                   sx={{
@@ -351,10 +353,10 @@ const Categories = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الفئة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الرابط</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الصورة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الفئة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الرابط</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الصورة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -386,24 +388,26 @@ const Categories = () => {
                         </TableCell>
 
                         <TableCell>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" color="text.secondary" textAlign={'center'}>
                             {category.slug}
                           </Typography>
                         </TableCell>
 
                         <TableCell>
+                          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
                           {category.image && (
-                            <Avatar
-                              src={category.image}
-                              sx={{ width: 40, height: 40 }}
+                            <Avatar                             
+                            src={category.image}
+                            sx={{ width: 40, height: 40 }}
                             >
                               <ImageIcon />
                             </Avatar>
                           )}
+                          </Box>
                         </TableCell>
 
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', alignItems: 'center'  }}>
                             <Tooltip title="تعديل">
                               <IconButton
                                 size="small"
