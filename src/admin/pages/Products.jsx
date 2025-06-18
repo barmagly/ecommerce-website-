@@ -370,6 +370,20 @@ const Products = () => {
       }
     }
 
+    // التحقق من maxQuantityPerOrder إذا كان موجود
+    if (formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0) {
+      if (parseInt(formData.maxQuantityPerOrder) > parseInt(formData.stock)) {
+        setFormErrors(prev => ({ ...prev, maxQuantityPerOrder: 'الحد الأقصى للكمية في الطلب لا يمكن أن يتجاوز المخزون المتاح' }));
+        hasErrors = true;
+      }
+    }
+
+    // التحقق من تفاصيل العنوان إذا كان النطاق نجع حمادي
+    if (formData.shippingAddressType === 'nag_hamadi' && !formData.shippingAddressDetails?.trim()) {
+      setFormErrors(prev => ({ ...prev, shippingAddressDetails: 'تفاصيل العنوان مطلوبة لنطاق نجع حمادي' }));
+      hasErrors = true;
+    }
+
     if (hasErrors) return;
 
     try {
@@ -392,12 +406,20 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
-          formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder || '');
+          
+          // Handle maxQuantityPerOrder properly - only send if it has a valid value
+          if (formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0) {
+            formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder);
+          }
+          // Don't send the field at all if it's empty or invalid
           
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
             supplierName: formData.supplierName,
-            supplierPrice: formData.supplierPrice
+            supplierPrice: formData.supplierPrice,
+            maxQuantityPerOrder: formData.maxQuantityPerOrder,
+            stock: formData.stock,
+            willSendMaxQuantity: !!(formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0)
           });
         } else {
           // إضافة قيم افتراضية للمنتج المتغير
@@ -406,7 +428,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', '0');
           formDataToSend.append('stock', '0');
           formDataToSend.append('sku', 'VAR-' + Date.now());
-          formDataToSend.append('maxQuantityPerOrder', '');
+          // Don't send maxQuantityPerOrder for variant products
         }
 
         // Handle imageCover
@@ -530,12 +552,20 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
-          formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder || '');
+          
+          // Handle maxQuantityPerOrder properly - only send if it has a valid value
+          if (formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0) {
+            formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder);
+          }
+          // Don't send the field at all if it's empty or invalid
           
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
             supplierName: formData.supplierName,
-            supplierPrice: formData.supplierPrice
+            supplierPrice: formData.supplierPrice,
+            maxQuantityPerOrder: formData.maxQuantityPerOrder,
+            stock: formData.stock,
+            willSendMaxQuantity: !!(formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0)
           });
         } else {
           // إضافة قيم افتراضية للمنتج المتغير
@@ -544,7 +574,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', '0');
           formDataToSend.append('stock', '0');
           formDataToSend.append('sku', 'VAR-' + Date.now());
-          formDataToSend.append('maxQuantityPerOrder', '');
+          // Don't send maxQuantityPerOrder for variant products
         }
 
         // إضافة الصور
@@ -1941,6 +1971,17 @@ const Products = () => {
     }
   }, [formData.attributes, formData.hasVariants, selectedProduct]);
 
+  // Handle shipping address type changes
+  useEffect(() => {
+    if (formData.shippingAddressType !== 'nag_hamadi') {
+      setFormData(prev => ({ ...prev, shippingAddressDetails: '' }));
+      // Clear the error if it exists
+      if (formErrors.shippingAddressDetails) {
+        setFormErrors(prev => ({ ...prev, shippingAddressDetails: '' }));
+      }
+    }
+  }, [formData.shippingAddressType, formErrors.shippingAddressDetails]);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -2661,7 +2702,8 @@ const Products = () => {
                             value={formData.maxQuantityPerOrder || ''}
                             onChange={handleFormChange('maxQuantityPerOrder')}
                             inputProps={{ min: 1 }}
-                            helperText="مثال: 5 (لن يستطيع العميل شراء أكثر من 5 قطع في الطلب الواحد)"
+                            error={!!formErrors.maxQuantityPerOrder}
+                            helperText={formErrors.maxQuantityPerOrder || "مثال: 5 (لن يستطيع العميل شراء أكثر من 5 قطع في الطلب الواحد)"}
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
@@ -2749,6 +2791,21 @@ const Products = () => {
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
                           />
                         </Grid>
+                        {formData.shippingAddressType === 'nag_hamadi' && (
+                          <Grid item xs={12} md={6}>
+                            <TextField
+                              fullWidth
+                              required
+                              label="تفاصيل العنوان في نجع حمادي"
+                              value={formData.shippingAddressDetails}
+                              onChange={handleFormChange('shippingAddressDetails')}
+                              placeholder="مثال: شارع الرئيسي، حي المدينة"
+                              error={!!formErrors.shippingAddressDetails}
+                              helperText={formErrors.shippingAddressDetails}
+                              sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
+                            />
+                          </Grid>
+                        )}
                       </Grid>
                     </Paper>
                   </Grid>
