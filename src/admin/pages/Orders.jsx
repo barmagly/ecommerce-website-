@@ -76,6 +76,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { fetchOrders, updateOrderStatus, deleteOrder } from '../store/slices/ordersSlice';
+import { updateOrderShippingDetailsThunk, sendOrderConfirmationEmailThunk } from '../../services/Slice/order/order';
 
 const POLLING_INTERVAL = 30000; // Poll every 30 seconds
 
@@ -220,13 +221,17 @@ const Orders = () => {
 
   // Event handlers
   const handleViewOrder = (order) => {
-    setSelectedOrder(order);
-    setOrderDetailsOpen(true);
+    if (order && order._id) {
+      setSelectedOrder(order);
+      setOrderDetailsOpen(true);
+    }
   };
 
   const handleEditOrder = (order) => {
-    setSelectedOrder(order);
-    setEditOrderOpen(true);
+    if (order && order._id) {
+      setSelectedOrder(order);
+      setEditOrderOpen(true);
+    }
   };
 
   const handleUpdateOrderStatus = async (orderId, newStatus) => {
@@ -276,21 +281,113 @@ const Orders = () => {
   };
 
   const handlePrintInvoice = (order) => {
-    setOrderToPrint(order);
-    setTimeout(() => {
-      handlePrint();
-    }, 100);
+    if (order && order._id) {
+      setOrderToPrint(order);
+      setTimeout(() => {
+        handlePrint();
+      }, 100);
+    }
   };
 
-  const handleExportPDF = (order) => {
-    exportInvoiceAsPDF(order);
-    toast.success('تم تصدير الفاتورة كملف PDF');
-    setMenuAnchorEl(null);
+  const handleExportPDF = async (order) => {
+    try {
+      if (!order || !order._id) {
+        toast.error('لا توجد بيانات صحيحة للطلب');
+        return;
+      }
+      
+      setActionLoading({ id: order._id, type: 'pdf' });
+      const result = await exportInvoiceAsPDF(order);
+      if (result.success) {
+        toast.success('تم تصدير الفاتورة بنجاح');
+      } else {
+        throw new Error(result.error || 'فشل تصدير الفاتورة');
+      }
+    } catch (error) {
+      toast.error(error.message || 'فشل تصدير الفاتورة');
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
   };
 
-  const handleSendEmail = (order) => {
-    toast.info(`إرسال الفاتورة إلى ${order.email}`);
-    setMenuAnchorEl(null);
+  const handleDownloadOrder = (order) => {
+    try {
+      if (!order || !order._id) {
+        toast.error('لا توجد بيانات صحيحة للطلب');
+        return;
+      }
+      
+      setActionLoading({ id: order._id, type: 'download' });
+      
+      // تحضير بيانات الطلب للتحميل
+      const orderData = {
+        orderNumber: order._id,
+        customerName: order.name,
+        customerEmail: order.email,
+        customerPhone: order.phone,
+        orderDate: new Date(order.createdAt).toLocaleDateString('ar-EG'),
+        status: getStatusLabel(order.status),
+        paymentStatus: getPaymentStatusLabel(order.paymentStatus),
+        paymentMethod: getPaymentMethodLabel(order.paymentMethod),
+        items: order.cartItems.map(item => ({
+          name: item.prdID.name,
+          price: item.prdID.price,
+          quantity: item.quantity,
+          total: item.prdID.price * item.quantity
+        })),
+        subtotal: order.subtotal,
+        shippingCost: order.shippingCost,
+        total: order.total
+      };
+
+      // تحويل البيانات إلى JSON
+      const dataStr = JSON.stringify(orderData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      
+      // إنشاء رابط التحميل
+      const url = window.URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `order-${order._id}.json`;
+      
+      // تنفيذ التحميل
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('تم تحميل بيانات الطلب بنجاح');
+    } catch (error) {
+      toast.error('فشل تحميل بيانات الطلب');
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
+  };
+
+  const handleSendEmail = async (order) => {
+    try {
+      setActionLoading({ id: order._id, type: 'email' });
+      
+      // Send to customer
+      await dispatch(sendOrderConfirmationEmailThunk({
+        orderId: order._id,
+        email: order.email
+      })).unwrap();
+      
+      // Send copy to admin
+      await dispatch(sendOrderConfirmationEmailThunk({
+        orderId: order._id,
+        email: 'support@mizanoo.com',
+        isAdminCopy: true
+      })).unwrap();
+      
+      toast.success('تم إرسال البريد الإلكتروني بنجاح');
+    } catch (error) {
+      console.error('Error sending email:', error);
+      toast.error('فشل في إرسال البريد الإلكتروني');
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
   };
 
   const handlePrintReport = () => {
@@ -313,6 +410,11 @@ const Orders = () => {
 
   const handleUpdateOrder = async () => {
     try {
+      if (!selectedOrder || !selectedOrder._id) {
+        toast.error('لا توجد بيانات صحيحة للطلب');
+        return;
+      }
+      
       dispatch(updateOrderStatus({
         id: selectedOrder._id,
         status: selectedOrder.status,
@@ -384,6 +486,82 @@ const Orders = () => {
         size="small"
       />
     );
+  };
+
+  const handleUpdateShippingDetails = async (order) => {
+    try {
+      setActionLoading({ id: order._id, type: 'shipping' });
+      
+      const totalShippingCost = order.cartItems.reduce((total, item) => 
+        total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0
+      );
+      
+      const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
+        Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
+      ));
+
+      await dispatch(updateOrderShippingDetailsThunk({
+        orderId: order._id,
+        shippingCost: totalShippingCost,
+        deliveryDays: maxDeliveryDays
+      })).unwrap();
+
+      toast.success('تم تحديث تفاصيل الشحن بنجاح');
+    } catch (error) {
+      console.error('Error updating shipping details:', error);
+      toast.error('فشل في تحديث تفاصيل الشحن');
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
+  };
+
+  const handleUpdateAllShippingDetails = async () => {
+    if (!window.confirm('هل أنت متأكد من تحديث تفاصيل الشحن لجميع الطلبات؟')) {
+      return;
+    }
+
+    let successCount = 0;
+    let failureCount = 0;
+
+    try {
+      setActionLoading({ id: 'all', type: 'shipping' });
+      
+      // Update each order sequentially
+      for (const order of orders) {
+        try {
+          const totalShippingCost = order.cartItems.reduce((total, item) => 
+            total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0
+          );
+          
+          const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
+            Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
+          ));
+
+          await dispatch(updateOrderShippingDetailsThunk({
+            orderId: order._id,
+            shippingCost: totalShippingCost,
+            deliveryDays: maxDeliveryDays
+          })).unwrap();
+
+          successCount++;
+        } catch (error) {
+          console.error(`Error updating order ${order._id}:`, error);
+          failureCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`تم تحديث ${successCount} طلب بنجاح`);
+      }
+      if (failureCount > 0) {
+        toast.error(`فشل تحديث ${failureCount} طلب`);
+      }
+    } catch (error) {
+      console.error('Error in bulk update:', error);
+      toast.error('حدث خطأ أثناء تحديث الطلبات');
+    } finally {
+      setActionLoading({ id: null, type: null });
+    }
   };
 
   if (loading) {
@@ -606,72 +784,74 @@ const Orders = () => {
                   sortedAndFilteredOrders
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((order) => (
-                      <TableRow
-                        key={order._id}
-                        sx={{
-                          '&:last-child td, &:last-child th': { border: 0 },
-                          backgroundColor: order.isNew ? alpha(theme.palette.info.light, 0.1) : 'inherit',
-                        }}
-                      >
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            #{order._id.slice(-6)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2" color="text.secondary">
-                            {new Date(order.createdAt).toLocaleDateString('ar-EG')}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <div style={{ maxWidth: 200 }}>
-                            <Typography variant="body2" noWrap>
-                              {order.name}
+                      order && order._id ? (
+                        <TableRow
+                          key={order._id}
+                          sx={{
+                            '&:last-child td, &:last-child th': { border: 0 },
+                            backgroundColor: order.isNew ? alpha(theme.palette.info.light, 0.1) : 'inherit',
+                          }}
+                        >
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              #{order._id.slice(-6)}
                             </Typography>
-                            <Typography variant="caption" color="textSecondary" noWrap>
-                              {order.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {new Date(order.createdAt).toLocaleDateString('ar-EG')}
                             </Typography>
-                            <Typography variant="caption" display="block" noWrap>
-                              {order.phone}
-                            </Typography>
-                          </div>
-                        </TableCell>
-                        <TableCell>{order.city || 'نجع حمادي'}</TableCell>
-                        <TableCell>
-                          {order.cartItems?.reduce((total, item) => 
-                            total + (item?.prdID?.shippingCost || 0), 0)
-                          } ج.م
-                        </TableCell>
-                        <TableCell>
-                          {Math.max(...(order.cartItems?.map(item => 
-                            item?.prdID?.deliveryDays || 2) || [2]))
-                          } يوم
-                        </TableCell>
-                        <TableCell>{order.total} ج.م</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getStatusLabel(order.status)}
-                            color={getStatusColor(order.status)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={getPaymentStatusLabel(order.paymentStatus)}
-                            color={getPaymentStatusColor(order.paymentStatus)}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={(event) => handleMenuClick(event, order._id)}
-                            disabled={!!actionLoading.id}
-                          >
-                            <MoreIcon />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
+                          </TableCell>
+                          <TableCell>
+                            <div style={{ maxWidth: 200 }}>
+                              <Typography variant="body2" noWrap>
+                                {order.name}
+                              </Typography>
+                              <Typography variant="caption" color="textSecondary" noWrap>
+                                {order.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
+                              </Typography>
+                              <Typography variant="caption" display="block" noWrap>
+                                {order.phone}
+                              </Typography>
+                            </div>
+                          </TableCell>
+                          <TableCell>{order.city || 'نجع حمادي'}</TableCell>
+                          <TableCell>
+                            {Number(order.shippingCost) > 0 ? order.shippingCost :
+                              order.cartItems?.reduce((total, item) => 
+                                total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م
+                          </TableCell>
+                          <TableCell>
+                            {Number(order.deliveryDays) > 0 ? order.deliveryDays :
+                              Math.max(...(order.cartItems?.map(item => 
+                                Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم
+                          </TableCell>
+                          <TableCell>{order.total} ج.م</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getStatusLabel(order.status)}
+                              color={getStatusColor(order.status)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={getPaymentStatusLabel(order.paymentStatus)}
+                              color={getPaymentStatusColor(order.paymentStatus)}
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton
+                              size="small"
+                              onClick={(event) => handleMenuClick(event, order._id)}
+                              disabled={!!actionLoading.id}
+                            >
+                              <MoreIcon />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ) : null
                     ))
                 )}
               </TableBody>
@@ -710,102 +890,112 @@ const Orders = () => {
         </DialogTitle>
 
         <DialogContent dividers>
-          <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" gutterBottom>
-                معلومات الطلب
-              </Typography>
-              <List dense>
-                <ListItem>
-                  <ListItemText
-                    primary="رقم الطلب"
-                    secondary={`#${selectedOrder?._id?.slice(-6)}`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="تاريخ الطلب"
-                    secondary={new Date(selectedOrder?.createdAt).toLocaleDateString('ar-EG')}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="المدينة"
-                    secondary={selectedOrder?.city || 'نجع حمادي'}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="مصاريف الشحن"
-                    secondary={`${selectedOrder?.cartItems?.reduce((total, item) => 
-                      total + (item?.prdID?.shippingCost || 0), 0)} ج.م`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="مدة التوصيل"
-                    secondary={`${Math.max(...(selectedOrder?.cartItems?.map(item => 
-                      item?.prdID?.deliveryDays || 2) || [2]))} يوم`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="الإجمالي"
-                    secondary={`${selectedOrder?.total} ج.م`}
-                  />
-                </ListItem>
-              </List>
+          {selectedOrder ? (
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" gutterBottom>
+                  معلومات الطلب
+                </Typography>
+                <List dense>
+                  <ListItem>
+                    <ListItemText
+                      primary="رقم الطلب"
+                      secondary={`#${selectedOrder?._id?.slice(-6)}`}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="تاريخ الطلب"
+                      secondary={new Date(selectedOrder?.createdAt).toLocaleDateString('ar-EG')}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="المدينة"
+                      secondary={selectedOrder?.city || 'نجع حمادي'}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="مصاريف الشحن"
+                      secondary={`${Number(selectedOrder?.shippingCost) > 0 ? selectedOrder?.shippingCost :
+                        selectedOrder?.cartItems?.reduce((total, item) => 
+                          total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م`}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="مدة التوصيل"
+                      secondary={`${Number(selectedOrder?.deliveryDays) > 0 ? selectedOrder?.deliveryDays :
+                        Math.max(...(selectedOrder?.cartItems?.map(item => 
+                          Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم`}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="الإجمالي"
+                      secondary={`${selectedOrder?.total} ج.م`}
+                    />
+                  </ListItem>
+                </List>
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Typography variant="subtitle1" gutterBottom>
+                  معلومات العميل
+                </Typography>
+                <List dense>
+                  <ListItem>
+                    <ListItemText
+                      primary="الاسم"
+                      secondary={selectedOrder?.name}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="البريد الإلكتروني"
+                      secondary={selectedOrder?.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="رقم الهاتف"
+                      secondary={selectedOrder?.phone}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="العنوان"
+                      secondary={selectedOrder?.address}
+                    />
+                  </ListItem>
+                </List>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Typography variant="subtitle1" gutterBottom>
-                معلومات العميل
-              </Typography>
-              <List dense>
-                <ListItem>
-                  <ListItemText
-                    primary="الاسم"
-                    secondary={selectedOrder?.name}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="البريد الإلكتروني"
-                    secondary={selectedOrder?.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="رقم الهاتف"
-                    secondary={selectedOrder?.phone}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="العنوان"
-                    secondary={selectedOrder?.address}
-                  />
-                </ListItem>
-              </List>
-            </Grid>
-          </Grid>
+          ) : (
+            <Typography variant="body1" align="center">
+              لا توجد بيانات للطلب
+            </Typography>
+          )}
         </DialogContent>
 
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={handleCloseDialog} color="inherit">
             إغلاق
           </Button>
-          <Button
-            variant="contained"
-            onClick={handleUpdateOrder}
-            sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-              }
-            }}
-          >
-            حفظ التغييرات
-          </Button>
+          {selectedOrder && (
+            <Button
+              variant="contained"
+              onClick={handleUpdateOrder}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                }
+              }}
+            >
+              حفظ التغييرات
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
@@ -820,7 +1010,9 @@ const Orders = () => {
       >
         <MenuItem onClick={() => {
           const order = orders.find(o => o._id === selectedOrderId);
-          handleViewOrder(order);
+          if (order) {
+            handleViewOrder(order);
+          }
           handleMenuClose();
         }}>
           <ListItemIcon>
@@ -831,50 +1023,35 @@ const Orders = () => {
 
         <MenuItem onClick={() => {
           const order = orders.find(o => o._id === selectedOrderId);
-          handleEditOrder(order);
+          if (order) {
+            handleDownloadOrder(order);
+          }
           handleMenuClose();
         }}>
           <ListItemIcon>
-            <EditIcon fontSize="small" />
+            <DownloadIcon fontSize="small" />
           </ListItemIcon>
-          <ListItemText>تعديل الطلب</ListItemText>
+          <ListItemText>تحميل الطلب</ListItemText>
         </MenuItem>
-
-        <Divider />
-
-        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'processing')}>
-          <ListItemIcon>
-            <Schedule fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>قيد المعالجة</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'shipped')}>
-          <ListItemIcon>
-            <LocalShipping fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>تم الشحن</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'delivered')}>
-          <ListItemIcon>
-            <CheckCircleIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>تم التوصيل</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'cancelled')}>
-          <ListItemIcon>
-            <CancelIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>إلغاء الطلب</ListItemText>
-        </MenuItem>
-
-        <Divider />
 
         <MenuItem onClick={() => {
           const order = orders.find(o => o._id === selectedOrderId);
-          handlePrintInvoice(order);
+          if (order) {
+            handleExportPDF(order);
+          }
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <PdfIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>تصدير PDF</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => {
+          const order = orders.find(o => o._id === selectedOrderId);
+          if (order) {
+            handlePrintInvoice(order);
+          }
           handleMenuClose();
         }}>
           <ListItemIcon>
@@ -884,23 +1061,55 @@ const Orders = () => {
         </MenuItem>
 
         <MenuItem onClick={() => {
-          const order = orders.find(o => o._id === selectedOrderId);
-          handleExportPDF(order);
+          if (selectedOrder) {
+            handleUpdateShippingDetails(selectedOrder);
+          }
           handleMenuClose();
         }}>
           <ListItemIcon>
-            <PdfIcon fontSize="small" />
+            <LocalShipping fontSize="small" />
           </ListItemIcon>
-          <ListItemText>تصدير PDF</ListItemText>
+          <ListItemText>تحديث تفاصيل الشحن</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => {
+          if (selectedOrder) {
+            handleSendEmail(selectedOrder);
+          }
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <EmailIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>إرسال الفاتورة بالبريد</ListItemText>
+          {selectedOrder && actionLoading.id === selectedOrder._id && actionLoading.type === 'email' && (
+            <CircularProgress size={20} />
+          )}
         </MenuItem>
 
         <Divider />
 
-        <MenuItem onClick={() => handleDeleteOrder(selectedOrderId)} sx={{ color: 'error.main' }}>
+        <MenuItem onClick={() => {
+          if (selectedOrderId) {
+            handleUpdateOrderStatus(selectedOrderId, 'cancelled');
+          }
+        }}>
+          <ListItemIcon>
+            <CancelIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText sx={{ color: 'error.main' }}>إلغاء الطلب</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => {
+          if (selectedOrderId) {
+            handleDeleteOrder(selectedOrderId);
+          }
+          handleMenuClose();
+        }}>
           <ListItemIcon>
             <DeleteIcon fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText>حذف الطلب</ListItemText>
+          <ListItemText sx={{ color: 'error.main' }}>حذف الطلب</ListItemText>
         </MenuItem>
       </Menu>
 
@@ -910,6 +1119,37 @@ const Orders = () => {
           <InvoicePrint ref={printRef} order={orderToPrint} />
         </Box>
       )}
+
+      {/* Add button to toolbar */}
+      <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={handleUpdateAllShippingDetails}
+          disabled={actionLoading.id === 'all'}
+          startIcon={<LocalShipping />}
+          sx={{
+            background: 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #45a049 0%, #3d8b40 100%)',
+            }
+          }}
+        >
+          تحديث تفاصيل الشحن للكل
+          {actionLoading.id === 'all' && (
+            <CircularProgress
+              size={24}
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                marginTop: '-12px',
+                marginLeft: '-12px',
+              }}
+            />
+          )}
+        </Button>
+      </Box>
     </Box>
   );
 };

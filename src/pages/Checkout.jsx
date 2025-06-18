@@ -5,10 +5,11 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { createOrderThunk } from "../services/Slice/order/order";
+import { createOrderThunk, sendOrderConfirmationEmailThunk } from "../services/Slice/order/order";
 import { deleteCartItemThunk, getCartThunk } from "../services/Slice/cart/cart";
 import { couponsAPI } from "../services/api";
 import { toast } from "react-toastify";
+import { generateOrderConfirmationEmailHTML, generateOrderConfirmationEmailText } from "../services/emailService";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ export default function Checkout() {
   }, [cartItems, cartLoading, navigate]);
 
   const [form, setForm] = useState({
-    firstName: "",
+    name: "",
     address: "",
     apartment: "",
     city: "",
@@ -81,7 +82,7 @@ export default function Checkout() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState("visa");
   const [instapayImage, setInstapayImage] = useState(null);
-  const [instapayNumber] = useState("01012345678");
+  const [instapayNumber] = useState("01092474959");
   const [instapayStatus, setInstapayStatus] = useState("");
 
   // Add state for coupon
@@ -91,8 +92,13 @@ export default function Checkout() {
 
   // حساب إجمالي الشحن والإجمالي النهائي
   const totalShipping = cartItems.reduce((sum, item) => {
+    console.log('Item in totalShipping calculation:', item);
+    console.log('Item shippingCost:', item?.prdID?.shippingCost);
     return sum + (item?.prdID?.shippingCost || 0);
   }, 0);
+
+  console.log('Cart Items in Checkout:', cartItems);
+  console.log('Total Shipping calculated:', totalShipping);
 
   const finalTotal = appliedCoupon 
     ? (discountedTotal + totalShipping)
@@ -323,7 +329,7 @@ export default function Checkout() {
   const validateForm = () => {
     console.log('validateForm called');
     const newErrors = {};
-    if (!form.firstName.trim()) newErrors.firstName = 'الاسم الأول مطلوب';
+    if (!form.name.trim()) newErrors.name = 'الاسم الأول مطلوب';
     if (!form.address.trim()) newErrors.address = 'العنوان مطلوب';
     if (form.shippingAddressType !== 'nag_hamadi' && !form.city.trim()) newErrors.city = 'المدينة مطلوبة';
     if (!form.email.trim()) {
@@ -341,45 +347,110 @@ export default function Checkout() {
     setErrors(newErrors);
     const isValid = Object.keys(newErrors).length === 0;
     console.log('validateForm isValid:', isValid);
-    return isValid;
+    return { isValid, errors: newErrors };
   };
 
   const handleOrder = async (e) => {
     e.preventDefault();
     console.log('handleOrder called');
-    if (!validateForm()) {
-      console.log('Form validation failed', errors);
-      const firstError = document.querySelector('.is-invalid');
-      if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
+    
+    // Validate form first
+    const validationResult = validateForm();
+    console.log('validateForm errors:', validationResult.errors);
+    console.log('validateForm isValid:', validationResult.isValid);
+    
+    if (!validationResult.isValid) {
+      setErrors(validationResult.errors);
       return;
     }
+
+    // Check shipping scope validation
+    if (!shippingValidation.isValid) {
+      setErrors(prev => ({
+        ...prev,
+        shipping: shippingValidation.message
+      }));
+      return;
+    }
+
     try {
+      // Calculate shipping costs and delivery times
+      const totalShippingCost = cartItems.reduce((total, item) => {
+        console.log('Item in totalShipping calculation:', item);
+        console.log('Item shippingCost:', item?.prdID?.shippingCost);
+        return total + (Number(item?.prdID?.shippingCost) || 0);
+      }, 0);
+      
+      const maxDeliveryDays = Math.max(...cartItems.map(item => 
+        Number(item?.prdID?.deliveryDays) || 2
+      ));
+
+      console.log('Cart Items:', cartItems);
+      console.log('Total Shipping Cost:', totalShippingCost);
+      console.log('Max Delivery Days:', maxDeliveryDays);
+      console.log('Individual product shipping costs:', cartItems.map(item => ({
+        name: item.prdID.name,
+        shippingCost: item.prdID.shippingCost,
+        deliveryDays: item.prdID.deliveryDays
+      })));
+
       const formData = new FormData();
-      formData.append('name', form.firstName);
+      formData.append('name', form.name);
       formData.append('email', form.email);
       formData.append('phone', form.phone);
       formData.append('address', form.address);
       formData.append('city', form.city);
-      formData.append('postalCode', '00000');
-      formData.append('country', 'مصر');
-      formData.append('apartment', form.apartment || '');
-      const shippingAddress = `${form.address}${form.apartment ? `, ${form.apartment}` : ''}, ${form.city}, مصر`;
-      formData.append('shippingAddress', shippingAddress);
+      formData.append('notes', form.notes || '');
+      formData.append('total', total);
       formData.append('shippingAddressType', form.shippingAddressType);
 
-      // حساب إجمالي مصاريف الشحن ومدة التوصيل من المنتجات
-      const totalShippingCost = cartItems.reduce((total, item) => 
-        total + (item?.prdID?.shippingCost || 0), 0
-      );
-      const maxDeliveryDays = Math.max(...cartItems.map(item => 
-        item?.prdID?.deliveryDays || 2
-      ));
+      // Add shipping address
+      const shippingAddress = `${form.address}, ${form.city || 'نجع حمادي'}, مصر`;
+      formData.append('shippingAddress', shippingAddress);
 
-      formData.append('shippingCost', totalShippingCost);
-      formData.append('deliveryDays', maxDeliveryDays);
+      // تحويل القيم إلى أرقام وإضافتها إلى FormData
+      formData.append('shippingCost', Number(totalShippingCost));
+      formData.append('deliveryDays', Number(maxDeliveryDays));
 
+      console.log('=== SHIPPING DETAILS BEING SENT ===');
+      console.log('totalShippingCost:', totalShippingCost, 'Type:', typeof totalShippingCost);
+      console.log('maxDeliveryDays:', maxDeliveryDays, 'Type:', typeof maxDeliveryDays);
+      console.log('Individual product details:');
+      cartItems.forEach((item, index) => {
+        console.log(`Product ${index + 1}:`, {
+          name: item.prdID.name,
+          shippingCost: item.prdID.shippingCost,
+          deliveryDays: item.prdID.deliveryDays,
+          shippingCostType: typeof item.prdID.shippingCost,
+          deliveryDaysType: typeof item.prdID.deliveryDays
+        });
+      });
+      console.log('===================================');
+
+      // إضافة بيانات المنتجات مع تفاصيل الشحن لكل منتج
+      const cartItemsWithShipping = cartItems.map(item => ({
+        productId: item.prdID._id,
+        variantId: item.variantId?._id || null,
+        quantity: item.quantity,
+        price: item.variantId ? item.variantId.price : item.prdID.price,
+        name: item.prdID.name,
+        images: item.variantId ? item.variantId.images : item.prdID.images,
+        shippingCost: Number(item.prdID.shippingCost) || 0,
+        deliveryDays: Number(item.prdID.deliveryDays) || 2,
+        shippingAddress: item.prdID.shippingAddress || { type: 'nag_hamadi' }
+      }));
+
+      // لا نرسل cartItems كـ JSON string - سيتم إرسالها من الـ backend
+      // formData.append('cartItems', JSON.stringify(cartItemsWithShipping));
+
+      // إضافة القيم الأصلية للمنتجات للتحقق منها
+      formData.append('productsShippingDetails', JSON.stringify(cartItems.map(item => ({
+        productId: item.prdID._id,
+        shippingCost: item.prdID.shippingCost || 0,
+        deliveryDays: item.prdID.deliveryDays || 2
+      }))));
+
+      // Determine payment method first
       let paymentMethod;
       switch (payment) {
         case 'visa':
@@ -394,6 +465,48 @@ export default function Checkout() {
         default:
           paymentMethod = 'cash_on_delivery';
       }
+
+      // إضافة محتوى البريد الإلكتروني
+      const emailHTML = generateOrderConfirmationEmailHTML({
+        _id: 'temp-id',
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        total: total,
+        paymentMethod: paymentMethod,
+        paymentStatus: payment === 'cod' ? 'pending' : 'paid',
+        cartItems: cartItems,
+        shippingCost: totalShippingCost,
+        deliveryDays: maxDeliveryDays,
+        notes: form.notes,
+        createdAt: new Date().toISOString()
+      }, false);
+
+      const emailText = generateOrderConfirmationEmailText({
+        _id: 'temp-id',
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        total: total,
+        paymentMethod: paymentMethod,
+        paymentStatus: payment === 'cod' ? 'pending' : 'paid',
+        cartItems: cartItems,
+        notes: form.notes,
+        createdAt: new Date().toISOString()
+      });
+
+      formData.append('emailHTML', emailHTML);
+      formData.append('emailText', emailText);
+
+      console.log('FormData before sending:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
       formData.append('paymentMethod', paymentMethod);
       if (payment === 'instapay') {
         if (!instapayImage) {
@@ -419,6 +532,27 @@ export default function Checkout() {
       console.log('Order resultAction:', resultAction);
       if (createOrderThunk.fulfilled.match(resultAction)) {
         setOrderPlaced(true);
+        
+        // Send confirmation email to customer
+        try {
+          await dispatch(sendOrderConfirmationEmailThunk({
+            orderId: resultAction.payload.order._id,
+            email: form.email
+          })).unwrap();
+          console.log('Confirmation email sent to customer');
+          
+          // Send copy to admin
+          await dispatch(sendOrderConfirmationEmailThunk({
+            orderId: resultAction.payload.order._id,
+            email: 'support@mizanoo.com',
+            isAdminCopy: true
+          })).unwrap();
+          console.log('Confirmation email sent to admin');
+        } catch (error) {
+          console.error('Failed to send confirmation email:', error);
+          // لا نوقف العملية إذا فشل إرسال البريد الإلكتروني
+        }
+        
         setTimeout(() => {
           navigate('/order-confirmation', {
             state: {
@@ -428,16 +562,22 @@ export default function Checkout() {
           });
         }, 2000);
       } else {
+        const errorMessage = typeof resultAction.payload === 'object' && resultAction.payload?.message 
+          ? resultAction.payload.message 
+          : (typeof resultAction.payload === 'string' ? resultAction.payload : 'حدث خطأ أثناء إنشاء الطلب');
         setErrors(prev => ({
           ...prev,
-          submit: resultAction.payload?.message || 'حدث خطأ أثناء إنشاء الطلب'
+          submit: errorMessage
         }));
-        console.log('Order failed:', resultAction.payload?.message);
+        console.log('Order failed:', errorMessage);
       }
     } catch (error) {
+      const errorMessage = typeof error === 'object' && error?.message 
+        ? error.message 
+        : (typeof error === 'string' ? error : 'حدث خطأ أثناء إنشاء الطلب');
       setErrors(prev => ({
         ...prev,
-        submit: error.message || 'حدث خطأ أثناء إنشاء الطلب'
+        submit: errorMessage
       }));
       console.log('Order error:', error);
     }
@@ -510,13 +650,13 @@ export default function Checkout() {
                 <div className="mb-3">
                   <label className="form-label">الاسم الأول *</label>
                   <input
-                    name="firstName"
-                    className={`form-control ${errors.firstName ? 'is-invalid' : ''}`}
-                    value={form.firstName}
+                    name="name"
+                    className={`form-control ${errors.name ? 'is-invalid' : ''}`}
+                    value={form.name}
                     onChange={handleChange}
                     required
                   />
-                  {errors.firstName && <div className="invalid-feedback">{errors.firstName}</div>}
+                  {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                 </div>
                 <div className="mb-3">
                   <label className="form-label">العنوان *</label>
@@ -915,6 +1055,13 @@ export default function Checkout() {
               {/* زر تأكيد الطلب */}
               <div className="card shadow-sm border-0">
                 <div className="card-body">
+                  {/* Display submit errors */}
+                  {errors.submit && (
+                    <div className="alert alert-danger mb-3">
+                      <strong>خطأ في إتمام الطلب:</strong> {errors.submit}
+                    </div>
+                  )}
+                  
                   <button
                     type="submit"
                     form="checkout-form"

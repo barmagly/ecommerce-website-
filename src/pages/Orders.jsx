@@ -324,13 +324,40 @@ export default function Orders() {
                           </td>
                           <td>{order.city || 'نجع حمادي'}</td>
                           <td>
-                            {order.cartItems?.reduce((total, item) => 
-                              total + (item?.prdID?.shippingCost || 0), 0)
-                            } ج.م
+                            {(() => {
+                              const storedShippingCost = Number(order.shippingCost);
+                              const calculatedShippingCost = order.cartItems?.reduce((total, item) => 
+                                total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0);
+                              
+                              console.log(`Order ${order._id.slice(-6)} - Shipping Cost:`, {
+                                stored: storedShippingCost,
+                                calculated: calculatedShippingCost,
+                                cartItems: order.cartItems?.map(item => ({
+                                  name: item.name || item.prdID?.name,
+                                  shippingCost: item.shippingCost || item.prdID?.shippingCost
+                                }))
+                              });
+                              
+                              return storedShippingCost > 0 ? storedShippingCost : calculatedShippingCost;
+                            })()} ج.م
                           </td>
                           <td>
-                            {Math.max(...(order.cartItems?.map(item => 
-                              item?.prdID?.deliveryDays || 2) || [2]))} يوم
+                            {(() => {
+                              const storedDeliveryDays = Number(order.deliveryDays);
+                              const calculatedDeliveryDays = Math.max(...(order.cartItems?.map(item => 
+                                Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]));
+                              
+                              console.log(`Order ${order._id.slice(-6)} - Delivery Days:`, {
+                                stored: storedDeliveryDays,
+                                calculated: calculatedDeliveryDays,
+                                cartItems: order.cartItems?.map(item => ({
+                                  name: item.name || item.prdID?.name,
+                                  deliveryDays: item.deliveryDays || item.prdID?.deliveryDays
+                                }))
+                              });
+                              
+                              return storedDeliveryDays > 0 ? storedDeliveryDays : calculatedDeliveryDays;
+                            })()} يوم
                           </td>
                           <td>{order.cartItems?.length || 0}</td>
                           <td>{order.total} ج.م</td>
@@ -375,15 +402,15 @@ export default function Orders() {
         </div>
         {/* Order Details Modal */}
         {selectedOrder && (
-          <div className={`modal fade show`} style={{ display: showModal ? 'block' : 'none', background: 'rgba(0,0,0,0.5)' }} tabIndex="-1" role="dialog" aria-modal="true">
-            <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
-              <div className="modal-content" dir="rtl">
+          <div className={`modal fade ${showModal ? 'show' : ''}`} style={{ display: showModal ? 'block' : 'none' }} tabIndex="-1">
+            <div className="modal-dialog modal-lg">
+              <div className="modal-content">
                 <div className="modal-header">
                   <h5 className="modal-title">تفاصيل الطلب #{selectedOrder._id.slice(-6)}</h5>
-                  <button type="button" className="btn-close ms-0" aria-label="إغلاق" onClick={handleCloseModal}></button>
+                  <button type="button" className="btn-close" onClick={handleCloseModal}></button>
                 </div>
                 <div className="modal-body">
-                  <div className="row">
+                  <div className="row mb-4">
                     <div className="col-md-6">
                       <h6 className="fw-bold mb-3">معلومات الطلب</h6>
                       <ul className="list-unstyled mb-3">
@@ -395,89 +422,54 @@ export default function Orders() {
                         <li><strong>طريقة الدفع:</strong> {selectedOrder.paymentMethod}</li>
                         <li><strong>حالة الدفع:</strong> {selectedOrder.paymentStatus}</li>
                         <li><strong>مصاريف الشحن:</strong> {
-                          selectedOrder.cartItems?.reduce((total, item) => 
-                            total + (item?.prdID?.shippingCost || 0), 0)
+                          Number(selectedOrder.shippingCost) > 0 ? selectedOrder.shippingCost :
+                            selectedOrder.cartItems?.reduce((total, item) => 
+                              total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)
                         } ج.م</li>
                         <li><strong>مدة التوصيل:</strong> {
-                          Math.max(...(selectedOrder.cartItems?.map(item => 
-                            item?.prdID?.deliveryDays || 2) || [2]))
+                          Number(selectedOrder.deliveryDays) > 0 ? selectedOrder.deliveryDays :
+                            Math.max(...(selectedOrder.cartItems?.map(item => 
+                              Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))
                         } يوم</li>
                         <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
                       </ul>
                       <h6 className="fw-bold mb-3">معلومات العميل</h6>
-                      <ul className="list-unstyled mb-3">
-                        <li><strong>الاسم:</strong> {selectedOrder.name}</li>
-                        <li><strong>البريد الإلكتروني:</strong> {selectedOrder.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}</li>
-                        <li><strong>رقم الهاتف:</strong> {selectedOrder.phone}</li>
-                        <li><strong>العنوان:</strong> {selectedOrder.address}</li>
-                        <li><strong>المدينة:</strong> {selectedOrder.city || 'نجع حمادي'}</li>
-                        <li><strong>الرمز البريدي:</strong> {selectedOrder.postalCode}</li>
-                        <li><strong>الدولة:</strong> {selectedOrder.country}</li>
-                      </ul>
-                    </div>
-                    <div className="col-md-6">
-                      <h6 className="fw-bold mb-3">معلومات الشحن</h6>
-                      <ul className="list-unstyled mb-3">
+                      <ul className="list-unstyled">
                         <li><strong>الاسم:</strong> {selectedOrder.name}</li>
                         <li><strong>البريد الإلكتروني:</strong> {selectedOrder.email}</li>
                         <li><strong>رقم الهاتف:</strong> {selectedOrder.phone}</li>
                         <li><strong>العنوان:</strong> {selectedOrder.address}</li>
-                        <li><strong>المدينة:</strong> {selectedOrder.city}</li>
-                        <li><strong>الرمز البريدي:</strong> {selectedOrder.postalCode}</li>
-                        <li><strong>الدولة:</strong> {selectedOrder.country}</li>
+                        <li><strong>المدينة:</strong> {selectedOrder.city || 'نجع حمادي'}</li>
                       </ul>
                     </div>
-                  </div>
-                  
-                  {/* Payment Receipt Image for Bank Transfer */}
-                  {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
-                    <div className="row mt-3">
-                      <div className="col-12">
-                        <h6 className="fw-bold mb-3">صورة إثبات التحويل (Instapay)</h6>
-                        <div className="text-center">
-                          <img
-                            src={selectedOrder.image}
-                            alt="إثبات التحويل البنكي"
-                            className="img-fluid"
-                            style={{ 
-                              maxWidth: '400px', 
-                              maxHeight: '200px', 
-                              borderRadius: '8px', 
-                              border: '1px solid #ddd' 
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {selectedOrder.cartItems?.length > 0 && (
-                    <div className="mt-4">
+                    <div className="col-md-6">
                       <h6 className="fw-bold mb-3">المنتجات</h6>
                       <div className="table-responsive">
-                        <table className="table table-bordered">
-                          <thead className="table-light">
+                        <table className="table table-sm">
+                          <thead>
                             <tr>
                               <th>المنتج</th>
-                              <th>السعر</th>
                               <th>الكمية</th>
-                              <th>الإجمالي</th>
+                              <th>السعر</th>
+                              <th>مصاريف الشحن</th>
+                              <th>مدة التوصيل</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {selectedOrder.cartItems.map((item, index) => (
-                              <tr key={index}>
-                                <td>{item.name}</td>
-                                <td>{item.price} ج.م</td>
+                            {selectedOrder.cartItems?.map((item) => (
+                              <tr key={item._id}>
+                                <td>{item.name || item.prdID?.name}</td>
                                 <td>{item.quantity}</td>
-                                <td>{item.price * item.quantity} ج.م</td>
+                                <td>{item.price || item.prdID?.price} ج.م</td>
+                                <td>{item.shippingCost || item.prdID?.shippingCost || 0} ج.م</td>
+                                <td>{item.deliveryDays || item.prdID?.deliveryDays || 2} يوم</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={handleCloseModal}>إغلاق</button>
@@ -508,6 +500,7 @@ export default function Orders() {
             </div>
           </div>
         )}
+        {showModal && <div className="modal-backdrop fade show"></div>}
         <Footer />
       </div>
     </ProtectedRoute>

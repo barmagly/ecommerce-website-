@@ -89,6 +89,18 @@ export default function Cart() {
     }
   }, [dispatch, token]);
 
+  // إضافة console.log للتحقق من قيم مصاريف الشحن
+  useEffect(() => {
+    if (products?.cartItems?.length > 0) {
+      console.log('Cart Items in Cart page:', products.cartItems);
+      console.log('Shipping costs in cart:', products.cartItems.map(item => ({
+        productName: item.prdID?.name,
+        shippingCost: item.prdID?.shippingCost,
+        deliveryDays: item.prdID?.deliveryDays
+      })));
+    }
+  }, [products?.cartItems]);
+
   if (loading) {
     return (
       <>

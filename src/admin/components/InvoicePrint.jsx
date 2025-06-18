@@ -590,7 +590,7 @@ const InvoicePrint = React.forwardRef(({ order }, ref) => {
         <Grid container spacing={2} justifyContent="center" sx={{ mb: 2 }}>
           <Grid size="auto">
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              📧 info@store.com
+              📧 support@mizanoo.com
             </Typography>
           </Grid>
           <Grid size="auto">

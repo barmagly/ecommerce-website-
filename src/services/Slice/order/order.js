@@ -27,18 +27,57 @@ export const createOrderThunk = createAsyncThunk(
     async (formData, thunkAPI) => {
         try {
             const token = localStorage.getItem("token");
+            
+            // طباعة محتويات FormData للتحقق
+            console.log('FormData in createOrderThunk:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}:`, value);
+            }
+
+            // التأكد من تحويل قيم الشحن إلى أرقام
+            const shippingCost = formData.get('shippingCost');
+            const deliveryDays = formData.get('deliveryDays');
+            
+            console.log('=== ORDER SLICE - SHIPPING VALUES ===');
+            console.log('Original shippingCost from FormData:', shippingCost, 'Type:', typeof shippingCost);
+            console.log('Original deliveryDays from FormData:', deliveryDays, 'Type:', typeof deliveryDays);
+            
+            if (shippingCost !== null) {
+                formData.set('shippingCost', Number(shippingCost));
+                console.log('Converted shippingCost:', Number(shippingCost));
+            }
+            
+            if (deliveryDays !== null) {
+                formData.set('deliveryDays', Number(deliveryDays));
+                console.log('Converted deliveryDays:', Number(deliveryDays));
+            }
+            console.log('=====================================');
+
             const { data } = await axios.post(`${API_URL}/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "multipart/form-data",
                 },
             });
+            
+            console.log('Server response:', data);
+            console.log('=== SERVER RESPONSE - SHIPPING VALUES ===');
+            console.log('Server shippingCost:', data.order?.shippingCost, 'Type:', typeof data.order?.shippingCost);
+            console.log('Server deliveryDays:', data.order?.deliveryDays, 'Type:', typeof data.order?.deliveryDays);
+            console.log('==========================================');
+            
             return {
                 status: data.status,
-                order: data.order,
+                order: {
+                    ...data.order,
+                    shippingCost: Number(data.order.shippingCost),
+                    deliveryDays: Number(data.order.deliveryDays)
+                },
             };
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response?.data || { message: "Server error" });
+            console.error('Error in createOrderThunk:', error);
+            const errorMessage = error.response?.data?.message || error.message || "Server error";
+            return thunkAPI.rejectWithValue(errorMessage);
         }
     }
 );
@@ -56,6 +95,50 @@ export const updateOrderStatusThunk = createAsyncThunk(
             return response.data.order; // إرجاع الطلب المحدث فقط
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "حدث خطأ أثناء تحديث حالة الطلب";
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const updateOrderShippingDetailsThunk = createAsyncThunk(
+    "order/updateShippingDetails",
+    async ({ orderId, shippingCost, deliveryDays }, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            const { data } = await axios.put(
+                `${API_URL}/${orderId}/shipping`,
+                { shippingCost, deliveryDays },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return data.order;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message || "Server error";
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const sendOrderConfirmationEmailThunk = createAsyncThunk(
+    "order/sendConfirmationEmail",
+    async ({ orderId, email, isAdminCopy = false }, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            const { data } = await axios.post(
+                `${API_URL}/${orderId}/send-confirmation-email`,
+                { email, isAdminCopy },
+                {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                }
+            );
+            return data;
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message || "Server error";
             return rejectWithValue(errorMessage);
         }
     }
@@ -189,7 +272,7 @@ const orderSlice = createSlice({
             })
             .addCase(getOrdersThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload?.message || typeof action.payload === 'string' ? action.payload : "فشل جلب الطلبات";
+                state.error = typeof action.payload === 'string' ? action.payload : "فشل جلب الطلبات";
             })
 
             // createOrderThunk
@@ -200,12 +283,16 @@ const orderSlice = createSlice({
             })
             .addCase(createOrderThunk.fulfilled, (state, action) => {
                 state.loading = false;
-                state.orders.push(action.payload.order);
+                state.orders.push({
+                    ...action.payload.order,
+                    shippingCost: Number(action.payload.order.shippingCost),
+                    deliveryDays: Number(action.payload.order.deliveryDays)
+                });
                 state.success = true;
             })
             .addCase(createOrderThunk.rejected, (state, action) => {
                 state.loading = false;
-                state.error = action.payload?.message || typeof action.payload === 'string' ? action.payload : "فشل إنشاء الطلب";
+                state.error = typeof action.payload === 'string' ? action.payload : "فشل إنشاء الطلب";
                 state.success = false;
             })
 
@@ -225,7 +312,38 @@ const orderSlice = createSlice({
             .addCase(updateOrderStatusThunk.rejected, (state, action) => {
                 state.isUpdating = false;
                 state.error = typeof action.payload === 'string' ? action.payload : 'حدث خطأ أثناء تحديث حالة الطلب';
-            });
+            })
+
+            // Update Order Shipping Details
+            .addCase(updateOrderShippingDetailsThunk.pending, (state) => {
+                state.isUpdating = true;
+                state.error = null;
+            })
+            .addCase(updateOrderShippingDetailsThunk.fulfilled, (state, action) => {
+                state.isUpdating = false;
+                const index = state.orders.findIndex(order => order._id === action.payload._id);
+                if (index !== -1) {
+                    state.orders[index] = action.payload;
+                }
+            })
+            .addCase(updateOrderShippingDetailsThunk.rejected, (state, action) => {
+                state.isUpdating = false;
+                state.error = typeof action.payload === 'string' ? action.payload : "فشل تحديث تفاصيل الشحن";
+            })
+
+            // Send Order Confirmation Email
+            .addCase(sendOrderConfirmationEmailThunk.pending, (state) => {
+                state.isUpdating = true;
+                state.error = null;
+            })
+            .addCase(sendOrderConfirmationEmailThunk.fulfilled, (state, action) => {
+                state.isUpdating = false;
+                state.success = true;
+            })
+            .addCase(sendOrderConfirmationEmailThunk.rejected, (state, action) => {
+                state.isUpdating = false;
+                state.error = typeof action.payload === 'string' ? action.payload : "فشل إرسال البريد الإلكتروني";
+            })
     },
 });
 

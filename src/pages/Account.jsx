@@ -29,7 +29,7 @@ export default function Account() {
 	]);
 	const [newPayment, setNewPayment] = useState({ type: "بطاقة ائتمان", number: "", holder: "" });
 	const [paymentTab, setPaymentTab] = useState("card");
-	const [instapayNumber] = useState("01012345678"); // رقم Instapay
+	const [instapayNumber] = useState("01092474959"); // رقم Instapay
 	const [instapayImage, setInstapayImage] = useState(null);
 	const [instapayStatus, setInstapayStatus] = useState("");
 

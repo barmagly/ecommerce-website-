@@ -179,34 +179,17 @@ const Products = () => {
     try {
       setLoading(true);
       const response = await productsAPI.getAll();
-      console.log('Fetched products:', response.data.products);
+      console.log('Products fetched from server:', response.data.products);
       
-      // Log detailed product structure
-      if (response.data.products && response.data.products.length > 0) {
-        console.log('First product detailed structure:', JSON.stringify(response.data.products[0], null, 2));
-        console.log('Product fields available:', Object.keys(response.data.products[0]));
-        
-        // Log specific fields we need for the table
-        const firstProduct = response.data.products[0];
-        console.log('Table display data:', {
-          name: firstProduct.name,
-          brand: firstProduct.brand,
-          category: firstProduct.category,
-          price: firstProduct.price,
-          stock: firstProduct.stock,
-          sku: firstProduct.sku,
-          ratings: firstProduct.ratings,
-          createdAt: firstProduct.createdAt,
-          description: firstProduct.description
-        });
-      }
+      // التحقق من قيم مصاريف الشحن ومدة التوصيل
+      response.data.products.forEach(product => {
+        console.log(`Product: ${product.name}, Shipping Cost: ${product.shippingCost}, Delivery Days: ${product.deliveryDays}`);
+      });
       
-      setProducts(response.data.products || []);
-      setHasAnyProductWithVariants(response.data.products.some(p => p.hasVariants));
-      setError(null);
-    } catch (err) {
-      setError('Failed to fetch products');
-      toast.error('Failed to load products');
+      setProducts(response.data.products);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('فشل في تحميل المنتجات');
     } finally {
       setLoading(false);
     }
@@ -487,6 +470,13 @@ const Products = () => {
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
+        console.log('Shipping data being sent:', {
+          shippingCost: formData.shippingCost,
+          deliveryDays: formData.deliveryDays,
+          shippingAddressType: formData.shippingAddressType,
+          shippingAddressDetails: formData.shippingAddressDetails
+        });
+
         // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
           const variantsData = generatedVariants.map(variant => ({
@@ -600,6 +590,13 @@ const Products = () => {
         formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
+
+        console.log('Shipping data being sent:', {
+          shippingCost: formData.shippingCost,
+          deliveryDays: formData.deliveryDays,
+          shippingAddressType: formData.shippingAddressType,
+          shippingAddressDetails: formData.shippingAddressDetails
+        });
 
         // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
@@ -1971,45 +1968,7 @@ const Products = () => {
                 إدارة وتحرير منتجات المتجر بكفاءة عالية
               </Typography>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                size='large'
-                variant="outlined"
-                startIcon={<RefreshIcon sx={{ ml: 1 }} />}
-                onClick={fetchProducts}
-              >
-                تحديث
-              </Button>
-              <Button
-                size='large'
-                variant="contained"
-                startIcon={<AddIcon sx={{ ml: 1 }} />}
-                onClick={() => handleOpenDialog('add')}
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                  }
-                }}
-              >
-                إضافة منتج جديد
-              </Button>
-              {hasAnyProductWithVariants && (
-                <Button
-                  variant="contained"
-                  startIcon={<SettingsIcon />}
-                  onClick={handleOpenVariantsOnlyDialog}
-                  sx={{
-                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
-                    }
-                  }}
-                >
-                  إضافة متغيرات
-                </Button>
-              )}
-            </Box>
+           
           </Box>
         </Box>
 
@@ -2081,6 +2040,45 @@ const Products = () => {
                   مسح المرشحات
                 </Button>
               </Grid>
+              <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                size='large'
+                variant="outlined"
+                startIcon={<RefreshIcon sx={{ ml: 1 }} />}
+                onClick={fetchProducts}
+              >
+                تحديث
+              </Button>
+              <Button
+                size='large'
+                variant="contained"
+                startIcon={<AddIcon sx={{ ml: 1 }} />}
+                onClick={() => handleOpenDialog('add')}
+                sx={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
+                  }
+                }}
+              >
+                إضافة منتج جديد
+              </Button>
+              {hasAnyProductWithVariants && (
+                <Button
+                  variant="contained"
+                  startIcon={<SettingsIcon />}
+                  onClick={handleOpenVariantsOnlyDialog}
+                  sx={{
+                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
+                    }
+                  }}
+                >
+                  إضافة متغيرات
+                </Button>
+              )}
+            </Box>
             </Grid>
           </CardContent>
         </Card>

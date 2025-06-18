@@ -76,7 +76,7 @@ export default function Profile() {
   const [paymentOptions, setPaymentOptions] = useState([]);
   const [newPayment, setNewPayment] = useState({ cardType: "بطاقة ائتمان", cardNumber: "", cardholderName: "" });
   const [paymentTab, setPaymentTab] = useState("card");
-  const [instapayNumber] = useState("01012345678");
+  const [instapayNumber] = useState("01092474959");
   const [instapayImage, setInstapayImage] = useState(null);
   const [instapayStatus, setInstapayStatus] = useState("");
   const [paymentLoading, setPaymentLoading] = useState(false);
