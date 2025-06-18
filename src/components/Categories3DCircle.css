@@ -1,11 +1,12 @@
 .categories-3d-section {
-  min-height: 420px;
-  background: #fff;
+  min-height: 500px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 60px 0;
 }
 .categories-3d-perspective {
   width: 100%;
@@ -45,55 +46,65 @@
   left: 50%;
   top: 30%;
   transform-origin: 0 0 0;
-  border-radius: 18px;
+  border-radius: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: transform 0.7s cubic-bezier(.4,2,.3,1), box-shadow 0.3s, background 0.3s, color 0.3s, opacity 0.3s;
-  box-shadow: 0 2px 8px #eee;
-  border: 2px solid #fff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 2px solid #ffffff;
   font-size: 1.1rem;
   user-select: none;
-  background: #fff;
-  color: #222;
-  min-width: 100px;
-  min-height: 100px;
+  background: #ffffff;
+  color: #2c3e50;
+  min-width: 120px;
+  min-height: 120px;
   opacity: 0.7;
   z-index: 10;
+  padding: 20px;
 }
 .categories-3d-item.active {
   font-size: 1.3rem;
   font-weight: bold;
   border: 2px solid #db4444;
-  background: #db4444;
+  background: linear-gradient(135deg, #db4444 0%, #c0392b 100%);
   color: #fff;
-  box-shadow: 0 12px 40px #db444455;
+  box-shadow: 0 20px 60px rgba(219, 68, 68, 0.3);
   opacity: 1;
   z-index: 30;
+  transform: scale(1.1);
+}
+.categories-3d-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
 }
 .categories-3d-icon {
   width: 54px;
   height: 54px;
   object-fit: contain;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+.categories-3d-item.active .categories-3d-icon {
+  transform: scale(1.1);
 }
 .categories-3d-arrow {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: #fff;
+  background: #ffffff;
   border: none;
   border-radius: 50%;
-  width: 54px;
-  height: 54px;
-  box-shadow: 0 2px 8px #db444433;
+  width: 60px;
+  height: 60px;
+  box-shadow: 0 8px 32px rgba(219, 68, 68, 0.2);
   font-size: 1.7rem;
   color: #db4444;
   z-index: 40;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,6 +118,8 @@
 .categories-3d-arrow:hover {
   background: #db4444;
   color: #fff;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 12px 40px rgba(219, 68, 68, 0.4);
 }
 .categories-3d-items-ring {
   width: 100%;
@@ -117,7 +130,29 @@
   transform-style: preserve-3d;
   transition: transform 0.7s cubic-bezier(.4,2,.3,1);
 }
+
+/* تحسين العنوان */
+.categories-3d-section h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin-bottom: 40px;
+  text-align: center;
+  background: linear-gradient(135deg, #2c3e50 0%, #db4444 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 @media (max-width: 700px) {
+  .categories-3d-section {
+    min-height: 400px;
+    padding: 40px 0;
+  }
+  .categories-3d-section h2 {
+    font-size: 1.8rem;
+    margin-bottom: 30px;
+  }
   .categories-3d-ring {
     width: 220px;
     height: 220px;
@@ -132,20 +167,21 @@
     height: 100%;
   }
   .categories-3d-item {
-    min-width: 38px;
-    min-height: 38px;
-    font-size: 0.7rem;
-    padding: 0;
+    min-width: 80px;
+    min-height: 80px;
+    font-size: 0.8rem;
+    padding: 15px;
   }
   .categories-3d-icon {
-    width: 22px !important;
-    height: 22px !important;
-    font-size: 22px !important;
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 32px !important;
+    margin-bottom: 8px;
   }
   .categories-3d-arrow {
-    width: 32px;
-    height: 32px;
-    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
+    font-size: 1.2rem;
     top: 50%;
     transform: translateY(-50%);
     right: -38px;
@@ -159,5 +195,122 @@
   .categories-3d-arrow.left {
     left: -28px;
     right: auto;
+  }
+}
+
+@media (max-width: 600px) {
+  .categories-3d-section {
+    min-height: 300px;
+    padding: 20px 10px;
+  }
+  
+  .categories-3d-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+  
+  .categories-3d-perspective {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  
+  .categories-3d-ring {
+    width: 200px !important;
+    height: 200px !important;
+    min-width: 200px !important;
+    min-height: 200px !important;
+    margin: 0 auto;
+    left: 0 !important;
+    transform: translateX(0) !important;
+  }
+  
+  .categories-3d-item {
+    min-width: 70px !important;
+    min-height: 70px !important;
+    font-size: 0.7rem !important;
+    padding: 10px !important;
+  }
+  
+  .categories-3d-icon {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 28px !important;
+    margin-bottom: 6px;
+  }
+  
+  .categories-3d-arrow {
+    width: 44px !important;
+    height: 44px !important;
+    font-size: 1.1rem !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #db4444 !important;
+    color: #db4444 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 50;
+  }
+  
+  .categories-3d-arrow.right {
+    right: 10px !important;
+    left: auto !important;
+  }
+  
+  .categories-3d-arrow.left {
+    left: 10px !important;
+    right: auto !important;
+  }
+  
+  .categories-3d-arrow:hover {
+    background: #db4444 !important;
+    color: white !important;
+    transform: translateY(-50%) scale(1.1) !important;
+  }
+}
+
+@media (max-width: 400px) {
+  .categories-3d-section {
+    min-height: 250px;
+    padding: 15px 5px;
+  }
+  
+  .categories-3d-section h2 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+  
+  .categories-3d-ring {
+    width: 160px !important;
+    height: 160px !important;
+    min-width: 160px !important;
+    min-height: 160px !important;
+  }
+  
+  .categories-3d-item {
+    min-width: 60px !important;
+    min-height: 60px !important;
+    font-size: 0.6rem !important;
+    padding: 8px !important;
+  }
+  
+  .categories-3d-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 24px !important;
+    margin-bottom: 4px;
+  }
+  
+  .categories-3d-arrow {
+    width: 40px !important;
+    height: 40px !important;
+    font-size: 1rem !important;
+  }
+  
+  .categories-3d-arrow.right {
+    right: 5px !important;
+  }
+  
+  .categories-3d-arrow.left {
+    left: 5px !important;
   }
 } 

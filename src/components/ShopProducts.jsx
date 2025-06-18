@@ -174,6 +174,20 @@ export default function ShopProducts({ products = [] }) {
                   {item.price} ج.م
                 </span>
               </div>
+              {item.shippingAddress && (
+                <div className="mb-2">
+                  <small className={`badge ${item.shippingAddress.type === 'nag_hamadi' ? 'bg-warning' : 'bg-success'}`}>
+                    {item.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي فقط' : '🚚 جميع المحافظات'}
+                  </small>
+                </div>
+              )}
+              <div className="product-info">
+                <h5 className="product-title">{item.name}</h5>
+                <div className="product-rating">
+                  <StarRating rating={item.ratings?.average || 0} />
+                  <span className="rating-count">({item.ratings?.count || 0})</span>
+                </div>
+              </div>
               {item.attributes?.map((attr, idx) => (
                 <div key={idx} className="d-flex gap-1 mb-2 flex-wrap">
                   {attr.values.map((value, vIdx) => (

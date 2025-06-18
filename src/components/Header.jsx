@@ -33,12 +33,26 @@ export default function Header() {
   const { user, token } = useSelector((state) => state.auth);
   const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
   const isAuthenticated = !!token;
+  const products = useSelector(state => state.product.products || []);
+  const [suggestions, setSuggestions] = useState([]);
 
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(getUserProfileThunk());
     }
   }, [dispatch, isAuthenticated]);
+
+  useEffect(() => {
+    if (search.trim()) {
+      setSuggestions(
+        products
+          .filter(item => item.name && item.name.toLowerCase().includes(search.toLowerCase()))
+          .slice(0, 5)
+      );
+    } else {
+      setSuggestions([]);
+    }
+  }, [search, products]);
 
   useEffect(() => {
   }, [profileUser, loading, error]);
@@ -88,7 +102,7 @@ export default function Header() {
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
           <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src="/images/logo.png" alt="Logo" style={{ height: '110px', width: '110px', marginLeft: '8px' }} />
+            <img src="/images/logo.png" alt="Logo" style={{ height: '150px', width: '150px', marginLeft: '8px' }} />
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
@@ -125,6 +139,41 @@ export default function Header() {
                 >
                   <i className="fas fa-search"></i>
                 </button>
+                {search && suggestions.length > 0 && (
+                  <ul className="search-suggestions-list" style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    left: 0,
+                    zIndex: 1000,
+                    background: '#fff',
+                    border: '1px solid #eee',
+                    borderTop: 'none',
+                    borderRadius: '0 0 16px 16px',
+                    boxShadow: '0 4px 16px #0001',
+                    listStyle: 'none',
+                    margin: 0,
+                    padding: 0,
+                    maxHeight: 300,
+                    overflowY: 'auto',
+                    textAlign: 'right'
+                  }}>
+                    {suggestions.map(item => (
+                      <li
+                        key={item._id}
+                        style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}
+                        onMouseDown={() => navigate(`/product/${item._id}`)}
+                      >
+                        <img
+                          src={item.images?.[0]?.url || item.imageCover || 'https://via.placeholder.com/40x40?text=No+Image'}
+                          alt={item.name}
+                          style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 8, marginLeft: 8 }}
+                        />
+                        <span>{item.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </form>
               <div className="d-flex align-items-center gap-3">
                 {isAuthenticated ? (
@@ -216,7 +265,7 @@ export default function Header() {
           <div className="offcanvas offcanvas-end d-lg-none custom-sidebar" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div className="offcanvas-header border-bottom">
               <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                <img src="/images/logo.png" alt="Logo" style={{ height: '90px', width: '90px' }} />
+                <img src="/images/logo.png" alt="Logo" style={{ height: '180px', width: '180px' }} />
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
@@ -444,6 +493,7 @@ export default function Header() {
           padding: 0.5rem 1rem;
         }
         
+        /* Enhanced Mobile Responsive Styles */
         @media (max-width: 991px) {
           .navbar {
             padding-top: 0.5rem;
@@ -452,6 +502,183 @@ export default function Header() {
           
           .custom-sidebar {
             width: 280px;
+          }
+          
+          .navbar-brand img {
+            height: 160px !important;
+            width: 160px !important;
+          }
+          
+          .search-form {
+            min-width: 200px !important;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .bg-gradient-primary .container {
+            padding: 0.5rem 1rem;
+          }
+          
+          .bg-gradient-primary span {
+            font-size: 0.85rem;
+            margin-left: 8px !important;
+          }
+          
+          .bg-gradient-primary .btn {
+            font-size: 0.8rem !important;
+            padding: 0.25rem 0.75rem !important;
+          }
+          
+          .navbar-brand img {
+            height: 140px !important;
+            width: 140px !important;
+          }
+          
+          .custom-sidebar {
+            width: 100%;
+            max-width: 320px;
+          }
+          
+          .search-form {
+            min-width: 100% !important;
+            margin-bottom: 1rem;
+          }
+          
+          .search-input {
+            border-radius: 25px;
+            padding: 10px 40px 10px 15px;
+            font-size: 0.9rem;
+          }
+          
+          .btn-icon {
+            width: 35px;
+            height: 35px;
+            font-size: 0.9rem;
+          }
+          
+          .offcanvas-body {
+            padding: 1rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.75rem 0;
+            font-size: 1rem;
+            border-bottom: 1px solid #eee;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+            border-radius: 8px;
+          }
+        }
+        
+        @media (max-width: 576px) {
+          .bg-gradient-primary {
+            padding: 0.5rem 0;
+          }
+          
+          .bg-gradient-primary .row {
+            flex-direction: column;
+            gap: 0.5rem;
+            text-align: center;
+          }
+          
+          .bg-gradient-primary span {
+            font-size: 0.8rem;
+            margin-left: 0 !important;
+            display: block;
+            margin-bottom: 0.5rem;
+          }
+          
+          .navbar-brand img {
+            height: 300px ;
+            width: 300px ;
+          }
+          
+          .custom-sidebar {
+            width: 100%;
+            max-width: 300px;
+          }
+          
+          .search-input {
+            padding: 8px 35px 8px 12px;
+            font-size: 0.85rem;
+          }
+          
+          .btn-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 0.8rem;
+          }
+          
+          .offcanvas-body {
+            padding: 0.75rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.6rem 0;
+            font-size: 0.95rem;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.6rem 0.75rem;
+            font-size: 0.85rem;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .container {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+          }
+          
+          .navbar-brand img {
+            height: 55px !important;
+            width: 55px !important;
+          }
+          
+          .search-input {
+            padding: 6px 30px 6px 10px;
+            font-size: 0.8rem;
+          }
+          
+          .btn-icon {
+            width: 30px;
+            height: 30px;
+            font-size: 0.75rem;
+          }
+          
+          .offcanvas-body {
+            padding: 0.5rem;
+          }
+          
+          .offcanvas-body .nav-link {
+            padding: 0.5rem 0;
+            font-size: 0.9rem;
+          }
+          
+          .offcanvas-body .btn {
+            padding: 0.5rem 0.6rem;
+            font-size: 0.8rem;
+          }
+        }
+        
+        @media (max-width: 360px) {
+          .navbar-brand img {
+            height: 50px !important;
+            width: 50px !important;
+          }
+          
+          .search-input {
+            padding: 5px 25px 5px 8px;
+            font-size: 0.75rem;
+          }
+          
+          .btn-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 0.7rem;
           }
         }
       `}</style>

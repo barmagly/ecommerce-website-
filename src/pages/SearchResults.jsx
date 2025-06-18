@@ -3,6 +3,8 @@ import { useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
+import { useSelector, useDispatch } from "react-redux";
+import { getProductsThunk } from "../services/Slice/product/product";
 
 const sampleResults = [
   {
@@ -32,15 +34,25 @@ export default function SearchResults() {
 
   const [query, setQuery] = useState(q);
   const [results, setResults] = useState([]);
+  const products = useSelector(state => state.product.products || []);
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    // Fetch products if not already loaded
+    if (!products || products.length === 0) {
+      dispatch(getProductsThunk());
+    }
     setQuery(q);
     if (q.trim()) {
-      setResults(sampleResults.filter(item => item.name.includes(q)));
+      setResults(
+        products.filter(item =>
+          item.name && item.name.toLowerCase().includes(q.toLowerCase())
+        )
+      );
     } else {
-      setResults(sampleResults);
+      setResults(products);
     }
-  }, [q]);
+  }, [q, products, dispatch]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -76,7 +88,7 @@ export default function SearchResults() {
           ) : results.map(item => (
             <div className="col-12 col-md-6 col-lg-4" key={item.id} data-aos="fade-up">
               <div className="card h-100 shadow-sm border-0">
-                <img src={item.image} alt={item.name} className="card-img-top p-3" style={{height: 180, objectFit: 'contain'}} />
+                <img src={item.images?.[0]?.url || item.imageCover || "https://via.placeholder.com/300x200?text=No+Image"} alt={item.name} className="card-img-top p-3" style={{height: 180, objectFit: 'contain'}} />
                 <div className="card-body d-flex flex-column align-items-center">
                   <h5 className="card-title fw-bold mb-2 text-center">{item.name}</h5>
                   <span className="text-danger fw-bold mb-3">{item.price} ج.م</span>

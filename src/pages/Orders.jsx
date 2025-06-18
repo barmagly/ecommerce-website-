@@ -30,6 +30,11 @@ export default function Orders() {
     ? orders
     : orders.filter(order => order.status === activeTab);
 
+  // Sort orders by createdAt date (newest first)
+  const sortedOrders = [...filteredOrders].sort((a, b) => 
+    new Date(b.createdAt) - new Date(a.createdAt)
+  );
+
   const handleShowDetails = (order) => {
     setSelectedOrder(order);
     setShowModal(true);
@@ -137,7 +142,7 @@ export default function Orders() {
           </ul>
           <div className="card shadow-sm border-0">
             <div className="card-body">
-              {filteredOrders.length === 0 ? (
+              {sortedOrders.length === 0 ? (
                 <div className="text-center py-5">لا توجد طلبات في هذا القسم.</div>
               ) : (
                 <div className="table-responsive">
@@ -154,7 +159,7 @@ export default function Orders() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredOrders.map(order => (
+                      {sortedOrders.map(order => (
                         <tr key={order._id}>
                           <td>#{order._id.slice(-6)}</td>
                           <td>{formatDate(order.createdAt)}</td>
@@ -215,6 +220,29 @@ export default function Orders() {
                       </ul>
                     </div>
                   </div>
+                  
+                  {/* Payment Receipt Image for Bank Transfer */}
+                  {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
+                    <div className="row mt-3">
+                      <div className="col-12">
+                        <h6 className="fw-bold mb-3">صورة إثبات التحويل (Instapay)</h6>
+                        <div className="text-center">
+                          <img
+                            src={selectedOrder.image}
+                            alt="إثبات التحويل البنكي"
+                            className="img-fluid"
+                            style={{ 
+                              maxWidth: '400px', 
+                              maxHeight: '200px', 
+                              borderRadius: '8px', 
+                              border: '1px solid #ddd' 
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {selectedOrder.cartItems?.length > 0 && (
                     <div className="mt-4">
                       <h6 className="fw-bold mb-3">المنتجات</h6>

@@ -56,14 +56,10 @@ function App() {
           <Route path="/admin/*" element={<AdminApp />} />
           <Route
             path="*"
-            element={
-              <>
-                <Error404 />
-                <WhatsAppFloat />
-              </>
-            }
+            element={<Error404 />}
           />
         </Routes>
+        <WhatsAppFloat />
       </div>
     </Provider>
   );

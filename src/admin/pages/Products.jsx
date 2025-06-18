@@ -59,6 +59,7 @@ import {
   Settings as SettingsIcon,
   Close as CloseIcon,
   Info as InfoIcon,
+  LocalShipping as LocalShippingIcon,
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
@@ -90,13 +91,19 @@ const Products = () => {
     category: '',
     hasVariants: false,
     price: '',
+    supplierName: '',
+    supplierPrice: '',
     stock: '',
     sku: '',
     imageCover: '',
     images: [],
     features: [],
     specifications: [],
-    attributes: [] // Initialize attributes as an empty array
+    attributes: [], // Initialize attributes as an empty array
+    shippingAddressType: 'nag_hamadi',
+    shippingAddressDetails: '',
+    shippingCost: 0,
+    deliveryDays: 2
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -124,6 +131,19 @@ const Products = () => {
   const [openVariantsOnlyDialog, setOpenVariantsOnlyDialog] = useState(false);
   const [selectedProductForVariantsOnly, setSelectedProductForVariantsOnly] = useState(null);
   const [hasAnyProductWithVariants, setHasAnyProductWithVariants] = useState(false);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, filterCategory, filterStatus]);
+
+  // Add useEffect to monitor form data changes
+  useEffect(() => {
+    if (openDialog && selectedProduct) {
+      console.log('Form data after setting:', formData);
+      console.log('Selected product:', selectedProduct);
+    }
+  }, [formData, openDialog, selectedProduct]);
 
   // Load products from localStorage on component mount
   useEffect(() => {
@@ -159,6 +179,28 @@ const Products = () => {
     try {
       setLoading(true);
       const response = await productsAPI.getAll();
+      console.log('Fetched products:', response.data.products);
+      
+      // Log detailed product structure
+      if (response.data.products && response.data.products.length > 0) {
+        console.log('First product detailed structure:', JSON.stringify(response.data.products[0], null, 2));
+        console.log('Product fields available:', Object.keys(response.data.products[0]));
+        
+        // Log specific fields we need for the table
+        const firstProduct = response.data.products[0];
+        console.log('Table display data:', {
+          name: firstProduct.name,
+          brand: firstProduct.brand,
+          category: firstProduct.category,
+          price: firstProduct.price,
+          stock: firstProduct.stock,
+          sku: firstProduct.sku,
+          ratings: firstProduct.ratings,
+          createdAt: firstProduct.createdAt,
+          description: firstProduct.description
+        });
+      }
+      
       setProducts(response.data.products || []);
       setHasAnyProductWithVariants(response.data.products.some(p => p.hasVariants));
       setError(null);
@@ -213,14 +255,15 @@ const Products = () => {
 
   const handleOpenDialog = (mode = 'add', product = null) => {
     if (product) {
-      console.log('Editing product:', product);
-      // Map the product data to match our form structure
+      // Map product data for editing
       const mappedProduct = {
         name: product.name || '',
         description: product.description || '',
         brand: product.brand || '',
         category: (product.category && product.category._id) ? product.category._id : (product.category || ''),
         price: product.price?.toString() || '',
+        supplierName: product.supplierName || '',
+        supplierPrice: product.supplierPrice?.toString() || '',
         hasVariants: product.hasVariants || false,
         stock: product.stock?.toString() || '',
         sku: product.sku || '',
@@ -239,16 +282,37 @@ const Products = () => {
           price: variant.price?.toString(),
           quantity: variant.quantity?.toString(),
           images: variant.images?.map(img => img.url || img) || []
-        })) || []
+        })) || [],
+        // إضافة معالجة عنوان الشحن
+        shippingAddressType: product.shippingAddress?.type || 'nag_hamadi',
+        shippingAddressDetails: product.shippingAddress?.details || '',
+        shippingCost: product.shippingCost || 0,
+        deliveryDays: product.deliveryDays || 2
       };
+      
+      console.log('Original product data:', product);
+      console.log('Mapped product data for editing:', mappedProduct);
+      console.log('Category mapping:', {
+        original: product.category,
+        mapped: mappedProduct.category,
+        categories: categories.map(c => ({ id: c._id, name: c.name }))
+      });
+      
       setFormData(mappedProduct);
       setDialogMode('edit');
+      setSelectedProduct(product);
+      setOpenDialog(true);
     } else {
-      setFormData(initialFormData);
+      // Reset form for adding new product
+      const groceryCategory = categories.find(cat => cat.name === 'بقالة');
+      setFormData({
+        ...initialFormData,
+        category: groceryCategory ? groceryCategory._id : ''
+      });
       setDialogMode('add');
+      setSelectedProduct(null);
+      setOpenDialog(true);
     }
-    setSelectedProduct(product);
-    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
@@ -295,6 +359,21 @@ const Products = () => {
         hasErrors = true;
       }
 
+      if (!formData.supplierName || formData.supplierName.trim().length < 2) {
+        setFormErrors(prev => ({ ...prev, supplierName: 'اسم المورد يجب أن يكون 2 أحرف على الأقل' }));
+        hasErrors = true;
+      }
+
+      if (!formData.supplierPrice || formData.supplierPrice < 0) {
+        setFormErrors(prev => ({ ...prev, supplierPrice: 'سعر المورد يجب أن يكون أكبر من 0' }));
+        hasErrors = true;
+      }
+
+      if (parseFloat(formData.supplierPrice) >= parseFloat(formData.price)) {
+        setFormErrors(prev => ({ ...prev, supplierPrice: 'سعر المورد يجب أن يكون أقل من السعر النهائي' }));
+        hasErrors = true;
+      }
+
       if (!formData.stock || formData.stock < 0) {
         setFormErrors(prev => ({ ...prev, stock: 'المخزون يجب أن يكون أكبر من 0' }));
         hasErrors = true;
@@ -310,89 +389,38 @@ const Products = () => {
 
     try {
       setLoading(true);
-      const formDataToSend = new FormData();
-
-      // إضافة البيانات الأساسية
-      formDataToSend.append('name', formData.name);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('brand', formData.brand);
-      formDataToSend.append('category', formData.category);
-      formDataToSend.append('hasVariants', formData.hasVariants);
-
-      // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
-      if (!formData.hasVariants) {
-        formDataToSend.append('price', formData.price);
-        formDataToSend.append('stock', formData.stock);
-        formDataToSend.append('sku', formData.sku);
-      } else {
-        // إضافة قيم افتراضية للمنتج المتغير
-        formDataToSend.append('price', '0');
-        formDataToSend.append('stock', '0');
-        formDataToSend.append('sku', 'VAR-' + Date.now());
-      }
-
-      // إضافة الصور
-      if (formData.imageCover) {
-        formDataToSend.append('imageCover', formData.imageCover);
-      }
-      // Format images as objects with url, alt, and isPrimary properties
-      const formattedImages = formData.images.map((image, index) => ({
-        url: image,
-        alt: `Product image ${index + 1}`,
-        isPrimary: index === 0
-      }));
-      formDataToSend.append('images', JSON.stringify(formattedImages));
-
-      // إضافة المميزات
-      formData.features.forEach((feature, index) => {
-        formDataToSend.append(`features[${index}][name]`, feature.name);
-        formDataToSend.append(`features[${index}][value]`, feature.value);
-      });
-
-      // إضافة المواصفات
-      formData.specifications.forEach((spec, specIndex) => {
-        formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
-        spec.items.forEach((item, itemIndex) => {
-          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
-          formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
-        });
-      });
-
-      // إضافة السمات
-      formData.attributes.forEach((attr, index) => {
-        formDataToSend.append(`attributes[${index}][name]`, attr.name);
-        formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
-      });
-
-      // إضافة المتغيرات إذا كانت موجودة
-      if (formData.hasVariants && generatedVariants.length > 0) {
-        const variantsData = generatedVariants.map(variant => ({
-          sku: variant.sku || ('VAR-' + Date.now()), // Generate SKU if not provided
-          // attributes: Object.fromEntries(variant.attributes), // Convert Map to object
-          price: parseFloat(variant.price) || 0,
-          quantity: parseInt(variant.quantity) || 0,
-          sold: parseInt(variant.sold) || 0,
-          inStock: variant.quantity > 0,
-          images: variant.images.map((img, index) => ({
-            url: img,
-            alt: `Variant image ${index + 1}`,
-            isPrimary: index === 0
-          })),
-          optionField: variant.optionField || ''
-        }));
-        formDataToSend.append('productVariants', JSON.stringify(variantsData));
-      }
 
       if (selectedProduct) {
         const formDataToSend = new FormData();
 
-        // Basic fields comparison
-        const fieldsToCompare = ['name', 'description', 'brand', 'category', 'hasVariants', 'price', 'stock', 'sku'];
-        fieldsToCompare.forEach(field => {
-          if (formData[field] !== selectedProduct[field]) {
-            formDataToSend.append(field, formData[field]);
-          }
-        });
+        // إضافة جميع البيانات الأساسية للتعديل
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('brand', formData.brand);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('hasVariants', formData.hasVariants);
+
+        // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
+        if (!formData.hasVariants) {
+          formDataToSend.append('price', formData.price);
+          formDataToSend.append('supplierName', formData.supplierName);
+          formDataToSend.append('supplierPrice', formData.supplierPrice);
+          formDataToSend.append('stock', formData.stock);
+          formDataToSend.append('sku', formData.sku);
+          
+          // Debug: Log supplier data
+          console.log('Sending supplier data:', {
+            supplierName: formData.supplierName,
+            supplierPrice: formData.supplierPrice
+          });
+        } else {
+          // إضافة قيم افتراضية للمنتج المتغير
+          formDataToSend.append('price', '0');
+          formDataToSend.append('supplierName', '');
+          formDataToSend.append('supplierPrice', '0');
+          formDataToSend.append('stock', '0');
+          formDataToSend.append('sku', 'VAR-' + Date.now());
+        }
 
         // Handle imageCover
         if (formData.imageCover) {
@@ -410,115 +438,27 @@ const Products = () => {
         });
         const originalImageUrls = selectedProduct.images?.map(img => img.url) || [];
 
-        if (JSON.stringify(currentImageUrls) !== JSON.stringify(originalImageUrls)) {
-          formData.images.forEach((image, index) => {
-            if (image instanceof File) {
-              formDataToSend.append('images', image);
-            } else {
-              const imageUrl = typeof image === 'string' ? image : image.url;
-              formDataToSend.append('images', imageUrl);
-            }
-          });
+        // Always send images array to ensure proper handling of deletions
+        // Send all current images (both files and URLs)
+        formData.images.forEach((image, index) => {
+          if (image instanceof File) {
+            formDataToSend.append('images', image);
+          } else {
+            const imageUrl = typeof image === 'string' ? image : image.url;
+            formDataToSend.append('images', imageUrl);
+          }
+        });
+
+        // Send information about deleted images
+        const deletedImages = originalImageUrls.filter(url => 
+          !currentImageUrls.some(current => 
+            typeof current === 'string' && current === url
+          )
+        );
+        
+        if (deletedImages.length > 0) {
+          formDataToSend.append('deletedImages', JSON.stringify(deletedImages));
         }
-
-        // Handle features - format as individual fields
-        if (JSON.stringify(formData.features) !== JSON.stringify(selectedProduct.features)) {
-          formData.features.forEach((feature) => {
-            formDataToSend.append(`features[${feature.name}]`, feature.value);
-          });
-        }
-
-        // Handle specifications
-        if (JSON.stringify(formData.specifications) !== JSON.stringify(selectedProduct.specifications)) {
-          formData.specifications.forEach((spec, specIndex) => {
-            formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
-            spec.items.forEach((item, itemIndex) => {
-              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
-              formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
-            });
-          });
-        }
-
-        // Handle attributes - format as individual fields
-        if (JSON.stringify(formData.attributes) !== JSON.stringify(selectedProduct.attributes)) {
-          formData.attributes.forEach((attr) => {
-            formDataToSend.append(`attributes[${attr.name}]`, attr.values.join(','));
-          });
-        }
-
-        // Handle variants
-        if (formData.hasVariants && generatedVariants.length > 0) {
-          generatedVariants.forEach((variant, index) => {
-            formDataToSend.append(`variants[${index}][sku]`, variant.sku || ('VAR-' + Date.now()));
-            formDataToSend.append(`variants[${index}][price]`, parseFloat(variant.price) || 0);
-            formDataToSend.append(`variants[${index}][quantity]`, parseInt(variant.quantity) || 0);
-            formDataToSend.append(`variants[${index}][sold]`, parseInt(variant.sold) || 0);
-            formDataToSend.append(`variants[${index}][inStock]`, variant.quantity > 0);
-
-            // Handle variant attributes
-            // Object.entries(Object.fromEntries(variant.attributes)).forEach(([key, value]) => {
-            //   formDataToSend.append(`variants[${index}][attributes][${key}]`, value);
-            // });
-
-            // Handle variant images
-            variant.images.forEach((img, imgIndex) => {
-              if (img instanceof File) {
-                formDataToSend.append(`variants[${index}][images]`, img);
-              } else {
-                const imageUrl = typeof img === 'string' ? img : img.url;
-                formDataToSend.append(`variants[${index}][images]`, imageUrl);
-              }
-            });
-          });
-        }
-
-        // Only proceed if there are changes
-        if (formDataToSend.entries().next().done) {
-          toast.info('لم يتم إجراء أي تغييرات على المنتج');
-          handleCloseDialog();
-          return;
-        }
-
-        const response = await productsAPI.update(selectedProduct._id, formDataToSend);
-        if (response.data.status === 'success') {
-          toast.success('تم تحديث المنتج بنجاح');
-          handleCloseDialog();
-          fetchProducts();
-        }
-      } else {
-        // For new products, send all data as before
-        const formDataToSend = new FormData();
-
-        // إضافة البيانات الأساسية
-        formDataToSend.append('name', formData.name);
-        formDataToSend.append('description', formData.description);
-        formDataToSend.append('brand', formData.brand);
-        formDataToSend.append('category', formData.category);
-        formDataToSend.append('hasVariants', formData.hasVariants);
-
-        // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
-        if (!formData.hasVariants) {
-          formDataToSend.append('price', formData.price);
-          formDataToSend.append('stock', formData.stock);
-          formDataToSend.append('sku', formData.sku);
-        } else {
-          // إضافة قيم افتراضية للمنتج المتغير
-          formDataToSend.append('price', '0');
-          formDataToSend.append('stock', '0');
-          formDataToSend.append('sku', 'VAR-' + Date.now());
-        }
-
-        // إضافة الصور
-        if (formData.imageCover) {
-          formDataToSend.append('imageCover', formData.imageCover);
-        }
-        // Format images as objects with url, alt, and isPrimary properties
-        const formattedImages = formData.images.map((image, index) => ({
-          url: image,
-          alt: `Product image ${index + 1}`,
-          isPrimary: index === 0
-        }));
-        formDataToSend.append('images', JSON.stringify(formattedImages));
 
         // إضافة المميزات
         formData.features.forEach((feature, index) => {
@@ -541,6 +481,126 @@ const Products = () => {
           formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
         });
 
+        // إضافة بيانات الشحن
+        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
+        formDataToSend.append('shippingCost', formData.shippingCost);
+        formDataToSend.append('deliveryDays', formData.deliveryDays);
+
+        // إضافة المتغيرات إذا كانت موجودة
+        if (formData.hasVariants && generatedVariants.length > 0) {
+          const variantsData = generatedVariants.map(variant => ({
+            sku: variant.sku || ('VAR-' + Date.now()),
+            price: parseFloat(variant.price) || 0,
+            quantity: parseInt(variant.quantity) || 0,
+            sold: parseInt(variant.sold) || 0,
+            inStock: variant.quantity > 0,
+            images: variant.images.map((img, index) => ({
+              url: img,
+              alt: `Variant image ${index + 1}`,
+              isPrimary: index === 0
+            })),
+            optionField: variant.optionField || ''
+          }));
+          formDataToSend.append('productVariants', JSON.stringify(variantsData));
+        }
+
+        const response = await productsAPI.update(selectedProduct._id, formDataToSend);
+        
+        // Debug: Log FormData contents
+        console.log('FormData contents:');
+        for (let [key, value] of formDataToSend.entries()) {
+          console.log(key, value);
+        }
+        
+        if (response.data.status === 'success') {
+          toast.success('تم تحديث المنتج بنجاح');
+          handleCloseDialog();
+          fetchProducts();
+        }
+      } else {
+        // For new products, send all data as before
+        const formDataToSend = new FormData();
+
+        // إضافة البيانات الأساسية
+        formDataToSend.append('name', formData.name);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('brand', formData.brand);
+        formDataToSend.append('category', formData.category);
+        formDataToSend.append('hasVariants', formData.hasVariants);
+
+        // إضافة السعر والمخزون وSKU إذا لم يكن المنتج متغير
+        if (!formData.hasVariants) {
+          formDataToSend.append('price', formData.price);
+          formDataToSend.append('supplierName', formData.supplierName);
+          formDataToSend.append('supplierPrice', formData.supplierPrice);
+          formDataToSend.append('stock', formData.stock);
+          formDataToSend.append('sku', formData.sku);
+          
+          // Debug: Log supplier data
+          console.log('Sending supplier data:', {
+            supplierName: formData.supplierName,
+            supplierPrice: formData.supplierPrice
+          });
+        } else {
+          // إضافة قيم افتراضية للمنتج المتغير
+          formDataToSend.append('price', '0');
+          formDataToSend.append('supplierName', '');
+          formDataToSend.append('supplierPrice', '0');
+          formDataToSend.append('stock', '0');
+          formDataToSend.append('sku', 'VAR-' + Date.now());
+        }
+
+        // إضافة الصور
+        if (formData.imageCover) {
+          formDataToSend.append('imageCover', formData.imageCover);
+        }
+        
+        // Handle images properly for new products
+        if (formData.images && formData.images.length > 0) {
+          formData.images.forEach((image, index) => {
+            if (image instanceof File) {
+              // If it's a File object, append it directly
+              formDataToSend.append('images', image);
+            } else if (typeof image === 'string') {
+              // If it's a string URL, format it as an object
+              const imageObj = {
+                url: image,
+                alt: `Product image ${index + 1}`,
+                isPrimary: index === 0
+              };
+              formDataToSend.append('images', JSON.stringify(imageObj));
+            }
+          });
+        }
+
+        // إضافة المميزات
+        formData.features.forEach((feature, index) => {
+          formDataToSend.append(`features[${index}][name]`, feature.name);
+          formDataToSend.append(`features[${index}][value]`, feature.value);
+        });
+
+        // إضافة المواصفات
+        formData.specifications.forEach((spec, specIndex) => {
+          formDataToSend.append(`specifications[${specIndex}][group]`, spec.group);
+          spec.items.forEach((item, itemIndex) => {
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][name]`, item.name);
+            formDataToSend.append(`specifications[${specIndex}][items][${itemIndex}][value]`, item.value);
+          });
+        });
+
+        // إضافة السمات
+        formData.attributes.forEach((attr, index) => {
+          formDataToSend.append(`attributes[${index}][name]`, attr.name);
+          formDataToSend.append(`attributes[${index}][values]`, attr.values.join(','));
+        });
+
+        // إضافة بيانات الشحن
+        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
+        formDataToSend.append('shippingCost', formData.shippingCost);
+        formDataToSend.append('deliveryDays', formData.deliveryDays);
+
         // إضافة المتغيرات إذا كانت موجودة
         if (formData.hasVariants && generatedVariants.length > 0) {
           const variantsData = generatedVariants.map(variant => ({
@@ -561,6 +621,13 @@ const Products = () => {
         }
 
         const response = await productsAPI.create(formDataToSend);
+        
+        // Debug: Log FormData contents (create)
+        console.log('FormData contents (create):');
+        for (let [key, value] of formDataToSend.entries()) {
+          console.log(key, value);
+        }
+        
         if (response.data.status === 'success') {
           toast.success('تم إضافة المنتج بنجاح');
           handleCloseDialog();
@@ -616,11 +683,27 @@ const Products = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
-        await productsAPI.delete(id);
-        toast.success('Product deleted successfully');
-        fetchProducts();
+        const response = await productsAPI.delete(id);
+        console.log('Delete response:', response);
+        
+        // 204 No Content is the standard response for successful DELETE
+        if (response.status === 204) {
+          toast.success('تم حذف المنتج بنجاح');
+          fetchProducts();
+        } else {
+          toast.error('Failed to delete product');
+        }
       } catch (err) {
-        toast.error('Failed to delete product');
+        console.log('Delete error:', err);
+        console.log('Error response:', err.response);
+        console.log('Error status:', err.response?.status);
+        
+        if (err.response && err.response.status === 404) {
+          toast.info('Product was already deleted or not found.');
+          fetchProducts(); // Refresh list to remove the missing product
+        } else {
+          toast.error('Failed to delete product');
+        }
       }
     }
   };
@@ -1040,69 +1123,47 @@ const Products = () => {
 
   // Modify the table actions to include variant management
   const renderTableActions = (product) => (
-    <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center' }}>
+    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+      <Tooltip title="عرض التفاصيل" arrow>
+        <IconButton
+          size="small"
+          onClick={() => handleOpenDialog('view', product)}
+          sx={{ color: 'info.main', '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.1)' } }}
+        >
+          <ViewIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      
+      <Tooltip title="تعديل المنتج" arrow>
+        <IconButton
+          size="small"
+          onClick={() => {
+            console.log('Edit button clicked for product:', product);
+            handleOpenDialog('edit', product);
+          }}
+          sx={{ color: 'primary.main', '&:hover': { bgcolor: 'rgba(25, 118, 210, 0.1)' } }}
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      
       {product.hasVariants && (
         <Tooltip title="إدارة المتغيرات" arrow>
           <IconButton
             size="small"
-            color="secondary"
             onClick={() => handleOpenVariantsDialog(product)}
-            sx={{
-              borderRadius: 2,
-              '&:hover': {
-                backgroundColor: alpha('#9c27b0', 0.1),
-                transform: 'scale(1.1)'
-              }
-            }}
+            sx={{ color: 'secondary.main', '&:hover': { bgcolor: 'rgba(156, 39, 176, 0.1)' } }}
           >
             <SettingsIcon fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
-      <Tooltip title="عرض التفاصيل" arrow>
-        <IconButton
-          size="small"
-          color="info"
-          onClick={() => handleOpenDialog('view', product)}
-          sx={{
-            borderRadius: 2,
-            '&:hover': {
-              backgroundColor: alpha('#1976d2', 0.1),
-              transform: 'scale(1.1)'
-            }
-          }}
-        >
-          <ViewIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="تعديل المنتج" arrow>
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={() => handleOpenDialog('edit', product)}
-          sx={{
-            borderRadius: 2,
-            '&:hover': {
-              backgroundColor: alpha('#2e7d32', 0.1),
-              transform: 'scale(1.1)'
-            }
-          }}
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
+      
       <Tooltip title="حذف المنتج" arrow>
         <IconButton
           size="small"
-          color="error"
           onClick={() => handleDelete(product._id)}
-          sx={{
-            borderRadius: 2,
-            '&:hover': {
-              backgroundColor: alpha('#d32f2f', 0.1),
-              transform: 'scale(1.1)'
-            }
-          }}
+          sx={{ color: 'error.main', '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.1)' } }}
         >
           <DeleteIcon fontSize="small" />
         </IconButton>
@@ -2175,11 +2236,14 @@ const Products = () => {
                     onClick={() => {
                       const data = filterProducts.map(p => ({
                         Name: p.name,
-                        SKU: p.sku,
+                        Brand: p.brand,
+                        Category: typeof p.category === 'object' ? p.category.name : p.category,
                         Price: p.price,
                         Stock: p.stock,
-                        Category: p.category,
-                        Status: p.status
+                        SKU: p.sku,
+                        Rating: p.ratings?.average || 0,
+                        Reviews: p.ratings?.count || 0,
+                        CreatedAt: new Date(p.createdAt).toLocaleDateString('ar-EG')
                       }));
                       const csv = [
                         Object.keys(data[0]).join(','),
@@ -2212,17 +2276,37 @@ const Products = () => {
                       textAlign: 'center'
                     }
                   }}>
-                    <TableCell sx={{ width: '25%' }}>المنتج</TableCell>
-                    <TableCell sx={{ width: '15%' }}>السعر والخصم</TableCell>
-                    <TableCell sx={{ width: '12%' }}>الفئة</TableCell>
-                    <TableCell sx={{ width: '10%' }}>المخزون</TableCell>
-                    <TableCell sx={{ width: '12%' }}>التقييم والمراجعات</TableCell>
+                    <TableCell sx={{ width: '15%' }}>المنتج</TableCell>
+                    <TableCell sx={{ width: '10%' }}>العلامة التجارية</TableCell>
+                    <TableCell sx={{ width: '10%' }}>الفئة</TableCell>
+                    <TableCell sx={{ width: '8%' }}>السعر النهائي</TableCell>
+                    <TableCell sx={{ width: '8%' }}>المخزون</TableCell>
+                    <TableCell sx={{ width: '8%' }}>رمز SKU</TableCell>
+                    <TableCell sx={{ width: '8%' }}>التقييم والمراجعات</TableCell>
                     <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
-                    <TableCell sx={{ width: '16%' }}>الإجراءات</TableCell>
+                    <TableCell sx={{ width: '8%' }}>الحالة</TableCell>
+                    <TableCell sx={{ width: '15%' }}>الإجراءات</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   <AnimatePresence>
+                    {/* {products
+                      .filter(product => {
+                        const matchesSearch = !searchTerm || 
+                          product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+                        
+                        const matchesCategory = !filterCategory || 
+                          (typeof product.category === 'object' ? product.category.name : product.category) === filterCategory;
+                        
+                        const matchesStatus = !filterStatus || 
+                          (filterStatus === 'نشط' && product.stock > 0) ||
+                          (filterStatus === 'غير نشط' && product.stock === 0) ||
+                          (filterStatus === 'نفد المخزون' && product.stock === 0);
+                        
+                        return matchesSearch && matchesCategory && matchesStatus;
+                      }) */}
                     {filterProducts
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((product, index) => (
@@ -2238,8 +2322,8 @@ const Products = () => {
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Avatar
-                                src={typeof product.imageCover === 'string' ? product.imageCover : undefined}
-                                sx={{ bgcolor: 'primary.main' }}
+                                src={typeof product.imageCover === 'string' ? product.imageCover : (product.imageCover?.url || undefined)}
+                                sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}
                               >
                                 <ImageIcon />
                               </Avatar>
@@ -2248,7 +2332,7 @@ const Products = () => {
                                   whiteSpace: 'nowrap',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
-                                  maxWidth: '250px' // Adjust as needed
+                                  maxWidth: '200px'
                                 }}>
                                   {product.name}
                                 </Typography>
@@ -2256,9 +2340,9 @@ const Products = () => {
                                   whiteSpace: 'nowrap',
                                   overflow: 'hidden',
                                   textOverflow: 'ellipsis',
-                                  maxWidth: '250px' // Adjust as needed
+                                  maxWidth: '200px'
                                 }}>
-                                  {product.sku}
+                                  {(product.description || '').substring(0, 50)}...
                                 </Typography>
                               </Box>
                             </Box>
@@ -2268,66 +2352,82 @@ const Products = () => {
                               whiteSpace: 'nowrap',
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              maxWidth: '150px' // Adjust as needed
+                              maxWidth: '120px'
                             }}>
-                              {product.price} جنية
-                              {product.salePrice && (
-                                <Typography
-                                  component="span"
-                                  variant="caption"
-                                  sx={{
-                                    textDecoration: 'line-through',
-                                    color: 'text.secondary',
-                                    ml: 1,
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    maxWidth: '100px' // Adjust as needed
-                                  }}
-                                >
-                                  {product.salePrice} جنية
-                                </Typography>
-                              )}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '120px' // Adjust as needed
-                            }}>
-                              {typeof product.category === 'object' ? product.category.name : product.category}
+                              {product.brand || 'غير محدد'}
                             </Typography>
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={product.stock > 0 ? `${product.stock} متوفر` : 'نفذ المخزون'}
-                              color={product.stock > 0 ? 'success' : 'error'}
+                              label={typeof product.category === 'object' ? product.category.name : (product.category || 'غير محدد')}
+                              color="primary"
                               size="small"
-                              onClick={() => console.log('Stock chip clicked!')}
+                              variant="outlined"
                             />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight="bold" color="success.main">
+                              {product.price || 0} جنية
+                            </Typography>
+                            {product.salePrice && (
+                              <Typography
+                                component="span"
+                                variant="caption"
+                                sx={{
+                                  textDecoration: 'line-through',
+                                  color: 'text.secondary',
+                                  display: 'block'
+                                }}
+                              >
+                                {product.salePrice} جنية
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={(product.stock || 0) > 0 ? `${product.stock || 0} متوفر` : 'نفذ المخزون'}
+                              color={(product.stock || 0) > 0 ? ((product.stock || 0) <= 10 ? 'warning' : 'success') : 'error'}
+                              size="small"
+                              icon={(product.stock || 0) <= 10 && (product.stock || 0) > 0 ? <Alert /> : undefined}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.8rem',
+                              color: 'text.secondary'
+                            }}>
+                              {product.sku || 'غير محدد'}
+                            </Typography>
                           </TableCell>
                           <TableCell>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
                               <Typography variant="subtitle2" fontWeight="bold">
-                                {product.rating}
+                                {product.ratings?.average || 0}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {product.reviews} مراجعة
+                                ({product.ratings?.count || 0})
                               </Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
                             <Box sx={{ textAlign: 'center' }}>
                               <Typography variant="body2" fontWeight="500">
-                                {new Date(product.createdAt).toLocaleDateString('en-US')}
+                                {product.createdAt ? new Date(product.createdAt).toLocaleDateString('ar-EG') : 'غير محدد'}
                               </Typography>
                               <Typography variant="caption" color="text.secondary">
-                                {new Date(product.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                                {product.createdAt ? new Date(product.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : ''}
                               </Typography>
                             </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={product.hasVariants ? 'متغيرات' : 'منتج عادي'}
+                              color={product.hasVariants ? 'secondary' : 'default'}
+                              size="small"
+                              variant="outlined"
+                            />
                           </TableCell>
                           <TableCell>
                             {renderTableActions(product)}
@@ -2344,6 +2444,22 @@ const Products = () => {
 
       <TablePagination
         component="div"
+        // count={products.filter(product => {
+        //   const matchesSearch = !searchTerm || 
+        //     product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        //     product.sku?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        //     product.brand?.toLowerCase().includes(searchTerm.toLowerCase());
+          
+        //   const matchesCategory = !filterCategory || 
+        //     (typeof product.category === 'object' ? product.category.name : product.category) === filterCategory;
+          
+        //   const matchesStatus = !filterStatus || 
+        //     (filterStatus === 'نشط' && product.stock > 0) ||
+        //     (filterStatus === 'غير نشط' && product.stock === 0) ||
+        //     (filterStatus === 'نفد المخزون' && product.stock === 0);
+          
+        //   return matchesSearch && matchesCategory && matchesStatus;
+        // }).length}
         count={filterProducts.length}
         page={page}
         onPageChange={handleChangePage}
@@ -2405,9 +2521,9 @@ const Products = () => {
         }}>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
             <Grid container spacing={3}>
-              {/* Basic Information Section */}
+              {/* المعلومات الأساسية */}
               <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
                   <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <SettingsIcon /> المعلومات الأساسية
                   </Typography>
@@ -2421,13 +2537,7 @@ const Products = () => {
                         onChange={handleFormChange('name')}
                         error={!!formErrors.name}
                         helperText={formErrors.name}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&:hover fieldset': {
-                              borderColor: '#667eea',
-                            },
-                          },
-                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
                       />
                     </Grid>
                     <Grid item xs={12} md={6}>
@@ -2439,13 +2549,7 @@ const Products = () => {
                         onChange={handleFormChange('brand')}
                         error={!!formErrors.brand}
                         helperText={formErrors.brand}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&:hover fieldset': {
-                              borderColor: '#667eea',
-                            },
-                          },
-                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
                       />
                     </Grid>
                     <Grid item xs={12}>
@@ -2459,22 +2563,43 @@ const Products = () => {
                         onChange={handleFormChange('description')}
                         error={!!formErrors.description}
                         helperText={formErrors.description}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            '&:hover fieldset': {
-                              borderColor: '#667eea',
-                            },
-                          },
-                        }}
+                        sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
                       />
                     </Grid>
                   </Grid>
                 </Paper>
               </Grid>
 
-              {/* Pricing and Stock Section */}
+              {/* التصنيف */}
               <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                  <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CategoryIcon /> التصنيف
+                  </Typography>
+                  <FormControl fullWidth required error={!!formErrors.category}>
+                    <InputLabel>الفئة</InputLabel>
+                    <Select
+                      value={formData.category}
+                      onChange={handleFormChange('category')}
+                      label="الفئة"
+                      sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#667eea' } }}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category._id} value={category._id}>
+                          {category.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {formErrors.category && (
+                      <FormHelperText>{formErrors.category}</FormHelperText>
+                    )}
+                  </FormControl>
+                </Paper>
+              </Grid>
+
+              {/* السعر والمخزون */}
+              <Grid item xs={12}>
+                <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
                   <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <PriceIcon /> السعر والمخزون
                   </Typography>
@@ -2493,29 +2618,47 @@ const Products = () => {
                     </Grid>
                     {!formData.hasVariants && (
                       <>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
                           <TextField
                             fullWidth
                             required
                             type="number"
-                            label="السعر"
+                            label="السعر النهائي"
                             value={formData.price}
                             onChange={handleFormChange('price')}
                             error={!!formErrors.price}
                             helperText={formErrors.price}
-                            InputProps={{
-                              startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                            }}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': {
-                                  borderColor: '#764ba2',
-                                },
-                              },
-                            }}
+                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            label="اسم المورد"
+                            value={formData.supplierName}
+                            onChange={handleFormChange('supplierName')}
+                            error={!!formErrors.supplierName}
+                            helperText={formErrors.supplierName}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="سعر المورد"
+                            value={formData.supplierPrice}
+                            onChange={handleFormChange('supplierPrice')}
+                            error={!!formErrors.supplierPrice}
+                            helperText={formErrors.supplierPrice}
+                            InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
                           <TextField
                             fullWidth
                             required
@@ -2525,16 +2668,10 @@ const Products = () => {
                             onChange={handleFormChange('stock')}
                             error={!!formErrors.stock}
                             helperText={formErrors.stock}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': {
-                                  borderColor: '#764ba2',
-                                },
-                              },
-                            }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid item xs={12} md={6}>
                           <TextField
                             fullWidth
                             required
@@ -2543,91 +2680,241 @@ const Products = () => {
                             onChange={handleFormChange('sku')}
                             error={!!formErrors.sku}
                             helperText={formErrors.sku}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': {
-                                  borderColor: '#764ba2',
-                                },
-                              },
-                            }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <Box sx={{ 
+                            p: 2, 
+                            bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                            borderRadius: 1, 
+                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1
+                          }}>
+                            <Typography variant="body2" color="success.main" fontWeight="bold">
+                              الربح الصافي:
+                            </Typography>
+                            <Typography variant="h6" color="success.main" fontWeight="bold">
+                              ${formData.price && formData.supplierPrice ? (parseFloat(formData.price) - parseFloat(formData.supplierPrice)).toFixed(2) : '0.00'}
+                            </Typography>
+                            {formData.price && formData.supplierPrice && (
+                              <Typography variant="caption" color="text.secondary">
+                                (نسبة الربح: {((parseFloat(formData.price) - parseFloat(formData.supplierPrice)) / parseFloat(formData.price) * 100).toFixed(1)}%)
+                              </Typography>
+                            )}
+                          </Box>
                         </Grid>
                       </>
                     )}
                   </Grid>
-                </Paper>
-              </Grid>
-
-              {/* Category Section */}
-              <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
-                  <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <CategoryIcon /> التصنيف
-                  </Typography>
-                  <Grid container spacing={3}>
-                    <Grid item xs={12}>
-                      <FormControl fullWidth required error={!!formErrors.category}>
-                        <InputLabel>الفئة</InputLabel>
-                        <Select
-                          value={formData.category}
-                          onChange={handleFormChange('category')}
-                          label="الفئة"
-                          sx={{
-                            '& .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#667eea',
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                              borderColor: '#667eea',
-                            },
-                          }}
-                        >
-                          {categories.map((category) => (
-                            <MenuItem key={category._id} value={category._id}>
-                              {category.name}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                        {formErrors.category && (
-                          <FormHelperText>{formErrors.category}</FormHelperText>
-                        )}
-                      </FormControl>
-                    </Grid>
+                  
+                  {/* معلومات الشحن */}
+                  <Grid item xs={12}>
+                    <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(255, 152, 0, 0.05)', borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ mb: 2, color: '#ff9800', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <LocalShippingIcon /> معلومات الشحن
+                      </Typography>
+                      <Grid container spacing={3}>
+                        <Grid item xs={12} md={6}>
+                          <FormControl fullWidth required>
+                            <InputLabel>نطاق الشحن</InputLabel>
+                            <Select
+                              value={formData.shippingAddressType}
+                              onChange={handleFormChange('shippingAddressType')}
+                              label="نطاق الشحن"
+                              sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' } }}
+                            >
+                              <MenuItem value="nag_hamadi">نجع حمادي فقط</MenuItem>
+                              <MenuItem value="other_governorates">جميع محافظات مصر</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="مصاريف الشحن (جنيه)"
+                            value={formData.shippingCost}
+                            onChange={handleFormChange('shippingCost')}
+                            InputProps={{ endAdornment: <InputAdornment position="end">ج.م</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={6}>
+                          <TextField
+                            fullWidth
+                            required
+                            type="number"
+                            label="عدد أيام التوصيل"
+                            value={formData.deliveryDays}
+                            onChange={handleFormChange('deliveryDays')}
+                            InputProps={{ endAdornment: <InputAdornment position="end">يوم</InputAdornment> }}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Paper>
                   </Grid>
+                  
+                  {/* السمات والمتغيرات إذا كان المنتج متغير */}
+                  {formData.hasVariants && (
+                    <>
+                      <Grid item xs={12}>
+                        <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                          <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <PaletteIcon /> السمات (المتغيرات)
+                          </Typography>
+                          {formData.attributes.map((attribute, index) => (
+                            <Paper
+                              key={index}
+                              sx={{ p: 3, mb: 2, bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease', '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } }}
+                            >
+                              <Grid container spacing={3} alignItems="center">
+                                <Grid item xs={12} md={5}>
+                                  <TextField
+                                    fullWidth
+                                    label="اسم السمة"
+                                    value={attribute.name}
+                                    onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                                    sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
+                                  />
+                                </Grid>
+                                <Grid item xs={12} md={5}>
+                                  <TextField
+                                    fullWidth
+                                    label="قيم السمة (افصل بينها بفاصلة)"
+                                    value={attribute.values.join(', ')}
+                                    onChange={(e) => updateAttribute(index, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
+                                    InputProps={{ endAdornment: (<InputAdornment position="end"><Tooltip title="افصل القيم بفاصلة" arrow><InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} /></Tooltip></InputAdornment>) }}
+                                    sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
+                                  />
+                                  <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {attribute.values.map((value, valueIndex) => (
+                                      <Chip
+                                        key={valueIndex}
+                                        label={value}
+                                        onDelete={() => {
+                                          const newValues = attribute.values.filter((_, i) => i !== valueIndex);
+                                          updateAttribute(index, 'values', newValues);
+                                        }}
+                                        sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
+                                      />
+                                    ))}
+                                  </Box>
+                                </Grid>
+                                <Grid item xs={12} md={2}>
+                                  <Button
+                                    color="error"
+                                    onClick={() => removeAttribute(index)}
+                                    startIcon={<DeleteIcon />}
+                                    sx={{ height: '100%', '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.1)' } }}
+                                  >
+                                    حذف
+                                  </Button>
+                                </Grid>
+                              </Grid>
+                            </Paper>
+                          ))}
+                          <Button
+                            variant="contained"
+                            startIcon={<AddIcon />}
+                            onClick={addAttribute}
+                            sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}
+                          >
+                            إضافة سمة
+                          </Button>
+                        </Paper>
+                      </Grid>
+                      {/* جدول المتغيرات الديناميكي */}
+                      {generatedVariants.length > 0 && (
+                        <Grid item xs={12}>
+                          <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                            <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <InventoryIcon /> إدارة المتغيرات
+                            </Typography>
+                            <TableContainer component={Paper} elevation={1} sx={{ mt: 2 }}>
+                              <Table size="small">
+                                <TableHead>
+                                  <TableRow sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.08) }}>
+                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>النسخة</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>السعر</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>الكمية</TableCell>
+                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>حقل اختياري</TableCell>
+                                  </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                  {generatedVariants.map((variant, index) => (
+                                    <TableRow key={index}>
+                                      <TableCell>
+                                        {Array.from(variant.attributes.values()).join(', ')}
+                                      </TableCell>
+                                      <TableCell>
+                                        <TextField
+                                          size="small"
+                                          type="number"
+                                          value={variant.price}
+                                          onChange={(e) => {
+                                            const newVariants = [...generatedVariants];
+                                            newVariants[index].price = e.target.value;
+                                            setGeneratedVariants(newVariants);
+                                          }}
+                                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <TextField
+                                          size="small"
+                                          type="number"
+                                          value={variant.quantity}
+                                          onChange={(e) => {
+                                            const newVariants = [...generatedVariants];
+                                            newVariants[index].quantity = e.target.value;
+                                            setGeneratedVariants(newVariants);
+                                          }}
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <TextField
+                                          size="small"
+                                          value={variant.optionField}
+                                          onChange={(e) => {
+                                            const newVariants = [...generatedVariants];
+                                            newVariants[index].optionField = e.target.value;
+                                            setGeneratedVariants(newVariants);
+                                          }}
+                                        />
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                            </TableContainer>
+                          </Paper>
+                        </Grid>
+                      )}
+                    </>
+                  )}
                 </Paper>
               </Grid>
 
-              {/* Product Images Section */}
+              {/* صور المنتج */}
               <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
                   <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <ImageIcon /> صور المنتج
                   </Typography>
                   <Grid container spacing={3}>
                     <Grid item xs={12} md={6}>
-                      <Box sx={{
-                        border: '2px dashed #764ba2',
-                        borderRadius: 2,
-                        p: 2,
-                        textAlign: 'center',
-                        bgcolor: 'rgba(118, 75, 162, 0.05)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          bgcolor: 'rgba(118, 75, 162, 0.1)',
-                        }
-                      }}>
+                      <Box sx={{ border: '2px dashed #764ba2', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(118, 75, 162, 0.05)', transition: 'all 0.3s ease', '&:hover': { bgcolor: 'rgba(118, 75, 162, 0.1)' } }}>
                         <Button
                           variant="outlined"
                           component="label"
                           fullWidth
                           startIcon={<ImageIcon />}
-                          sx={{
-                            borderColor: '#764ba2',
-                            color: '#764ba2',
-                            '&:hover': {
-                              borderColor: '#667eea',
-                              color: '#667eea',
-                            }
-                          }}
+                          sx={{ borderColor: '#764ba2', color: '#764ba2', '&:hover': { borderColor: '#667eea', color: '#667eea' } }}
                         >
                           صورة الغلاف
                           <input
@@ -2642,42 +2929,20 @@ const Products = () => {
                             <img
                               src={formData.imageCover}
                               alt="Cover"
-                              style={{
-                                maxWidth: '100%',
-                                maxHeight: 200,
-                                borderRadius: 8,
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                              }}
+                              style={{ maxWidth: '100%', maxHeight: 200, borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                             />
                           </Box>
                         )}
                       </Box>
                     </Grid>
                     <Grid item xs={12} md={6}>
-                      <Box sx={{
-                        border: '2px dashed #764ba2',
-                        borderRadius: 2,
-                        p: 2,
-                        textAlign: 'center',
-                        bgcolor: 'rgba(118, 75, 162, 0.05)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          bgcolor: 'rgba(118, 75, 162, 0.1)',
-                        }
-                      }}>
+                      <Box sx={{ border: '2px dashed #764ba2', borderRadius: 2, p: 2, textAlign: 'center', bgcolor: 'rgba(118, 75, 162, 0.05)', transition: 'all 0.3s ease', '&:hover': { bgcolor: 'rgba(118, 75, 162, 0.1)' } }}>
                         <Button
                           variant="outlined"
                           component="label"
                           fullWidth
                           startIcon={<ImageIcon />}
-                          sx={{
-                            borderColor: '#764ba2',
-                            color: '#764ba2',
-                            '&:hover': {
-                              borderColor: '#667eea',
-                              color: '#667eea',
-                            }
-                          }}
+                          sx={{ borderColor: '#764ba2', color: '#764ba2', '&:hover': { borderColor: '#667eea', color: '#667eea' } }}
                         >
                           صور إضافية
                           <input
@@ -2688,54 +2953,22 @@ const Products = () => {
                             onChange={handleImagesChange}
                           />
                         </Button>
-                        <Box sx={{
-                          mt: 2,
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: 1,
-                          justifyContent: 'center'
-                        }}>
+                        <Box sx={{ mt: 2, display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'center' }}>
                           {formData.images.map((img, index) => (
                             <Box
                               key={index}
-                              sx={{
-                                position: 'relative',
-                                transition: 'transform 0.2s ease',
-                                '&:hover': {
-                                  transform: 'scale(1.05)',
-                                }
-                              }}
+                              sx={{ position: 'relative', transition: 'transform 0.2s ease', '&:hover': { transform: 'scale(1.05)' } }}
                             >
                               <img
                                 src={img}
                                 alt={`Product ${index + 1}`}
-                                style={{
-                                  width: 100,
-                                  height: 100,
-                                  objectFit: 'cover',
-                                  borderRadius: 8,
-                                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-                                }}
+                                style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
                               />
                               <IconButton
                                 size="small"
-                                sx={{
-                                  position: 'absolute',
-                                  top: -8,
-                                  right: -8,
-                                  bgcolor: 'rgba(0,0,0,0.7)',
-                                  color: 'white',
-                                  '&:hover': {
-                                    bgcolor: 'rgba(0,0,0,0.9)',
-                                    transform: 'scale(1.1)'
-                                  },
-                                  transition: 'all 0.2s ease'
-                                }}
+                                sx={{ position: 'absolute', top: -8, right: -8, bgcolor: 'rgba(0,0,0,0.7)', color: 'white', '&:hover': { bgcolor: 'rgba(0,0,0,0.9)', transform: 'scale(1.1)' }, transition: 'all 0.2s ease' }}
                                 onClick={() => {
-                                  setFormData(prev => ({
-                                    ...prev,
-                                    images: prev.images.filter((_, i) => i !== index)
-                                  }));
+                                  setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
                                 }}
                               >
                                 <CloseIcon fontSize="small" />
@@ -2748,489 +2981,19 @@ const Products = () => {
                   </Grid>
                 </Paper>
               </Grid>
-
-              {/* Features Section */}
-              <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <StarIcon /> المميزات
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          features: [...prev.features, { name: '', value: '' }]
-                        }));
-                      }}
-                      sx={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                        }
-                      }}
-                    >
-                      إضافة ميزة
-                    </Button>
-                  </Box>
-                  {formData.features.map((feature, index) => (
-                    <Paper
-                      key={index}
-                      sx={{
-                        p: 3,
-                        mb: 2,
-                        bgcolor: 'white',
-                        borderRadius: 2,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        }
-                      }}
-                    >
-                      <Grid container spacing={3}>
-                        <Grid item xs={12} md={5}>
-                          <TextField
-                            fullWidth
-                            label="اسم الميزة"
-                            value={feature.name}
-                            onChange={(e) => {
-                              const newFeatures = [...formData.features];
-                              newFeatures[index] = { ...feature, name: e.target.value };
-                              setFormData(prev => ({ ...prev, features: newFeatures }));
-                            }}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': {
-                                  borderColor: '#667eea',
-                                },
-                              },
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={5}>
-                          <TextField
-                            fullWidth
-                            label="قيمة الميزة"
-                            value={feature.value}
-                            onChange={(e) => {
-                              const newFeatures = [...formData.features];
-                              newFeatures[index] = { ...feature, value: e.target.value };
-                              setFormData(prev => ({ ...prev, features: newFeatures }));
-                            }}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                '&:hover fieldset': {
-                                  borderColor: '#667eea',
-                                },
-                              },
-                            }}
-                          />
-                        </Grid>
-                        <Grid item xs={12} md={2}>
-                          <Button
-                            color="error"
-                            onClick={() => {
-                              setFormData(prev => ({
-                                ...prev,
-                                features: prev.features.filter((_, i) => i !== index)
-                              }));
-                            }}
-                            startIcon={<DeleteIcon />}
-                            sx={{
-                              height: '100%',
-                              '&:hover': {
-                                bgcolor: 'rgba(211, 47, 47, 0.1)',
-                              }
-                            }}
-                          >
-                            حذف
-                          </Button>
-                        </Grid>
-                      </Grid>
-                    </Paper>
-                  ))}
-                </Paper>
-              </Grid>
-
-              {/* Specifications Section */}
-              <Grid item xs={12}>
-                <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" sx={{ color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <SettingsIcon /> المواصفات
-                    </Typography>
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          specifications: [...prev.specifications, { group: '', items: [{ name: '', value: '' }] }]
-                        }));
-                      }}
-                      sx={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                        '&:hover': {
-                          background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                        }
-                      }}
-                    >
-                      إضافة مجموعة مواصفات
-                    </Button>
-                  </Box>
-                  {formData.specifications.map((spec, specIndex) => (
-                    <Paper
-                      key={specIndex}
-                      sx={{
-                        p: 3,
-                        mb: 2,
-                        bgcolor: 'white',
-                        borderRadius: 2,
-                        boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                        transition: 'all 0.3s ease',
-                        '&:hover': {
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                        }
-                      }}
-                    >
-                      <Box sx={{ mb: 2 }}>
-                        <TextField
-                          fullWidth
-                          label="اسم المجموعة"
-                          value={spec.group}
-                          onChange={(e) => {
-                            const newSpecs = [...formData.specifications];
-                            newSpecs[specIndex] = { ...spec, group: e.target.value };
-                            setFormData(prev => ({ ...prev, specifications: newSpecs }));
-                          }}
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              '&:hover fieldset': {
-                                borderColor: '#764ba2',
-                              },
-                            },
-                          }}
-                        />
-                      </Box>
-                      {spec.items.map((item, itemIndex) => (
-                        <Box key={itemIndex} sx={{ mb: 2 }}>
-                          <Grid container spacing={3}>
-                            <Grid item xs={12} md={5}>
-                              <TextField
-                                fullWidth
-                                label="اسم المواصفة"
-                                value={item.name}
-                                onChange={(e) => {
-                                  const newSpecs = [...formData.specifications];
-                                  newSpecs[specIndex].items[itemIndex] = { ...item, name: e.target.value };
-                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    '&:hover fieldset': {
-                                      borderColor: '#764ba2',
-                                    },
-                                  },
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} md={5}>
-                              <TextField
-                                fullWidth
-                                label="قيمة المواصفة"
-                                value={item.value}
-                                onChange={(e) => {
-                                  const newSpecs = [...formData.specifications];
-                                  newSpecs[specIndex].items[itemIndex] = { ...item, value: e.target.value };
-                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
-                                }}
-                                sx={{
-                                  '& .MuiOutlinedInput-root': {
-                                    '&:hover fieldset': {
-                                      borderColor: '#764ba2',
-                                    },
-                                  },
-                                }}
-                              />
-                            </Grid>
-                            <Grid item xs={12} md={2}>
-                              <Button
-                                color="error"
-                                onClick={() => {
-                                  const newSpecs = [...formData.specifications];
-                                  newSpecs[specIndex].items = spec.items.filter((_, i) => i !== itemIndex);
-                                  setFormData(prev => ({ ...prev, specifications: newSpecs }));
-                                }}
-                                startIcon={<DeleteIcon />}
-                                sx={{
-                                  height: '100%',
-                                  '&:hover': {
-                                    bgcolor: 'rgba(211, 47, 47, 0.1)',
-                                  }
-                                }}
-                              >
-                                حذف
-                              </Button>
-                            </Grid>
-                          </Grid>
-                        </Box>
-                      ))}
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                        <Button
-                          variant="outlined"
-                          startIcon={<AddIcon />}
-                          onClick={() => {
-                            const newSpecs = [...formData.specifications];
-                            newSpecs[specIndex].items.push({ name: '', value: '' });
-                            setFormData(prev => ({ ...prev, specifications: newSpecs }));
-                          }}
-                          sx={{
-                            borderColor: '#764ba2',
-                            color: '#764ba2',
-                            '&:hover': {
-                              borderColor: '#667eea',
-                              color: '#667eea',
-                            }
-                          }}
-                        >
-                          إضافة مواصفة
-                        </Button>
-                        <Button
-                          color="error"
-                          onClick={() => {
-                            setFormData(prev => ({
-                              ...prev,
-                              specifications: prev.specifications.filter((_, i) => i !== specIndex)
-                            }));
-                          }}
-                          startIcon={<DeleteIcon />}
-                          sx={{
-                            '&:hover': {
-                              bgcolor: 'rgba(211, 47, 47, 0.1)',
-                            }
-                          }}
-                        >
-                          حذف المجموعة
-                        </Button>
-                      </Box>
-                    </Paper>
-                  ))}
-                </Paper>
-              </Grid>
-
-              {/* Attributes Section */}
-              {formData.hasVariants && (
-                <Grid item xs={12}>
-                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                      <Typography variant="h6" sx={{ color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <PaletteIcon /> السمات (المتغيرات)
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={addAttribute}
-                        sx={{
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                          '&:hover': {
-                            background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                          }
-                        }}
-                      >
-                        إضافة سمة
-                      </Button>
-                    </Box>
-                    {formData.attributes.map((attribute, index) => (
-                      <Paper
-                        key={index}
-                        sx={{
-                          p: 3,
-                          mb: 2,
-                          bgcolor: 'white',
-                          borderRadius: 2,
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
-                          transition: 'all 0.3s ease',
-                          '&:hover': {
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                          }
-                        }}
-                      >
-                        <Grid container spacing={3} alignItems="center">
-                          <Grid item xs={12} md={5}>
-                            <TextField
-                              fullWidth
-                              label="اسم السمة"
-                              value={attribute.name}
-                              onChange={(e) => updateAttribute(index, 'name', e.target.value)}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '&:hover fieldset': {
-                                    borderColor: '#667eea',
-                                  },
-                                },
-                              }}
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={5}>
-                            <TextField
-                              fullWidth
-                              label="قيم السمة (افصل بينها بفاصلة)"
-                              value={attribute.values.join(', ')}
-                              onChange={(e) => updateAttribute(index, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
-                              InputProps={{
-                                endAdornment: (
-                                  <InputAdornment position="end">
-                                    <Tooltip title="افصل القيم بفاصلة" arrow>
-                                      <InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-                                    </Tooltip>
-                                  </InputAdornment>
-                                ),
-                              }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  '&:hover fieldset': {
-                                    borderColor: '#667eea',
-                                  },
-                                },
-                              }}
-                            />
-                            <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {attribute.values.map((value, valueIndex) => (
-                                <Chip
-                                  key={valueIndex}
-                                  label={value}
-                                  onDelete={() => {
-                                    const newValues = attribute.values.filter((_, i) => i !== valueIndex);
-                                    updateAttribute(index, 'values', newValues);
-                                  }}
-                                  sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
-                                />
-                              ))}
-                            </Box>
-                          </Grid>
-                          <Grid item xs={12} md={2}>
-                            <Button
-                              color="error"
-                              onClick={() => removeAttribute(index)}
-                              startIcon={<DeleteIcon />}
-                              sx={{
-                                height: '100%',
-                                '&:hover': {
-                                  bgcolor: 'rgba(211, 47, 47, 0.1)',
-                                }
-                              }}
-                            >
-                              حذف
-                            </Button>
-                          </Grid>
-                        </Grid>
-                      </Paper>
-                    ))}
-                  </Paper>
-                </Grid>
-              )}
-
-              {/* Dynamic Variants Table */}
-              {formData.hasVariants && generatedVariants.length > 0 && (
-                <Grid item xs={12}>
-                  <Paper elevation={0} sx={{ p: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
-                    <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <InventoryIcon /> إدارة المتغيرات
-                    </Typography>
-                    <TableContainer component={Paper} elevation={1} sx={{ mt: 2 }}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.08) }}>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>النسخة</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>السعر</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>الكمية</TableCell>
-                            <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>حقل اختياري</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {generatedVariants.map((variant, index) => (
-                            <TableRow key={index}>
-                              <TableCell>
-                                {Array.from(variant.attributes.values()).join(', ')}
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  type="number"
-                                  value={variant.price}
-                                  onChange={(e) => {
-                                    const newVariants = [...generatedVariants];
-                                    newVariants[index].price = e.target.value;
-                                    setGeneratedVariants(newVariants);
-                                  }}
-                                  InputProps={{
-                                    startAdornment: <InputAdornment position="start">$</InputAdornment>,
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  type="number"
-                                  value={variant.quantity}
-                                  onChange={(e) => {
-                                    const newVariants = [...generatedVariants];
-                                    newVariants[index].quantity = e.target.value;
-                                    setGeneratedVariants(newVariants);
-                                  }}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <TextField
-                                  size="small"
-                                  value={variant.optionField}
-                                  onChange={(e) => {
-                                    const newVariants = [...generatedVariants];
-                                    newVariants[index].optionField = e.target.value;
-                                    setGeneratedVariants(newVariants);
-                                  }}
-                                />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </Paper>
-                </Grid>
-              )}
             </Grid>
 
-            <DialogActions sx={{
-              mt: 3,
-              px: 3,
-              py: 2,
-              borderTop: '1px solid #e0e0e0',
-              bgcolor: '#f8f9fa'
-            }}>
+            <DialogActions sx={{ mt: 3, px: 3, py: 2, borderTop: '1px solid #e0e0e0', bgcolor: '#f8f9fa' }}>
               <Button
                 onClick={handleCloseDialog}
-                sx={{
-                  color: '#666',
-                  '&:hover': {
-                    bgcolor: 'rgba(0,0,0,0.05)',
-                  }
-                }}
+                sx={{ color: '#666', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
               >
                 إلغاء
               </Button>
               <Button
                 type="submit"
                 variant="contained"
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                  }
-                }}
+                sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}
               >
                 {dialogMode === 'add' ? 'إضافة' : 'تحديث'}
               </Button>

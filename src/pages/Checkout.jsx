@@ -31,7 +31,8 @@ export default function Checkout() {
     city: "",
     phone: "",
     email: "",
-    coupon: ""
+    coupon: "",
+    shippingAddressType: "nag_hamadi"
   });
 
   // إضافة حالة للتحقق من الأخطاء
@@ -307,6 +308,7 @@ export default function Checkout() {
       // Create shipping address string
       const shippingAddress = `${form.address}${form.apartment ? `, ${form.apartment}` : ''}, ${form.city}, مصر`;
       formData.append('shippingAddress', shippingAddress);
+      formData.append('shippingAddressType', form.shippingAddressType);
 
       // Map payment method to schema enum values
       let paymentMethod;
@@ -376,6 +378,10 @@ export default function Checkout() {
     }
   };
 
+  // حساب إجمالي مصاريف الشحن
+  const totalShipping = cartItems.reduce((acc, item) => acc + (item?.prdID?.shippingCost || 0) * item.quantity, 0);
+  const finalTotal = discountedTotal + totalShipping;
+
   return (
     <ProtectedRoute>
       <div className="bg-white" dir="rtl" style={{ textAlign: "right" }}>
@@ -402,15 +408,57 @@ export default function Checkout() {
                 </div>
                 <div className="mb-3">
                   <label className="form-label">العنوان *</label>
-                  <input
-                    name="address"
-                    className={`form-control ${errors.address ? 'is-invalid' : ''}`}
-                    value={form.address}
-                    onChange={handleChange}
+                  <select
+                    name="addressType"
+                    className={`form-select ${errors.addressType ? 'is-invalid' : ''}`}
+                    value={form.addressType || 'nag_hamadi'}
+                    onChange={e => setForm(prev => ({ ...prev, addressType: e.target.value, address: '', city: '' }))}
                     required
-                  />
-                  {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+                  >
+                    <option value="nag_hamadi">نجع حمادي</option>
+                    <option value="other_governorates">محافظة أخرى</option>
+                  </select>
+                  {errors.addressType && <div className="invalid-feedback">{errors.addressType}</div>}
                 </div>
+                {form.addressType === 'nag_hamadi' && (
+                  <div className="mb-3">
+                    <label className="form-label">تفاصيل العنوان في نجع حمادي *</label>
+                    <input
+                      name="address"
+                      className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                      value={form.address}
+                      onChange={handleChange}
+                      required
+                    />
+                    {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+                  </div>
+                )}
+                {form.addressType === 'other_governorates' && (
+                  <>
+                    <div className="mb-3">
+                      <label className="form-label">اسم المحافظة *</label>
+                      <input
+                        name="city"
+                        className={`form-control ${errors.city ? 'is-invalid' : ''}`}
+                        value={form.city}
+                        onChange={handleChange}
+                        required
+                      />
+                      {errors.city && <div className="invalid-feedback">{errors.city}</div>}
+                    </div>
+                    <div className="mb-3">
+                      <label className="form-label">تفاصيل العنوان *</label>
+                      <input
+                        name="address"
+                        className={`form-control ${errors.address ? 'is-invalid' : ''}`}
+                        value={form.address}
+                        onChange={handleChange}
+                        required
+                      />
+                      {errors.address && <div className="invalid-feedback">{errors.address}</div>}
+                    </div>
+                  </>
+                )}
                 <div className="mb-3">
                   <label className="form-label">شقة/دور (اختياري)</label>
                   <input
@@ -419,17 +467,6 @@ export default function Checkout() {
                     value={form.apartment}
                     onChange={handleChange}
                   />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">المدينة *</label>
-                  <input
-                    name="city"
-                    className={`form-control ${errors.city ? 'is-invalid' : ''}`}
-                    value={form.city}
-                    onChange={handleChange}
-                    required
-                  />
-                  {errors.city && <div className="invalid-feedback">{errors.city}</div>}
                 </div>
                 <div className="mb-3">
                   <label className="form-label">رقم الهاتف *</label>
@@ -478,9 +515,14 @@ export default function Checkout() {
                 <div className="card-body">
                   <h5 className="fw-bold mb-3">ملخص الطلب</h5>
                   {cartItems.map(item => (
-                    <div className="d-flex align-items-center mb-3" key={item?.variantId ? item?.variantId._id : item?.prdID._id}>
+                    <div className="d-flex align-items-center mb-2" key={item?.variantId ? item?.variantId._id : item?.prdID._id}>
                       <img src={item?.variantId ? item?.variantId?.images[0].url : item?.prdID?.images[0].url} alt={item?.prdID?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
-                      <span className="fw-bold flex-fill">{item?.prdID?.name}</span>
+                      <div className="flex-fill">
+                        <span className="fw-bold">{item?.prdID?.name}</span>
+                        <div className="text-muted small">
+                          الشحن: {item?.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item?.prdID?.deliveryDays || 2} يوم
+                        </div>
+                      </div>
                       <span>{item?.variantId ? item?.variantId?.price * item?.quantity : item?.prdID?.price * item?.quantity} ج.م</span>
                     </div>
                   ))}
@@ -500,13 +542,13 @@ export default function Checkout() {
                     </div>
                   )}
                   <div className="d-flex justify-content-between mb-2">
-                    <span>الشحن:</span>
-                    <span>مجاني</span>
+                    <span>إجمالي الشحن:</span>
+                    <span>{totalShipping} ج.م</span>
                   </div>
                   <hr />
                   <div className="d-flex justify-content-between mb-3">
                     <span className="fw-bold">الإجمالي الكلي:</span>
-                    <span className="fw-bold text-danger">{discountedTotal} ج.م</span>
+                    <span className="fw-bold text-danger">{finalTotal} ج.م</span>
                   </div>
                   <div className="mb-3">
                     <div className="input-group">

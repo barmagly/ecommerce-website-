@@ -11,18 +11,33 @@ import 'aos/dist/aos.css';
 
 export default function Home() {
   useEffect(() => {
-    AOS.init({ duration: 900, once: true });
+    AOS.init({ 
+      duration: 1000, 
+      once: true,
+      offset: 100,
+      easing: 'ease-in-out'
+    });
   }, []);
+  
   return (
     <>
       <Header />
       <div className="home-bg-animated"></div>
       <div style={{direction: 'rtl'}}>
         <MainSlider data-aos="fade-up" />
+        
+        <div className="section-spacer"></div>
         <FlashSalesSection data-aos="fade-up" />
+        
+        <div className="section-spacer"></div>
         <Categories3DCircle data-aos="zoom-in-up" />
+        
+        <div className="section-spacer"></div>
         <BestSellersSection data-aos="fade-up" />
+        
+        <div className="section-spacer"></div>
         <ServiceFeaturesSection data-aos="fade-up" />
+        
         <Footer />
       </div>
     </>

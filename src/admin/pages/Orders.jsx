@@ -40,6 +40,7 @@ import {
   Tooltip,
   CircularProgress,
   Alert,
+  Paper,
 } from '@mui/material';
 import { useReactToPrint } from 'react-to-print';
 import InvoicePrint from '../components/InvoicePrint';
@@ -530,6 +531,8 @@ const Orders = () => {
                   <TableCell sx={{ fontWeight: 'bold' }}>رقم الطلب</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>العميل</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>المجموع</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>سعر المورد</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }}>الربح الصافي</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>حالة الطلب</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>حالة الدفع</TableCell>
                   <TableCell sx={{ fontWeight: 'bold' }}>طريقة الدفع</TableCell>
@@ -580,6 +583,47 @@ const Orders = () => {
                           <Typography variant="subtitle2" fontWeight="bold">
                             {order.total} جنيه
                           </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography variant="body2" color="text.secondary">
+                            {(() => {
+                              const supplierTotal = order.cartItems?.reduce((total, item) => {
+                                return total + (item.supplierPrice || 0) * item.quantity;
+                              }, 0) || 0;
+                              return `${supplierTotal.toFixed(2)} جنيه`;
+                            })()}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Box sx={{ 
+                            p: 1, 
+                            bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                            borderRadius: 1, 
+                            border: '1px solid rgba(76, 175, 80, 0.3)',
+                            textAlign: 'center'
+                          }}>
+                            <Typography variant="body2" color="success.main" fontWeight="bold">
+                              {(() => {
+                                const supplierTotal = order.cartItems?.reduce((total, item) => {
+                                  return total + (item.supplierPrice || 0) * item.quantity;
+                                }, 0) || 0;
+                                const profit = parseFloat(order.total) - supplierTotal;
+                                return `${profit.toFixed(2)} جنيه`;
+                              })()}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {(() => {
+                                const supplierTotal = order.cartItems?.reduce((total, item) => {
+                                  return total + (item.supplierPrice || 0) * item.quantity;
+                                }, 0) || 0;
+                                const profit = parseFloat(order.total) - supplierTotal;
+                                const percentage = (profit / parseFloat(order.total)) * 100;
+                                return `${percentage.toFixed(1)}%`;
+                              })()}
+                            </Typography>
+                          </Box>
                         </TableCell>
 
                         <TableCell>
@@ -731,7 +775,9 @@ const Orders = () => {
                     <TableHead>
                       <TableRow>
                         <TableCell>المنتج</TableCell>
-                        <TableCell>السعر</TableCell>
+                        <TableCell>السعر النهائي</TableCell>
+                        <TableCell>سعر المورد</TableCell>
+                        <TableCell>الربح الصافي</TableCell>
                         <TableCell>الكمية</TableCell>
                         <TableCell>المجموع</TableCell>
                       </TableRow>
@@ -753,6 +799,28 @@ const Orders = () => {
                             </Box>
                           </TableCell>
                           <TableCell>{item.price} جنيه</TableCell>
+                          <TableCell>{item.supplierPrice || 'غير محدد'} جنيه</TableCell>
+                          <TableCell>
+                            <Box sx={{ 
+                              p: 1, 
+                              bgcolor: 'rgba(76, 175, 80, 0.1)', 
+                              borderRadius: 1, 
+                              border: '1px solid rgba(76, 175, 80, 0.3)',
+                              textAlign: 'center'
+                            }}>
+                              <Typography variant="body2" color="success.main" fontWeight="bold">
+                                {item.supplierPrice ? 
+                                  `${(parseFloat(item.price) - parseFloat(item.supplierPrice)).toFixed(2)} جنيه` : 
+                                  'غير محدد'
+                                }
+                              </Typography>
+                              {item.supplierPrice && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {((parseFloat(item.price) - parseFloat(item.supplierPrice)) / parseFloat(item.price) * 100).toFixed(1)}%
+                                </Typography>
+                              )}
+                            </Box>
+                          </TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>{item.price * item.quantity} جنيه</TableCell>
                         </TableRow>
@@ -760,6 +828,68 @@ const Orders = () => {
                     </TableBody>
                   </Table>
                 </TableContainer>
+              </Grid>
+
+              {/* Supplier Summary */}
+              <Grid grid={{ xs: 12 }}>
+                <Paper elevation={1} sx={{ p: 3, bgcolor: 'rgba(76, 175, 80, 0.05)' }}>
+                  <Typography variant="h6" gutterBottom color="success.main">
+                    ملخص المورد والربح
+                  </Typography>
+                  <Grid container spacing={3}>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
+                        <Typography variant="h6" color="primary.main" fontWeight="bold">
+                          إجمالي المبيعات
+                        </Typography>
+                        <Typography variant="h4" color="primary.main" fontWeight="bold">
+                          {selectedOrder.total} جنيه
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
+                        <Typography variant="h6" color="warning.main" fontWeight="bold">
+                          إجمالي سعر المورد
+                        </Typography>
+                        <Typography variant="h4" color="warning.main" fontWeight="bold">
+                          {(() => {
+                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
+                              return total + (item.supplierPrice || 0) * item.quantity;
+                            }, 0);
+                            return `${supplierTotal.toFixed(2)} جنيه`;
+                          })()}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={4}>
+                      <Box sx={{ textAlign: 'center', p: 2, bgcolor: 'white', borderRadius: 2 }}>
+                        <Typography variant="h6" color="success.main" fontWeight="bold">
+                          الربح الصافي
+                        </Typography>
+                        <Typography variant="h4" color="success.main" fontWeight="bold">
+                          {(() => {
+                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
+                              return total + (item.supplierPrice || 0) * item.quantity;
+                            }, 0);
+                            const profit = parseFloat(selectedOrder.total) - supplierTotal;
+                            return `${profit.toFixed(2)} جنيه`;
+                          })()}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          نسبة الربح: {(() => {
+                            const supplierTotal = selectedOrder.cartItems.reduce((total, item) => {
+                              return total + (item.supplierPrice || 0) * item.quantity;
+                            }, 0);
+                            const profit = parseFloat(selectedOrder.total) - supplierTotal;
+                            const percentage = (profit / parseFloat(selectedOrder.total)) * 100;
+                            return `${percentage.toFixed(1)}%`;
+                          })()}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Paper>
               </Grid>
 
               {/* Order Status */}

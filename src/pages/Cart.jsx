@@ -4,9 +4,10 @@ import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { decreaseQ, deleteItem, getCartThunk, increaseQ } from "../services/Slice/cart/cart";
+import { decreaseQ, deleteCartItemThunk, getCartThunk, increaseQ } from "../services/Slice/cart/cart";
 import ProtectedRoute from "../components/ProtectedRoute";
 import { toast } from 'react-toastify';
+import axios from "axios";
 
 export default function Cart() {
   const dispatch = useDispatch();
@@ -14,13 +15,25 @@ export default function Cart() {
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
 
-  const handleRemove = (variantId, prdID) => {
-    dispatch(deleteItem({ variantId, prdID }));
-    toast.success("تم حذف المنتج من السلة", {
-      position: "top-center",
-      rtl: true,
-      autoClose: 2000
-    });
+  const handleRemove = async (variantId, prdID) => {
+    console.log('🔄 Delete button clicked with:', { variantId, prdID });
+    try {
+      console.log('📡 Dispatching deleteCartItemThunk...');
+      const result = await dispatch(deleteCartItemThunk({ variantId, prdID })).unwrap();
+      console.log('✅ deleteCartItemThunk successful:', result);
+      toast.success("تم حذف المنتج من السلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 2000
+      });
+    } catch (error) {
+      console.error('❌ deleteCartItemThunk failed:', error);
+      toast.error("فشل في حذف المنتج من السلة", {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+    }
   };
 
   const decreaseQuantity = (variantId, prdID) => {
@@ -40,6 +53,20 @@ export default function Cart() {
       });
       return;
     }
+
+    // التحقق من نطاق الشحن للمنتجات
+    const hasNagHamadiOnlyProducts = products.cartItems.some(item => 
+      item.prdID?.shippingAddress?.type === 'nag_hamadi'
+    );
+
+    if (hasNagHamadiOnlyProducts) {
+      toast.info('بعض المنتجات متاحة للشحن في نجع حمادي فقط. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 5000
+      });
+    }
+
     navigate('/checkout', { state: { cartItems: products.cartItems, total: products.total } });
   };
 
@@ -111,7 +138,11 @@ export default function Cart() {
                 <div className="row g-0">
                   <div className="col-md-4">
                     <img
-                      src={item.prdID?.images?.[0]?.url || "https://via.placeholder.com/300x200?text=No+Image"}
+                      src={
+                        item.prdID?.images?.[0]?.url ||
+                        item.prdID?.imageCover ||
+                        "/images/Placeholder.png"
+                      }
                       className="img-fluid rounded-start"
                       alt={item.prdID?.name}
                       style={{ height: "200px", objectFit: "cover" }}
@@ -123,6 +154,9 @@ export default function Cart() {
                       <p className="card-text">
                         السعر: {item.prdID?.price} ج.م
                       </p>
+                      <div className="text-muted small mb-2">
+                        الشحن: {item.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item.prdID?.deliveryDays || 2} يوم
+                      </div>
                       <div className="d-flex align-items-center">
                         <button
                           className="btn btn-outline-secondary btn-sm"
