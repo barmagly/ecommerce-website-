@@ -36,7 +36,7 @@ const AppContent = ({ children }) => {
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box>
       <CssBaseline />
       {isAuthenticated ? (
         <AdminLayout>{children}</AdminLayout>

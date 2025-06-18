@@ -130,6 +130,15 @@ const Products = () => {
     fetchProducts();
   }, []);
 
+  // Function to filter products based on search term and category
+  const filterProducts = products.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = filterCategory === '' || product.category === filterCategory;
+    const matchesStatus = filterStatus === '' || product.stock === 0 ;
+
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
   // Check for low stock products and show alerts
   useEffect(() => {
     if ((products || []).length > 0) {
@@ -170,6 +179,8 @@ const Products = () => {
       toast.error('Failed to load categories');
     }
   };
+
+
 
   // Update useEffect to fetch both products and categories
   useEffect(() => {
@@ -858,13 +869,9 @@ const Products = () => {
       )
     }));
   };
-
-  // Update the category options to match the backend values
-  const categoryOptions = [
-    { value: 'electronics', label: 'إلكترونيات' },
-    { value: 'clothing', label: 'ملابس' },
-    { value: 'books', label: 'كتب' }
-  ];
+  // const handleSearchChange = (event) => {
+  //   setSearchTerm(event.target.value);
+  // }; 
 
   // Add new handlers for variants dialog
   const handleOpenVariantsDialog = (product, variant = null) => {
@@ -1905,15 +1912,17 @@ const Products = () => {
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
+                size='large'
                 variant="outlined"
-                startIcon={<RefreshIcon />}
+                startIcon={<RefreshIcon sx={{ ml: 1 }} />}
                 onClick={fetchProducts}
               >
                 تحديث
               </Button>
               <Button
+                size='large'
                 variant="contained"
-                startIcon={<AddIcon />}
+                startIcon={<AddIcon sx={{ ml: 1 }} />}
                 onClick={() => handleOpenDialog('add')}
                 sx={{
                   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -1963,17 +1972,17 @@ const Products = () => {
                 />
               </Grid>
               <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 150 }} fullWidth>
                   <InputLabel>تصفية حسب الفئة</InputLabel>
                   <Select
                     value={filterCategory}
                     label="تصفية حسب الفئة"
                     onChange={(e) => setFilterCategory(e.target.value)}
-                    startAdornment={<CategoryIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+                  // startAdornment={<CategoryIcon sx={{ mr: 1, color: 'text.secondary' }} />}
                   >
                     <MenuItem value="">جميع الفئات</MenuItem>
                     {categories.map((category) => (
-                      <MenuItem key={category._id || category.id} value={typeof category === 'object' ? category.name : category}>
+                      <MenuItem key={category._id || category.id} value={typeof category === 'object' ? category._id : category}>
                         {typeof category === 'object' ? category.name : category}
                       </MenuItem>
                     ))}
@@ -1981,13 +1990,13 @@ const Products = () => {
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={3}>
-                <FormControl fullWidth>
+                <FormControl sx={{ minWidth: 150 }} fullWidth>
                   <InputLabel>تصفية حسب الحالة</InputLabel>
                   <Select
                     value={filterStatus}
                     label="تصفية حسب الحالة"
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    startAdornment={<FilterIcon sx={{ mr: 1, color: 'text.secondary' }} />}
+                  // startAdornment={<FilterIcon sx={{ mr: 1, color: 'text.secondary' }} />}
                   >
                     <MenuItem value="">جميع الحالات</MenuItem>
                     <MenuItem value="نشط">نشط</MenuItem>
@@ -1998,9 +2007,9 @@ const Products = () => {
               </Grid>
               <Grid item xs={12} md={2}>
                 <Button
-                  fullWidth
+                  size='large'
                   variant="outlined"
-                  startIcon={<FilterIcon />}
+                  // startIcon={<FilterIcon />}
                   onClick={() => {
                     setSearchTerm('');
                     setFilterCategory('');
@@ -2035,9 +2044,9 @@ const Products = () => {
                         {products.length}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">إجمالي المنتجات</Typography>
-                      <Typography variant="caption" color="success.main">
+                      {/* <Typography variant="caption" color="success.main">
                         +{products.filter(p => p.featured).length} منتج مميز
-                      </Typography>
+                      </Typography> */}
                     </Box>
                     <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48 }}>
                       <InventoryIcon />
@@ -2059,7 +2068,7 @@ const Products = () => {
                 transition: 'transform 0.2s ease-in-out',
                 '&:hover': { transform: 'translateY(-4px)' }
               }}>
-                <CardContent>
+                {/* <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#2e7d32">
@@ -2074,7 +2083,7 @@ const Products = () => {
                       <StarIcon />
                     </Avatar>
                   </Box>
-                </CardContent>
+                </CardContent> */}
               </Card>
             </motion.div>
           </Grid>
@@ -2129,7 +2138,7 @@ const Products = () => {
                       </Typography>
                       <Typography variant="body1" color="text.secondary">قيمة المخزون</Typography>
                       <Typography variant="caption" color="text.secondary">
-                        متوسط السعر: ${products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed(2) : '0.00'}
+                        متوسط السعر: {products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed(2) : '0.00'}
                       </Typography>
                     </Box>
                     <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48 }}>
@@ -2149,7 +2158,7 @@ const Products = () => {
             <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" fontWeight="bold">
-                  قائمة المنتجات ({products.length})
+                  قائمة المنتجات ({filterProducts.length})
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   <Button
@@ -2164,7 +2173,7 @@ const Products = () => {
                     size="small"
                     variant="outlined"
                     onClick={() => {
-                      const data = products.map(p => ({
+                      const data = filterProducts.map(p => ({
                         Name: p.name,
                         SKU: p.sku,
                         Price: p.price,
@@ -2214,7 +2223,7 @@ const Products = () => {
                 </TableHead>
                 <TableBody>
                   <AnimatePresence>
-                    {products
+                    {filterProducts
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((product, index) => (
                         <motion.tr
@@ -2335,7 +2344,7 @@ const Products = () => {
 
       <TablePagination
         component="div"
-        count={products.length}
+        count={filterProducts.length}
         page={page}
         onPageChange={handleChangePage}
         rowsPerPage={rowsPerPage}
