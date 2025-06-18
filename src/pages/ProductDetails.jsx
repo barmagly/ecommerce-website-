@@ -11,6 +11,11 @@ import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
+// إضافة مكون Snackbar من Material-UI
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
 function StarRating({ rating, setRating, interactive }) {
@@ -48,21 +53,21 @@ export default function ProductDetails() {
   const { reviews, loading: reviewsLoading } = useSelector((state) => state.reviews);
   const { token, user: currentUser } = useSelector((state) => state.auth);
   const { user: profileUser } = useSelector((state) => state.userProfile);
-  // const [product, setProduct] = useState(null);
-  // const [productLoading, setProductLoading] = useState(true);
-  // const [productError, setProductError] = useState(null);
 
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [currentVariantIndex, setCurrentVariantIndex] = useState(0);
   const [editingReview, setEditingReview] = useState(null);
   const [editForm, setEditForm] = useState({ rating: 5, comment: "" });
-
   const [selectedAttributes, setSelectedAttributes] = useState({});
   const [mainImg, setMainImg] = useState(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
   const [reviewError, setReviewError] = useState(null);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [showSnackbar, setShowSnackbar] = useState(false);
+
   const product = products?.find(p => p._id === id);
+
   useEffect(() => {
     dispatch(getProductsThunk());
     if (id) {
@@ -73,7 +78,6 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (product) {
-      // Initialize selected attributes only if product has attributes
       if (product.attributes?.length > 0) {
         const initialAttributes = {};
         product.attributes.forEach(attr => {
@@ -88,7 +92,6 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (variants && variants.length > 0) {
-      // Find matching variant based on selected attributes
       const matchingVariant = variants.find(variant => {
         return Object.entries(selectedAttributes).every(([key, value]) =>
           variant.attributes[key] === value
@@ -103,7 +106,6 @@ export default function ProductDetails() {
         setCurrentVariantIndex(0);
       }
     } else {
-      // If no variants, set selectedVariant to null
       setSelectedVariant(null);
     }
   }, [variants, selectedAttributes]);
@@ -121,6 +123,13 @@ export default function ProductDetails() {
       dispatch(getUserProfileThunk());
     }
   }, [dispatch, token]);
+
+  useEffect(() => {
+    if (showSnackbar) {
+      setOpenSnackbar(true);
+      setShowSnackbar(false);
+    }
+  }, [showSnackbar]);
 
   // Get similar products (same category)
   const similarProducts = products?.filter(p =>
@@ -155,7 +164,6 @@ export default function ProductDetails() {
       const nextIndex = (currentVariantIndex + 1) % variants.length;
       setCurrentVariantIndex(nextIndex);
       setSelectedVariant(variants[nextIndex]);
-      // Update selected attributes to match the new variant
       setSelectedAttributes(variants[nextIndex].attributes);
     }
   };
@@ -165,9 +173,28 @@ export default function ProductDetails() {
       const prevIndex = (currentVariantIndex - 1 + variants.length) % variants.length;
       setCurrentVariantIndex(prevIndex);
       setSelectedVariant(variants[prevIndex]);
-      // Update selected attributes to match the new variant
       setSelectedAttributes(variants[prevIndex].attributes);
     }
+  };
+
+  const handleAddToCartClick = () => {
+    setShowSnackbar(true);
+    handleAddToCart(dispatch, addToCartThunk, {
+      productId: id,
+      variantId: selectedVariant?._id
+    }, navigate);
+  };
+
+  const handleAddToWishlistClick = () => {
+    handleAddToWishlist(dispatch, addUserWishlistThunk, id, navigate);
+  };
+
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+  };
+
+  const handleGoToCart = () => {
+    navigate('/cart');
   };
 
   if (loading) {
@@ -218,17 +245,6 @@ export default function ProductDetails() {
     setReviewForm({ ...reviewForm, [e.target.name]: e.target.value });
   };
 
-  const handleAddToCartClick = () => {
-    handleAddToCart(dispatch, addToCartThunk, {
-      productId: id,
-      variantId: selectedVariant?._id // This will be undefined for products without variants
-    }, navigate);
-  };
-
-  const handleAddToWishlistClick = () => {
-    handleAddToWishlist(dispatch, addUserWishlistThunk, id, navigate);
-  };
-
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     if (!token) {
@@ -258,7 +274,6 @@ export default function ProductDetails() {
 
       if (result.status === 'success') {
         setReviewForm({ rating: 5, comment: "" });
-        // Refresh product data
         dispatch(getProductsThunk());
         if (id) {
           dispatch(getVariantsThunk({ prdId: id }));
@@ -924,6 +939,45 @@ export default function ProductDetails() {
           </div>
         )}
       </div>
+
+      {/* إضافة المربع العائم */}
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ 
+            width: '100%',
+            backgroundColor: '#4CAF50',
+            color: 'white',
+            '& .MuiAlert-icon': {
+              color: 'white'
+            }
+          }}
+          action={
+            <Button 
+              color="inherit" 
+              size="small" 
+              onClick={handleGoToCart}
+              sx={{
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.3)'
+                }
+              }}
+            >
+              متابعة الطلب
+            </Button>
+          }
+        >
+          تم إضافة المنتج إلى السلة بنجاح!
+        </Alert>
+      </Snackbar>
+
       <Footer />
       <style>{`
         .similar-carousel::-webkit-scrollbar {

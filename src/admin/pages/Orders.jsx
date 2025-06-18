@@ -637,8 +637,16 @@ const Orders = () => {
                           </div>
                         </TableCell>
                         <TableCell>{order.city || 'نجع حمادي'}</TableCell>
-                        <TableCell>{order.shippingCost || 0} ج.م</TableCell>
-                        <TableCell>{order.deliveryDays || 2} يوم</TableCell>
+                        <TableCell>
+                          {order.cartItems?.reduce((total, item) => 
+                            total + (item?.prdID?.shippingCost || 0), 0)
+                          } ج.م
+                        </TableCell>
+                        <TableCell>
+                          {Math.max(...(order.cartItems?.map(item => 
+                            item?.prdID?.deliveryDays || 2) || [2]))
+                          } يوم
+                        </TableCell>
                         <TableCell>{order.total} ج.م</TableCell>
                         <TableCell>
                           <Chip
@@ -729,13 +737,15 @@ const Orders = () => {
                 <ListItem>
                   <ListItemText
                     primary="مصاريف الشحن"
-                    secondary={`${selectedOrder?.shippingCost || 0} ج.م`}
+                    secondary={`${selectedOrder?.cartItems?.reduce((total, item) => 
+                      total + (item?.prdID?.shippingCost || 0), 0)} ج.م`}
                   />
                 </ListItem>
                 <ListItem>
                   <ListItemText
                     primary="مدة التوصيل"
-                    secondary={`${selectedOrder?.deliveryDays || 2} يوم`}
+                    secondary={`${Math.max(...(selectedOrder?.cartItems?.map(item => 
+                      item?.prdID?.deliveryDays || 2) || [2]))} يوم`}
                   />
                 </ListItem>
                 <ListItem>
@@ -798,6 +808,101 @@ const Orders = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Actions Menu */}
+      <Menu
+        anchorEl={menuAnchorEl}
+        open={Boolean(menuAnchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: { borderRadius: 2, minWidth: 200 }
+        }}
+      >
+        <MenuItem onClick={() => {
+          const order = orders.find(o => o._id === selectedOrderId);
+          handleViewOrder(order);
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <ViewIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>عرض التفاصيل</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => {
+          const order = orders.find(o => o._id === selectedOrderId);
+          handleEditOrder(order);
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <EditIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>تعديل الطلب</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'processing')}>
+          <ListItemIcon>
+            <Schedule fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>قيد المعالجة</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'shipped')}>
+          <ListItemIcon>
+            <LocalShipping fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>تم الشحن</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'delivered')}>
+          <ListItemIcon>
+            <CheckCircleIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>تم التوصيل</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => handleUpdateOrderStatus(selectedOrderId, 'cancelled')}>
+          <ListItemIcon>
+            <CancelIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>إلغاء الطلب</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem onClick={() => {
+          const order = orders.find(o => o._id === selectedOrderId);
+          handlePrintInvoice(order);
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <PrintIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>طباعة الفاتورة</ListItemText>
+        </MenuItem>
+
+        <MenuItem onClick={() => {
+          const order = orders.find(o => o._id === selectedOrderId);
+          handleExportPDF(order);
+          handleMenuClose();
+        }}>
+          <ListItemIcon>
+            <PdfIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>تصدير PDF</ListItemText>
+        </MenuItem>
+
+        <Divider />
+
+        <MenuItem onClick={() => handleDeleteOrder(selectedOrderId)} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" color="error" />
+          </ListItemIcon>
+          <ListItemText>حذف الطلب</ListItemText>
+        </MenuItem>
+      </Menu>
 
       {/* Invoice Print Component (Hidden) */}
       {orderToPrint && (

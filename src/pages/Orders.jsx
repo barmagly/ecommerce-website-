@@ -323,8 +323,15 @@ export default function Orders() {
                             )}
                           </td>
                           <td>{order.city || 'نجع حمادي'}</td>
-                          <td>{order.shippingCost || 0} ج.م</td>
-                          <td>{order.deliveryDays || 2} يوم</td>
+                          <td>
+                            {order.cartItems?.reduce((total, item) => 
+                              total + (item?.prdID?.shippingCost || 0), 0)
+                            } ج.م
+                          </td>
+                          <td>
+                            {Math.max(...(order.cartItems?.map(item => 
+                              item?.prdID?.deliveryDays || 2) || [2]))} يوم
+                          </td>
                           <td>{order.cartItems?.length || 0}</td>
                           <td>{order.total} ج.م</td>
                           <td>{order.paymentMethod}</td>
@@ -387,8 +394,14 @@ export default function Orders() {
                         </span></li>
                         <li><strong>طريقة الدفع:</strong> {selectedOrder.paymentMethod}</li>
                         <li><strong>حالة الدفع:</strong> {selectedOrder.paymentStatus}</li>
-                        <li><strong>مصاريف الشحن:</strong> {selectedOrder.shippingCost || 0} ج.م</li>
-                        <li><strong>مدة التوصيل:</strong> {selectedOrder.deliveryDays || 2} يوم</li>
+                        <li><strong>مصاريف الشحن:</strong> {
+                          selectedOrder.cartItems?.reduce((total, item) => 
+                            total + (item?.prdID?.shippingCost || 0), 0)
+                        } ج.م</li>
+                        <li><strong>مدة التوصيل:</strong> {
+                          Math.max(...(selectedOrder.cartItems?.map(item => 
+                            item?.prdID?.deliveryDays || 2) || [2]))
+                        } يوم</li>
                         <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
                       </ul>
                       <h6 className="fw-bold mb-3">معلومات العميل</h6>

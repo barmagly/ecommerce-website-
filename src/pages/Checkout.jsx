@@ -368,6 +368,18 @@ export default function Checkout() {
       const shippingAddress = `${form.address}${form.apartment ? `, ${form.apartment}` : ''}, ${form.city}, مصر`;
       formData.append('shippingAddress', shippingAddress);
       formData.append('shippingAddressType', form.shippingAddressType);
+
+      // حساب إجمالي مصاريف الشحن ومدة التوصيل من المنتجات
+      const totalShippingCost = cartItems.reduce((total, item) => 
+        total + (item?.prdID?.shippingCost || 0), 0
+      );
+      const maxDeliveryDays = Math.max(...cartItems.map(item => 
+        item?.prdID?.deliveryDays || 2
+      ));
+
+      formData.append('shippingCost', totalShippingCost);
+      formData.append('deliveryDays', maxDeliveryDays);
+
       let paymentMethod;
       switch (payment) {
         case 'visa':
