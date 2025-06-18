@@ -41,6 +41,37 @@ export default function Cart() {
   };
 
   const increaseQuantity = (variantId, prdID) => {
+    // البحث عن المنتج في السلة
+    const cartItem = products.cartItems.find(item => 
+      item.variantId?._id === variantId && item.prdID?._id === prdID
+    );
+    
+    if (!cartItem) return;
+    
+    const product = cartItem.prdID;
+    const currentQuantity = cartItem.quantity;
+    const maxQuantityPerOrder = product.maxQuantityPerOrder;
+    
+    // التحقق من الحد الأقصى للشراء
+    if (maxQuantityPerOrder && currentQuantity >= parseInt(maxQuantityPerOrder)) {
+      toast.warning(`لا يمكن شراء أكثر من ${maxQuantityPerOrder} قطع من هذا المنتج في الطلب الواحد. الحد الأقصى المحدد من قبل الإدارة.`, {
+        position: "top-center",
+        rtl: true,
+        autoClose: 4000
+      });
+      return;
+    }
+    
+    // التحقق من المخزون المتاح
+    if (currentQuantity >= product.stock) {
+      toast.warning('لا يوجد مخزون كافي لهذا المنتج', {
+        position: "top-center",
+        rtl: true,
+        autoClose: 3000
+      });
+      return;
+    }
+    
     dispatch(increaseQ({ variantId, prdID }));
   };
 
@@ -184,6 +215,19 @@ export default function Cart() {
                       <div className="text-muted small mb-2">
                         الشحن: {item.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item.prdID?.deliveryDays || 2} يوم
                       </div>
+                      {item.prdID?.maxQuantityPerOrder && (
+                        <div className="text-muted small mb-2">
+                          الحد الأقصى للشراء: <strong>{item.prdID.maxQuantityPerOrder}</strong> قطعة في الطلب الواحد
+                        </div>
+                      )}
+                      {item.prdID?.maxQuantityPerOrder && item.prdID.maxQuantityPerOrder < item.prdID.stock && (
+                        <div className="alert alert-info py-2 mb-2">
+                          <small>
+                            <i className="fas fa-info-circle ms-1"></i>
+                            <strong>ملاحظة:</strong> تم تحديد حد أقصى للشراء من قبل الإدارة
+                          </small>
+                        </div>
+                      )}
                       {item.prdID?.shippingAddress?.type === 'nag_hamadi' && (
                         <div className="alert alert-warning py-2 mb-2">
                           <small>
@@ -203,7 +247,10 @@ export default function Cart() {
                         <button
                           className="btn btn-outline-secondary btn-sm"
                           onClick={() => increaseQuantity(item.variantId?._id, item.prdID?._id)}
-                          disabled={item.quantity >= item.prdID?.stock}
+                          disabled={
+                            item.quantity >= item.prdID?.stock || 
+                            (item.prdID?.maxQuantityPerOrder && item.quantity >= parseInt(item.prdID.maxQuantityPerOrder))
+                          }
                         >
                           +
                         </button>

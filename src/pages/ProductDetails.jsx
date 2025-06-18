@@ -15,6 +15,7 @@ import Footer from "../components/Footer";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
+import { toast } from 'react-toastify';
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -65,6 +66,7 @@ export default function ProductDetails() {
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   const product = products?.find(p => p._id === id);
 
@@ -178,11 +180,30 @@ export default function ProductDetails() {
   };
 
   const handleAddToCartClick = () => {
-    setShowSnackbar(true);
-    handleAddToCart(dispatch, addToCartThunk, {
+    dispatch(addToCartThunk({
       productId: id,
-      variantId: selectedVariant?._id
-    }, navigate);
+      variantId: selectedVariant?._id,
+      quantity: quantity
+    }))
+      .unwrap()
+      .then(() => {
+        setShowSnackbar(true);
+      })
+      .catch(error => {
+        if (error.message && error.message.includes('لا يمكن شراء أكثر من')) {
+          toast.error(error.message, {
+            position: "top-center",
+            rtl: true,
+            autoClose: 4000
+          });
+        } else {
+          toast.error(error.message || "حدث خطأ أثناء إضافة المنتج إلى السلة", {
+            position: "top-center",
+            rtl: true,
+            autoClose: 3000
+          });
+        }
+      });
   };
 
   const handleAddToWishlistClick = () => {
@@ -443,7 +464,14 @@ export default function ProductDetails() {
             )}
           </div>
           <div className="col-12 col-md-6">
-            <h2 className="fw-bold mb-2" style={{ fontSize: '2.1rem' }}>{product.name}</h2>
+            <h1 className="fw-bold mb-3" style={{ fontSize: '2.2em', color: '#333', lineHeight: 1.2 }}>
+              {product.name}
+              {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                <span className="badge bg-info ms-2" style={{ fontSize: '0.4em', verticalAlign: 'top' }}>
+                  الحد الأقصى: {product.maxQuantityPerOrder}
+                </span>
+              )}
+            </h1>
             <div className="mb-2 text-muted" style={{ fontSize: '1.1rem' }}>{product.brand}</div>
             <div className="d-flex align-items-center gap-2 mb-2">
               <span className="badge bg-warning text-dark" style={{ fontSize: '1.1em' }}>
@@ -454,16 +482,31 @@ export default function ProductDetails() {
                 {product?.stock > 0 ? 'متوفر' : 'غير متوفر'}
               </span>
             </div>
-            <div className="mb-3">
-              <span className="text-danger fw-bold fs-3">
-                {selectedVariant?.price || product?.price} ج.م
+            <div className="d-flex align-items-center gap-2 mb-2">
+              <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>
+                {selectedVariant ? selectedVariant.price : product.price} ج.م
               </span>
-              {selectedVariant && (
-                <span className="ms-2 text-muted" style={{ fontSize: '0.9em' }}>
-                  SKU: {selectedVariant.sku}
+              {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                <span className="badge bg-warning text-dark" style={{ fontSize: '0.8rem' }}>
+                  <i className="fas fa-exclamation-triangle ms-1"></i>
+                  الحد الأقصى: {product.maxQuantityPerOrder} قطعة
                 </span>
               )}
             </div>
+            {selectedVariant && (
+              <div className="mb-3">
+                <span className="text-muted" style={{ fontSize: '0.9em' }}>
+                  SKU: {selectedVariant.sku}
+                </span>
+              </div>
+            )}
+            {!selectedVariant && product.sku && (
+              <div className="mb-3">
+                <span className="text-muted" style={{ fontSize: '0.9em' }}>
+                  SKU: {product.sku}
+                </span>
+              </div>
+            )}
 
             {/* عرض نطاق التوصيل */}
             {product.shippingAddress && (
@@ -574,6 +617,19 @@ export default function ProductDetails() {
                         الكمية المتوفرة: {selectedVariant.quantity}
                       </span>
                     )}
+                    {product.maxQuantityPerOrder && (
+                      <span className="text-muted d-block">
+                        الحد الأقصى للشراء في الطلب الواحد: <strong>{product.maxQuantityPerOrder}</strong> قطعة
+                      </span>
+                    )}
+                    {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                      <div className="alert alert-info py-2 mt-2">
+                        <small>
+                          <i className="fas fa-info-circle ms-1"></i>
+                          <strong>ملاحظة:</strong> تم تحديد حد أقصى للشراء من قبل الإدارة
+                        </small>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -585,43 +641,132 @@ export default function ProductDetails() {
                         الكمية المتوفرة: {product.stock}
                       </span>
                     )}
+                    {product.maxQuantityPerOrder && (
+                      <span className="text-muted d-block">
+                        الحد الأقصى للشراء في الطلب الواحد: <strong>{product.maxQuantityPerOrder}</strong> قطعة
+                      </span>
+                    )}
+                    {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                      <div className="alert alert-info py-2 mt-2">
+                        <small>
+                          <i className="fas fa-info-circle ms-1"></i>
+                          <strong>ملاحظة:</strong> تم تحديد حد أقصى للشراء من قبل الإدارة
+                        </small>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
             </div>
 
-            {product.features?.length > 0 && (
-              <div className="mb-3">
-                <span className="fw-bold">المميزات:</span>
-                <ul className="mt-2">
-                  {product.features.map((f, i) => (
-                    <li key={i} className="text-muted">
-                      <b>{f.name}:</b> {f.value}
+            {product.features && product.features.length > 0 && (
+              <div className="bg-light rounded p-4 text-end shadow-sm" style={{ fontSize: '1.13em', border: '1px solid #eee', direction: 'rtl', marginBottom: 24 }}>
+                <h5 className="fw-bold mb-3 text-success text-end" style={{ fontSize: '1.25em' }}>مميزات المنتج</h5>
+                {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                  <div className="alert alert-warning mb-3">
+                    <i className="fas fa-exclamation-triangle ms-1"></i>
+                    <strong>تنبيه:</strong> الحد الأقصى للشراء هو {product.maxQuantityPerOrder} قطعة في الطلب الواحد
+                  </div>
+                )}
+                <ul className="list-unstyled">
+                  {product.features.map((feature, index) => (
+                    <li key={index} className="mb-2">
+                      <i className="fas fa-check text-success ms-2"></i>
+                      <strong>{feature.name}:</strong> {feature.value}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
 
-            {product.specifications?.length > 0 && (
-              <div className="mb-3">
-                <span className="fw-bold">المواصفات:</span>
-                {product.specifications.map((spec, idx) => (
-                  <div key={idx} className="mt-3">
-                    <h6 className="fw-bold">{spec.group}</h6>
-                    <ul className="mt-2">
-                      {spec.items.map((item, i) => (
-                        <li key={i} className="text-muted">
-                          <b>{item.name}:</b> {item.value}
-                        </li>
+            {product.specifications && product.specifications.length > 0 && (
+              <div className="bg-light rounded p-4 text-end shadow-sm" style={{ fontSize: '1.13em', border: '1px solid #eee', direction: 'rtl', marginBottom: 24 }}>
+                <h5 className="fw-bold mb-3 text-primary text-end" style={{ fontSize: '1.25em' }}>مواصفات المنتج</h5>
+                {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                  <div className="alert alert-info mb-3">
+                    <i className="fas fa-info-circle ms-1"></i>
+                    <strong>معلومات الشراء:</strong> الحد الأقصى المسموح هو {product.maxQuantityPerOrder} قطعة في الطلب الواحد
+                  </div>
+                )}
+                {product.specifications.map((spec, specIndex) => (
+                  <div key={specIndex} className="mb-4">
+                    <h6 className="fw-bold text-primary mb-2">{spec.group}</h6>
+                    <div className="row">
+                      {spec.items.map((item, itemIndex) => (
+                        <div key={itemIndex} className="col-md-6 mb-2">
+                          <div className="d-flex justify-content-between">
+                            <span className="text-muted">{item.name}:</span>
+                            <span className="fw-bold">{item.value}</span>
+                          </div>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
+              <div className="d-flex align-items-center gap-2">
+                <div className="d-flex flex-column align-items-center">
+                  <label className="form-label mb-1">الكمية</label>
+                  <div className="d-flex align-items-center gap-1">
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >
+                      -
+                    </button>
+                    <input
+                      type="number"
+                      min={1}
+                      max={product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock}
+                      value={quantity}
+                      onChange={e => {
+                        let val = parseInt(e.target.value) || 1;
+                        if (val < 1) val = 1;
+                        if (val > (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock))
+                          val = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
+                        setQuantity(val);
+                      }}
+                      style={{ width: 60, textAlign: 'center' }}
+                      className="form-control d-inline-block mx-1"
+                    />
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      onClick={() => {
+                        const maxQ = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
+                        if (quantity >= maxQ) {
+                          if (product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock) {
+                            toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد. الحد الأقصى المحدد من قبل الإدارة.`, {
+                              position: "top-center",
+                              rtl: true,
+                              autoClose: 4000
+                            });
+                          } else {
+                            toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد`, {
+                              position: "top-center",
+                              rtl: true,
+                              autoClose: 3000
+                            });
+                          }
+                          return;
+                        }
+                        setQuantity(q => Math.min(maxQ, q + 1));
+                      }}
+                      disabled={quantity >= (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock)}
+                    >
+                      +
+                    </button>
+                  </div>
+                  {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                    <small className="text-muted mt-1">
+                      الحد الأقصى: {product.maxQuantityPerOrder} قطعة
+                    </small>
+                  )}
+                </div>
+              </div>
               <button className="btn btn-danger px-4" onClick={handleAddToCartClick}>أضف للسلة</button>
               <button
                 className="btn btn-outline-danger px-4"
@@ -648,6 +793,12 @@ export default function ProductDetails() {
           <div className="col-12 col-md-10 col-lg-8">
             <div className="bg-light rounded p-4 text-end shadow-sm" style={{ fontSize: '1.13em', border: '1px solid #eee', direction: 'rtl', marginBottom: 24 }}>
               <h5 className="fw-bold mb-3 text-danger text-end" style={{ fontSize: '1.25em' }}>عن هذه السلعة</h5>
+              {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                <div className="alert alert-info mb-3">
+                  <i className="fas fa-info-circle ms-1"></i>
+                  <strong>ملاحظة مهمة:</strong> تم تحديد حد أقصى للشراء من قبل الإدارة ({product.maxQuantityPerOrder} قطعة في الطلب الواحد)
+                </div>
+              )}
               <div className="text-muted" style={{ fontSize: '1.08em', lineHeight: 1.8 }}>
                 {product.description}
               </div>
@@ -663,6 +814,14 @@ export default function ProductDetails() {
                 <div className="col-12 col-md-4 border-end-md" style={{ borderLeft: '1.5px solid #eee' }}>
                   <div className="text-center p-4">
                     <div className="fw-bold mb-3" style={{ fontSize: '1.4em', color: '#333' }}>تقييمات المستخدمين</div>
+                    {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                      <div className="mb-3">
+                        <small className="badge bg-info text-white">
+                          <i className="fas fa-info-circle ms-1"></i>
+                          الحد الأقصى للشراء: {product.maxQuantityPerOrder} قطعة
+                        </small>
+                      </div>
+                    )}
                     <div className="d-flex align-items-center justify-content-center gap-3 mb-3">
                       <div className="text-center">
                         <span className="fw-bold text-warning d-block" style={{ fontSize: '3.5em', lineHeight: 1 }}>
@@ -684,6 +843,12 @@ export default function ProductDetails() {
                     <h4 className="fw-bold mb-4 text-center" style={{ color: '#333' }}>
                       <i className="fas fa-star text-warning ms-2"></i> التقييمات
                     </h4>
+                    {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                      <div className="alert alert-info mb-4 text-center">
+                        <i className="fas fa-info-circle ms-1"></i>
+                        <strong>تذكير:</strong> الحد الأقصى للشراء هو {product.maxQuantityPerOrder} قطعة في الطلب الواحد
+                      </div>
+                    )}
                     <div className="mb-4">
                       {reviewsLoading ? (
                         <div className="text-center py-4">
@@ -783,6 +948,12 @@ export default function ProductDetails() {
                       )}                    </div>
                     <form onSubmit={handleReviewSubmit} className="border rounded-4 p-4 bg-light mt-4">
                       <h6 className="fw-bold mb-3 text-center" style={{ color: '#333' }}>أضف تقييمك</h6>
+                      {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                        <div className="alert alert-warning mb-4 text-center">
+                          <i className="fas fa-exclamation-triangle ms-1"></i>
+                          <strong>تنبيه:</strong> الحد الأقصى للشراء هو {product.maxQuantityPerOrder} قطعة في الطلب الواحد
+                        </div>
+                      )}
                       {reviewError && (
                         <div className="alert alert-danger text-center mb-3">
                           {reviewError}

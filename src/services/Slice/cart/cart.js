@@ -48,7 +48,16 @@ export const addToCartThunk = createAsyncThunk(
                 product: data.product
             };
         } catch (error) {
-            return thunkAPI.rejectWithValue(error.response.data || "error server");
+            // معالجة خاصة لرسائل الخطأ من الباك إند
+            if (error.response?.data?.message) {
+                return thunkAPI.rejectWithValue({
+                    message: error.response.data.message,
+                    maxQuantity: error.response.data.maxQuantity,
+                    currentQuantity: error.response.data.currentQuantity,
+                    requestedQuantity: error.response.data.requestedQuantity
+                });
+            }
+            return thunkAPI.rejectWithValue(error.response?.data || "error server");
         }
     }
 );
@@ -136,6 +145,17 @@ const cartSlice = createSlice({
                     // Revert the quantity change if the API call fails
                     item.quantity += 1;
                     state.products.total = calculateTotal(state.products.cartItems);
+                    
+                    // عرض رسالة خطأ للمستخدم إذا كان هناك رسالة من الباك إند
+                    if (error.response?.data?.message) {
+                        if (typeof window !== 'undefined' && window.toast) {
+                            window.toast.error(error.response.data.message, {
+                                position: "top-center",
+                                rtl: true,
+                                autoClose: 4000
+                            });
+                        }
+                    }
                 });
                 state.products.total = calculateTotal(state.products.cartItems);
             }
@@ -164,6 +184,17 @@ const cartSlice = createSlice({
                     // Revert the quantity change if the API call fails
                     item.quantity -= 1;
                     state.products.total = calculateTotal(state.products.cartItems);
+                    
+                    // عرض رسالة خطأ للمستخدم إذا كان هناك رسالة من الباك إند
+                    if (error.response?.data?.message) {
+                        if (typeof window !== 'undefined' && window.toast) {
+                            window.toast.error(error.response.data.message, {
+                                position: "top-center",
+                                rtl: true,
+                                autoClose: 4000
+                            });
+                        }
+                    }
                 });
                 state.products.total = calculateTotal(state.products.cartItems);
             }

@@ -37,11 +37,20 @@ export default function ShopProducts({ products = [] }) {
         autoClose: 2000
       });
     } catch (error) {
-      toast.error(error.message || "حدث خطأ أثناء إضافة المنتج إلى السلة", {
-        position: "top-center",
-        rtl: true,
-        autoClose: 3000
-      });
+      // معالجة خاصة لرسائل الخطأ من الباك إند
+      if (error.message && error.message.includes('لا يمكن شراء أكثر من')) {
+        toast.error(error.message, {
+          position: "top-center",
+          rtl: true,
+          autoClose: 4000
+        });
+      } else {
+        toast.error(error.message || "حدث خطأ أثناء إضافة المنتج إلى السلة", {
+          position: "top-center",
+          rtl: true,
+          autoClose: 3000
+        });
+      }
     }
   };
 
@@ -178,6 +187,13 @@ export default function ShopProducts({ products = [] }) {
                 <div className="mb-2">
                   <small className={`badge ${item.shippingAddress.type === 'nag_hamadi' ? 'bg-warning' : 'bg-success'}`}>
                     {item.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي فقط' : '🚚 جميع المحافظات'}
+                  </small>
+                </div>
+              )}
+              {item.maxQuantityPerOrder && (
+                <div className="mb-2">
+                  <small className="badge bg-info">
+                    الحد الأقصى: {item.maxQuantityPerOrder} قطعة
                   </small>
                 </div>
               )}

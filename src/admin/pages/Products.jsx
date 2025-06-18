@@ -102,8 +102,9 @@ const Products = () => {
     attributes: [], // Initialize attributes as an empty array
     shippingAddressType: 'nag_hamadi',
     shippingAddressDetails: '',
-    shippingCost: 0,
-    deliveryDays: 2
+    shippingCost: 20,
+    deliveryDays: 4,
+    maxQuantityPerOrder: ''
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -270,7 +271,8 @@ const Products = () => {
         shippingAddressType: product.shippingAddress?.type || 'nag_hamadi',
         shippingAddressDetails: product.shippingAddress?.details || '',
         shippingCost: product.shippingCost || 0,
-        deliveryDays: product.deliveryDays || 2
+        deliveryDays: product.deliveryDays || 2,
+        maxQuantityPerOrder: product.maxQuantityPerOrder || ''
       };
       
       console.log('Original product data:', product);
@@ -390,6 +392,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
+          formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder || '');
           
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
@@ -403,6 +406,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', '0');
           formDataToSend.append('stock', '0');
           formDataToSend.append('sku', 'VAR-' + Date.now());
+          formDataToSend.append('maxQuantityPerOrder', '');
         }
 
         // Handle imageCover
@@ -526,6 +530,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
+          formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder || '');
           
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
@@ -539,6 +544,7 @@ const Products = () => {
           formDataToSend.append('supplierPrice', '0');
           formDataToSend.append('stock', '0');
           formDataToSend.append('sku', 'VAR-' + Date.now());
+          formDataToSend.append('maxQuantityPerOrder', '');
         }
 
         // إضافة الصور
@@ -2279,6 +2285,7 @@ const Products = () => {
                     <TableCell sx={{ width: '10%' }}>الفئة</TableCell>
                     <TableCell sx={{ width: '8%' }}>السعر النهائي</TableCell>
                     <TableCell sx={{ width: '8%' }}>المخزون</TableCell>
+                    <TableCell sx={{ width: '8%' }}>الحد الأقصى للشراء</TableCell>
                     <TableCell sx={{ width: '8%' }}>رمز SKU</TableCell>
                     <TableCell sx={{ width: '8%' }}>التقييم والمراجعات</TableCell>
                     <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
@@ -2372,6 +2379,15 @@ const Products = () => {
                               size="small"
                               icon={(product.stock || 0) <= 10 && (product.stock || 0) > 0 ? <Alert /> : undefined}
                             />
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.8rem',
+                              color: 'text.secondary'
+                            }}>
+                              {product.maxQuantityPerOrder ? `${product.maxQuantityPerOrder} قطعة` : 'غير محدد'}
+                            </Typography>
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" sx={{
@@ -2634,6 +2650,18 @@ const Products = () => {
                             onChange={handleFormChange('stock')}
                             error={!!formErrors.stock}
                             helperText={formErrors.stock}
+                            sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
+                          />
+                        </Grid>
+                        <Grid item xs={12} md={3}>
+                          <TextField
+                            fullWidth
+                            type="number"
+                            label="العدد الأقصى للشراء في الطلب الواحد"
+                            value={formData.maxQuantityPerOrder || ''}
+                            onChange={handleFormChange('maxQuantityPerOrder')}
+                            inputProps={{ min: 1 }}
+                            helperText="مثال: 5 (لن يستطيع العميل شراء أكثر من 5 قطع في الطلب الواحد)"
                             sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#764ba2' } } }}
                           />
                         </Grid>
