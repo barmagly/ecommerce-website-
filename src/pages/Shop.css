@@ -18,4 +18,45 @@
     border-bottom: 1.5px solid #eee;
     margin-bottom: 24px;
   }
+}
+
+@media (max-width: 767px) {
+  .shop-page {
+    padding: 0 4px;
+  }
+  .shop-page .breadcrumb {
+    font-size: 1em;
+    margin-bottom: 12px;
+  }
+  .shop-page .row > .col-lg-3 {
+    border: none;
+    margin-bottom: 0;
+  }
+  .product-card-pro {
+    min-height: 340px !important;
+    padding: 10px !important;
+    margin-bottom: 16px;
+  }
+  .product-card-pro .product-img-main {
+    height: 110px !important;
+    padding: 0 !important;
+  }
+  .product-card-pro h6,
+  .product-card-pro .fw-bold {
+    font-size: 1em !important;
+  }
+  .product-card-pro .btn,
+  .product-card-pro .btn-outline-danger {
+    width: 100% !important;
+    font-size: 1em !important;
+    padding: 8px 0 !important;
+  }
+  .shop-filters {
+    margin-bottom: 16px;
+  }
+  .shop-filters .form-group,
+  .shop-filters .MuiFormControl-root {
+    width: 100% !important;
+    margin-bottom: 8px !important;
+  }
 } 
