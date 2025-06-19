@@ -181,6 +181,7 @@ export const ordersAPI = {
         return api.patch(`/api/orders/status/${id}`, data);
     },
     delete: (id) => api.delete(`/api/orders/${id}`),
+    cancel: (id) => api.patch(`/api/orders/${id}/cancel`),
 };
 
 // Coupons API

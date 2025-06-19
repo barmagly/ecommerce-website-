@@ -30,7 +30,12 @@ export const updateOrderStatus = createAsyncThunk(
   'orders/updateOrderStatus',
   async ({ id, status, paymentStatus }, { rejectWithValue, getState }) => {
     try {
-      const response = await ordersAPI.update(id, { status, paymentStatus });
+      let response;
+      if (status === 'cancelled') {
+        response = await ordersAPI.cancel(id); // Use cancel endpoint for stock restore
+      } else {
+        response = await ordersAPI.update(id, { status, paymentStatus });
+      }
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
