@@ -522,6 +522,11 @@ const Orders = () => {
     }
   };
 
+  // Add a helper at the top
+  function formatPrice(val) {
+    return Number(val || 0).toFixed(2);
+  }
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -775,7 +780,7 @@ const Orders = () => {
                           </TableCell>
                           <TableCell>{order.city || 'نجع حمادي'}</TableCell>
                           <TableCell>
-                            {Number(order.shippingCost) > 0 ? order.shippingCost :
+                            {Number(order.shippingCost) > 0 ? formatPrice(order.shippingCost) :
                               order.cartItems?.reduce((total, item) =>
                                 total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م
                           </TableCell>
@@ -784,7 +789,7 @@ const Orders = () => {
                               Math.max(...(order.cartItems?.map(item =>
                                 Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم
                           </TableCell>
-                          <TableCell>{order.total} ج.م</TableCell>
+                          <TableCell>{formatPrice(order.total)} ج.م</TableCell>
                           <TableCell>
                             <Chip
                               label={getStatusLabel(order.status)}
@@ -876,7 +881,7 @@ const Orders = () => {
                   <ListItem>
                     <ListItemText
                       primary="مصاريف الشحن"
-                      secondary={`${Number(selectedOrder?.shippingCost) > 0 ? selectedOrder?.shippingCost :
+                      secondary={`${Number(selectedOrder?.shippingCost) > 0 ? formatPrice(selectedOrder?.shippingCost) :
                         selectedOrder?.cartItems?.reduce((total, item) =>
                           total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م`}
                     />
@@ -892,7 +897,7 @@ const Orders = () => {
                   <ListItem>
                     <ListItemText
                       primary="الإجمالي"
-                      secondary={`${selectedOrder?.total} ج.م`}
+                      secondary={`${formatPrice(selectedOrder?.total)} ج.م`}
                     />
                   </ListItem>
                 </List>
@@ -975,9 +980,9 @@ const Orders = () => {
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell>{item.price} جنيه</TableCell>
+                          <TableCell>{formatPrice(item.price)} جنيه</TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.price * item.quantity} جنيه</TableCell>
+                          <TableCell>{formatPrice(item.price * item.quantity)} جنيه</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
