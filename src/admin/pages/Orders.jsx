@@ -847,87 +847,112 @@ const Orders = () => {
         <DialogTitle sx={{
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          fontWeight: 'bold'
+          fontWeight: 'bold',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2
         }}>
-          تفاصيل الطلب
+          <OrdersIcon sx={{ mr: 1 }} /> تفاصيل الطلب
         </DialogTitle>
+
+        {/* شريط تقدم حالة الطلب */}
+        {selectedOrder && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 2, py: 2, background: 'rgba(102,126,234,0.07)' }}>
+            {['pending','processing','shipped','delivered','cancelled'].map((step, idx) => (
+              <React.Fragment key={step}>
+                <Chip
+                  icon={
+                    step === 'pending' ? <Schedule /> :
+                    step === 'processing' ? <TrendingUp /> :
+                    step === 'shipped' ? <LocalShipping /> :
+                    step === 'delivered' ? <CheckCircleIcon /> :
+                    <CancelIcon />
+                  }
+                  label={getStatusLabel(step)}
+                  color={selectedOrder.status === step ? getStatusColor(step) : 'default'}
+                  variant={selectedOrder.status === step ? 'filled' : 'outlined'}
+                  sx={{ fontWeight: selectedOrder.status === step ? 700 : 400, minWidth: 100 }}
+                  onClick={undefined}
+                />
+                {idx < 4 && <Box sx={{ width: 30, height: 2, bgcolor: selectedOrder.status === step ? getStatusColor(step)+'.main' : 'grey.300', mx: 0.5, borderRadius: 1 }} />}
+              </React.Fragment>
+            ))}
+          </Box>
+        )}
+        {/* نهاية شريط التقدم */}
 
         <DialogContent dividers>
           {selectedOrder && (
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom align='center'>
-                  معلومات الطلب
+                  <OrdersIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> معلومات الطلب
                 </Typography>
                 <List dense >
                   <ListItem>
                     <ListItemText
-                      primary="رقم الطلب"
+                      primary={<><b>رقم الطلب</b></>}
                       secondary={`#${selectedOrder?._id?.slice(-6)}`}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="تاريخ الطلب"
+                      primary={<><Schedule sx={{ fontSize: 18, mr: 0.5 }} /> <b>تاريخ الطلب</b></>}
                       secondary={new Date(selectedOrder?.createdAt).toLocaleDateString('ar-EG')}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="المدينة"
+                      primary={<><LocalShipping sx={{ fontSize: 18, mr: 0.5 }} /> <b>المدينة</b></>}
                       secondary={selectedOrder?.city || 'نجع حمادي'}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="مصاريف الشحن"
-                      secondary={`${Number(selectedOrder?.shippingCost) > 0 ? formatPrice(selectedOrder?.shippingCost) :
-                        selectedOrder?.cartItems?.reduce((total, item) =>
-                          total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م`}
+                      primary={<><LocalShipping sx={{ fontSize: 18, mr: 0.5 }} /> <b>مصاريف الشحن</b></>}
+                      secondary={<b style={{ color: '#1976d2' }}>{formatPrice(selectedOrder?.shippingCost)} ج.م</b>}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="مدة التوصيل"
-                      secondary={`${Number(selectedOrder?.deliveryDays) > 0 ? selectedOrder?.deliveryDays :
-                        Math.max(...(selectedOrder?.cartItems?.map(item =>
-                          Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم`}
+                      primary={<><LocalShipping sx={{ fontSize: 18, mr: 0.5 }} /> <b>مدة التوصيل</b></>}
+                      secondary={<b>{selectedOrder?.deliveryDays || 2} يوم</b>}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="الإجمالي"
-                      secondary={`${formatPrice(selectedOrder?.total)} ج.م`}
+                      primary={<><AttachMoney sx={{ fontSize: 18, mr: 0.5 }} /> <b>الإجمالي</b></>}
+                      secondary={<b style={{ color: '#388e3c' }}>{formatPrice(selectedOrder?.total)} ج.م</b>}
                     />
                   </ListItem>
                 </List>
               </Grid>
               <Grid item xs={12} md={6}>
                 <Typography variant="subtitle1" gutterBottom align='center'>
-                  معلومات العميل
+                  <PersonIcon sx={{ verticalAlign: 'middle', mr: 1 }} /> معلومات العميل
                 </Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText
-                      primary="الاسم"
+                      primary={<b>الاسم</b>}
                       secondary={selectedOrder?.name}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="البريد الإلكتروني"
+                      primary={<b>البريد الإلكتروني</b>}
                       secondary={selectedOrder?.email?.replace('khaledahmed.201188@gmail.com', 'khaledahmedhaggagy@gmail.com')}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="رقم الهاتف"
+                      primary={<b>رقم الهاتف</b>}
                       secondary={selectedOrder?.phone}
                     />
                   </ListItem>
                   <ListItem>
                     <ListItemText
-                      primary="العنوان"
+                      primary={<b>العنوان</b>}
                       secondary={selectedOrder?.address}
                     />
                   </ListItem>
@@ -950,7 +975,7 @@ const Orders = () => {
               )}
 
               {/* Order Items */}
-              <Grid grid={{ xs: 12 }}>
+              <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
                   المنتجات
                 </Typography>
@@ -991,8 +1016,8 @@ const Orders = () => {
               </Grid>
 
               {/* Order Status */}
-              <Grid grid={{ xs: 12 }}>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              <Grid item xs={12}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center', mt: 2 }}>
                   <FormControl fullWidth>
                     <InputLabel>حالة الطلب</InputLabel>
                     <Select
@@ -1021,6 +1046,26 @@ const Orders = () => {
                       <MenuItem value="refunded">مسترد</MenuItem>
                     </Select>
                   </FormControl>
+                  {/* شارة حالة الطلب */}
+                  <Chip
+                    label={getStatusLabel(selectedOrder.status)}
+                    color={getStatusColor(selectedOrder.status)}
+                    icon={
+                      selectedOrder.status === 'pending' ? <Schedule /> :
+                      selectedOrder.status === 'processing' ? <TrendingUp /> :
+                      selectedOrder.status === 'shipped' ? <LocalShipping /> :
+                      selectedOrder.status === 'delivered' ? <CheckCircleIcon /> :
+                      <CancelIcon />
+                    }
+                    sx={{ fontWeight: 700, fontSize: 16, px: 2, minWidth: 120 }}
+                  />
+                  {/* شارة حالة الدفع */}
+                  <Chip
+                    label={getPaymentStatusLabel(selectedOrder.paymentStatus)}
+                    color={getPaymentStatusColor(selectedOrder.paymentStatus)}
+                    icon={<PaymentIcon />}
+                    sx={{ fontWeight: 700, fontSize: 16, px: 2, minWidth: 120 }}
+                  />
                 </Box>
               </Grid>
 
@@ -1117,7 +1162,7 @@ const Orders = () => {
           handleMenuClose();
         }}>
           <ListItemIcon>
-            <LocalShipping fontSize="small" />
+            <LocalShipping />
           </ListItemIcon>
           <ListItemText>تحديث تفاصيل الشحن</ListItemText>
         </MenuItem>
