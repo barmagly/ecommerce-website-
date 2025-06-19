@@ -87,7 +87,7 @@ export const updateOrderStatusThunk = createAsyncThunk(
     async ({ orderId, status }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.patch(`${API_URL}/${orderId}`, { status }, {
+            const response = await axios.patch(`${API_URL}/status/${orderId}`, { status }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
@@ -139,6 +139,29 @@ export const sendOrderConfirmationEmailThunk = createAsyncThunk(
             return data;
         } catch (error) {
             const errorMessage = error.response?.data?.message || error.message || "Server error";
+            return rejectWithValue(errorMessage);
+        }
+    }
+);
+
+export const cancelOrderThunk = createAsyncThunk(
+    "order/cancelOrder",
+    async (orderId, { rejectWithValue }) => {
+        try {
+            const token = localStorage.getItem("token");
+            const response = await axios.patch(`${API_URL}/${orderId}/cancel`, {}, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+            if (response.data.order.status === 'cancelled') {
+                return response.data.order;
+            }
+            if (response.data.order.status !== 'pending') {
+                return rejectWithValue(response.data.order);
+            }
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || error.message || "حدث خطأ أثناء إلغاء الطلب";
             return rejectWithValue(errorMessage);
         }
     }
@@ -343,6 +366,23 @@ const orderSlice = createSlice({
             .addCase(sendOrderConfirmationEmailThunk.rejected, (state, action) => {
                 state.isUpdating = false;
                 state.error = typeof action.payload === 'string' ? action.payload : "فشل إرسال البريد الإلكتروني";
+            })
+
+            // Cancel Order
+            .addCase(cancelOrderThunk.pending, (state) => {
+                state.isUpdating = true;
+                state.error = null;
+            })
+            .addCase(cancelOrderThunk.fulfilled, (state, action) => {
+                state.isUpdating = false;
+                const index = state.orders.findIndex(order => order._id === action.payload._id);
+                if (index !== -1) {
+                    state.orders[index] = action.payload;
+                }
+            })
+            .addCase(cancelOrderThunk.rejected, (state, action) => {
+                state.isUpdating = false;
+                state.error = typeof action.payload === 'string' ? action.payload : "فشل إلغاء الطلب";
             })
     },
 });

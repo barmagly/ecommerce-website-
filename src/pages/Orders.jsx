@@ -4,7 +4,7 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from '../components/ProtectedRoute';
-import { getOrdersThunk, updateOrderStatusThunk, updateOrderStatusLocally, loadLocalUpdates, removeOrderLocally, cleanupOldLocalUpdates, cleanupOldDeletedOrders } from "../services/Slice/order/order";
+import { getOrdersThunk, updateOrderStatusThunk, updateOrderStatusLocally, loadLocalUpdates, removeOrderLocally, cleanupOldLocalUpdates, cleanupOldDeletedOrders, cancelOrderThunk } from "../services/Slice/order/order";
 import { toast } from 'react-toastify';
 
 const statusTabs = [
@@ -120,7 +120,7 @@ export default function Orders() {
     
     try {
       setIsUpdating(true);
-      await dispatch(updateOrderStatusThunk({ orderId, status: 'cancelled' })).unwrap();
+      await dispatch(cancelOrderThunk(orderId)).unwrap();
       toast.success('تم إلغاء الطلب بنجاح');
       setShowModal(false);
     } catch (error) {
