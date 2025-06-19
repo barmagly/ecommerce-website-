@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import Store from './services/Slice/Store';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -20,6 +21,7 @@ root.render(
             v7_relativeSplatPath: true
           }}
         >
+          <ScrollToTop />
           <App />
         </BrowserRouter>
       </GoogleOAuthProvider>

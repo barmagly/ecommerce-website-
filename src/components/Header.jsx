@@ -733,32 +733,33 @@ export default function Header() {
           }
         }
         .header-logo {
-          height: 150px;
-          width: 150px;
+          height: 48px !important;
+          width: auto !important;
+          max-width: 180px !important;
           transition: height 0.3s, width 0.3s;
         }
         @media (max-width: 991px) {
           .header-logo {
-            height: 140px;
-            width: 140px;
+            height: 44px !important;
+            max-width: 140px !important;
+          }
+        }
+        @media (max-width: 768px) {
+          .header-logo {
+            height: 40px !important;
+            max-width: 120px !important;
           }
         }
         @media (max-width: 576px) {
           .header-logo {
-            height: 160px !important;
-            width: 160px !important;
+            height: 36px !important;
+            max-width: 90px !important;
           }
         }
-        @media (max-width: 480px) {
+        @media (max-width: 400px) {
           .header-logo {
-            height: 130px !important;
-            width: 130px !important;
-          }
-        }
-        @media (max-width: 360px) {
-          .header-logo {
-            height: 110px !important;
-            width: 110px !important;
+            height: 28px !important;
+            max-width: 60px !important;
           }
         }
       `}</style>
