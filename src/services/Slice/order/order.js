@@ -87,7 +87,7 @@ export const updateOrderStatusThunk = createAsyncThunk(
     async ({ orderId, status }, { rejectWithValue }) => {
         try {
             const token = localStorage.getItem("token");
-            const response = await axios.put(`${API_URL}/${orderId}/status`, { status }, {
+            const response = await axios.patch(`${API_URL}/${orderId}`, { status }, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

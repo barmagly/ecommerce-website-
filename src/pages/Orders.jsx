@@ -399,6 +399,17 @@ export default function Orders() {
                         <li><strong>العنوان:</strong> {selectedOrder.address}</li>
                         <li><strong>المدينة:</strong> {selectedOrder.city || 'نجع حمادي'}</li>
                       </ul>
+                      {/* Instapay Receipt */}
+                      {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
+                        <div className="mb-3 text-center">
+                          <h6 className="fw-bold mb-2">إيصال Instapay</h6>
+                          <img
+                            src={selectedOrder.image}
+                            alt="إيصال Instapay"
+                            style={{ maxWidth: 400, maxHeight: 200, borderRadius: 8, border: '1px solid #ddd' }}
+                          />
+                        </div>
+                      )}
                     </div>
                     <div className="col-md-6">
                       <h6 className="fw-bold mb-3">المنتجات</h6>
