@@ -50,6 +50,7 @@ import {
   Search as SearchIcon,
   Email as EmailIcon,
   Home as HomeIcon,
+  LocalOffer as LocalOfferIcon,
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -93,7 +94,13 @@ const menuItems = [
     color: '#9c27b0',
     gradient: 'linear-gradient(135deg, #9c27b0 0%, #7b1fa2 100%)'
   },
-
+  {
+    text: 'العروض والخصومات',
+    icon: <LocalOfferIcon />,
+    path: '/admin/offers',
+    color: '#e91e63',
+    gradient: 'linear-gradient(135deg, #e91e63 0%, #ad1457 100%)'
+  },
   {
     text: 'الكوبونات',
     icon: <CouponIcon />,
@@ -115,13 +122,6 @@ const menuItems = [
     color: '#0288d1',
     gradient: 'linear-gradient(135deg, #0288d1 0%, #0277bd 100%)'
   },
-  // {
-  //   text: 'الخيارات',
-  //   icon: <VariantIcon />,
-  //   path: '/admin/variants',
-  //   color: '#7b1fa2',
-  //   gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
-  // },
 
 ];
 

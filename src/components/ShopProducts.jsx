@@ -168,6 +168,11 @@ export default function ShopProducts({ products = [] }) {
                 onError={e => { e.target.onerror = null; e.target.src = PLACEHOLDER_IMG; }}
               />
               <AvailabilityBadge stock={item.stock} />
+              {item.originalPrice && item.originalPrice > item.price && (
+                <span className="badge bg-danger position-absolute top-0 start-0 m-2" style={{zIndex:2, fontSize: '0.95em', borderRadius: '12px', padding: '6px 12px'}}>
+                  خصم {Math.round(100 - (item.price / item.originalPrice) * 100)}%
+                </span>
+              )}
             </div>
             <div className="flex-grow-1 d-flex flex-column align-items-center">
               <span className="text-muted small">{item.brand || 'بدون ماركة'}</span>
@@ -182,6 +187,11 @@ export default function ShopProducts({ products = [] }) {
                 <span className="text-danger fw-bold">
                   {item.price} ج.م
                 </span>
+                {item.originalPrice && item.originalPrice > item.price && (
+                  <span className="text-muted text-decoration-line-through ms-2" style={{fontSize:'1em'}}>
+                    {item.originalPrice} ج.م
+                  </span>
+                )}
               </div>
               {item.shippingAddress && (
                 <div className="mb-2">

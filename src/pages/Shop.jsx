@@ -6,10 +6,11 @@ import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
-import { Box, Grid, Typography } from "@mui/material";
+import { Box, Grid, Typography, Checkbox, FormControlLabel } from "@mui/material";
 import { Image } from "react-bootstrap";
 import "./Shop.css";
 import { frontendAPI } from '../services/api';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 
 const API_URL = process.env.REACT_APP_API_URL 
 
@@ -31,12 +32,13 @@ export default function Shop() {
     minRating: '',
     inStock: ''
   });
+  const [showDiscounted, setShowDiscounted] = useState(false);
 
   // Fetch initial products and categories
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(showDiscounted);
     fetchCategories();
-  }, []);
+  }, [showDiscounted]);
 
   // Handle URL parameters on page load
   useEffect(() => {
@@ -52,17 +54,15 @@ export default function Shop() {
     }
   }, [categories, searchParams]);
 
-  const fetchProducts = async () => {
+  const fetchProducts = async (discounted = false) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/api/products`);
-
-      // Ensure we're setting an array
+      const url = discounted ? `${API_URL}/api/products?discounted=true` : `${API_URL}/api/products`;
+      const response = await axios.get(url);
       const productsData = Array.isArray(response.data) ? response.data :
         response.data.products ? response.data.products :
           [];
-
       setProducts(productsData);
       setFilteredProducts(productsData);
     } catch (err) {
@@ -198,6 +198,11 @@ export default function Shop() {
     }
   };
 
+  const handleDiscountedChange = (e) => {
+    setShowDiscounted(e.target.checked);
+    fetchProducts(e.target.checked);
+  };
+
   if (loading) {
     return (
       <>
@@ -315,8 +320,18 @@ export default function Shop() {
             )}
           </Box>
 
-          {/* فلاتر أفقية */}
-          <div className="d-flex flex-wrap gap-2 align-items-center bg-white p-3 rounded shadow-sm mb-4">
+          {/* فلتر العروض */}
+          <div className="d-flex flex-wrap gap-3 align-items-center bg-white p-3 rounded shadow-sm mb-4">
+            <button
+              className={`btn btn-sm d-flex align-items-center fw-bold px-3 py-2 me-2 ${showDiscounted ? 'btn-danger text-white shadow' : 'btn-outline-danger'}`}
+              style={{ borderRadius: 24, fontSize: 15, transition: 'all 0.2s', boxShadow: showDiscounted ? '0 2px 8px #f4433622' : 'none' }}
+              onClick={() => setShowDiscounted(v => !v)}
+              type="button"
+            >
+              <LocalOfferIcon style={{ marginLeft: 6, fontSize: 20 }} />
+              {showDiscounted ? 'عرض جميع المنتجات' : 'عرض المنتجات المخفضة فقط'}
+            </button>
+            {/* فلاتر أفقية */}
             <span className="fw-bold">ترتيب حسب:</span>
             <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'newest' ? 'btn-dark text-light' : ''}`}

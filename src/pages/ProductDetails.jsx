@@ -16,6 +16,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import { toast } from 'react-toastify';
+import axios from 'axios';
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -67,8 +68,11 @@ export default function ProductDetails() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [productDetails, setProductDetails] = useState(null);
+  const [productDetailsLoading, setProductDetailsLoading] = useState(true);
+  const [productDetailsError, setProductDetailsError] = useState(null);
 
-  const product = products?.find(p => p._id === id);
+  const product = productDetails || products?.find(p => p._id === id);
 
   useEffect(() => {
     dispatch(getProductsThunk());
@@ -132,6 +136,17 @@ export default function ProductDetails() {
       setShowSnackbar(false);
     }
   }, [showSnackbar]);
+
+  useEffect(() => {
+    setProductDetailsLoading(true);
+    setProductDetailsError(null);
+    if (id) {
+      axios.get((process.env.REACT_APP_API_URL || 'http://localhost:5000') + `/api/products/${id}`)
+        .then(res => setProductDetails(res.data))
+        .catch(err => setProductDetailsError('فشل في جلب بيانات المنتج'))
+        .finally(() => setProductDetailsLoading(false));
+    }
+  }, [id]);
 
   // Get similar products (same category)
   const similarProducts = products?.filter(p =>
@@ -229,13 +244,13 @@ export default function ProductDetails() {
     navigate('/cart');
   };
 
-  if (loading) {
+  if (productDetailsLoading) {
     return (
       <>
         <Header />
         <div className="container py-5 text-center">
           <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
+            <span className="visually-hidden">جاري تحميل بيانات المنتج...</span>
           </div>
         </div>
         <Footer />
@@ -243,13 +258,13 @@ export default function ProductDetails() {
     );
   }
 
-  if (error) {
+  if (productDetailsError) {
     return (
       <>
         <Header />
         <div className="container py-5 text-center">
           <div className="alert alert-danger" role="alert">
-            {error}
+            {productDetailsError}
           </div>
           <button className="btn btn-dark mt-3" onClick={() => navigate(-1)}>رجوع</button>
         </div>
@@ -494,9 +509,31 @@ export default function ProductDetails() {
               </span>
             </div>
             <div className="d-flex align-items-center gap-2 mb-2">
-              <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>
-                {selectedVariant ? selectedVariant.price : product.price} ج.م
-              </span>
+              {/* عرض السعر مع الخصم إذا وجد */}
+              {(() => {
+                // حالة المتغير المختار عليه خصم
+                if (selectedVariant && selectedVariant.originalPrice && selectedVariant.originalPrice > selectedVariant.price) {
+                  return <>
+                    <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>{selectedVariant.price} ج.م</span>
+                    <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: '1.2rem' }}>{selectedVariant.originalPrice} ج.م</span>
+                    <span className="badge bg-danger ms-2" style={{ fontSize: '1rem' }}>
+                      خصم {Math.round(100 - (selectedVariant.price / selectedVariant.originalPrice) * 100)}%
+                    </span>
+                  </>;
+                }
+                // حالة المنتج الأساسي عليه خصم
+                if (product.originalPrice && product.originalPrice > product.price) {
+                  return <>
+                    <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>{product.price} ج.م</span>
+                    <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: '1.2rem' }}>{product.originalPrice} ج.م</span>
+                    <span className="badge bg-danger ms-2" style={{ fontSize: '1rem' }}>
+                      خصم {Math.round(100 - (product.price / product.originalPrice) * 100)}%
+                    </span>
+                  </>;
+                }
+                // لا يوجد خصم
+                return <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>{selectedVariant ? selectedVariant.price : product.price} ج.م</span>;
+              })()}
               {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
                 <span className="badge bg-warning text-dark" style={{ fontSize: '0.8rem' }}>
                   <i className="fas fa-exclamation-triangle ms-1"></i>

@@ -427,7 +427,16 @@ export default function Orders() {
                               <tr key={item._id}>
                                 <td>{item.name || item.prdID?.name}</td>
                                 <td>{item.quantity}</td>
-                                <td>{item.price || item.prdID?.price} ج.م</td>
+                                <td>
+                                  {item.prdID?.originalPrice && item.prdID?.originalPrice > item.prdID?.price ? (
+                                    <>
+                                      <span className="text-danger fw-bold">{item.prdID?.price} ج.م</span>
+                                      <span className="text-muted text-decoration-line-through ms-2">{item.prdID?.originalPrice} ج.م</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-danger fw-bold">{item.prdID?.price} ج.م</span>
+                                  )}
+                                </td>
                               </tr>
                             ))}
                           </tbody>

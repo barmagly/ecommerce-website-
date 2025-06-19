@@ -210,7 +210,15 @@ export default function Cart() {
                     <div className="card-body">
                       <h5 className="card-title">{item.prdID?.name}</h5>
                       <p className="card-text">
-                        السعر: {item.prdID?.price} ج.م
+                        السعر:
+                        {item.prdID?.originalPrice && item.prdID?.originalPrice > item.prdID?.price ? (
+                          <span className="ms-2">
+                            <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>{item.prdID?.price} ج.م</span>
+                            <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: '1.2rem' }}>{item.prdID?.originalPrice} ج.م</span>
+                          </span>
+                        ) : (
+                          <span className="text-danger fw-bold" style={{ fontSize: '2rem' }}>{item.prdID?.price} ج.م</span>
+                        )}
                       </p>
                       <div className="text-muted small mb-2">
                         الشحن: {item.prdID?.shippingCost || 0} ج.م | التوصيل خلال {item.prdID?.deliveryDays || 2} يوم
@@ -273,7 +281,19 @@ export default function Cart() {
                 <h5 className="card-title">ملخص الطلب</h5>
                 <div className="d-flex justify-content-between mb-3">
                   <span>المجموع:</span>
-                  <span>{products.total} ج.م</span>
+                  <span>
+                    {(() => {
+                      const totalAfterDiscount = products.cartItems.reduce((sum, item) => sum + (item.prdID?.price * item.quantity), 0);
+                      const totalOriginal = products.cartItems.reduce((sum, item) => sum + ((item.prdID?.originalPrice || item.prdID?.price) * item.quantity), 0);
+                      if (totalOriginal > totalAfterDiscount) {
+                        return <>
+                          <span className="text-danger fw-bold">{totalAfterDiscount} ج.م</span>
+                          <span className="text-muted text-decoration-line-through ms-2">{totalOriginal} ج.م</span>
+                        </>;
+                      }
+                      return <span className="text-danger fw-bold">{totalAfterDiscount} ج.م</span>;
+                    })()}
+                  </span>
                 </div>
                 <button
                   className="btn btn-primary w-100"

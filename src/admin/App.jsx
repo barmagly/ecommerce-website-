@@ -24,6 +24,7 @@ import Variants from './pages/Variants';
 import Settings from './pages/Settings';
 import AdminLogin from './pages/AdminLogin';
 import Profile from './pages/Profile';
+import Offers from './pages/Offers';
 
 // Import layout and auth
 import AdminLayout from './components/AdminLayout';
@@ -130,6 +131,7 @@ const AdminAppContent = () => {
             <Route path="settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="login" element={<AdminLogin />} />
+            <Route path="offers" element={<ProtectedRoute><Offers /></ProtectedRoute>} />
             <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
           </Routes>
         </AppContent>

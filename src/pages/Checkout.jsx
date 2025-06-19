@@ -828,7 +828,16 @@ export default function Checkout() {
                         )}
                       </div>
                       <div className="d-flex align-items-center">
-                        <span className="ms-3">{item?.variantId ? item?.variantId?.price * item?.quantity : item?.prdID?.price * item?.quantity} ج.م</span>
+                        <span className="ms-3">
+                          {item?.prdID?.originalPrice && item?.prdID?.originalPrice > item?.prdID?.price ? (
+                            <>
+                              <span className="text-danger fw-bold">{item?.prdID?.price} ج.م</span>
+                              <span className="text-muted text-decoration-line-through ms-2">{item?.prdID?.originalPrice} ج.م</span>
+                            </>
+                          ) : (
+                            <span className="text-danger fw-bold">{item?.prdID?.price} ج.م</span>
+                          )}
+                        </span>
                         <button
                           type="button"
                           className="btn btn-link text-danger p-0 ms-2"
