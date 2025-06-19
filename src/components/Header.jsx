@@ -631,8 +631,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 300px ;
-            width: 300px ;
+            height: 90px !important;
+            width: 90px !important;
           }
           
           .custom-sidebar {
@@ -673,8 +673,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 55px !important;
-            width: 55px !important;
+            height: 70px !important;
+            width: 70px !important;
           }
           
           .search-input {
@@ -705,8 +705,8 @@ export default function Header() {
         
         @media (max-width: 360px) {
           .navbar-brand img {
-            height: 50px !important;
-            width: 50px !important;
+            height: 60px !important;
+            width: 60px !important;
           }
           
           .search-input {
