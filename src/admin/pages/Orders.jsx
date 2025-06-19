@@ -492,9 +492,9 @@ const Orders = () => {
     try {
       setActionLoading({ id: order._id, type: 'shipping' });
       
-      const totalShippingCost = order.cartItems.reduce((total, item) => 
-        total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0
-      );
+      const maxShippingCost = Math.max(...order.cartItems.map(item => 
+        Number(item?.shippingCost || item?.prdID?.shippingCost) || 0
+      ));
       
       const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
         Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
@@ -502,7 +502,7 @@ const Orders = () => {
 
       await dispatch(updateOrderShippingDetailsThunk({
         orderId: order._id,
-        shippingCost: totalShippingCost,
+        shippingCost: maxShippingCost,
         deliveryDays: maxDeliveryDays
       })).unwrap();
 
@@ -529,9 +529,9 @@ const Orders = () => {
       // Update each order sequentially
       for (const order of orders) {
         try {
-          const totalShippingCost = order.cartItems.reduce((total, item) => 
-            total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0
-          );
+          const maxShippingCost = Math.max(...order.cartItems.map(item => 
+            Number(item?.shippingCost || item?.prdID?.shippingCost) || 0
+          ));
           
           const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
             Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
@@ -539,7 +539,7 @@ const Orders = () => {
 
           await dispatch(updateOrderShippingDetailsThunk({
             orderId: order._id,
-            shippingCost: totalShippingCost,
+            shippingCost: maxShippingCost,
             deliveryDays: maxDeliveryDays
           })).unwrap();
 
@@ -1011,7 +1011,7 @@ const Orders = () => {
         <MenuItem onClick={() => {
           const order = orders.find(o => o._id === selectedOrderId);
           if (order) {
-            handleViewOrder(order);
+            handleOpenDialog(order);
           }
           handleMenuClose();
         }}>

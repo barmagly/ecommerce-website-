@@ -197,22 +197,6 @@ export default function ShopProducts({ products = [] }) {
                   </small>
                 </div>
               )}
-              <div className="product-info">
-                <h5 className="product-title">{item.name}</h5>
-                <div className="product-rating">
-                  <StarRating rating={item.ratings?.average || 0} />
-                  <span className="rating-count">({item.ratings?.count || 0})</span>
-                </div>
-              </div>
-              {item.attributes?.map((attr, idx) => (
-                <div key={idx} className="d-flex gap-1 mb-2 flex-wrap">
-                  {attr.values.map((value, vIdx) => (
-                    <span key={vIdx} className="badge bg-light text-dark border" style={{ fontSize: '0.85em', margin: 1 }}>
-                      {value}
-                    </span>
-                  ))}
-                </div>
-              ))}
               <div className={`product-actions mt-auto gap-2 ${hoveredProduct === item._id ? 'show' : ''}`} style={{ display: 'flex', opacity: hoveredProduct === item._id ? 1 : 0, pointerEvents: hoveredProduct === item._id ? 'auto' : 'none', transition: 'opacity 0.2s' }}>
                 <button className="btn btn-sm btn-danger" onClick={(e) => handleAddToCart(e, item._id)}><i className="fas fa-shopping-cart"></i></button>
                 <button

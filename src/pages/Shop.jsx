@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
@@ -12,6 +13,7 @@ import { useMediaQuery } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import "./Shop.css";
+import { frontendAPI } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL 
 
@@ -20,6 +22,8 @@ export default function Shop() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [page, setPage] = useState(0);
   const [categoriesPerPage, setCategoriesPerPage] = useState(9);
@@ -29,6 +33,7 @@ export default function Shop() {
   const [error, setError] = useState(null);
   const [categories, setCategories] = useState([]);
   const [sortOption, setSortOption] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('');
   const [currentFilters, setCurrentFilters] = useState({
     search: '',
     minPrice: '',
@@ -67,6 +72,20 @@ export default function Shop() {
     fetchProducts();
     fetchCategories();
   }, []);
+
+  // Handle URL parameters on page load
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam && categories.length > 0) {
+      // Find the category by name
+      const category = categories.find(cat => cat.name === categoryParam);
+      if (category) {
+        fetchProductCat(category._id, category.name);
+      }
+    } else if (!categoryParam) {
+      setSelectedCategory('');
+    }
+  }, [categories, searchParams]);
 
   const fetchProducts = async () => {
     try {
@@ -109,18 +128,26 @@ export default function Shop() {
     setFilteredProducts(filteredProducts);
   };
 
-  const fetchProductCat = async (id) => {
+  const fetchProductCat = async (id, name) => {
     try {
       setLoading(true);
       setError(null);
       const response = await axios.get(`${API_URL}/api/products/category/${id}`)
       setFilteredProducts(response.data)
+      setSearchParams({ category: name });
+      setSelectedCategory(name);
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
       console.error("Error fetching products:", err);
     } finally {
       setLoading(false);
     }
+  }
+
+  const showAllProducts = () => {
+    setFilteredProducts(products);
+    setSearchParams({});
+    setSelectedCategory('');
   }
 
   const handleFilterChange = (filterParams) => {
@@ -139,7 +166,7 @@ export default function Shop() {
       });
   };
 
-  const handleSort = (option) => {
+  const handleSort = async (option) => {
     // If clicking the same sort option, remove sorting
     if (sortOption === option) {
       setSortOption('');
@@ -149,32 +176,61 @@ export default function Shop() {
       return;
     }
 
-    // Set new sort option
     setSortOption(option);
     const filterParams = new URLSearchParams(currentFilters);
 
-    // Add sort parameter
     switch (option) {
       case 'newest':
         filterParams.set("sort", "-createdAt");
+        handleFilterChange(filterParams.toString());
         break;
-      case 'bestselling':
-        filterParams.set("sort", "-sold");
+      case 'bestselling': {
+        setLoading(true);
+        setError(null);
+        try {
+          const response = await frontendAPI.getBestSellers();
+          let bestSellers = [];
+          if (response.data && response.data.data) {
+            bestSellers = response.data.data;
+          } else if (response.data && Array.isArray(response.data)) {
+            bestSellers = response.data;
+          }
+          if (bestSellers.length > 0) {
+            setFilteredProducts(bestSellers);
+          } else {
+            // fallback to all products
+            const allProductsResponse = await frontendAPI.getAllProducts();
+            let allProducts = [];
+            if (allProductsResponse.data && allProductsResponse.data.data) {
+              allProducts = allProductsResponse.data.data;
+            } else if (allProductsResponse.data && Array.isArray(allProductsResponse.data)) {
+              allProducts = allProductsResponse.data;
+            }
+            setFilteredProducts(allProducts);
+          }
+        } catch (err) {
+          setError(err.response?.data?.message || "حدث خطأ اثناء جلب المنتجات");
+        } finally {
+          setLoading(false);
+        }
         break;
+      }
       case 'topRated':
         filterParams.set("sort", "-ratings.average");
+        handleFilterChange(filterParams.toString());
         break;
       case 'priceAsc':
         filterParams.set("sort", "price");
+        handleFilterChange(filterParams.toString());
         break;
       case 'priceDesc':
         filterParams.set("sort", "-price");
+        handleFilterChange(filterParams.toString());
         break;
       default:
         filterParams.delete("sort");
+        handleFilterChange(filterParams.toString());
     }
-
-    handleFilterChange(filterParams.toString());
   };
 
   if (loading) {
@@ -232,8 +288,40 @@ export default function Shop() {
               },
             }}
           >
+            {/* All Products Option */}
+            <Grid onClick={showAllProducts} minHeight={110} minWidth={110} px={0} sx={{
+              cursor: 'pointer',
+              scrollSnapAlign: 'center',
+              border: selectedCategory === '' ? '2px solid #007bff' : '2px solid transparent',
+              borderRadius: '50%',
+              padding: '4px'
+            }} 
+              rowSpacing={2}
+            >
+              <Image
+                src="/images/Placeholder.png"
+                alt="جميع المنتجات"
+                roundedCircle
+                height={100}
+                width={100}
+                style={{
+                  objectFit: 'cover',
+                  marginBottom: 8,
+                }}
+              />
+              <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title="جميع المنتجات">
+                جميع المنتجات
+              </Typography>
+            </Grid>
+
             {categories.map(cat =>
-              <Grid key={cat._id} onClick={() => fetchProductCat(cat._id)} minHeight={110} minWidth={110} px={0} sx={{cursor: 'pointer' ,scrollSnapAlign: 'center'}} 
+              <Grid key={cat._id} onClick={() => fetchProductCat(cat._id, cat.name)} minHeight={110} minWidth={110} px={0} sx={{
+                cursor: 'pointer',
+                scrollSnapAlign: 'center',
+                border: selectedCategory === cat.name ? '2px solid #007bff' : '2px solid transparent',
+                borderRadius: '50%',
+                padding: '4px'
+              }} 
                 rowSpacing={2}
               >
                 <Image

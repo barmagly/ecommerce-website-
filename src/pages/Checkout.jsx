@@ -5,11 +5,10 @@ import Header from "../components/Header";
 import Footer from "../components/Footer";
 import Breadcrumb from "../components/Breadcrumb";
 import ProtectedRoute from "../components/ProtectedRoute";
-import { createOrderThunk, sendOrderConfirmationEmailThunk } from "../services/Slice/order/order";
+import { createOrderThunk } from "../services/Slice/order/order";
 import { deleteCartItemThunk, getCartThunk } from "../services/Slice/cart/cart";
 import { couponsAPI } from "../services/api";
 import { toast } from "react-toastify";
-import { generateOrderConfirmationEmailHTML, generateOrderConfirmationEmailText } from "../services/emailService";
 
 export default function Checkout() {
   const navigate = useNavigate();
@@ -375,18 +374,16 @@ export default function Checkout() {
 
     try {
       // Calculate shipping costs and delivery times
-      const totalShippingCost = cartItems.reduce((total, item) => {
-        console.log('Item in totalShipping calculation:', item);
-        console.log('Item shippingCost:', item?.prdID?.shippingCost);
-        return total + (Number(item?.prdID?.shippingCost) || 0);
-      }, 0);
+      const maxShippingCost = Math.max(...cartItems.map(item => 
+        Number(item?.prdID?.shippingCost) || 0
+      ));
       
       const maxDeliveryDays = Math.max(...cartItems.map(item => 
         Number(item?.prdID?.deliveryDays) || 2
       ));
 
       console.log('Cart Items:', cartItems);
-      console.log('Total Shipping Cost:', totalShippingCost);
+      console.log('Total Shipping Cost:', maxShippingCost);
       console.log('Max Delivery Days:', maxDeliveryDays);
       console.log('Individual product shipping costs:', cartItems.map(item => ({
         name: item.prdID.name,
@@ -409,11 +406,11 @@ export default function Checkout() {
       formData.append('shippingAddress', shippingAddress);
 
       // تحويل القيم إلى أرقام وإضافتها إلى FormData
-      formData.append('shippingCost', Number(totalShippingCost));
+      formData.append('shippingCost', Number(maxShippingCost));
       formData.append('deliveryDays', Number(maxDeliveryDays));
 
       console.log('=== SHIPPING DETAILS BEING SENT ===');
-      console.log('totalShippingCost:', totalShippingCost, 'Type:', typeof totalShippingCost);
+      console.log('maxShippingCost:', maxShippingCost, 'Type:', typeof maxShippingCost);
       console.log('maxDeliveryDays:', maxDeliveryDays, 'Type:', typeof maxDeliveryDays);
       console.log('Individual product details:');
       cartItems.forEach((item, index) => {
@@ -466,42 +463,6 @@ export default function Checkout() {
           paymentMethod = 'cash_on_delivery';
       }
 
-      // إضافة محتوى البريد الإلكتروني
-      const emailHTML = generateOrderConfirmationEmailHTML({
-        _id: 'temp-id',
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        total: total,
-        paymentMethod: paymentMethod,
-        paymentStatus: payment === 'cod' ? 'pending' : 'paid',
-        cartItems: cartItems,
-        shippingCost: totalShippingCost,
-        deliveryDays: maxDeliveryDays,
-        notes: form.notes,
-        createdAt: new Date().toISOString()
-      }, false);
-
-      const emailText = generateOrderConfirmationEmailText({
-        _id: 'temp-id',
-        name: form.name,
-        email: form.email,
-        phone: form.phone,
-        address: form.address,
-        city: form.city,
-        total: total,
-        paymentMethod: paymentMethod,
-        paymentStatus: payment === 'cod' ? 'pending' : 'paid',
-        cartItems: cartItems,
-        notes: form.notes,
-        createdAt: new Date().toISOString()
-      });
-
-      formData.append('emailHTML', emailHTML);
-      formData.append('emailText', emailText);
-
       console.log('FormData before sending:');
       for (let [key, value] of formData.entries()) {
         console.log(`${key}:`, value);
@@ -532,26 +493,6 @@ export default function Checkout() {
       console.log('Order resultAction:', resultAction);
       if (createOrderThunk.fulfilled.match(resultAction)) {
         setOrderPlaced(true);
-        
-        // Send confirmation email to customer
-        try {
-          await dispatch(sendOrderConfirmationEmailThunk({
-            orderId: resultAction.payload.order._id,
-            email: form.email
-          })).unwrap();
-          console.log('Confirmation email sent to customer');
-          
-          // Send copy to admin
-          await dispatch(sendOrderConfirmationEmailThunk({
-            orderId: resultAction.payload.order._id,
-            email: 'support@mizanoo.com',
-            isAdminCopy: true
-          })).unwrap();
-          console.log('Confirmation email sent to admin');
-        } catch (error) {
-          console.error('Failed to send confirmation email:', error);
-          // لا نوقف العملية إذا فشل إرسال البريد الإلكتروني
-        }
         
         setTimeout(() => {
           navigate('/order-confirmation', {

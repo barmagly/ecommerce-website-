@@ -1,18 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaLaptop, FaTshirt, FaCouch, FaFutbol, FaGamepad, FaHeartbeat, FaClock, FaCamera } from 'react-icons/fa';
+import { useDispatch, useSelector } from 'react-redux';
+import { getCategoriesThunk } from '../services/Slice/categorie/categorie';
 import './Categories3DCircle.css';
-
-const categories = [
-  { name: 'إلكترونيات', icon: <FaLaptop size={44} /> },
-  { name: 'أزياء', icon: <FaTshirt size={44} /> },
-  { name: 'أجهزة منزلية', icon: <FaCouch size={44} /> },
-  { name: 'رياضة', icon: <FaFutbol size={44} /> },
-  { name: 'ألعاب أطفال', icon: <FaGamepad size={44} /> },
-  { name: 'الصحة والجمال', icon: <FaHeartbeat size={44} /> },
-  { name: 'ساعات ذكية', icon: <FaClock size={44} /> },
-  { name: 'كاميرات', icon: <FaCamera size={44} /> },
-];
 
 function useResponsiveCircle() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 700;
@@ -30,7 +20,14 @@ export default function Categories3DCircle() {
   const [isAutoScrolling, setIsAutoScrolling] = useState(true);
   const [isScrolling, setIsScrolling] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { categories, loading } = useSelector((state) => state.categorie);
   const { radius, perspective, baseScale, maxScale, angleStep } = useResponsiveCircle();
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    dispatch(getCategoriesThunk());
+  }, [dispatch]);
 
   // زاوية دوران الحلقة بحيث يكون العنصر النشط في المنتصف (زاوية 0)
   const ringRotation = -active * angleStep;
@@ -38,37 +35,37 @@ export default function Categories3DCircle() {
   const scrollToNext = useCallback(() => {
     if (!isScrolling) {
       setIsScrolling(true);
-      setActive((prev) => (prev + 1) % categories.length);
+      setActive((prev) => (prev + 1) % (categories?.length || 1));
       
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling]);
+  }, [isScrolling, categories?.length]);
 
   const scrollToPrev = useCallback(() => {
     if (!isScrolling) {
       setIsScrolling(true);
-      setActive((prev) => (prev - 1 + categories.length) % categories.length);
+      setActive((prev) => (prev - 1 + (categories?.length || 1)) % (categories?.length || 1));
       
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling]);
+  }, [isScrolling, categories?.length]);
 
   // التمرير التلقائي كل 3 ثواني
   useEffect(() => {
-    if (!isAutoScrolling || isScrolling) return;
+    if (!isAutoScrolling || isScrolling || !categories || categories.length === 0) return;
 
     const interval = setInterval(() => {
       scrollToNext();
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isAutoScrolling, isScrolling, scrollToNext]);
+  }, [isAutoScrolling, isScrolling, scrollToNext, categories]);
 
   // إيقاف التمرير التلقائي عند التفاعل مع الماوس
   const handleMouseEnter = () => {
@@ -78,6 +75,21 @@ export default function Categories3DCircle() {
   const handleMouseLeave = () => {
     setIsAutoScrolling(true);
   };
+
+  // Don't render if loading or no categories
+  if (loading || !categories || categories.length === 0) {
+    return (
+      <div className="categories-3d-section d-flex flex-column align-items-center justify-content-center categories-section-bg">
+        <h2 className="fw-bold mb-1">تصفح حسب التصنيف</h2>
+        <div className="text-center">
+          <div className="spinner-border text-danger" role="status">
+            <span className="visually-hidden">جاري التحميل...</span>
+          </div>
+          <p className="mt-2">جاري تحميل التصنيفات...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div 
@@ -105,7 +117,7 @@ export default function Categories3DCircle() {
               const opacity = isActive ? 1 : 0.18;
               return (
                 <div
-                  key={i}
+                  key={cat._id}
                   className={`categories-3d-item${isActive ? ' active' : ''}`}
                   style={{
                     transform: `rotateY(${angle}deg) translateZ(${radius}px) scale(${scale})`,
@@ -116,7 +128,37 @@ export default function Categories3DCircle() {
                   }}
                   onClick={() => navigate(`/shop?category=${encodeURIComponent(cat.name)}`)}
                 >
-                  <span className="categories-3d-icon mb-2">{cat.icon}</span>
+                  <div className="categories-3d-image mb-2">
+                    {cat.image ? (
+                      <img 
+                        src={cat.image} 
+                        alt={cat.name}
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          objectFit: 'cover',
+                          borderRadius: '8px',
+                          border: '2px solid #fff',
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                        }}
+                      />
+                    ) : (
+                      <div 
+                        style={{
+                          width: '60px',
+                          height: '60px',
+                          backgroundColor: '#f8f9fa',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: '2px solid #dee2e6'
+                        }}
+                      >
+                        <i className="fas fa-image text-muted"></i>
+                      </div>
+                    )}
+                  </div>
                   <span className="fw-bold">{cat.name}</span>
                 </div>
               );

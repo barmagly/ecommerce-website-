@@ -323,42 +323,8 @@ export default function Orders() {
                             )}
                           </td>
                           <td>{order.city || 'نجع حمادي'}</td>
-                          <td>
-                            {(() => {
-                              const storedShippingCost = Number(order.shippingCost);
-                              const calculatedShippingCost = order.cartItems?.reduce((total, item) => 
-                                total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0);
-                              
-                              console.log(`Order ${order._id.slice(-6)} - Shipping Cost:`, {
-                                stored: storedShippingCost,
-                                calculated: calculatedShippingCost,
-                                cartItems: order.cartItems?.map(item => ({
-                                  name: item.name || item.prdID?.name,
-                                  shippingCost: item.shippingCost || item.prdID?.shippingCost
-                                }))
-                              });
-                              
-                              return storedShippingCost > 0 ? storedShippingCost : calculatedShippingCost;
-                            })()} ج.م
-                          </td>
-                          <td>
-                            {(() => {
-                              const storedDeliveryDays = Number(order.deliveryDays);
-                              const calculatedDeliveryDays = Math.max(...(order.cartItems?.map(item => 
-                                Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]));
-                              
-                              console.log(`Order ${order._id.slice(-6)} - Delivery Days:`, {
-                                stored: storedDeliveryDays,
-                                calculated: calculatedDeliveryDays,
-                                cartItems: order.cartItems?.map(item => ({
-                                  name: item.name || item.prdID?.name,
-                                  deliveryDays: item.deliveryDays || item.prdID?.deliveryDays
-                                }))
-                              });
-                              
-                              return storedDeliveryDays > 0 ? storedDeliveryDays : calculatedDeliveryDays;
-                            })()} يوم
-                          </td>
+                          <td>{order.shippingCost || 0} ج.م</td>
+                          <td>{order.deliveryDays || 2} يوم</td>
                           <td>{order.cartItems?.length || 0}</td>
                           <td>{order.total} ج.م</td>
                           <td>{order.paymentMethod}</td>
@@ -421,16 +387,8 @@ export default function Orders() {
                         </span></li>
                         <li><strong>طريقة الدفع:</strong> {selectedOrder.paymentMethod}</li>
                         <li><strong>حالة الدفع:</strong> {selectedOrder.paymentStatus}</li>
-                        <li><strong>مصاريف الشحن:</strong> {
-                          Number(selectedOrder.shippingCost) > 0 ? selectedOrder.shippingCost :
-                            selectedOrder.cartItems?.reduce((total, item) => 
-                              total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)
-                        } ج.م</li>
-                        <li><strong>مدة التوصيل:</strong> {
-                          Number(selectedOrder.deliveryDays) > 0 ? selectedOrder.deliveryDays :
-                            Math.max(...(selectedOrder.cartItems?.map(item => 
-                              Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))
-                        } يوم</li>
+                        <li><strong>مصاريف الشحن:</strong> {selectedOrder.shippingCost || 0} ج.م</li>
+                        <li><strong>مدة التوصيل:</strong> {selectedOrder.deliveryDays || 2} يوم</li>
                         <li><strong>الإجمالي:</strong> {selectedOrder.total} ج.م</li>
                       </ul>
                       <h6 className="fw-bold mb-3">معلومات العميل</h6>
@@ -451,8 +409,6 @@ export default function Orders() {
                               <th>المنتج</th>
                               <th>الكمية</th>
                               <th>السعر</th>
-                              <th>مصاريف الشحن</th>
-                              <th>مدة التوصيل</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -461,8 +417,6 @@ export default function Orders() {
                                 <td>{item.name || item.prdID?.name}</td>
                                 <td>{item.quantity}</td>
                                 <td>{item.price || item.prdID?.price} ج.م</td>
-                                <td>{item.shippingCost || item.prdID?.shippingCost || 0} ج.م</td>
-                                <td>{item.deliveryDays || item.prdID?.deliveryDays || 2} يوم</td>
                               </tr>
                             ))}
                           </tbody>
