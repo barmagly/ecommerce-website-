@@ -137,7 +137,7 @@ export default function Header() {
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
           <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src="/images/logo.png" alt="Logo" style={{ height: '150px', width: '150px', marginLeft: '8px' }} />
+            <img src="/images/logo.png" alt="Logo" className="header-logo" style={{ marginLeft: '8px' }} />
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
@@ -305,7 +305,7 @@ export default function Header() {
           <div className="offcanvas offcanvas-end d-lg-none custom-sidebar" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
             <div className="offcanvas-header border-bottom">
               <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                <img src="/images/logo.png" alt="Logo" style={{ height: '180px', width: '180px' }} />
+                <img src="/images/logo.png" alt="Logo" className="sidebar-logo" />
               </h5>
               <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
@@ -544,8 +544,8 @@ export default function Header() {
           }
           
           .navbar-brand img {
-            height: 160px !important;
-            width: 160px !important;
+            height: 140px !important;
+            width: 140px !important;
           }
           
           .search-form {
@@ -718,6 +718,47 @@ export default function Header() {
             width: 28px;
             height: 28px;
             font-size: 0.7rem;
+          }
+        }
+        
+        .sidebar-logo {
+          height: 120px;
+          width: 120px;
+          transition: height 0.3s, width 0.3s;
+        }
+        @media (max-width: 576px) {
+          .sidebar-logo {
+            height: 60px !important;
+            width: 60px !important;
+          }
+        }
+        .header-logo {
+          height: 150px;
+          width: 150px;
+          transition: height 0.3s, width 0.3s;
+        }
+        @media (max-width: 991px) {
+          .header-logo {
+            height: 140px;
+            width: 140px;
+          }
+        }
+        @media (max-width: 576px) {
+          .header-logo {
+            height: 160px !important;
+            width: 160px !important;
+          }
+        }
+        @media (max-width: 480px) {
+          .header-logo {
+            height: 130px !important;
+            width: 130px !important;
+          }
+        }
+        @media (max-width: 360px) {
+          .header-logo {
+            height: 110px !important;
+            width: 110px !important;
           }
         }
       `}</style>
