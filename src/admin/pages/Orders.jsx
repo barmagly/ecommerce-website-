@@ -42,9 +42,6 @@ import {
   Alert,
   Paper,
 } from '@mui/material';
-import { useReactToPrint } from 'react-to-print';
-import InvoicePrint from '../components/InvoicePrint';
-import { exportInvoiceAsPDF, printInvoice } from '../components/InvoiceExporter';
 import {
   Search as SearchIcon,
   Visibility as ViewIcon,
@@ -99,16 +96,6 @@ const Orders = () => {
   const [menuAnchorEl, setMenuAnchorEl] = useState(null);
   const [selectedOrderId, setSelectedOrderId] = useState(null);
   const [orderToPrint, setOrderToPrint] = useState(null);
-
-  // Print functionality
-  const printRef = useRef();
-  const handlePrint = useReactToPrint({
-    content: () => printRef.current,
-    documentTitle: `فاتورة-${orderToPrint?.orderNumber || 'غير محدد'}`,
-    onAfterPrint: () => {
-      setOrderToPrint(null);
-    },
-  });
 
   // Dialog states
   const [openDialog, setOpenDialog] = useState(false);
@@ -238,36 +225,6 @@ const Orders = () => {
     setPage(0);
   };
 
-  const handlePrintInvoice = (order) => {
-    if (order && order._id) {
-      setOrderToPrint(order);
-      setTimeout(() => {
-        handlePrint();
-      }, 100);
-    }
-  };
-
-  const handleExportPDF = async (order) => {
-    try {
-      if (!order || !order._id) {
-        toast.error('لا توجد بيانات صحيحة للطلب');
-        return;
-      }
-
-      setActionLoading({ id: order._id, type: 'pdf' });
-      const result = await exportInvoiceAsPDF(order);
-      if (result.success) {
-        toast.success('تم تصدير الفاتورة بنجاح');
-      } else {
-        throw new Error(result.error || 'فشل تصدير الفاتورة');
-      }
-    } catch (error) {
-      toast.error(error.message || 'فشل تصدير الفاتورة');
-    } finally {
-      setActionLoading({ id: null, type: null });
-    }
-  };
-
   const handleDownloadOrder = (order) => {
     try {
       if (!order || !order._id) {
@@ -325,21 +282,22 @@ const Orders = () => {
   const handleSendEmail = async (order) => {
     try {
       setActionLoading({ id: order._id, type: 'email' });
+      console.log('Sending email for order:', order._id, order.email);
 
-      // Send to customer
+      // إرسال للعميل
       await dispatch(sendOrderConfirmationEmailThunk({
         orderId: order._id,
         email: order.email
       })).unwrap();
 
-      // Send copy to admin
+      // إرسال للإدارة
       await dispatch(sendOrderConfirmationEmailThunk({
         orderId: order._id,
         email: 'support@mizanoo.com',
         isAdminCopy: true
       })).unwrap();
 
-      toast.success('تم إرسال البريد الإلكتروني بنجاح');
+      toast.success('تم إرسال البريد الإلكتروني للعميل والإدارة بنجاح');
     } catch (error) {
       console.error('Error sending email:', error);
       toast.error('فشل في إرسال البريد الإلكتروني');
@@ -1116,60 +1074,15 @@ const Orders = () => {
           <ListItemText>عرض التفاصيل</ListItemText>
         </MenuItem>
 
-        <MenuItem onClick={() => {
-          const order = orders.find(o => o._id === selectedOrderId);
-          if (order) {
-            handleDownloadOrder(order);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <DownloadIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>تحميل الطلب</ListItemText>
-        </MenuItem>
+     
 
         <MenuItem onClick={() => {
           const order = orders.find(o => o._id === selectedOrderId);
           if (order) {
-            handleExportPDF(order);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <PdfIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>تصدير PDF</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          const order = orders.find(o => o._id === selectedOrderId);
-          if (order) {
-            handlePrintInvoice(order);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <PrintIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>طباعة الفاتورة</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          if (selectedOrder) {
-            handleUpdateShippingDetails(selectedOrder);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <LocalShipping />
-          </ListItemIcon>
-          <ListItemText>تحديث تفاصيل الشحن</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          if (selectedOrder) {
-            handleSendEmail(selectedOrder);
+            console.log('Sending email for order:', order._id, order.email);
+            handleSendEmail(order);
+          } else {
+            toast.warn('لم يتم العثور على بيانات الطلب');
           }
           handleMenuClose();
         }}>
@@ -1177,18 +1090,13 @@ const Orders = () => {
             <EmailIcon fontSize="small" />
           </ListItemIcon>
           <ListItemText>إرسال الفاتورة بالبريد</ListItemText>
-          {selectedOrder && actionLoading.id === selectedOrder._id && actionLoading.type === 'email' && (
+          {selectedOrderId && actionLoading.id === selectedOrderId && actionLoading.type === 'email' && (
             <CircularProgress size={20} />
           )}
-        </MenuItem>        
-      </Menu>
+        </MenuItem>
 
-      {/* Invoice Print Component (Hidden) */}
-      {orderToPrint && (
-        <Box sx={{ display: 'none' }}>
-          <InvoicePrint ref={printRef} order={orderToPrint} />
-        </Box>
-      )}
+        
+      </Menu>
 
       {/* Add button to toolbar */}
       <Box sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
