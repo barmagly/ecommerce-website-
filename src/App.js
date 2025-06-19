@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -31,7 +31,8 @@ function App() {
   useEffect(() => {
     AOS.init({ duration: 800, once: true });
   }, []);
-
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
   return (
     <Provider store={Store}>
       <ToastContainer />
@@ -59,7 +60,7 @@ function App() {
             element={<Error404 />}
           />
         </Routes>
-        <WhatsAppFloat />
+        {!isAdmin && <WhatsAppFloat />}
       </div>
     </Provider>
   );
