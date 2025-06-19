@@ -428,13 +428,13 @@ export default function Orders() {
                                 <td>{item.name || item.prdID?.name}</td>
                                 <td>{item.quantity}</td>
                                 <td>
-                                  {item.prdID?.originalPrice && item.prdID?.originalPrice > item.prdID?.price ? (
+                                  {(item.originalPrice && item.originalPrice > item.price) ? (
                                     <>
-                                      <span className="text-danger fw-bold">{item.prdID?.price} ج.م</span>
-                                      <span className="text-muted text-decoration-line-through ms-2">{item.prdID?.originalPrice} ج.م</span>
+                                      <span className="text-danger fw-bold">{item.price} ج.م</span>
+                                      <span className="text-muted text-decoration-line-through ms-2">{item.originalPrice} ج.م</span>
                                     </>
                                   ) : (
-                                    <span className="text-danger fw-bold">{item.prdID?.price} ج.م</span>
+                                    <span className="text-danger fw-bold">{item.price} ج.م</span>
                                   )}
                                 </td>
                               </tr>
