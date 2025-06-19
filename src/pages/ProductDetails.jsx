@@ -114,9 +114,9 @@ export default function ProductDetails() {
 
   useEffect(() => {
     if (selectedVariant) {
-      setMainImg(selectedVariant.images?.[0]?.url || product?.imageCover || PLACEHOLDER_IMG);
+      setMainImg(selectedVariant.images?.[0]?.url || product?.imageCover);
     } else if (product) {
-      setMainImg(product.images?.[0]?.url || product.imageCover || PLACEHOLDER_IMG);
+      setMainImg(product.imageCover);
     }
   }, [selectedVariant, product]);
 
@@ -441,7 +441,7 @@ export default function ProductDetails() {
                 style={{ maxWidth: 480, maxHeight: 420, borderRadius: 18, objectFit: 'contain', width: '100%', transition: '0.25s' }}
               />
             </div>
-            {(selectedVariant?.images || product.images) && (selectedVariant?.images || product.images).length > 1 && (
+            {(selectedVariant?.images || product?.images) && (selectedVariant?.images || product?.images).length > 0 && (
               <div className="d-flex gap-2 mt-3 justify-content-center flex-wrap">
                 {(selectedVariant?.images || product.images).map((img, idx) => (
                   <img
@@ -464,7 +464,7 @@ export default function ProductDetails() {
             )}
           </div>
           <div className="col-12 col-md-6">
-            <h1 className="fw-bold mb-3" style={{ fontSize: '2.2em', color: '#333', lineHeight: 1.2 }}>
+            <h1 className="fw-bold my-3 name" style={{ fontSize: '2.0em', color: '#333', lineHeight: 1.2 }}>
               {product.name}
               {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
                 <span className="badge bg-info ms-2" style={{ fontSize: '0.4em', verticalAlign: 'top' }}>
@@ -707,69 +707,82 @@ export default function ProductDetails() {
             )}
 
             <div className="d-flex gap-3 mt-4 flex-wrap">
-              <div className="d-flex align-items-center gap-2">
-                <div className="d-flex flex-column align-items-center">
-                  <label className="form-label mb-1">الكمية</label>
-                  <div className="d-flex align-items-center gap-1">
-                    <button
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                      disabled={quantity <= 1}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min={1}
-                      max={product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock}
-                      value={quantity}
-                      onChange={e => {
-                        let val = parseInt(e.target.value) || 1;
-                        if (val < 1) val = 1;
-                        if (val > (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock))
-                          val = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
-                        setQuantity(val);
-                      }}
-                      style={{ width: 60, textAlign: 'center' }}
-                      className="form-control d-inline-block mx-1"
-                    />
-                    <button
-                      className="btn btn-outline-secondary btn-sm"
-                      onClick={() => {
-                        const maxQ = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
-                        if (quantity >= maxQ) {
-                          if (product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock) {
-                            toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد. الحد الأقصى المحدد من قبل الإدارة.`, {
-                              position: "top-center",
-                              rtl: true,
-                              autoClose: 4000
-                            });
-                          } else {
-                            toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد`, {
-                              position: "top-center",
-                              rtl: true,
-                              autoClose: 3000
-                            });
-                          }
-                          return;
+              <div className="w-100">
+                <label className="form-label mb-1 text-end w-100">الكمية</label>
+                <div
+                  className="d-flex align-items-center justify-content-between"
+                  style={{ maxWidth: 180, background: "#fff", borderRadius: 12, border: "1px solid #ccc", padding: 4 }}
+                >
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    style={{ minWidth: 36, minHeight: 36, fontSize: 20 }}
+                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                    disabled={quantity <= 1}
+                    tabIndex={-1}
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock}
+                    value={quantity}
+                    onChange={e => {
+                      let val = parseInt(e.target.value) || 1;
+                      if (val < 1) val = 1;
+                      if (val > (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock))
+                        val = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
+                      setQuantity(val);
+                    }}
+                    style={{
+                      width: 48,
+                      textAlign: "center",
+                      border: "none",
+                      outline: "none",
+                      boxShadow: "none",
+                      background: "transparent",
+                      fontWeight: "bold"
+                    }}
+                    className="form-control mx-1 p-0"
+                  />
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    style={{ minWidth: 36, minHeight: 36, fontSize: 20 }}
+                    onClick={() => {
+                      const maxQ = product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock;
+                      if (quantity >= maxQ) {
+                        if (product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock) {
+                          toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد. الحد الأقصى المحدد من قبل الإدارة.`, {
+                            position: "top-center",
+                            rtl: true,
+                            autoClose: 4000
+                          });
+                        } else {
+                          toast.warning(`لا يمكنك شراء أكثر من ${maxQ} من هذا المنتج في الطلب الواحد`, {
+                            position: "top-center",
+                            rtl: true,
+                            autoClose: 3000
+                          });
                         }
-                        setQuantity(q => Math.min(maxQ, q + 1));
-                      }}
-                      disabled={quantity >= (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock)}
-                    >
-                      +
-                    </button>
-                  </div>
-                  {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
-                    <small className="text-muted mt-1">
-                      الحد الأقصى: {product.maxQuantityPerOrder} قطعة
-                    </small>
-                  )}
+                        return;
+                      }
+                      setQuantity(q => Math.min(maxQ, q + 1));
+                    }}
+                    disabled={quantity >= (product.maxQuantityPerOrder ? Math.min(product.maxQuantityPerOrder, product.stock) : product.stock)}
+                    tabIndex={-1}
+                  >
+                    +
+                  </button>
                 </div>
+                {product.maxQuantityPerOrder && product.maxQuantityPerOrder < product.stock && (
+                  <small className="text-muted mt-1 w-100 text-end d-block">
+                    الحد الأقصى: {product.maxQuantityPerOrder} قطعة
+                  </small>
+                )}
               </div>
-              <button className="btn btn-danger px-4" onClick={handleAddToCartClick}>أضف للسلة</button>
+              <button className="btn btn-danger px-2" onClick={handleAddToCartClick}>أضف للسلة</button>
               <button
-                className="btn btn-outline-danger px-4"
+                className="btn btn-outline-danger px-2"
                 onClick={handleAddToWishlistClick}
               >
                 <i className={`${wishlist?.some(w => w._id === id) ? 'fas' : 'far'} fa-heart ms-2`}></i>
@@ -779,11 +792,11 @@ export default function ProductDetails() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-success px-4 d-flex align-items-center gap-2"
+                className="btn btn-success px-2 d-flex align-items-center gap-2 justify-content-center"
               >
                 <i className="fab fa-whatsapp"></i> اطلب عبر واتساب
               </a>
-              <button className="btn btn-dark px-4" onClick={() => navigate(-1)}>رجوع</button>
+              <button className="btn btn-dark px-2" onClick={() => navigate(-1)}>رجوع</button>
             </div>
           </div>
         </div>
@@ -1167,8 +1180,8 @@ export default function ProductDetails() {
         }
         @media (max-width: 767px) {
           .container {
-            padding-left: 4px !important;
-            padding-right: 4px !important;
+            padding-left: 30px !important;
+            padding-right: 30px !important;
           }
           .row.mb-4.align-items-center {
             flex-direction: column !important;
@@ -1184,8 +1197,12 @@ export default function ProductDetails() {
             width: 100% !important;
             max-width: 100vw !important;
           }
+          .name
+          {
+            font-size: 1.5em !important;
+          }
         }
       `}</style>
     </>
   );
-} 
+}

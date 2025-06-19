@@ -1,32 +1,21 @@
-import React, { useState, useEffect } from "react";
+import  { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import {  useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
-import { Box, Grid, IconButton, Typography } from "@mui/material";
+import { Box, Grid, Typography } from "@mui/material";
 import { Image } from "react-bootstrap";
-import { useTheme } from '@mui/material/styles';
-import { useMediaQuery } from '@mui/material';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import "./Shop.css";
 import { frontendAPI } from '../services/api';
 
 const API_URL = process.env.REACT_APP_API_URL 
 
 export default function Shop() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [page, setPage] = useState(0);
-  const [categoriesPerPage, setCategoriesPerPage] = useState(9);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,30 +31,6 @@ export default function Shop() {
     minRating: '',
     inStock: ''
   });
-
-  useEffect(() => {
-    if (isMobile) {
-      setCategoriesPerPage(3);
-    } else if (isTablet) {
-      setCategoriesPerPage(6);
-    } else if (isDesktop) {
-      setCategoriesPerPage(9);
-    }
-  }, [isMobile, isTablet, isDesktop]);
-
-  const pageCount = Math.ceil(categories.length / categoriesPerPage);
-  const startIdx = page * categoriesPerPage;
-  const endIdx = startIdx + categoriesPerPage;
-  const currentCategories = categories.slice(startIdx, endIdx);
-
-  const handlePrev = () => {
-    setPage((prev) => (prev > 0 ? prev - 1 : prev));
-    setCategories(currentCategories)
-  };
-  const handleNext = () => {
-    setPage((prev) => (prev < pageCount - 1 ? prev + 1 : prev));
-    setCategories(currentCategories)
-  };
 
   // Fetch initial products and categories
   useEffect(() => {
@@ -292,9 +257,12 @@ export default function Shop() {
             <Grid onClick={showAllProducts} minHeight={110} minWidth={110} px={0} sx={{
               cursor: 'pointer',
               scrollSnapAlign: 'center',
-              border: selectedCategory === '' ? '2px solid #007bff' : '2px solid transparent',
               borderRadius: '50%',
-              padding: '4px'
+              padding: '4px',
+               transition: 'border 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
             }} 
               rowSpacing={2}
             >
@@ -307,6 +275,7 @@ export default function Shop() {
                 style={{
                   objectFit: 'cover',
                   marginBottom: 8,
+                  border: selectedCategory === '' ? '2px solid #007bff' : '2px solid transparent',
                 }}
               />
               <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title="جميع المنتجات">
@@ -318,9 +287,12 @@ export default function Shop() {
               <Grid key={cat._id} onClick={() => fetchProductCat(cat._id, cat.name)} minHeight={110} minWidth={110} px={0} sx={{
                 cursor: 'pointer',
                 scrollSnapAlign: 'center',
-                border: selectedCategory === cat.name ? '2px solid #007bff' : '2px solid transparent',
                 borderRadius: '50%',
-                padding: '4px'
+                padding: '4px',
+                transition: 'border 0.3s ease',
+                '&:hover': {
+                  transform: 'scale(1.05)',
+                },
               }} 
                 rowSpacing={2}
               >
@@ -333,6 +305,7 @@ export default function Shop() {
                   style={{
                     objectFit: 'cover',
                     marginBottom: 8,
+                    border: selectedCategory === cat.name ? '2px solid #007bff' : '2px solid transparent',
                   }}
                 />
                 <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title={cat.name}>

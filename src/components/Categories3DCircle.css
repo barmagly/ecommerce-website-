@@ -337,11 +337,11 @@
   }
   
   .categories-3d-arrow.right {
-    right: 5px !important;
+    right: -90px !important;
   }
   
   .categories-3d-arrow.left {
-    left: 5px !important;
+    left: -90px !important;
   }
   .categories-3d-image img {
     width: 30px !important;

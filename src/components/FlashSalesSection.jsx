@@ -91,20 +91,20 @@ export default function FlashSalesSection() {
   };
 
   const scrollToNext = useCallback(() => {
-    console.log('scrollToNext called', { 
-      hasRef: !!scrollContainerRef.current, 
-      isScrolling, 
-      productsLength: products.length 
+    console.log('scrollToNext called', {
+      hasRef: !!scrollContainerRef.current,
+      isScrolling,
+      productsLength: products.length
     });
-    
+
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       const container = scrollContainerRef.current;
       const cardWidth = 300;
       const maxScroll = container.scrollWidth - container.clientWidth;
-      
+
       let newScrollLeft = container.scrollLeft + cardWidth;
-      
+
       console.log('Scroll details:', {
         currentScroll: container.scrollLeft,
         newScrollLeft,
@@ -113,17 +113,17 @@ export default function FlashSalesSection() {
         scrollWidth: container.scrollWidth,
         clientWidth: container.clientWidth
       });
-      
+
       // إذا وصلنا للنهاية، نعود للبداية
       if (newScrollLeft >= maxScroll) {
         newScrollLeft = 0;
       }
-      
-      container.scrollTo({ 
-        left: newScrollLeft, 
-        behavior: 'smooth' 
+
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
       });
-      
+
       setTimeout(() => {
         setIsScrolling(false);
       }, 800);
@@ -131,20 +131,20 @@ export default function FlashSalesSection() {
   }, [isScrolling, products.length]);
 
   const scrollToPrev = useCallback(() => {
-    console.log('scrollToPrev called', { 
-      hasRef: !!scrollContainerRef.current, 
-      isScrolling, 
-      productsLength: products.length 
+    console.log('scrollToPrev called', {
+      hasRef: !!scrollContainerRef.current,
+      isScrolling,
+      productsLength: products.length
     });
-    
+
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       const container = scrollContainerRef.current;
       const cardWidth = 300;
       const maxScroll = container.scrollWidth - container.clientWidth;
-      
+
       let newScrollLeft = container.scrollLeft - cardWidth;
-      
+
       console.log('Scroll details:', {
         currentScroll: container.scrollLeft,
         newScrollLeft,
@@ -153,17 +153,17 @@ export default function FlashSalesSection() {
         scrollWidth: container.scrollWidth,
         clientWidth: container.clientWidth
       });
-      
+
       // إذا وصلنا للبداية، نذهب للنهاية
       if (newScrollLeft <= 0) {
         newScrollLeft = maxScroll;
       }
-      
-      container.scrollTo({ 
-        left: newScrollLeft, 
-        behavior: 'smooth' 
+
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
       });
-      
+
       setTimeout(() => {
         setIsScrolling(false);
       }, 800);
@@ -179,17 +179,17 @@ export default function FlashSalesSection() {
         const container = scrollContainerRef.current;
         const cardWidth = 300;
         const maxScroll = container.scrollWidth - container.clientWidth;
-        
+
         let newScrollLeft = container.scrollLeft + cardWidth;
-        
+
         // إذا وصلنا للنهاية، نعود للبداية
         if (newScrollLeft >= maxScroll) {
           newScrollLeft = 0;
         }
-        
-        container.scrollTo({ 
-          left: newScrollLeft, 
-          behavior: 'smooth' 
+
+        container.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
         });
       }
     }, 3000);
@@ -200,9 +200,27 @@ export default function FlashSalesSection() {
   const handleMouseEnter = () => {
     setIsAutoScrolling(false);
   };
-  
+
   const handleMouseLeave = () => {
     setIsAutoScrolling(true);
+  };
+
+  const StarRating = ({ rating }) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<i key={i} className="fas fa-star text-warning"></i>);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<i key={i} className="fas fa-star-half-alt text-warning"></i>);
+      } else {
+        stars.push(<i key={i} className="far fa-star text-warning"></i>);
+      }
+    }
+
+    return <div className="d-flex gap-1">{stars}</div>;
   };
 
   return (
@@ -217,8 +235,8 @@ export default function FlashSalesSection() {
               إذا استمرت المشكلة، يرجى التحقق من اتصال الإنترنت أو المحاولة لاحقاً
             </small>
             <br />
-            <button 
-              className="btn btn-outline-danger mt-3" 
+            <button
+              className="btn btn-outline-danger mt-3"
               onClick={() => window.location.reload()}
             >
               <i className="fas fa-redo me-2"></i>
@@ -240,14 +258,6 @@ export default function FlashSalesSection() {
           <div className="alert alert-success" role="alert">
             <i className="fas fa-star me-2"></i>
             عرض {products.length} منتج من الأعلى تقييماً
-          </div>
-        </div>
-      )}
-      {!isShowingAllProducts && products.length > 4 && (
-        <div className="container py-3">
-          <div className="alert alert-info" role="alert">
-            <i className="fas fa-thumbs-up me-2"></i>
-            عرض {products.length} منتج من الأعلى تقييماً - استخدم أزرار التمرير للتنقل
           </div>
         </div>
       )}
@@ -274,15 +284,15 @@ export default function FlashSalesSection() {
           )}
         </div>
       </div>
-      
+
       {/* قائمة قابلة للتمرير */}
-      <div 
+      <div
         className="scrollable-products-container ms-lg-5 mb-5 position-relative"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         {/* أزرار التمرير */}
-        <button 
+        <button
           className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
           onClick={scrollToPrev}
           onMouseEnter={handleMouseEnter}
@@ -305,9 +315,9 @@ export default function FlashSalesSection() {
             transition: 'all 0.3s ease'
           }}
         >
-          <i className="fas fa-chevron-right"></i>
+          <i className="fas fa-chevron-left"></i>
         </button>
-        <button 
+        <button
           className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
           onClick={scrollToNext}
           onMouseEnter={handleMouseEnter}
@@ -330,7 +340,7 @@ export default function FlashSalesSection() {
             transition: 'all 0.3s ease'
           }}
         >
-          <i className="fas fa-chevron-left"></i>
+          <i className="fas fa-chevron-right"></i>
         </button>
 
         {products.length === 0 && !isLoading ? (
@@ -338,8 +348,8 @@ export default function FlashSalesSection() {
             <div className="alert alert-info" role="alert">
               لا توجد منتجات متاحة حالياً
               <br />
-              <button 
-                className="btn btn-outline-primary mt-3" 
+              <button
+                className="btn btn-outline-primary mt-3"
                 onClick={() => window.location.reload()}
               >
                 <i className="fas fa-redo me-2"></i>
@@ -351,9 +361,9 @@ export default function FlashSalesSection() {
           <>
             <div className="scrollable-products-wrapper" ref={scrollContainerRef}>
               {products?.map((product, index) => (
-                <div 
-                  key={product?._id || product?.id} 
-                  className="scrollable-product-card" 
+                <div
+                  key={product?._id || product?.id}
+                  className="scrollable-product-card"
                   data-aos="zoom-in"
                   style={{
                     animation: `slideInUpDown ${1.6 + index * 0.1}s ease-out`
@@ -361,9 +371,9 @@ export default function FlashSalesSection() {
                 >
                   <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
                     <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                      <img 
-                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'} 
-                        alt={product?.name || 'Product'} 
+                      <img
+                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'}
+                        alt={product?.name || 'Product'}
                         className="img-fluid mb-3"
                         style={{ height: '200px', objectFit: 'contain' }}
                       />
@@ -377,18 +387,14 @@ export default function FlashSalesSection() {
                         )}
                       </div>
                       <div className="d-flex justify-content-center align-items-center gap-1 mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <i 
-                            key={i} 
-                            className={`fas fa-star ${i < Math.floor(product?.ratings?.average || 5) ? 'text-warning' : 'text-muted'}`}
-                            style={{ fontSize: '0.8rem' }}
-                          ></i>
-                        ))}
-                        <span className="text-muted small">({product?.ratings?.count || 0})</span>
+                        <StarRating rating={product.ratings?.average || 0} />
+                        {product.ratings?.count > 0 && (
+                          <small className="text-muted ms-1">({product.ratings.count})</small>
+                        )}
                       </div>
                     </div>
-                    <button 
-                      className="btn btn-danger w-100 mt-auto" 
+                    <button
+                      className="btn btn-danger w-100 mt-auto"
                       onClick={() => handleAddToCart(product?._id)}
                       style={{ transition: 'all 0.3s ease' }}
                     >

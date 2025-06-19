@@ -161,7 +161,7 @@ export default function ShopProducts({ products = [] }) {
           >
             <div className="product-img-wrapper mb-2 position-relative w-100 d-flex justify-content-center align-items-center" style={{ height: 180, overflow: 'hidden' }}>
               <img
-                src={item.images?.[0]?.url || item.imageCover || PLACEHOLDER_IMG}
+                src={item.imageCover}
                 alt={item.name}
                 className="product-img-main"
                 style={{ height: 170, objectFit: 'contain', borderRadius: 12, background: '#f6f6f6', width: '100%', transition: 'transform 0.3s' }}

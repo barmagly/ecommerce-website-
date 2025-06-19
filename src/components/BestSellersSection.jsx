@@ -64,7 +64,7 @@ export default function BestSellersSection() {
     }
     fetchPro();
   }, []);
-  
+
   const handleAddToCart = (productId) => {
     if (!isAuthenticated) {
       toast.info('يرجى تسجيل الدخول لإضافة المنتج إلى السلة', {
@@ -99,36 +99,36 @@ export default function BestSellersSection() {
       const container = scrollContainerRef.current;
       const cardWidth = 300; // عرض البطاقة + المسافة بينها
       const maxScroll = container.scrollWidth - container.clientWidth;
-      
+
       // استخدام آخر اتجاه تم استخدامه
       if (lastScrollDirection === 'right') {
         // التمرير للبطاقة التالية مع انيميشن
         let newScrollLeft = container.scrollLeft + cardWidth;
-        
+
         // إذا وصلنا للنهاية، نعود للبداية
         if (newScrollLeft >= maxScroll) {
           newScrollLeft = 0;
         }
-        
-        container.scrollTo({ 
-          left: newScrollLeft, 
-          behavior: 'smooth' 
+
+        container.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
         });
       } else {
         // التمرير لليسار
         let newScrollLeft = container.scrollLeft - cardWidth;
-        
+
         // إذا وصلنا للبداية، نذهب للنهاية
         if (newScrollLeft <= 0) {
           newScrollLeft = maxScroll;
         }
-        
-        container.scrollTo({ 
-          left: newScrollLeft, 
-          behavior: 'smooth' 
+
+        container.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
         });
       }
-      
+
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
@@ -143,20 +143,20 @@ export default function BestSellersSection() {
       const container = scrollContainerRef.current;
       const cardWidth = 300;
       const maxScroll = container.scrollWidth - container.clientWidth;
-      
+
       // التمرير للبطاقة السابقة مع انيميشن
       let newScrollLeft = container.scrollLeft - cardWidth;
-      
+
       // إذا وصلنا للبداية، نذهب للنهاية
       if (newScrollLeft <= 0) {
         newScrollLeft = maxScroll;
       }
-      
-      container.scrollTo({ 
-        left: newScrollLeft, 
-        behavior: 'smooth' 
+
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
       });
-      
+
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
@@ -171,20 +171,20 @@ export default function BestSellersSection() {
       const container = scrollContainerRef.current;
       const cardWidth = 300; // عرض البطاقة + المسافة بينها
       const maxScroll = container.scrollWidth - container.clientWidth;
-      
+
       // التمرير للبطاقة التالية مع انيميشن
       let newScrollLeft = container.scrollLeft + cardWidth;
-      
+
       // إذا وصلنا للنهاية، نعود للبداية
       if (newScrollLeft >= maxScroll) {
         newScrollLeft = 0;
       }
-      
-      container.scrollTo({ 
-        left: newScrollLeft, 
-        behavior: 'smooth' 
+
+      container.scrollTo({
+        left: newScrollLeft,
+        behavior: 'smooth'
       });
-      
+
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
@@ -203,18 +203,18 @@ export default function BestSellersSection() {
         const container = scrollContainerRef.current;
         const cardWidth = 300;
         const maxScroll = container.scrollWidth - container.clientWidth;
-        
+
         // التمرير للأمام بشكل مستمر
         let newScrollLeft = container.scrollLeft + cardWidth;
-        
+
         // إذا وصلنا للنهاية، نعود للبداية بدون توقف
         if (newScrollLeft >= maxScroll) {
           newScrollLeft = 0;
         }
-        
-        container.scrollTo({ 
-          left: newScrollLeft, 
-          behavior: 'smooth' 
+
+        container.scrollTo({
+          left: newScrollLeft,
+          behavior: 'smooth'
         });
       }
     };
@@ -242,9 +242,27 @@ export default function BestSellersSection() {
   const handleMouseEnter = () => {
     setIsAutoScrolling(false);
   };
-  
+
   const handleMouseLeave = () => {
     setIsAutoScrolling(true);
+  };
+
+   const StarRating = ({ rating }) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+
+    for (let i = 0; i < 5; i++) {
+      if (i < fullStars) {
+        stars.push(<i key={i} className="fas fa-star text-warning"></i>);
+      } else if (i === fullStars && hasHalfStar) {
+        stars.push(<i key={i} className="fas fa-star-half-alt text-warning"></i>);
+      } else {
+        stars.push(<i key={i} className="far fa-star text-warning"></i>);
+      }
+    }
+
+    return <div className="d-flex gap-1">{stars}</div>;
   };
 
   return (
@@ -259,8 +277,8 @@ export default function BestSellersSection() {
               إذا استمرت المشكلة، يرجى التحقق من اتصال الإنترنت أو المحاولة لاحقاً
             </small>
             <br />
-            <button 
-              className="btn btn-outline-danger mt-3" 
+            <button
+              className="btn btn-outline-danger mt-3"
               onClick={() => window.location.reload()}
             >
               <i className="fas fa-redo me-2"></i>
@@ -282,14 +300,6 @@ export default function BestSellersSection() {
           <div className="alert alert-success" role="alert">
             <i className="fas fa-fire me-2"></i>
             عرض {products.length} منتج من الأكثر مبيعاً
-          </div>
-        </div>
-      )}
-      {!isShowingAllProducts && products.length > 4 && (
-        <div className="container py-3">
-          <div className="alert alert-info" role="alert">
-            <i className="fas fa-thumbs-up me-2"></i>
-            عرض {products.length} منتج من الأكثر مبيعاً - استخدم أزرار التمرير للتنقل
           </div>
         </div>
       )}
@@ -316,7 +326,7 @@ export default function BestSellersSection() {
           )}
         </div>
         <div className="d-flex align-items-center gap-2">
-          <button 
+          <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
             onClick={scrollToPrev}
             onMouseEnter={handleMouseEnter}
@@ -328,9 +338,9 @@ export default function BestSellersSection() {
               zIndex: 10
             }}
           >
-            <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-left"></i>
           </button>
-          <button 
+          <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
             onClick={scrollToNextManual}
             onMouseEnter={handleMouseEnter}
@@ -342,13 +352,13 @@ export default function BestSellersSection() {
               zIndex: 10
             }}
           >
-            <i className="fas fa-chevron-left"></i>
+            <i className="fas fa-chevron-right"></i>
           </button>
         </div>
       </div>
-      
+
       {/* قائمة قابلة للتمرير */}
-      <div 
+      <div
         className="scrollable-products-container ms-lg-5 mb-5"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
@@ -358,8 +368,8 @@ export default function BestSellersSection() {
             <div className="alert alert-info" role="alert">
               لا توجد منتجات متاحة حالياً
               <br />
-              <button 
-                className="btn btn-outline-primary mt-3" 
+              <button
+                className="btn btn-outline-primary mt-3"
                 onClick={() => window.location.reload()}
               >
                 <i className="fas fa-redo me-2"></i>
@@ -371,9 +381,9 @@ export default function BestSellersSection() {
           <>
             <div className="scrollable-products-wrapper" ref={scrollContainerRef}>
               {products?.map((product, index) => (
-                <div 
-                  key={product?._id || product?.id} 
-                  className="scrollable-product-card" 
+                <div
+                  key={product?._id || product?.id}
+                  className="scrollable-product-card"
                   data-aos="zoom-in"
                   style={{
                     animation: `slideInUpDown ${0.6 + index * 0.1}s ease-out`
@@ -381,9 +391,9 @@ export default function BestSellersSection() {
                 >
                   <div className="flashsales-card card h-100 p-3 d-flex flex-column align-items-center justify-content-center">
                     <Link to={`/product/${product?._id}`} style={{ textDecoration: 'none', color: 'inherit', width: '100%' }}>
-                      <img 
-                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'} 
-                        alt={product?.name || 'Product'} 
+                      <img
+                        src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'}
+                        alt={product?.name || 'Product'}
                         className="img-fluid mb-3"
                         style={{ height: '200px', objectFit: 'contain' }}
                       />
@@ -397,18 +407,15 @@ export default function BestSellersSection() {
                         )}
                       </div>
                       <div className="d-flex justify-content-center align-items-center gap-1 mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <i 
-                            key={i} 
-                            className={`fas fa-star ${i < Math.floor(product?.ratings?.average || 5) ? 'text-warning' : 'text-muted'}`}
-                            style={{ fontSize: '0.8rem' }}
-                          ></i>
-                        ))}
-                        <span className="text-muted small">({product?.ratings?.count || 0})</span>
+                        <StarRating rating={product.ratings?.average || 0} />
+                        {product.ratings?.count > 0 && (
+                          <small className="text-muted ms-1">({product.ratings.count})</small>
+                        )}
+
                       </div>
                     </div>
-                    <button 
-                      className="btn btn-danger w-100 mt-auto" 
+                    <button
+                      className="btn btn-danger w-100 mt-auto"
                       onClick={() => handleAddToCart(product?._id)}
                       style={{ transition: 'all 0.3s ease' }}
                     >
