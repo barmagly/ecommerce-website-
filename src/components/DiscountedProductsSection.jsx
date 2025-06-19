@@ -53,20 +53,17 @@ export default function DiscountedProductsSection() {
   if (error) return <div className="container py-5 text-center"><div className="alert alert-danger">{error}</div></div>;
 
   return (
-    <div className="container py-5">
-      <div className="d-flex align-items-center gap-3 mb-4">
-        <i className="fas fa-tags fa-2x text-danger"></i>
-        <h2 className="fw-bold mb-0 text-danger">عروض وخصومات</h2>
-      </div>
-      {products.length === 0 ? (
-        <div className="alert alert-info text-center my-5" role="alert">
-          لا توجد عروض أو خصومات متاحة حالياً
+    products.length !== 0 ? (
+      <div className="container py-5">
+        <div className="d-flex align-items-center gap-3 mb-4">
+          <i className="fas fa-tags fa-2x text-danger"></i>
+          <h2 className="fw-bold mb-0 text-danger">عروض وخصومات</h2>
         </div>
-      ) : (
+
         <Slider ref={sliderRef} {...settings}>
           {products.map(product => (
             <div key={product._id} className="px-2">
-              <div className="product-card-pro h-100 position-relative bg-white rounded p-3 d-flex flex-column" style={{minHeight: 420, cursor: 'pointer', border: '1px solid #eee'}}>
+              <div className="product-card-pro h-100 position-relative bg-white rounded p-3 d-flex flex-column" style={{ minHeight: 420, cursor: 'pointer', border: '1px solid #eee' }}>
                 <div className="product-img-wrapper mb-2 position-relative w-100 d-flex justify-content-center align-items-center" style={{ height: 180, overflow: 'hidden' }}>
                   <img
                     src={product.imageCover || product.images?.[0]?.url || '/images/Placeholder.png'}
@@ -76,7 +73,7 @@ export default function DiscountedProductsSection() {
                     onError={e => { e.target.onerror = null; e.target.src = '/images/Placeholder.png'; }}
                   />
                   {product.originalPrice && product.originalPrice > product.price && (
-                    <span className="badge bg-danger position-absolute top-0 start-0 m-2" style={{zIndex:2, fontSize: '0.95em', borderRadius: '12px', padding: '6px 12px'}}>
+                    <span className="badge bg-danger position-absolute top-0 start-0 m-2" style={{ zIndex: 2, fontSize: '0.95em', borderRadius: '12px', padding: '6px 12px' }}>
                       خصم {Math.round(100 - (product.price / product.originalPrice) * 100)}%
                     </span>
                   )}
@@ -87,7 +84,7 @@ export default function DiscountedProductsSection() {
                   <div className="mb-2 d-flex align-items-center justify-content-center gap-2">
                     <span className="text-danger fw-bold fs-5">{product.price} ج.م</span>
                     {product.originalPrice && product.originalPrice > product.price && (
-                      <span className="text-muted text-decoration-line-through" style={{fontSize:'1em'}}>{product.originalPrice} ج.م</span>
+                      <span className="text-muted text-decoration-line-through" style={{ fontSize: '1em' }}>{product.originalPrice} ج.م</span>
                     )}
                   </div>
                   <a href={`/product/${product._id}`} className="btn btn-outline-danger w-100 mt-auto">عرض التفاصيل</a>
@@ -96,7 +93,7 @@ export default function DiscountedProductsSection() {
             </div>
           ))}
         </Slider>
-      )}
-    </div>
+      </div>
+    ) : null
   );
 } 
