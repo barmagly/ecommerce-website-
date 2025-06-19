@@ -50,7 +50,7 @@ export default function Profile() {
   const [input2, setInput2] = useState("");
   const [input3, setInput3] = useState("");
   const [input4, setInput4] = useState("");
-  const [input5, setInput5] = useState("");
+  const [input5, setInput5] = useState(user?.phone || '');
   const [input6, setInput6] = useState("");
   const [input7, setInput7] = useState("");
   const [activeSection, setActiveSection] = useState("profile");
@@ -157,6 +157,7 @@ export default function Profile() {
       setInput2(user.name?.split(' ').slice(1).join(' ') || '');
       setInput3(user.email || '');
       setInput4(user.addresses?.[0] || '');
+      setInput5(user.phone || '');
       // تحديث صورة البروفايل
       if (user.profileImg) {
         let imageUrl;
@@ -474,12 +475,16 @@ export default function Profile() {
       if (input4) {
         formData.append("addresses", input4)
       }
+      if (input5) {
+        formData.append('phone', input5);
+      }
 
       console.log('📤 Sending profile update with data:', {
         name: `${input1} ${input2}`.trim(),
         email: input3,
         hasImage: !!profileImage,
-        address: input4
+        address: input4,
+        phone: input5
       });
 
       const result = await dispatch(updateUserProfileThunk(formData)).unwrap();
@@ -651,8 +656,14 @@ export default function Profile() {
                 <div className="row mb-3">
                   <div className="col-md-6 mb-3 mb-md-0">
                     <label className="form-label">البريد الإلكتروني</label>
-                    <input type="email" className="form-control" value={input3} onChange={e => setInput3(e.target.value)} disabled />
+                    <input type="email" className="form-control" value={input3} onChange={e => setInput3(e.target.value)} />
                   </div>
+                  <div className="col-md-6">
+                    <label className="form-label">رقم الهاتف</label>
+                    <input type="text" className="form-control" value={input5} onChange={e => setInput5(e.target.value)} />
+                  </div>
+                </div>
+                <div className="row mb-3">
                   <div className="col-md-6">
                     <label className="form-label">العنوان</label>
                     <input type="text" className="form-control" value={input4} onChange={e => setInput4(e.target.value)} />
@@ -663,6 +674,8 @@ export default function Profile() {
                     setInput1(user?.name?.split(' ')[0] || '');
                     setInput2(user?.name?.split(' ').slice(1).join(' ') || '');
                     setInput3(user?.email || '');
+                    setInput4(user?.addresses?.[0] || '');
+                    setInput5(user?.phone || '');
                     setImagePreview(user?.profileImg);
                     setProfileImage(null);
                   }}>إلغاء</button>
@@ -757,112 +770,6 @@ export default function Profile() {
                       </>
                     ) : 'تغيير كلمة المرور'}
                   </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        );
-      case "address":
-        return (
-          <div className="card shadow-sm border-0">
-            <div className="card-body">
-              <h4 className="fw-bold text-primary mb-4">دفتر العناوين</h4>
-              {addressSuccess && (
-                <div className="alert alert-success alert-dismissible fade show" role="alert">
-                  {addressOperation === 'add' && 'تم إضافة العنوان بنجاح'}
-                  {addressOperation === 'update' && 'تم تحديث العنوان بنجاح'}
-                  {addressOperation === 'delete' && 'تم حذف العنوان بنجاح'}
-                  <button type="button" className="btn-close" onClick={() => {
-                    setAddressSuccess(false);
-                    setAddressOperation('');
-                  }}></button>
-                </div>
-              )}
-              {addressError && (
-                <div className="alert alert-danger alert-dismissible fade show" role="alert">
-                  {addressError}
-                  <button type="button" className="btn-close" onClick={() => setAddressError(null)}></button>
-                </div>
-              )}
-              <ul className="list-group mb-4">
-                {localAddresses.map(addr => (
-                  <li key={addr._id} className="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                      <div className="fw-bold">{addr.label} - {addr.city}</div>
-                      <div className="text-muted small">{addr.details}</div>
-                    </div>
-                    <div>
-                      <button
-                        className="btn btn-sm btn-outline-primary me-2"
-                        onClick={() => handleEditAddress(addr)}
-                        disabled={addressLoading}
-                      >
-                        تعديل
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleDeleteAddress(addr._id)}
-                        disabled={addressLoading}
-                      >
-                        حذف
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-              <form onSubmit={editId ? handleUpdateAddress : handleAddAddress} className="row g-2 align-items-end">
-                <div className="col-md-3">
-                  <label className="form-label">اسم العنوان</label>
-                  <input
-                    className="form-control"
-                    value={newAddress.label}
-                    onChange={e => setNewAddress({ ...newAddress, label: e.target.value })}
-                    placeholder="مثال: المنزل"
-                    required
-                  />
-                </div>
-                <div className="col-md-3">
-                  <label className="form-label">المدينة</label>
-                  <input
-                    className="form-control"
-                    value={newAddress.city}
-                    onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
-                    placeholder="مثال: القاهرة"
-                    required
-                  />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">تفاصيل العنوان</label>
-                  <input
-                    className="form-control"
-                    value={newAddress.details}
-                    onChange={e => setNewAddress({ ...newAddress, details: e.target.value })}
-                    placeholder="مثال: شارع التحرير"
-                    required
-                  />
-                </div>
-                <div className="col-md-2">
-                  <div className="d-flex gap-2">
-                    {editId && (
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary flex-grow-1"
-                        onClick={handleCancelEdit}
-                        disabled={addressLoading}
-                      >
-                        إلغاء
-                      </button>
-                    )}
-                    <button
-                      className="btn btn-success flex-grow-1"
-                      type="submit"
-                      disabled={addressLoading}
-                    >
-                      {addressLoading ? (
-                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                      ) : editId ? "تحديث" : "إضافة"}
-                    </button>
-                  </div>
                 </div>
               </form>
             </div>
@@ -1004,214 +911,6 @@ export default function Profile() {
             </div>
           </div>
         );
-      case "returns":
-      case "cancellations":
-        return (
-          <>
-            <div className="card shadow-sm border-0">
-              <div className="card-body">
-                <h4 className="fw-bold text-primary mb-4">{activeSection === "returns" ? "المرتجعات" : "الإلغاءات"}</h4>
-                {ordersLoading ? (
-                  <div className="text-center py-4">
-                    <div className="spinner-border text-primary" role="status">
-                      <span className="visually-hidden">جاري التحميل...</span>
-                    </div>
-                  </div>
-                ) : ordersError ? (
-                  <div className="alert alert-danger">
-                    {ordersError}
-                  </div>
-                ) : (
-                  <>
-                    {activeSection === "returns" && returns.length === 0 && (
-                      <div className="text-center py-4">
-                        <i className="fas fa-undo text-muted mb-3" style={{ fontSize: '3rem' }}></i>
-                        <h5 className="text-muted">لا توجد مرتجعات</h5>
-                      </div>
-                    )}
-                    {activeSection === "cancellations" && cancellations.length === 0 && (
-                      <div className="text-center py-4">
-                        <i className="fas fa-times-circle text-muted mb-3" style={{ fontSize: '3rem' }}></i>
-                        <h5 className="text-muted">لا توجد إلغاءات</h5>
-                      </div>
-                    )}
-                    {(activeSection === "returns" ? returns : cancellations).length > 0 && (
-                      <div className="table-responsive">
-                        <table className="table table-bordered text-center">
-                          <thead className="table-light">
-                            <tr>
-                              <th>رقم الطلب</th>
-                              <th>التاريخ</th>
-                              <th>المبلغ</th>
-                              <th>الحالة</th>
-                              <th>التفاصيل</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {(activeSection === "returns" ? returns : cancellations).map(order => {
-                              const statusBadge = getStatusBadge(order.status);
-                              return (
-                                <tr key={order._id}>
-                                  <td>#{order._id.slice(-6)}</td>
-                                  <td>{new Date(order.createdAt).toLocaleDateString('ar-EG')}</td>
-                                  <td>{order.total} ج.م</td>
-                                  <td>
-                                    <span className={`badge ${statusBadge.class}`}>
-                                      {statusBadge.text}
-                                    </span>
-                                  </td>
-                                  <td>
-                                    <button
-                                      className="btn btn-sm btn-outline-primary"
-                                      onClick={() => handleShowOrderDetails(order)}
-                                    >
-                                      عرض التفاصيل
-                                    </button>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Order Details Modal */}
-            {selectedOrder && (
-              <div className="modal fade show" style={{ display: 'block', backgroundColor: 'rgba(0,0,0,0.5)' }}>
-                <div className="modal-dialog modal-lg">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h5 className="modal-title">تفاصيل الطلب #{selectedOrder._id.slice(-6)}</h5>
-                      <button type="button" className="btn-close" onClick={handleCloseOrderDetails}></button>
-                    </div>
-                    <div className="modal-body">
-                      <div className="row mb-4">
-                        <div className="col-md-6">
-                          <h6 className="fw-bold mb-3">معلومات الطلب</h6>
-                          <p className="mb-2">
-                            <span className="text-muted">التاريخ:</span> {new Date(selectedOrder.createdAt).toLocaleDateString('ar-EG')}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">الحالة:</span>
-                            <span className={`badge ${getStatusBadge(selectedOrder.status).class} ms-2`}>
-                              {getStatusBadge(selectedOrder.status).text}
-                            </span>
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">المبلغ الإجمالي:</span> {selectedOrder.total} ج.م
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">طريقة الدفع:</span> {
-                              selectedOrder.paymentMethod === 'paypal' ? 'باي بال' :
-                                selectedOrder.paymentMethod === 'bank_transfer' ? 'تحويل بنكي' :
-                                  selectedOrder.paymentMethod === 'cash_on_delivery' ? 'الدفع عند الاستلام' :
-                                    selectedOrder.paymentMethod
-                            }
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">حالة الدفع:</span> {
-                              selectedOrder.paymentStatus === 'pending' ? 'قيد الانتظار' :
-                                selectedOrder.paymentStatus === 'paid' ? 'تم الدفع' :
-                                  selectedOrder.paymentStatus
-                            }
-                          </p>
-                        </div>
-                        <div className="col-md-6">
-                          <h6 className="fw-bold mb-3">معلومات الشحن</h6>
-                          <p className="mb-2">
-                            <span className="text-muted">الاسم:</span> {selectedOrder.name}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">البريد الإلكتروني:</span> {selectedOrder.email}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">رقم الهاتف:</span> {selectedOrder.phone}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">العنوان:</span> {selectedOrder.address}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">المدينة:</span> {selectedOrder.city}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">الرمز البريدي:</span> {selectedOrder.postalCode}
-                          </p>
-                          <p className="mb-2">
-                            <span className="text-muted">الدولة:</span> {selectedOrder.country}
-                          </p>
-                        </div>
-                      </div>
-
-                      {selectedOrder.image && (
-                        <div className="mb-4">
-                          <h6 className="fw-bold mb-3">صورة إثبات الدفع</h6>
-                          <img
-                            src={selectedOrder.image}
-                            alt="إثبات الدفع"
-                            className="img-fluid rounded"
-                            style={{ maxHeight: '200px' }}
-                          />
-                        </div>
-                      )}
-
-                      <h6 className="fw-bold mb-3">المنتجات</h6>
-                      <div className="table-responsive">
-                        <table className="table table-bordered">
-                          <thead className="table-light">
-                            <tr>
-                              <th>المنتج</th>
-                              <th>السعر</th>
-                              <th>الكمية</th>
-                              <th>المجموع</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {selectedOrder.cartItems?.map((item, index) => (
-                              <tr key={index}>
-                                <td>
-                                  <div className="d-flex align-items-center">
-                                    <img
-                                      src={item.image}
-                                      alt={item.name}
-                                      style={{ width: '50px', height: '50px', objectFit: 'cover', marginLeft: '10px' }}
-                                    />
-                                    <div>
-                                      <div>{item.name}</div>
-                                      {item.variantId && (
-                                        <small className="text-muted">(متغير)</small>
-                                      )}
-                                    </div>
-                                  </div>
-                                </td>
-                                <td>{item.price} ج.م</td>
-                                <td>{item.quantity}</td>
-                                <td>{item.price * item.quantity} ج.م</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                          <tfoot>
-                            <tr>
-                              <td colSpan="3" className="text-start fw-bold">المجموع الكلي</td>
-                              <td className="fw-bold">{selectedOrder.total} ج.م</td>
-                            </tr>
-                          </tfoot>
-                        </table>
-                      </div>
-                    </div>
-                    <div className="modal-footer">
-                      <button type="button" className="btn btn-secondary" onClick={handleCloseOrderDetails}>إغلاق</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </>
-        );
       default:
         return null;
     }
@@ -1228,17 +927,19 @@ export default function Profile() {
           <div className="row g-4">
             {/* Sidebar */}
             <div className="col-lg-3">
+              <div className="card shadow-sm mb-4 p-3 text-center align-items-center border-0">
+                <img
+                  src={user?.profileImg || 'https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740'}
+                  alt="Avatar"
+                  className="rounded-circle mb-2"
+                  style={{ width: 90, height: 90, objectFit: 'cover', border: '3px solid #e2e8f0' }}
+                />
+                <div className="fw-bold" style={{ fontSize: '1.1rem' }}>{user?.name}</div>
+                <div className="text-muted mb-2" style={{ fontSize: '0.95rem' }}>{user?.email}</div>
+              </div>
               <div className="list-group mb-4 shadow-sm">
                 <div className="list-group-item fw-bold bg-light">إدارة حسابي</div>
-                <button className={`list-group-item list-group-item-action${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}>الملف الشخصي</button>
-                {!isGoogleUser() && (
-                  <button className={`list-group-item list-group-item-action${activeSection === "password" ? " text-danger active" : ""}`} onClick={() => setActiveSection("password")}>تغيير كلمة المرور</button>
-                )}
-                <button className={`list-group-item list-group-item-action${activeSection === "address" ? " active" : ""}`} onClick={() => setActiveSection("address")}>دفتر العناوين</button>
-                <button className={`list-group-item list-group-item-action${activeSection === "payment" ? " active" : ""}`} onClick={() => setActiveSection("payment")}>خيارات الدفع</button>
-                <div className="list-group-item fw-bold bg-light mt-3">طلباتي</div>
-                <button className={`list-group-item list-group-item-action${activeSection === "returns" ? " active" : ""}`} onClick={() => setActiveSection("returns")}>المرتجعات</button>
-                <button className={`list-group-item list-group-item-action${activeSection === "cancellations" ? " active" : ""}`} onClick={() => setActiveSection("cancellations")}>الإلغاءات</button>
+                <button className={`list-group-item list-group-item-action d-flex align-items-center${activeSection === "profile" ? " text-danger active" : ""}`} onClick={() => setActiveSection("profile")}> <i className="fas fa-user ms-2"></i> الملف الشخصي</button>
               </div>
             </div>
             {/* Main Section */}

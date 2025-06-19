@@ -37,11 +37,14 @@ export default function SearchResults() {
   const products = useSelector(state => state.product.products || []);
   const dispatch = useDispatch();
 
+  // جلب المنتجات عند أول تحميل إذا لم تكن موجودة
   useEffect(() => {
-    // Fetch products if not already loaded
     if (!products || products.length === 0) {
       dispatch(getProductsThunk());
     }
+  }, [dispatch, products]);
+
+  useEffect(() => {
     setQuery(q);
     if (q.trim()) {
       setResults(
@@ -52,7 +55,7 @@ export default function SearchResults() {
     } else {
       setResults(products);
     }
-  }, [q, products, dispatch]);
+  }, [q, products]);
 
   const handleSearch = (e) => {
     e.preventDefault();

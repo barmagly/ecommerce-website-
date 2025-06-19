@@ -119,7 +119,10 @@ const Carts = () => {
     return matchesSearch;
   });
 
-  const paginatedCarts = filteredCarts.slice(
+  // Sort newest first
+  const sortedCarts = [...filteredCarts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+  const paginatedCarts = sortedCarts.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
@@ -135,7 +138,8 @@ const Carts = () => {
   };
 
   const formatCurrency = (amount) => {
-    return `${amount.toLocaleString('ar-SA')} ج.م`;
+    if (amount === undefined || amount === null || isNaN(amount)) return '0 ج.م';
+    return `${Number(amount).toLocaleString('ar-SA')} ج.م`;
   };
 
   const getTimeAgo = (dateString) => {
@@ -393,7 +397,7 @@ const Carts = () => {
               <List>
                 <ListItem>
                   <ListItemAvatar>
-                    <Avatar>
+                    <Avatar src={selectedCart.userID?.profileImg}>
                       {selectedCart.userID?.name?.[0]}
                     </Avatar>
                   </ListItemAvatar>
@@ -402,6 +406,21 @@ const Carts = () => {
                     secondary={selectedCart.userID?.email}
                   />
                 </ListItem>
+                {selectedCart.userID?.phone && (
+                  <ListItem>
+                    <ListItemText primary="رقم الهاتف" secondary={selectedCart.userID.phone} />
+                  </ListItem>
+                )}
+                {selectedCart.userID?.address && (
+                  <ListItem>
+                    <ListItemText primary="العنوان" secondary={selectedCart.userID.address} />
+                  </ListItem>
+                )}
+                {selectedCart.userID?.city && (
+                  <ListItem>
+                    <ListItemText primary="المدينة" secondary={selectedCart.userID.city} />
+                  </ListItem>
+                )}
               </List>
               <Divider sx={{ my: 2 }} />
               <Typography variant="h6" gutterBottom>

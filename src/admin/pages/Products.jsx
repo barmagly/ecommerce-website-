@@ -379,10 +379,10 @@ const Products = () => {
     }
 
     // التحقق من تفاصيل العنوان إذا كان النطاق نجع حمادي
-    if (formData.shippingAddressType === 'nag_hamadi' && !formData.shippingAddressDetails?.trim()) {
-      setFormErrors(prev => ({ ...prev, shippingAddressDetails: 'تفاصيل العنوان مطلوبة لنطاق نجع حمادي' }));
-      hasErrors = true;
-    }
+    // if (formData.shippingAddressType === 'nag_hamadi' && !formData.shippingAddressDetails?.trim()) {
+    //   setFormErrors(prev => ({ ...prev, shippingAddressDetails: 'تفاصيل العنوان مطلوبة لنطاق نجع حمادي' }));
+    //   hasErrors = true;
+    // }
 
     if (hasErrors) return;
 
@@ -492,7 +492,6 @@ const Products = () => {
 
         // إضافة بيانات الشحن
         formDataToSend.append('shippingAddressType', formData.shippingAddressType);
-        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
@@ -623,7 +622,6 @@ const Products = () => {
 
         // إضافة بيانات الشحن
         formDataToSend.append('shippingAddressType', formData.shippingAddressType);
-        formDataToSend.append('shippingAddressDetails', formData.shippingAddressDetails);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
@@ -2556,6 +2554,8 @@ const Products = () => {
                         fullWidth
                         required
                         label="اسم المنتج"
+                        id="product-name"
+                        name="name"
                         value={formData.name}
                         onChange={handleFormChange('name')}
                         error={!!formErrors.name}
@@ -2568,6 +2568,8 @@ const Products = () => {
                         fullWidth
                         required
                         label="العلامة التجارية"
+                        id="product-brand"
+                        name="brand"
                         value={formData.brand}
                         onChange={handleFormChange('brand')}
                         error={!!formErrors.brand}
@@ -2580,6 +2582,8 @@ const Products = () => {
                         fullWidth
                         required
                         label="الوصف"
+                        id="product-description"
+                        name="description"
                         multiline
                         minRows={3}
                         value={formData.description}
@@ -2793,17 +2797,7 @@ const Products = () => {
                         </Grid>
                         {formData.shippingAddressType === 'nag_hamadi' && (
                           <Grid item xs={12} md={6}>
-                            <TextField
-                              fullWidth
-                              required
-                              label="تفاصيل العنوان في نجع حمادي"
-                              value={formData.shippingAddressDetails}
-                              onChange={handleFormChange('shippingAddressDetails')}
-                              placeholder="مثال: شارع الرئيسي، حي المدينة"
-                              error={!!formErrors.shippingAddressDetails}
-                              helperText={formErrors.shippingAddressDetails}
-                              sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#ff9800' } } }}
-                            />
+                            {/* تم حذف حقل تفاصيل العنوان */}
                           </Grid>
                         )}
                       </Grid>

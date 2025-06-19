@@ -115,13 +115,13 @@ const menuItems = [
     color: '#0288d1',
     gradient: 'linear-gradient(135deg, #0288d1 0%, #0277bd 100%)'
   },
-  {
-    text: 'الخيارات',
-    icon: <VariantIcon />,
-    path: '/admin/variants',
-    color: '#7b1fa2',
-    gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
-  },
+  // {
+  //   text: 'الخيارات',
+  //   icon: <VariantIcon />,
+  //   path: '/admin/variants',
+  //   color: '#7b1fa2',
+  //   gradient: 'linear-gradient(135deg, #7b1fa2 0%, #6a1b9a 100%)'
+  // },
 
 ];
 

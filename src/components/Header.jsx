@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
+import { getProductsThunk } from "../services/Slice/product/product";
 
 const navLinks = [
   { label: "الرئيسية", href: "/" },
@@ -84,6 +85,13 @@ export default function Header() {
       setSuggestions([]);
     }
   }, [search, products]);
+
+  // جلب المنتجات عند أول تحميل إذا لم تكن موجودة
+  useEffect(() => {
+    if (!products || products.length === 0) {
+      dispatch(getProductsThunk());
+    }
+  }, [dispatch, products]);
 
   const handleSearch = (e) => {
     e.preventDefault();

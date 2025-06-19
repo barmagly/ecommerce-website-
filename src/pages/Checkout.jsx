@@ -807,7 +807,15 @@ export default function Checkout() {
                       }`} 
                       key={item?.variantId ? item?.variantId._id : item?.prdID._id}
                     >
-                      <img src={item?.variantId ? item?.variantId?.images[0].url : item?.prdID?.images[0].url} alt={item?.prdID?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
+                      <img src={
+                        item?.variantId && item?.variantId?.images && item?.variantId?.images[0]?.url
+                          ? item.variantId.images[0].url
+                          : item?.prdID?.images && item?.prdID?.images[0]?.url
+                            ? item.prdID.images[0].url
+                            : item?.prdID?.imageCover
+                              ? item.prdID.imageCover
+                              : '/images/Placeholder.png'
+                      } alt={item?.prdID?.name} style={{ width: 54, height: 54, borderRadius: 8, marginLeft: 8 }} />
                       <div className="flex-fill">
                         <span className="fw-bold">{item?.prdID?.name}</span>
                         <div className="text-muted small">
