@@ -13,6 +13,7 @@ import { frontendAPI } from '../services/api';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 
 const API_URL = process.env.REACT_APP_API_URL 
+console.log('🔗 API_URL:', API_URL);
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -43,16 +44,23 @@ export default function Shop() {
   // Handle URL parameters on page load
   useEffect(() => {
     const categoryParam = searchParams.get('category');
+    console.log('🔗 category param from URL:', categoryParam);
     if (categoryParam && categories.length > 0) {
       // Find the category by name
-      const category = categories.find(cat => cat.name === categoryParam);
+      const normalize = str => (str || '').trim().replace(/\s+/g, ' ');
+      const category = categories.find(cat => normalize(cat.name) === normalize(categoryParam));
       if (category) {
         fetchProductCat(category._id, category.name);
+        setSelectedCategory(category.name);
+      } else {
+        setFilteredProducts([]);
+        setSelectedCategory(categoryParam);
       }
     } else if (!categoryParam) {
       setSelectedCategory('');
+      setFilteredProducts(products);
     }
-  }, [categories, searchParams]);
+  }, [categories, searchParams, products]);
 
   const fetchProducts = async (discounted = false) => {
     try {
@@ -65,6 +73,7 @@ export default function Shop() {
           [];
       setProducts(productsData);
       setFilteredProducts(productsData);
+      console.log('🛒 All Products:', productsData);
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
       console.error("Error fetching products:", err);
@@ -76,13 +85,11 @@ export default function Shop() {
   const fetchCategories = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/categories`);
-
-      // Ensure we're setting an array
       const categoriesData = Array.isArray(response.data) ? response.data :
         response.data.categories ? response.data.categories :
           [];
-
       setCategories(categoriesData);
+      console.log('📦 Categories:', categoriesData);
     } catch (err) {
       console.error("Error fetching categories:", err);
       setCategories([]); // Set empty array on error
@@ -98,9 +105,10 @@ export default function Shop() {
       setLoading(true);
       setError(null);
       const response = await axios.get(`${API_URL}/api/products/category/${id}`)
-      setFilteredProducts(response.data)
+      setFilteredProducts(Array.isArray(response.data) ? response.data : response.data.products || [])
       setSearchParams({ category: name });
       setSelectedCategory(name);
+      console.log('🔎 Products for category', name, ':', response.data);
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
       console.error("Error fetching products:", err);
