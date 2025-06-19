@@ -50,7 +50,7 @@ export default function MainSlider() {
         if (!isTransitioning && slides.length > 0) {
           nextSlide();
         }
-      }, 1500); 
+      }, 3000); 
     };
 
     if (!loading && !error && slides.length > 0) {

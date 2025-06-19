@@ -180,6 +180,17 @@ export default function ProductDetails() {
   };
 
   const handleAddToCartClick = () => {
+    if (!token) {
+      toast.info('يجب تسجيل الدخول لإضافة المنتج إلى السلة', {
+        position: 'top-center',
+        rtl: true,
+        autoClose: 3000
+      });
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+      return;
+    }
     dispatch(addToCartThunk({
       productId: id,
       variantId: selectedVariant?._id,
