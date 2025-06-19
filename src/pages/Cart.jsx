@@ -42,16 +42,16 @@ export default function Cart() {
 
   const increaseQuantity = (variantId, prdID) => {
     // البحث عن المنتج في السلة
-    const cartItem = products.cartItems.find(item => 
+    const cartItem = products.cartItems.find(item =>
       item.variantId?._id === variantId && item.prdID?._id === prdID
     );
-    
+
     if (!cartItem) return;
-    
+
     const product = cartItem.prdID;
     const currentQuantity = cartItem.quantity;
     const maxQuantityPerOrder = product.maxQuantityPerOrder;
-    
+
     // التحقق من الحد الأقصى للشراء
     if (maxQuantityPerOrder && currentQuantity >= parseInt(maxQuantityPerOrder)) {
       toast.warning(`لا يمكن شراء أكثر من ${maxQuantityPerOrder} قطع من هذا المنتج في الطلب الواحد. الحد الأقصى المحدد من قبل الإدارة.`, {
@@ -61,7 +61,7 @@ export default function Cart() {
       });
       return;
     }
-    
+
     // التحقق من المخزون المتاح
     if (currentQuantity >= product.stock) {
       toast.warning('لا يوجد مخزون كافي لهذا المنتج', {
@@ -71,7 +71,7 @@ export default function Cart() {
       });
       return;
     }
-    
+
     dispatch(increaseQ({ variantId, prdID }));
   };
 
@@ -88,14 +88,14 @@ export default function Cart() {
     try {
       // Refresh cart data before proceeding
       await dispatch(getCartThunk()).unwrap();
-      
+
       // التحقق من نطاق الشحن للمنتجات
-      const hasNagHamadiOnlyProducts = products.cartItems.some(item => 
+      const hasNagHamadiOnlyProducts = products.cartItems.some(item =>
         item.prdID?.shippingAddress?.type === 'nag_hamadi'
       );
 
       if (hasNagHamadiOnlyProducts) {
-        toast.info('بعض المنتجات متاحة للشحن في نجع حمادي فقط. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
+        toast.info('بعض المنتجات متاحة للشحن في نجع حمادي و ضواحيها. سيتم التحقق من العنوان في صفحة إتمام الشراء.', {
           position: "top-center",
           rtl: true,
           autoClose: 5000
@@ -190,9 +190,8 @@ export default function Cart() {
         <div className="row">
           <div className="col-12 col-lg-8">
             {products.cartItems.map((item) => (
-              <div key={item._id} className={`card mb-3 ${
-                item.prdID?.shippingAddress?.type === 'nag_hamadi' ? 'border-warning' : ''
-              }`}>
+              <div key={item._id} className={`card mb-3 ${item.prdID?.shippingAddress?.type === 'nag_hamadi' ? 'border-warning' : ''
+                }`}>
                 <div className="row g-0">
                   <div className="col-md-4">
                     <img
@@ -239,7 +238,7 @@ export default function Cart() {
                       {item.prdID?.shippingAddress?.type === 'nag_hamadi' && (
                         <div className="alert alert-warning py-2 mb-2">
                           <small>
-                            🚚 <strong>متاح للشحن في نجع حمادي فقط</strong>
+                            🚚 <strong>متاح للشحن في نجع حمادي و ضواحيها</strong>
                           </small>
                         </div>
                       )}
@@ -256,7 +255,7 @@ export default function Cart() {
                           className="btn btn-outline-secondary btn-sm"
                           onClick={() => increaseQuantity(item.variantId?._id, item.prdID?._id)}
                           disabled={
-                            item.quantity >= item.prdID?.stock || 
+                            item.quantity >= item.prdID?.stock ||
                             (item.prdID?.maxQuantityPerOrder && item.quantity >= parseInt(item.prdID.maxQuantityPerOrder))
                           }
                         >

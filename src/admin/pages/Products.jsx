@@ -156,7 +156,7 @@ const Products = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === '' || product.category._id === filterCategory;
-    const matchesStatus = filterStatus === '' || product.stock === 0 ;
+    const matchesStatus = filterStatus === '' || product.stock === 0;
 
     return matchesSearch && matchesCategory && matchesStatus;
   });
@@ -181,12 +181,12 @@ const Products = () => {
       setLoading(true);
       const response = await productsAPI.getAll();
       console.log('Products fetched from server:', response.data.products);
-      
+
       // التحقق من قيم مصاريف الشحن ومدة التوصيل
       response.data.products.forEach(product => {
         console.log(`Product: ${product.name}, Shipping Cost: ${product.shippingCost}, Delivery Days: ${product.deliveryDays}`);
       });
-      
+
       setProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -274,7 +274,7 @@ const Products = () => {
         deliveryDays: product.deliveryDays || 2,
         maxQuantityPerOrder: product.maxQuantityPerOrder || ''
       };
-      
+
       console.log('Original product data:', product);
       console.log('Mapped product data for editing:', mappedProduct);
       console.log('Category mapping:', {
@@ -282,7 +282,7 @@ const Products = () => {
         mapped: mappedProduct.category,
         categories: categories.map(c => ({ id: c._id, name: c.name }))
       });
-      
+
       setFormData(mappedProduct);
       setDialogMode('edit');
       setSelectedProduct(product);
@@ -406,13 +406,13 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
-          
+
           // Handle maxQuantityPerOrder properly - only send if it has a valid value
           if (formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0) {
             formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder);
           }
           // Don't send the field at all if it's empty or invalid
-          
+
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
             supplierName: formData.supplierName,
@@ -459,12 +459,12 @@ const Products = () => {
         });
 
         // Send information about deleted images
-        const deletedImages = originalImageUrls.filter(url => 
-          !currentImageUrls.some(current => 
+        const deletedImages = originalImageUrls.filter(url =>
+          !currentImageUrls.some(current =>
             typeof current === 'string' && current === url
           )
         );
-        
+
         if (deletedImages.length > 0) {
           formDataToSend.append('deletedImages', JSON.stringify(deletedImages));
         }
@@ -521,13 +521,13 @@ const Products = () => {
         }
 
         const response = await productsAPI.update(selectedProduct._id, formDataToSend);
-        
+
         // Debug: Log FormData contents
         console.log('FormData contents:');
         for (let [key, value] of formDataToSend.entries()) {
           console.log(key, value);
         }
-        
+
         if (response.data.status === 'success') {
           toast.success('تم تحديث المنتج بنجاح');
           handleCloseDialog();
@@ -551,13 +551,13 @@ const Products = () => {
           formDataToSend.append('supplierPrice', formData.supplierPrice);
           formDataToSend.append('stock', formData.stock);
           formDataToSend.append('sku', formData.sku);
-          
+
           // Handle maxQuantityPerOrder properly - only send if it has a valid value
           if (formData.maxQuantityPerOrder && formData.maxQuantityPerOrder > 0) {
             formDataToSend.append('maxQuantityPerOrder', formData.maxQuantityPerOrder);
           }
           // Don't send the field at all if it's empty or invalid
-          
+
           // Debug: Log supplier data
           console.log('Sending supplier data:', {
             supplierName: formData.supplierName,
@@ -580,7 +580,7 @@ const Products = () => {
         if (formData.imageCover) {
           formDataToSend.append('imageCover', formData.imageCover);
         }
-        
+
         // Handle images properly for new products
         if (formData.images && formData.images.length > 0) {
           formData.images.forEach((image, index) => {
@@ -652,13 +652,13 @@ const Products = () => {
         }
 
         const response = await productsAPI.create(formDataToSend);
-        
+
         // Debug: Log FormData contents (create)
         console.log('FormData contents (create):');
         for (let [key, value] of formDataToSend.entries()) {
           console.log(key, value);
         }
-        
+
         if (response.data.status === 'success') {
           toast.success('تم إضافة المنتج بنجاح');
           handleCloseDialog();
@@ -716,7 +716,7 @@ const Products = () => {
       try {
         const response = await productsAPI.delete(id);
         console.log('Delete response:', response);
-        
+
         // 204 No Content is the standard response for successful DELETE
         if (response.status === 204) {
           toast.success('تم حذف المنتج بنجاح');
@@ -728,7 +728,7 @@ const Products = () => {
         console.log('Delete error:', err);
         console.log('Error response:', err.response);
         console.log('Error status:', err.response?.status);
-        
+
         if (err.response && err.response.status === 404) {
           toast.info('Product was already deleted or not found.');
           fetchProducts(); // Refresh list to remove the missing product
@@ -1164,7 +1164,7 @@ const Products = () => {
           <ViewIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      
+
       <Tooltip title="تعديل المنتج" arrow>
         <IconButton
           size="small"
@@ -1177,7 +1177,7 @@ const Products = () => {
           <EditIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      
+
       {product.hasVariants && (
         <Tooltip title="إدارة المتغيرات" arrow>
           <IconButton
@@ -1189,7 +1189,7 @@ const Products = () => {
           </IconButton>
         </Tooltip>
       )}
-      
+
       <Tooltip title="حذف المنتج" arrow>
         <IconButton
           size="small"
@@ -2013,7 +2013,7 @@ const Products = () => {
                 إدارة وتحرير منتجات المتجر بكفاءة عالية
               </Typography>
             </Box>
-           
+
           </Box>
         </Box>
 
@@ -2086,44 +2086,44 @@ const Products = () => {
                 </Button>
               </Grid>
               <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                size='large'
-                variant="outlined"
-                startIcon={<RefreshIcon sx={{ ml: 1 }} />}
-                onClick={fetchProducts}
-              >
-                تحديث
-              </Button>
-              <Button
-                size='large'
-                variant="contained"
-                startIcon={<AddIcon sx={{ ml: 1 }} />}
-                onClick={() => handleOpenDialog('add')}
-                sx={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
-                  }
-                }}
-              >
-                إضافة منتج جديد
-              </Button>
-              {hasAnyProductWithVariants && (
                 <Button
+                  size='large'
+                  variant="outlined"
+                  startIcon={<RefreshIcon sx={{ ml: 1 }} />}
+                  onClick={fetchProducts}
+                >
+                  تحديث
+                </Button>
+                <Button
+                  size='large'
                   variant="contained"
-                  startIcon={<SettingsIcon />}
-                  onClick={handleOpenVariantsOnlyDialog}
+                  startIcon={<AddIcon sx={{ ml: 1 }} />}
+                  onClick={() => handleOpenDialog('add')}
                   sx={{
-                    background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
+                      background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)',
                     }
                   }}
                 >
-                  إضافة متغيرات
+                  إضافة منتج جديد
                 </Button>
-              )}
-            </Box>
+                {hasAnyProductWithVariants && (
+                  <Button
+                    variant="contained"
+                    startIcon={<SettingsIcon />}
+                    onClick={handleOpenVariantsOnlyDialog}
+                    sx={{
+                      background: 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #6a4190 0%, #5a6fd8 100%)',
+                      }
+                    }}
+                  >
+                    إضافة متغيرات
+                  </Button>
+                )}
+              </Box>
             </Grid>
           </CardContent>
         </Card>
@@ -2152,7 +2152,7 @@ const Products = () => {
                         +{products.filter(p => p.featured).length} منتج مميز
                       </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
+                    <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48, position: 'absolute', top: 0, left: 0 }}>
                       <InventoryIcon />
                     </Avatar>
                   </Box>
@@ -2214,7 +2214,7 @@ const Products = () => {
                         {products.filter(p => p.stock === 0).length} نفد المخزون
                       </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#ed6c02', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
+                    <Avatar sx={{ bgcolor: '#ed6c02', color: 'white', width: 48, height: 48, position: 'absolute', top: 0, left: 0 }}>
                       <Alert />
                     </Avatar>
                   </Box>
@@ -2245,7 +2245,7 @@ const Products = () => {
                         متوسط السعر: {products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00'}
                       </Typography>
                     </Box>
-                    <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48, position:'absolute', top: 0, left: 0 }}>
+                    <Avatar sx={{ bgcolor: '#9c27b0', color: 'white', width: 48, height: 48, position: 'absolute', top: 0, left: 0 }}>
                       <PriceIcon />
                     </Avatar>
                   </Box>
@@ -2724,10 +2724,10 @@ const Products = () => {
                           />
                         </Grid>
                         <Grid item xs={12} md={6}>
-                          <Box sx={{ 
-                            p: 2, 
-                            bgcolor: 'rgba(76, 175, 80, 0.1)', 
-                            borderRadius: 1, 
+                          <Box sx={{
+                            p: 2,
+                            bgcolor: 'rgba(76, 175, 80, 0.1)',
+                            borderRadius: 1,
                             border: '1px solid rgba(76, 175, 80, 0.3)',
                             display: 'flex',
                             alignItems: 'center',
@@ -2749,7 +2749,7 @@ const Products = () => {
                       </>
                     )}
                   </Grid>
-                  
+
                   {/* معلومات الشحن */}
                   <Grid item xs={12}>
                     <Paper elevation={0} sx={{ p: 3, mb: 3, bgcolor: 'rgba(255, 152, 0, 0.05)', borderRadius: 2 }}>
@@ -2766,7 +2766,7 @@ const Products = () => {
                               label="نطاق الشحن"
                               sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' } }}
                             >
-                              <MenuItem value="nag_hamadi">نجع حمادي فقط</MenuItem>
+                              <MenuItem value="nag_hamadi">نجع حمادي و ضواحيها</MenuItem>
                               <MenuItem value="other_governorates">جميع محافظات مصر</MenuItem>
                             </Select>
                           </FormControl>
@@ -2803,7 +2803,7 @@ const Products = () => {
                       </Grid>
                     </Paper>
                   </Grid>
-                  
+
                   {/* السمات والمتغيرات إذا كان المنتج متغير */}
                   {formData.hasVariants && (
                     <>

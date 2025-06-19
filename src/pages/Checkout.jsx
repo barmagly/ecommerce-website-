@@ -26,7 +26,7 @@ export default function Checkout() {
       navigate('/cart');
       return;
     }
-    
+
     const fetchCart = async () => {
       try {
         await dispatch(getCartThunk()).unwrap();
@@ -99,7 +99,7 @@ export default function Checkout() {
   console.log('Cart Items in Checkout:', cartItems);
   console.log('Total Shipping calculated:', totalShipping);
 
-  const finalTotal = appliedCoupon 
+  const finalTotal = appliedCoupon
     ? (discountedTotal + totalShipping)
     : (total + totalShipping);
 
@@ -213,19 +213,19 @@ export default function Checkout() {
       console.log('Validating coupon:', testCouponCode);
       const response = await couponsAPI.validate(testCouponCode);
       console.log('Coupon validation response:', response.data);
-      
+
       const { valid, coupon } = response.data.data;
 
       if (valid && coupon) {
         console.log('Coupon details:', coupon);
-        
+
         // فحص أن الكوبون نشط
         if (!coupon.isActive) {
           toast.error('هذا الكوبون غير نشط حالياً');
           setCouponLoading(false);
           return;
         }
-        
+
         // فحص تاريخ انتهاء الكوبون
         const now = new Date();
         const expireDate = new Date(coupon.expire || coupon.endDate);
@@ -234,7 +234,7 @@ export default function Checkout() {
           setCouponLoading(false);
           return;
         }
-        
+
         // فحص تاريخ بداية الكوبون
         const startDate = new Date(coupon.startDate);
         if (startDate > now) {
@@ -245,13 +245,13 @@ export default function Checkout() {
 
         // Check if coupon applies to any products in cart
         if (coupon.applyTo === 'products') {
-          const cartProductIds = cartItems.map(item => 
+          const cartProductIds = cartItems.map(item =>
             item?.variantId ? item?.variantId._id : item?.prdID._id
           );
-          const hasApplicableProducts = coupon.products.some(productId => 
+          const hasApplicableProducts = coupon.products.some(productId =>
             cartProductIds.includes(productId)
           );
-          
+
           if (!hasApplicableProducts) {
             toast.error('هذا الكوبون لا ينطبق على المنتجات في سلة المشتريات');
             setCouponLoading(false);
@@ -261,14 +261,14 @@ export default function Checkout() {
 
         // Check if coupon applies to any categories in cart
         if (coupon.applyTo === 'categories') {
-          const cartCategoryIds = cartItems.map(item => 
+          const cartCategoryIds = cartItems.map(item =>
             item?.prdID?.category?._id
           ).filter(Boolean);
-          
-          const hasApplicableCategories = coupon.categories.some(categoryId => 
+
+          const hasApplicableCategories = coupon.categories.some(categoryId =>
             cartCategoryIds.includes(categoryId)
           );
-          
+
           if (!hasApplicableCategories) {
             toast.error('هذا الكوبون لا ينطبق على الفئات في سلة المشتريات');
             setCouponLoading(false);
@@ -303,7 +303,7 @@ export default function Checkout() {
     } catch (err) {
       console.error('Coupon validation error:', err);
       console.error('Error response:', err.response?.data);
-      
+
       if (err.response?.status === 404) {
         toast.error('كود الكوبون غير موجود. جرب كود آخر أو تحقق من صحة الكود.');
       } else if (err.response?.status === 400) {
@@ -352,12 +352,12 @@ export default function Checkout() {
   const handleOrder = async (e) => {
     e.preventDefault();
     console.log('handleOrder called');
-    
+
     // Validate form first
     const validationResult = validateForm();
     console.log('validateForm errors:', validationResult.errors);
     console.log('validateForm isValid:', validationResult.isValid);
-    
+
     if (!validationResult.isValid) {
       setErrors(validationResult.errors);
       return;
@@ -374,11 +374,11 @@ export default function Checkout() {
 
     try {
       // Calculate shipping costs and delivery times
-      const maxShippingCost = Math.max(...cartItems.map(item => 
+      const maxShippingCost = Math.max(...cartItems.map(item =>
         Number(item?.prdID?.shippingCost) || 0
       ));
-      
-      const maxDeliveryDays = Math.max(...cartItems.map(item => 
+
+      const maxDeliveryDays = Math.max(...cartItems.map(item =>
         Number(item?.prdID?.deliveryDays) || 2
       ));
 
@@ -493,7 +493,7 @@ export default function Checkout() {
       console.log('Order resultAction:', resultAction);
       if (createOrderThunk.fulfilled.match(resultAction)) {
         setOrderPlaced(true);
-        
+
         setTimeout(() => {
           navigate('/order-confirmation', {
             state: {
@@ -503,8 +503,8 @@ export default function Checkout() {
           });
         }, 2000);
       } else {
-        const errorMessage = typeof resultAction.payload === 'object' && resultAction.payload?.message 
-          ? resultAction.payload.message 
+        const errorMessage = typeof resultAction.payload === 'object' && resultAction.payload?.message
+          ? resultAction.payload.message
           : (typeof resultAction.payload === 'string' ? resultAction.payload : 'حدث خطأ أثناء إنشاء الطلب');
         setErrors(prev => ({
           ...prev,
@@ -513,8 +513,8 @@ export default function Checkout() {
         console.log('Order failed:', errorMessage);
       }
     } catch (error) {
-      const errorMessage = typeof error === 'object' && error?.message 
-        ? error.message 
+      const errorMessage = typeof error === 'object' && error?.message
+        ? error.message
         : (typeof error === 'string' ? error : 'حدث خطأ أثناء إنشاء الطلب');
       setErrors(prev => ({
         ...prev,
@@ -526,27 +526,27 @@ export default function Checkout() {
 
   // التحقق من نطاق الشحن للمنتجات
   const validateShippingScope = () => {
-    const nagHamadiOnlyProducts = cartItems.filter(item => 
+    const nagHamadiOnlyProducts = cartItems.filter(item =>
       item?.prdID?.shippingAddress?.type === 'nag_hamadi'
     );
-    
-    // إذا كان العنوان المحدد ليس نجع حمادي وكانت هناك منتجات متاحة في نجع حمادي فقط
+
+    // إذا كان العنوان المحدد ليس نجع حمادي وكانت هناك منتجات متاحة في نجع حمادي و ضواحيها
     if (form.shippingAddressType === 'other_governorates' && nagHamadiOnlyProducts.length > 0) {
       return {
         isValid: false,
         restrictedProducts: nagHamadiOnlyProducts,
-        message: 'لا يمكن توصيل بعض المنتجات إلى العنوان المحدد. هذه المنتجات متاحة للشحن في نجع حمادي فقط.'
+        message: 'لا يمكن توصيل بعض المنتجات إلى العنوان المحدد. هذه المنتجات متاحة للشحن في نجع حمادي و ضواحيها.'
       };
     }
-    
+
     return { isValid: true, restrictedProducts: [], message: '' };
   };
 
   const shippingValidation = validateShippingScope();
 
   const handleRemoveRestrictedProducts = () => {
-    const updatedCartItems = cartItems.filter(item => 
-      item?.prdID?.shippingAddress?.type === 'nag_hamadi' && form.shippingAddressType === 'other_governorates' 
+    const updatedCartItems = cartItems.filter(item =>
+      item?.prdID?.shippingAddress?.type === 'nag_hamadi' && form.shippingAddressType === 'other_governorates'
         ? false
         : true
     );
@@ -556,16 +556,16 @@ export default function Checkout() {
 
   const handleRemoveItem = async (item) => {
     try {
-      await dispatch(deleteCartItemThunk({ 
-        variantId: item?.variantId?._id, 
-        prdID: item?.prdID?._id 
+      await dispatch(deleteCartItemThunk({
+        variantId: item?.variantId?._id,
+        prdID: item?.prdID?._id
       })).unwrap();
-      
+
       // Fetch updated cart data
       await dispatch(getCartThunk());
-      
+
       toast.success('تم حذف المنتج من السلة');
-      
+
       // If cart is empty after removal, redirect to cart page
       if (cartItems.length === 1) { // Check for 1 since the current item is about to be removed
         navigate('/cart');
@@ -633,15 +633,15 @@ export default function Checkout() {
                         <div className="border rounded p-3 bg-light">
                           {shippingValidation.restrictedProducts.map((item, index) => (
                             <div key={index} className="d-flex align-items-center mb-2 p-2 border-bottom">
-                              <img 
-                                src={item?.prdID?.images?.[0]?.url || item?.prdID?.imageCover || "/images/Placeholder.png"} 
+                              <img
+                                src={item?.prdID?.images?.[0]?.url || item?.prdID?.imageCover || "/images/Placeholder.png"}
                                 alt={item?.prdID?.name}
                                 style={{ width: 40, height: 40, borderRadius: 4, marginLeft: 8 }}
                               />
                               <div className="flex-fill">
                                 <span className="fw-bold">{item?.prdID?.name}</span>
                                 <div className="text-danger small">
-                                  🚚 متاح للشحن في نجع حمادي فقط
+                                  🚚 متاح للشحن في نجع حمادي و ضواحيها
                                 </div>
                               </div>
                               <button
@@ -649,9 +649,9 @@ export default function Checkout() {
                                 className="btn btn-outline-danger btn-sm"
                                 onClick={async () => {
                                   try {
-                                    await dispatch(deleteCartItemThunk({ 
-                                      variantId: item?.variantId?._id, 
-                                      prdID: item?.prdID?._id 
+                                    await dispatch(deleteCartItemThunk({
+                                      variantId: item?.variantId?._id,
+                                      prdID: item?.prdID?._id
                                     })).unwrap();
                                     toast.success('تم حذف المنتج من السلة');
                                     // Refresh the page to update cart items
@@ -678,9 +678,9 @@ export default function Checkout() {
                                 try {
                                   // Remove all restricted products
                                   for (const item of shippingValidation.restrictedProducts) {
-                                    await dispatch(deleteCartItemThunk({ 
-                                      variantId: item?.variantId?._id, 
-                                      prdID: item?.prdID?._id 
+                                    await dispatch(deleteCartItemThunk({
+                                      variantId: item?.variantId?._id,
+                                      prdID: item?.prdID?._id
                                     })).unwrap();
                                   }
                                   toast.success('تم حذف جميع المنتجات المحدودة النطاق من السلة');
@@ -792,7 +792,7 @@ export default function Checkout() {
               <div className="card shadow-sm border-0 mb-4">
                 <div className="card-body">
                   <h5 className="fw-bold mb-3">ملخص الطلب</h5>
-                  
+
                   {/* تحذير نطاق الشحن */}
                   {!shippingValidation.isValid && (
                     <div className="alert alert-warning mb-3">
@@ -800,11 +800,10 @@ export default function Checkout() {
                       <p className="mb-0 small">لا يمكن إتمام الطلب بسبب مشاكل في نطاق الشحن [احذف المنتج الغير المتاح للشحن لمتابعة شراء طلبك]</p>
                     </div>
                   )}
-                  
+
                   {cartItems.map(item => (
-                    <div className={`d-flex align-items-center mb-2 p-2 border-bottom ${
-                      item?.prdID?.shippingAddress?.type === 'nag_hamadi' && form.shippingAddressType === 'other_governorates' ? 'bg-light' : ''
-                      }`} 
+                    <div className={`d-flex align-items-center mb-2 p-2 border-bottom ${item?.prdID?.shippingAddress?.type === 'nag_hamadi' && form.shippingAddressType === 'other_governorates' ? 'bg-light' : ''
+                      }`}
                       key={item?.variantId ? item?.variantId._id : item?.prdID._id}
                     >
                       <img src={
@@ -823,7 +822,7 @@ export default function Checkout() {
                         </div>
                         {item?.prdID?.shippingAddress?.type === 'nag_hamadi' && form.shippingAddressType === 'other_governorates' && (
                           <div className="text-danger small mt-1">
-                            ⚠️ متاح للشحن في نجع حمادي فقط
+                            ⚠️ متاح للشحن في نجع حمادي و ضواحيها
                           </div>
                         )}
                       </div>
@@ -858,8 +857,8 @@ export default function Checkout() {
                     <div className="d-flex justify-content-between mb-2">
                       <span>الخصم:</span>
                       <span className="text-success">
-                        -{appliedCoupon.type === 'percentage' 
-                          ? `${appliedCoupon.discount}%` 
+                        -{appliedCoupon.type === 'percentage'
+                          ? `${appliedCoupon.discount}%`
                           : `${appliedCoupon.discount} ج.م`}
                       </span>
                     </div>
@@ -1009,7 +1008,7 @@ export default function Checkout() {
                   )}
                 </div>
               </div>
-              
+
               {/* زر تأكيد الطلب */}
               <div className="card shadow-sm border-0">
                 <div className="card-body">
@@ -1019,7 +1018,7 @@ export default function Checkout() {
                       <strong>خطأ في إتمام الطلب:</strong> {errors.submit}
                     </div>
                   )}
-                  
+
                   <button
                     type="submit"
                     form="checkout-form"
@@ -1035,7 +1034,7 @@ export default function Checkout() {
                       'تأكيد الطلب'
                     )}
                   </button>
-                  
+
                   {!shippingValidation.isValid && (
                     <div className="alert alert-warning mt-3 mb-0">
                       <small>

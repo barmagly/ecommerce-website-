@@ -169,7 +169,7 @@ export default function ShopProducts({ products = [] }) {
               />
               <AvailabilityBadge stock={item.stock} />
               {item.originalPrice && item.originalPrice > item.price && (
-                <span className="badge bg-danger position-absolute top-0 start-0 m-2" style={{zIndex:2, fontSize: '0.95em', borderRadius: '12px', padding: '6px 12px'}}>
+                <span className="badge bg-danger position-absolute top-0 start-0 m-2" style={{ zIndex: 2, fontSize: '0.95em', borderRadius: '12px', padding: '6px 12px' }}>
                   خصم {Math.round(100 - (item.price / item.originalPrice) * 100)}%
                 </span>
               )}
@@ -188,7 +188,7 @@ export default function ShopProducts({ products = [] }) {
                   {item.price} ج.م
                 </span>
                 {item.originalPrice && item.originalPrice > item.price && (
-                  <span className="text-muted text-decoration-line-through ms-2" style={{fontSize:'1em'}}>
+                  <span className="text-muted text-decoration-line-through ms-2" style={{ fontSize: '1em' }}>
                     {item.originalPrice} ج.م
                   </span>
                 )}
@@ -196,7 +196,7 @@ export default function ShopProducts({ products = [] }) {
               {item.shippingAddress && (
                 <div className="mb-2">
                   <small className={`badge ${item.shippingAddress.type === 'nag_hamadi' ? 'bg-warning' : 'bg-success'}`}>
-                    {item.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي فقط' : '🚚 جميع المحافظات'}
+                    {item.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي و ضواحيها' : '🚚 جميع المحافظات'}
                   </small>
                 </div>
               )}

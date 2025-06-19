@@ -561,15 +561,15 @@ export default function ProductDetails() {
               <div className="mb-3">
                 <div className="d-flex align-items-center gap-2 mb-2">
                   <span className={`badge ${product.shippingAddress.type === 'nag_hamadi' ? 'bg-warning' : 'bg-success'}`} style={{ fontSize: '1em' }}>
-                    {product.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي فقط' : '🚚 جميع المحافظات'}
+                    {product.shippingAddress.type === 'nag_hamadi' ? '🚚 نجع حمادي و ضواحيها' : '🚚 جميع المحافظات'}
                   </span>
                   <span className="text-muted small">
-                    {product.shippingAddress.type === 'nag_hamadi' 
-                      ? 'هذا المنتج متاح للشحن في نجع حمادي فقط' 
+                    {product.shippingAddress.type === 'nag_hamadi'
+                      ? 'هذا المنتج متاح للشحن في نجع حمادي و ضواحيها'
                       : 'هذا المنتج متاح للشحن في جميع محافظات مصر'}
                   </span>
                 </div>
-                
+
                 {/* معلومات إضافية عن التوصيل */}
                 <div className="bg-light p-3 rounded">
                   <div className="row text-center">
@@ -1174,17 +1174,17 @@ export default function ProductDetails() {
 
       {/* إضافة المربع العائم */}
       <Snackbar
-      
+
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
-        <Alert 
-        
+        <Alert
+
           onClose={handleCloseSnackbar}
           severity="success"
-          sx={{ 
+          sx={{
             width: '100%',
             backgroundColor: '#4CAF50',
             color: 'white',
@@ -1194,12 +1194,12 @@ export default function ProductDetails() {
             padding: 0,
           }}
           action={
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               onClick={handleGoToCart}
               sx={{
-                mx:2,
+                mx: 2,
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.3)'
