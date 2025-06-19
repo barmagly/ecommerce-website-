@@ -243,7 +243,7 @@ const Reviews = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('ar-SA', {
+    return new Date(dateString).toLocaleDateString('ar-EG', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -466,12 +466,12 @@ const Reviews = () => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: alpha(theme.palette.primary.main, 0.05) }}>
-                  <TableCell sx={{ fontWeight: 'bold' }}>المنتج والعميل</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التقييم والمراجعة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التفاعل</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الحالة</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>التاريخ</TableCell>
-                  <TableCell sx={{ fontWeight: 'bold' }}>الإجراءات</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>المنتج والعميل</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>التقييم والمراجعة</TableCell>
+                  {/* <TableCell sx={{ fontWeight: 'bold' }} align='center'>التفاعل</TableCell> */}
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الحالة</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>التاريخ</TableCell>
+                  <TableCell sx={{ fontWeight: 'bold' }} align='center'>الإجراءات</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -489,10 +489,7 @@ const Reviews = () => {
                         hover
                       >
                         <TableCell>
-                          <Box>
-                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                              {review.productName}
-                            </Typography>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Avatar src={review.userAvatar} sx={{ width: 32, height: 32 }}>
                                 <PersonIcon />
@@ -512,11 +509,14 @@ const Reviews = () => {
                                 )}
                               </Box>
                             </Box>
+                            <Typography variant="subtitle2" fontWeight="bold" gutterBottom align='right'>
+                              {review.productName}
+                            </Typography>
                           </Box>
                         </TableCell>
                         
                         <TableCell>
-                          <Box>
+                          <Box textAlign={'center'}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                               <Rating value={review.rating} readOnly size="small" />
                               <Chip
@@ -552,7 +552,7 @@ const Reviews = () => {
                           </Box>
                         </TableCell>
                         
-                        <TableCell>
+                        {/* <TableCell>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <LikeIcon color="success" fontSize="small" />
@@ -560,19 +560,15 @@ const Reviews = () => {
                               <DislikeIcon color="error" fontSize="small" />
                               <Typography variant="caption">{review.notHelpfulCount}</Typography>
                             </Box>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <ReplyIcon fontSize="small" color="action" />
-                              <Typography variant="caption">{review.replies.length} رد</Typography>
-                            </Box>
                             {review.reportCount > 0 && (
                               <Badge badgeContent={review.reportCount} color="error">
                                 <ReportIcon fontSize="small" color="error" />
                               </Badge>
                             )}
                           </Box>
-                        </TableCell>
+                        </TableCell> */}
                         
-                        <TableCell>
+                        <TableCell align="center">
                           <Chip
                             label={getStatusText(review.status)}
                             color={getStatusColor(review.status)}
@@ -580,14 +576,14 @@ const Reviews = () => {
                           />
                         </TableCell>
                         
-                        <TableCell>
+                        <TableCell align="center">
                           <Typography variant="caption" color="text.secondary">
                             {formatDate(review.createdAt)}
                           </Typography>
                         </TableCell>
                         
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <TableCell >
+                          <Box sx={{ display: 'flex', gap: 0.5 , justifyContent: 'center' }}>
                             <Tooltip title="عرض التفاصيل">
                               <IconButton
                                 size="small"
@@ -598,15 +594,7 @@ const Reviews = () => {
                               </IconButton>
                             </Tooltip>
                             
-                            <Tooltip title="إضافة رد">
-                              <IconButton
-                                size="small"
-                                color="primary"
-                                onClick={() => handleOpenDialog('reply', review)}
-                              >
-                                <ReplyIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
+                           
                             
                             {review.status === 'pending' && (
                               <Tooltip title="موافقة">

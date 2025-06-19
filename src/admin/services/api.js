@@ -176,9 +176,9 @@ export const ordersAPI = {
     update: (id, data) => {
         // If data contains files, use FormData
         if (data instanceof FormData) {
-            return api.put(`/api/orders/${id}`, data);
+            return api.patch(`/api/orders/status/${id}`, data);
         }
-        return api.put(`/api/orders/${id}`, data);
+        return api.patch(`/api/orders/status/${id}`, data);
     },
     delete: (id) => api.delete(`/api/orders/${id}`),
 };

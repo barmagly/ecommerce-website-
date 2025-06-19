@@ -125,10 +125,10 @@ const Orders = () => {
   // Start polling for orders
   const startPolling = useCallback(() => {
     if (pollingInterval.current) return;
-    
+
     // Initial fetch
     dispatch(fetchOrders());
-    
+
     // Set up polling
     pollingInterval.current = setInterval(() => {
       dispatch(fetchOrders());
@@ -219,49 +219,7 @@ const Orders = () => {
     })
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by newest first
 
-  // Event handlers
-  const handleViewOrder = (order) => {
-    if (order && order._id) {
-      setSelectedOrder(order);
-      setOrderDetailsOpen(true);
-    }
-  };
-
-  const handleEditOrder = (order) => {
-    if (order && order._id) {
-      setSelectedOrder(order);
-      setEditOrderOpen(true);
-    }
-  };
-
-  const handleUpdateOrderStatus = async (orderId, newStatus) => {
-    try {
-      setActionLoading({ id: orderId, type: 'status' });
-      await dispatch(updateOrderStatus({ id: orderId, status: newStatus })).unwrap();
-      toast.success('تم تحديث حالة الطلب بنجاح');
-    } catch (error) {
-      toast.error(error.message || 'فشل تحديث حالة الطلب');
-    } finally {
-      setActionLoading({ id: null, type: null });
-      setMenuAnchorEl(null);
-    }
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
-
-    try {
-      setActionLoading({ id: orderId, type: 'delete' });
-      await dispatch(deleteOrder(orderId)).unwrap();
-      toast.success('تم حذف الطلب بنجاح');
-    } catch (error) {
-      toast.error(error.message || 'فشل حذف الطلب');
-    } finally {
-      setActionLoading({ id: null, type: null });
-      setMenuAnchorEl(null);
-    }
-  };
-
+  
   const handleMenuClick = (event, orderId) => {
     setSelectedOrderId(orderId);
     setMenuAnchorEl(event.currentTarget);
@@ -295,7 +253,7 @@ const Orders = () => {
         toast.error('لا توجد بيانات صحيحة للطلب');
         return;
       }
-      
+
       setActionLoading({ id: order._id, type: 'pdf' });
       const result = await exportInvoiceAsPDF(order);
       if (result.success) {
@@ -316,9 +274,9 @@ const Orders = () => {
         toast.error('لا توجد بيانات صحيحة للطلب');
         return;
       }
-      
+
       setActionLoading({ id: order._id, type: 'download' });
-      
+
       // تحضير بيانات الطلب للتحميل
       const orderData = {
         orderNumber: order._id,
@@ -343,13 +301,13 @@ const Orders = () => {
       // تحويل البيانات إلى JSON
       const dataStr = JSON.stringify(orderData, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      
+
       // إنشاء رابط التحميل
       const url = window.URL.createObjectURL(dataBlob);
       const link = document.createElement('a');
       link.href = url;
       link.download = `order-${order._id}.json`;
-      
+
       // تنفيذ التحميل
       document.body.appendChild(link);
       link.click();
@@ -367,20 +325,20 @@ const Orders = () => {
   const handleSendEmail = async (order) => {
     try {
       setActionLoading({ id: order._id, type: 'email' });
-      
+
       // Send to customer
       await dispatch(sendOrderConfirmationEmailThunk({
         orderId: order._id,
         email: order.email
       })).unwrap();
-      
+
       // Send copy to admin
       await dispatch(sendOrderConfirmationEmailThunk({
         orderId: order._id,
         email: 'support@mizanoo.com',
         isAdminCopy: true
       })).unwrap();
-      
+
       toast.success('تم إرسال البريد الإلكتروني بنجاح');
     } catch (error) {
       console.error('Error sending email:', error);
@@ -491,12 +449,12 @@ const Orders = () => {
   const handleUpdateShippingDetails = async (order) => {
     try {
       setActionLoading({ id: order._id, type: 'shipping' });
-      
-      const maxShippingCost = Math.max(...order.cartItems.map(item => 
+
+      const maxShippingCost = Math.max(...order.cartItems.map(item =>
         Number(item?.shippingCost || item?.prdID?.shippingCost) || 0
       ));
-      
-      const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
+
+      const maxDeliveryDays = Math.max(...order.cartItems.map(item =>
         Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
       ));
 
@@ -525,15 +483,15 @@ const Orders = () => {
 
     try {
       setActionLoading({ id: 'all', type: 'shipping' });
-      
+
       // Update each order sequentially
       for (const order of orders) {
         try {
-          const maxShippingCost = Math.max(...order.cartItems.map(item => 
+          const maxShippingCost = Math.max(...order.cartItems.map(item =>
             Number(item?.shippingCost || item?.prdID?.shippingCost) || 0
           ));
-          
-          const maxDeliveryDays = Math.max(...order.cartItems.map(item => 
+
+          const maxDeliveryDays = Math.max(...order.cartItems.map(item =>
             Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2
           ));
 
@@ -723,16 +681,16 @@ const Orders = () => {
                   </Select>
                 </FormControl>
               </Grid>
-            <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-              <Button
-              size='large'
-                variant="outlined"
-                startIcon={<RefreshIcon sx={{ml: 1}}/>}
-                onClick={() => dispatch(fetchOrders())}
-              >
-                تحديث
-              </Button>
-            </Box>
+              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                <Button
+                  size='large'
+                  variant="outlined"
+                  startIcon={<RefreshIcon sx={{ ml: 1 }} />}
+                  onClick={() => dispatch(fetchOrders())}
+                >
+                  تحديث
+                </Button>
+              </Box>
             </Grid>
           </CardContent>
         </Card>
@@ -818,12 +776,12 @@ const Orders = () => {
                           <TableCell>{order.city || 'نجع حمادي'}</TableCell>
                           <TableCell>
                             {Number(order.shippingCost) > 0 ? order.shippingCost :
-                              order.cartItems?.reduce((total, item) => 
+                              order.cartItems?.reduce((total, item) =>
                                 total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م
                           </TableCell>
                           <TableCell>
                             {Number(order.deliveryDays) > 0 ? order.deliveryDays :
-                              Math.max(...(order.cartItems?.map(item => 
+                              Math.max(...(order.cartItems?.map(item =>
                                 Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم
                           </TableCell>
                           <TableCell>{order.total} ج.م</TableCell>
@@ -890,13 +848,13 @@ const Orders = () => {
         </DialogTitle>
 
         <DialogContent dividers>
-          {selectedOrder ? (
+          {selectedOrder && (
             <Grid container spacing={3}>
               <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom align='center'>
                   معلومات الطلب
                 </Typography>
-                <List dense>
+                <List dense >
                   <ListItem>
                     <ListItemText
                       primary="رقم الطلب"
@@ -919,7 +877,7 @@ const Orders = () => {
                     <ListItemText
                       primary="مصاريف الشحن"
                       secondary={`${Number(selectedOrder?.shippingCost) > 0 ? selectedOrder?.shippingCost :
-                        selectedOrder?.cartItems?.reduce((total, item) => 
+                        selectedOrder?.cartItems?.reduce((total, item) =>
                           total + (Number(item?.shippingCost || item?.prdID?.shippingCost) || 0), 0)} ج.م`}
                     />
                   </ListItem>
@@ -927,7 +885,7 @@ const Orders = () => {
                     <ListItemText
                       primary="مدة التوصيل"
                       secondary={`${Number(selectedOrder?.deliveryDays) > 0 ? selectedOrder?.deliveryDays :
-                        Math.max(...(selectedOrder?.cartItems?.map(item => 
+                        Math.max(...(selectedOrder?.cartItems?.map(item =>
                           Number(item?.deliveryDays || item?.prdID?.deliveryDays) || 2) || [2]))} يوم`}
                     />
                   </ListItem>
@@ -940,7 +898,7 @@ const Orders = () => {
                 </List>
               </Grid>
               <Grid item xs={12} md={6}>
-                <Typography variant="subtitle1" gutterBottom>
+                <Typography variant="subtitle1" gutterBottom align='center'>
                   معلومات العميل
                 </Typography>
                 <List dense>
@@ -970,11 +928,98 @@ const Orders = () => {
                   </ListItem>
                 </List>
               </Grid>
+              {/* Instapay Image (Conditionally Rendered) */}
+              {selectedOrder.paymentMethod === 'bank_transfer' && selectedOrder.image && (
+                <Grid item xs={12} md={6}>
+                  <Typography variant="h6" gutterBottom>
+                    صورة إثبات التحويل (Instapay)
+                  </Typography>
+                  <Box sx={{ mb: 2 }}>
+                    <img
+                      src={selectedOrder.image}
+                      alt="Instapay Proof"
+                      style={{ maxWidth: 400, maxHeight: 200, borderRadius: 8, border: '1px solid #ddd' }}
+                    />
+                  </Box>
+                </Grid>
+              )}
+
+              {/* Order Items */}
+              <Grid grid={{ xs: 12 }}>
+                <Typography variant="h6" gutterBottom>
+                  المنتجات
+                </Typography>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>المنتج</TableCell>
+                        <TableCell>السعر</TableCell>
+                        <TableCell>الكمية</TableCell>
+                        <TableCell>المجموع</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {selectedOrder.cartItems.map((item) => (
+                        <TableRow key={item._id}>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              <Avatar
+                                src={item.image}
+                                sx={{ width: 40, height: 40 }}
+                              >
+                                <ShoppingCartIcon />
+                              </Avatar>
+                              <Typography variant="body2">
+                                {item.name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>{item.price} جنيه</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.price * item.quantity} جنيه</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+
+              {/* Order Status */}
+              <Grid grid={{ xs: 12 }}>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <FormControl fullWidth>
+                    <InputLabel>حالة الطلب</InputLabel>
+                    <Select
+                      value={selectedOrder.status}
+                      onChange={(e) => handleStatusChange(e.target.value)}
+                      label="حالة الطلب"
+                    >
+                      <MenuItem value="pending">قيد الانتظار</MenuItem>
+                      <MenuItem value="processing">قيد المعالجة</MenuItem>
+                      <MenuItem value="shipped">تم الشحن</MenuItem>
+                      <MenuItem value="delivered">تم التوصيل</MenuItem>
+                      <MenuItem value="cancelled">ملغي</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth>
+                    <InputLabel>حالة الدفع</InputLabel>
+                    <Select
+                      value={selectedOrder.paymentStatus}
+                      onChange={(e) => handlePaymentStatusChange(e.target.value)}
+                      label="حالة الدفع"
+                    >
+                      <MenuItem value="pending">قيد الانتظار</MenuItem>
+                      <MenuItem value="paid">مدفوع</MenuItem>
+                      <MenuItem value="failed">فشل</MenuItem>
+                      <MenuItem value="refunded">مسترد</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Grid>
+
             </Grid>
-          ) : (
-            <Typography variant="body1" align="center">
-              لا توجد بيانات للطلب
-            </Typography>
           )}
         </DialogContent>
 
@@ -1085,32 +1130,7 @@ const Orders = () => {
           {selectedOrder && actionLoading.id === selectedOrder._id && actionLoading.type === 'email' && (
             <CircularProgress size={20} />
           )}
-        </MenuItem>
-
-        <Divider />
-
-        <MenuItem onClick={() => {
-          if (selectedOrderId) {
-            handleUpdateOrderStatus(selectedOrderId, 'cancelled');
-          }
-        }}>
-          <ListItemIcon>
-            <CancelIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>إلغاء الطلب</ListItemText>
-        </MenuItem>
-
-        <MenuItem onClick={() => {
-          if (selectedOrderId) {
-            handleDeleteOrder(selectedOrderId);
-          }
-          handleMenuClose();
-        }}>
-          <ListItemIcon>
-            <DeleteIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText sx={{ color: 'error.main' }}>حذف الطلب</ListItemText>
-        </MenuItem>
+        </MenuItem>        
       </Menu>
 
       {/* Invoice Print Component (Hidden) */}

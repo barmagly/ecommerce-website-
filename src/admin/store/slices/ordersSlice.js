@@ -28,9 +28,9 @@ export const fetchOrderById = createAsyncThunk(
 
 export const updateOrderStatus = createAsyncThunk(
   'orders/updateOrderStatus',
-  async ({ id, status }, { rejectWithValue, getState }) => {
+  async ({ id, status, paymentStatus }, { rejectWithValue, getState }) => {
     try {
-      const response = await ordersAPI.update(id, { status });
+      const response = await ordersAPI.update(id, { status, paymentStatus });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update order status');
@@ -171,7 +171,7 @@ const ordersSlice = createSlice({
       })
       // Update Order Status - Optimistic Update
       .addCase(updateOrderStatus.pending, (state, action) => {
-        const { id, status } = action.meta.arg;
+        const { id, status, paymentStatus } = action.meta.arg;
         const orderIndex = state.items.findIndex(order => order._id === id);
         if (orderIndex !== -1) {
           const oldStatus = state.items[orderIndex].status;
@@ -179,7 +179,8 @@ const ordersSlice = createSlice({
           state.stats.statusCounts[oldStatus]--;
           state.stats.statusCounts[status]++;
           // Update order status
-          state.items[orderIndex].status = status;
+          state.items[orderIndex].status = status|| state.items[orderIndex].status;
+          state.items[orderIndex].paymentStatus= paymentStatus || state.items[orderIndex].paymentStatus;
         }
       })
       .addCase(updateOrderStatus.fulfilled, (state, action) => {
