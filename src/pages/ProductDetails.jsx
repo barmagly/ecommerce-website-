@@ -1126,12 +1126,14 @@ export default function ProductDetails() {
 
       {/* إضافة المربع العائم */}
       <Snackbar
+      
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert 
+        
           onClose={handleCloseSnackbar}
           severity="success"
           sx={{ 
@@ -1140,7 +1142,8 @@ export default function ProductDetails() {
             color: 'white',
             '& .MuiAlert-icon': {
               color: 'white'
-            }
+            },
+            padding: 0,
           }}
           action={
             <Button 
@@ -1148,6 +1151,7 @@ export default function ProductDetails() {
               size="small" 
               onClick={handleGoToCart}
               sx={{
+                mx:2,
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.3)'
