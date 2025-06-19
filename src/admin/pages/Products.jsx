@@ -1980,6 +1980,16 @@ const Products = () => {
     }
   }, [formData.shippingAddressType, formErrors.shippingAddressDetails]);
 
+  // Ensure at least one attribute exists when opening the add product dialog
+  useEffect(() => {
+    if (openDialog && dialogMode === 'add' && formData.attributes.length === 0) {
+      setFormData(prev => ({
+        ...prev,
+        attributes: [{ name: '', values: [] }]
+      }));
+    }
+  }, [openDialog, dialogMode]);
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
@@ -2805,142 +2815,138 @@ const Products = () => {
                   </Grid>
 
                   {/* السمات والمتغيرات إذا كان المنتج متغير */}
-                  {formData.hasVariants && (
-                    <>
-                      <Grid item xs={12}>
-                        <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
-                          <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <PaletteIcon /> السمات (المتغيرات)
-                          </Typography>
-                          {formData.attributes.map((attribute, index) => (
-                            <Paper
-                              key={index}
-                              sx={{ p: 3, mb: 2, bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease', '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } }}
-                            >
-                              <Grid container spacing={3} alignItems="center">
-                                <Grid item xs={12} md={5}>
-                                  <TextField
-                                    fullWidth
-                                    label="اسم السمة"
-                                    value={attribute.name}
-                                    onChange={(e) => updateAttribute(index, 'name', e.target.value)}
-                                    sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
+                  <Grid item xs={12}>
+                    <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(102, 126, 234, 0.05)', borderRadius: 2 }}>
+                      <Typography variant="h6" sx={{ mb: 2, color: '#667eea', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PaletteIcon /> السمات (المتغيرات)
+                      </Typography>
+                      {formData.attributes.map((attribute, index) => (
+                        <Paper
+                          key={index}
+                          sx={{ p: 3, mb: 2, bgcolor: 'white', borderRadius: 2, boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'all 0.3s ease', '&:hover': { boxShadow: '0 4px 12px rgba(0,0,0,0.1)' } }}
+                        >
+                          <Grid container spacing={3} alignItems="center">
+                            <Grid item xs={12} md={5}>
+                              <TextField
+                                fullWidth
+                                label="اسم السمة"
+                                value={attribute.name || ''}
+                                onChange={(e) => updateAttribute(index, 'name', e.target.value)}
+                                sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={5}>
+                              <TextField
+                                fullWidth
+                                label="قيم السمة (افصل بينها بفاصلة)"
+                                value={attribute.values ? attribute.values.join(', ') : ''}
+                                onChange={(e) => updateAttribute(index, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
+                                InputProps={{ endAdornment: (<InputAdornment position="end"><Tooltip title="افصل القيم بفاصلة" arrow><InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} /></Tooltip></InputAdornment>) }}
+                                sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
+                              />
+                              <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {(attribute.values || []).map((value, valueIndex) => (
+                                  <Chip
+                                    key={valueIndex}
+                                    label={value}
+                                    onDelete={() => {
+                                      const newValues = attribute.values.filter((_, i) => i !== valueIndex);
+                                      updateAttribute(index, 'values', newValues);
+                                    }}
+                                    sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
                                   />
-                                </Grid>
-                                <Grid item xs={12} md={5}>
-                                  <TextField
-                                    fullWidth
-                                    label="قيم السمة (افصل بينها بفاصلة)"
-                                    value={attribute.values.join(', ')}
-                                    onChange={(e) => updateAttribute(index, 'values', e.target.value.split(',').map(v => v.trim()).filter(Boolean))}
-                                    InputProps={{ endAdornment: (<InputAdornment position="end"><Tooltip title="افصل القيم بفاصلة" arrow><InfoIcon fontSize="small" sx={{ color: 'text.secondary' }} /></Tooltip></InputAdornment>) }}
-                                    sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
-                                  />
-                                  <Box sx={{ mt: 1, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                                    {attribute.values.map((value, valueIndex) => (
-                                      <Chip
-                                        key={valueIndex}
-                                        label={value}
-                                        onDelete={() => {
-                                          const newValues = attribute.values.filter((_, i) => i !== valueIndex);
-                                          updateAttribute(index, 'values', newValues);
-                                        }}
-                                        sx={{ bgcolor: alpha('#667eea', 0.1), color: '#667eea' }}
-                                      />
-                                    ))}
-                                  </Box>
-                                </Grid>
-                                <Grid item xs={12} md={2}>
-                                  <Button
-                                    color="error"
-                                    onClick={() => removeAttribute(index)}
-                                    startIcon={<DeleteIcon />}
-                                    sx={{ height: '100%', '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.1)' } }}
-                                  >
-                                    حذف
-                                  </Button>
-                                </Grid>
-                              </Grid>
-                            </Paper>
-                          ))}
-                          <Button
-                            variant="contained"
-                            startIcon={<AddIcon />}
-                            onClick={addAttribute}
-                            sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}
-                          >
-                            إضافة سمة
-                          </Button>
+                                ))}
+                              </Box>
+                            </Grid>
+                            <Grid item xs={12} md={2}>
+                              <Button
+                                color="error"
+                                onClick={() => removeAttribute(index)}
+                                startIcon={<DeleteIcon />}
+                                sx={{ height: '100%', '&:hover': { bgcolor: 'rgba(211, 47, 47, 0.1)' } }}
+                              >
+                                حذف
+                              </Button>
+                            </Grid>
+                          </Grid>
                         </Paper>
-                      </Grid>
-                      {/* جدول المتغيرات الديناميكي */}
-                      {generatedVariants.length > 0 && (
-                        <Grid item xs={12}>
-                          <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
-                            <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <InventoryIcon /> إدارة المتغيرات
-                            </Typography>
-                            <TableContainer component={Paper} elevation={1} sx={{ mt: 2 }}>
-                              <Table size="small">
-                                <TableHead>
-                                  <TableRow sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.08) }}>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>النسخة</TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>السعر</TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>الكمية</TableCell>
-                                    <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>حقل اختياري</TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {generatedVariants.map((variant, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell>
-                                        {Array.from(variant.attributes.values()).join(', ')}
-                                      </TableCell>
-                                      <TableCell>
-                                        <TextField
-                                          size="small"
-                                          type="number"
-                                          value={variant.price}
-                                          onChange={(e) => {
-                                            const newVariants = [...generatedVariants];
-                                            newVariants[index].price = e.target.value;
-                                            setGeneratedVariants(newVariants);
-                                          }}
-                                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                                        />
-                                      </TableCell>
-                                      <TableCell>
-                                        <TextField
-                                          size="small"
-                                          type="number"
-                                          value={variant.quantity}
-                                          onChange={(e) => {
-                                            const newVariants = [...generatedVariants];
-                                            newVariants[index].quantity = e.target.value;
-                                            setGeneratedVariants(newVariants);
-                                          }}
-                                        />
-                                      </TableCell>
-                                      <TableCell>
-                                        <TextField
-                                          size="small"
-                                          value={variant.optionField}
-                                          onChange={(e) => {
-                                            const newVariants = [...generatedVariants];
-                                            newVariants[index].optionField = e.target.value;
-                                            setGeneratedVariants(newVariants);
-                                          }}
-                                        />
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
-                          </Paper>
-                        </Grid>
-                      )}
-                    </>
+                      ))}
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={addAttribute}
+                        sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', '&:hover': { background: 'linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%)' } }}
+                      >
+                        إضافة سمة
+                      </Button>
+                    </Paper>
+                  </Grid>
+                  {/* جدول المتغيرات الديناميكي */}
+                  {formData.hasVariants && generatedVariants.length > 0 && (
+                    <Grid item xs={12}>
+                      <Paper elevation={0} sx={{ p: 3, mt: 3, bgcolor: 'rgba(118, 75, 162, 0.05)', borderRadius: 2 }}>
+                        <Typography variant="h6" sx={{ mb: 2, color: '#764ba2', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <InventoryIcon /> إدارة المتغيرات
+                        </Typography>
+                        <TableContainer component={Paper} elevation={1} sx={{ mt: 2 }}>
+                          <Table size="small">
+                            <TableHead>
+                              <TableRow sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.08) }}>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>النسخة</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>السعر</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>الكمية</TableCell>
+                                <TableCell sx={{ fontWeight: 700, fontSize: '0.9rem', color: theme.palette.secondary.dark }}>حقل اختياري</TableCell>
+                              </TableRow>
+                            </TableHead>
+                            <TableBody>
+                              {generatedVariants.map((variant, index) => (
+                                <TableRow key={index}>
+                                  <TableCell>
+                                    {Array.from(variant.attributes.values()).join(', ')}
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      value={variant.price}
+                                      onChange={(e) => {
+                                        const newVariants = [...generatedVariants];
+                                        newVariants[index].price = e.target.value;
+                                        setGeneratedVariants(newVariants);
+                                      }}
+                                      InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      value={variant.quantity}
+                                      onChange={(e) => {
+                                        const newVariants = [...generatedVariants];
+                                        newVariants[index].quantity = e.target.value;
+                                        setGeneratedVariants(newVariants);
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>
+                                    <TextField
+                                      size="small"
+                                      value={variant.optionField}
+                                      onChange={(e) => {
+                                        const newVariants = [...generatedVariants];
+                                        newVariants[index].optionField = e.target.value;
+                                        setGeneratedVariants(newVariants);
+                                      }}
+                                    />
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </TableContainer>
+                      </Paper>
+                    </Grid>
                   )}
                 </Paper>
               </Grid>
