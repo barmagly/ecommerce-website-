@@ -30,7 +30,9 @@ export default function Categories3DCircle() {
   }, [dispatch]);
 
   // زاوية دوران الحلقة بحيث يكون العنصر النشط في المنتصف (زاوية 0)
-  const ringRotation = -active * angleStep;
+  // لجعل العنصر النشط أقرب لليسار، أضف offset موجب
+  const offset = -22; // يمكنك تعديل هذه القيمة حسب رغبتك
+  const ringRotation = -active * angleStep + offset;
 
   const scrollToNext = useCallback(() => {
     if (!isScrolling) {
@@ -134,19 +136,20 @@ export default function Categories3DCircle() {
                         src={cat.image} 
                         alt={cat.name}
                         style={{
-                          width: '60px',
-                          height: '60px',
+                          width: isActive ? '100px' : '150px',
+                          height: isActive ? '100px' : '150px',
                           objectFit: 'cover',
                           borderRadius: '8px',
                           border: '2px solid #fff',
-                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                          transition: 'all 0.5s ease',
                         }}
                       />
                     ) : (
                       <div 
                         style={{
-                          width: '60px',
-                          height: '60px',
+                          width: isActive ? '80px' : '60px',
+                          height: isActive ? '80px' : '60px',
                           backgroundColor: '#f8f9fa',
                           borderRadius: '8px',
                           display: 'flex',

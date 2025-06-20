@@ -262,6 +262,7 @@
     padding: 1.5rem 1vw;
     min-height: 350px;
     border-radius: 16px;
+    position: relative !important;
   }
 
   .slider-content {
@@ -296,19 +297,21 @@
     padding: 0.5rem;
   }
 
-  .slider-arrow {
-    width: 44px !important;
-    height: 44px !important;
-    font-size: 1.1rem !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    border: 2px solid #db4444 !important;
-    color: #db4444 !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+  .slider-arrow.left {
+    position: absolute !important;
+    right: 10px !important;
+    left: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 10;
   }
-  
-  .slider-arrow:hover {
-    background: #db4444 !important;
-    color: white !important;
+  .slider-arrow.right {
+    position: absolute !important;
+    left: 10px !important;
+    right: auto !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    z-index: 10;
   }
   
   .shop-now-link {

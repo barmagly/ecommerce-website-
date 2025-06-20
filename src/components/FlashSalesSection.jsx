@@ -293,51 +293,23 @@ export default function FlashSalesSection() {
       >
         {/* أزرار التمرير */}
         <button
-          className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
+          className="btn btn-light rounded-circle p-3 scroll-btn scroll-left flashsales-arrow-mobile"
           onClick={scrollToPrev}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{
-            position: 'absolute',
-            left: '-25px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 10,
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(255, 255, 255, 0.95)',
-            border: '2px solid #db4444',
-            color: '#db4444',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            transition: 'all 0.3s ease'
+            zIndex: 10
           }}
         >
           <i className="fas fa-chevron-left"></i>
         </button>
         <button
-          className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
+          className="btn btn-light rounded-circle p-3 scroll-btn scroll-right flashsales-arrow-mobile"
           onClick={scrollToNext}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{
-            position: 'absolute',
-            right: '-25px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 10,
-            width: '50px',
-            height: '50px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'rgba(255, 255, 255, 0.95)',
-            border: '2px solid #db4444',
-            color: '#db4444',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            transition: 'all 0.3s ease'
+            zIndex: 10
           }}
         >
           <i className="fas fa-chevron-right"></i>
@@ -375,7 +347,7 @@ export default function FlashSalesSection() {
                         src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'}
                         alt={product?.name || 'Product'}
                         className="img-fluid mb-3"
-                        style={{ height: '200px', objectFit: 'contain' }}
+                        style={{ height: '200px', objectFit: 'contain', display: 'block', margin: '0 auto', maxWidth: '100%' }}
                       />
                     </Link>
                     <div className="text-center w-100">
@@ -525,6 +497,31 @@ export default function FlashSalesSection() {
 
         .scrollable-product-card:hover {
           transform: scale(1.02);
+        }
+
+        @media (max-width: 600px) {
+          .flashsales-arrow-mobile.scroll-btn {
+            width: 44px !important;
+            height: 44px !important;
+            font-size: 1.1rem !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #db4444 !important;
+            color: #db4444 !important;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+            border-radius: 50% !important;
+            z-index: 30;
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+          }
+          .flashsales-arrow-mobile.scroll-left {
+            left: 10px !important;
+            right: auto !important;
+          }
+          .flashsales-arrow-mobile.scroll-right {
+            right: 10px !important;
+            left: auto !important;
+          }
         }
       `}</style>
     </div>

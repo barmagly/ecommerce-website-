@@ -310,7 +310,7 @@ export default function BestSellersSection() {
           </div>
         </div>
       )}
-      <div className="d-flex justify-content-between align-items-start mb-5 ms-lg-5 gap-5">
+      <div className="d-flex justify-content-between align-items-start mb-5 ms-lg-5 gap-5 position-relative">
         <div className="d-flex flex-column flex-shrink-0 align-items-start me-5 gap-3">
           <div className="d-flex align-items-center pe-1 gap-3">
             <div className="bg-danger rounded flashsales-bar"></div>
@@ -325,7 +325,7 @@ export default function BestSellersSection() {
             </span>
           )}
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 slider-arrows-best-sellers">
           <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
             onClick={scrollToPrev}
@@ -333,8 +333,6 @@ export default function BestSellersSection() {
             onMouseLeave={handleMouseLeave}
             style={{
               transition: 'all 0.3s ease',
-              transform: 'translateY(-50%)',
-              position: 'relative',
               zIndex: 10
             }}
           >
@@ -347,14 +345,40 @@ export default function BestSellersSection() {
             onMouseLeave={handleMouseLeave}
             style={{
               transition: 'all 0.3s ease',
-              transform: 'translateY(-50%)',
-              position: 'relative',
               zIndex: 10
             }}
           >
             <i className="fas fa-chevron-right"></i>
           </button>
         </div>
+        <style>{`
+          @media (max-width: 600px) {
+            .slider-arrows-best-sellers {
+              position: absolute !important;
+              top: 50%;
+              left: 0;
+              right: 0;
+              width: 100%;
+              justify-content: space-between !important;
+              transform: translateY(-50%);
+              z-index: 20;
+              padding: 0 10px;
+              gap: 0 !important;
+            }
+            .slider-arrows-best-sellers .scroll-btn {
+              width: 44px !important;
+              height: 44px !important;
+              font-size: 1.1rem !important;
+              background: rgba(255, 255, 255, 0.95) !important;
+              border: 2px solid #db4444 !important;
+              color: #db4444 !important;
+              box-shadow: 0 4px 16px rgba(0,0,0,0.15) !important;
+              border-radius: 50% !important;
+              z-index: 30;
+              position: static !important;
+            }
+          }
+        `}</style>
       </div>
 
       {/* قائمة قابلة للتمرير */}
@@ -395,7 +419,7 @@ export default function BestSellersSection() {
                         src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'}
                         alt={product?.name || 'Product'}
                         className="img-fluid mb-3"
-                        style={{ height: '200px', objectFit: 'contain' }}
+                        style={{ height: '200px', objectFit: 'contain', display: 'block', margin: '0 auto', maxWidth: '100%' }}
                       />
                     </Link>
                     <div className="text-center w-100">
