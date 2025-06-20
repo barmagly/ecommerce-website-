@@ -2576,14 +2576,14 @@ const Products = () => {
                     <Grid item xs={12} md={6}>
                       <TextField
                         fullWidth
-                        required
+                        // required
                         label="العلامة التجارية"
                         id="product-brand"
                         name="brand"
                         value={formData.brand}
                         onChange={handleFormChange('brand')}
-                        error={!!formErrors.brand}
-                        helperText={formErrors.brand}
+                        // error={!!formErrors.brand}
+                        // helperText={formErrors.brand}
                         sx={{ '& .MuiOutlinedInput-root': { '&:hover fieldset': { borderColor: '#667eea' } } }}
                       />
                     </Grid>

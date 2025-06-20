@@ -79,7 +79,7 @@ export default function DiscountedProductsSection() {
                   )}
                 </div>
                 <div className="flex-grow-1 d-flex flex-column align-items-center">
-                  <span className="text-muted small">{product.brand || 'بدون ماركة'}</span>
+                  <span className="text-muted small">{product.brand || ' '}</span>
                   <h6 className="fw-bold text-center mb-1" style={{ minHeight: 32 }}>{product.name}</h6>
                   <div className="mb-2 d-flex align-items-center justify-content-center gap-2">
                     <span className="text-danger fw-bold fs-5">{product.price} ج.م</span>

@@ -175,7 +175,7 @@ export default function ShopProducts({ products = [] }) {
               )}
             </div>
             <div className="flex-grow-1 d-flex flex-column align-items-center">
-              <span className="text-muted small">{item.brand || 'بدون ماركة'}</span>
+              <span className="text-muted small">{item.brand || ' '}</span>
               <h6 className="fw-bold text-center mb-1" style={{ minHeight: 32 }}>{item.name}</h6>
               <div className="mb-1 d-flex align-items-center justify-content-between g-2">
                 <StarRating rating={item.ratings?.average || 0} />
