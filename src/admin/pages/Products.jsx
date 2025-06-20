@@ -322,11 +322,6 @@ const Products = () => {
       hasErrors = true;
     }
 
-    if (!formData.brand) {
-      setFormErrors(prev => ({ ...prev, brand: 'العلامة التجارية مطلوبة' }));
-      hasErrors = true;
-    }
-
     if (!formData.category) {
       setFormErrors(prev => ({ ...prev, category: 'التصنيف مطلوب' }));
       hasErrors = true;
