@@ -464,6 +464,7 @@ export default function ProductDetails() {
               <img
                 src={mainImg}
                 alt={product.name}
+                className="product-img-zoom"
                 style={{ maxWidth: 480, maxHeight: 420, borderRadius: 18, objectFit: 'contain', width: '100%', transition: '0.25s' }}
               />
             </div>
@@ -474,6 +475,7 @@ export default function ProductDetails() {
                     key={idx}
                     src={img.url}
                     alt={`${product.name}-img-${idx}`}
+                    className={`product-img-zoom${mainImg === img.url ? ' selected' : ''}`}
                     style={{
                       width: 64,
                       height: 64,
@@ -575,7 +577,7 @@ export default function ProductDetails() {
                   <div className="row text-center">
                     <div className="col-6">
                       <div className="text-muted small">تكلفة الشحن</div>
-                      <div className="fw-bold text-success">{product.shippingCost || 0} ج.م</div>
+                      <div className="fw-bold text-success">{product.shippingCost === 0 ? 'التوصيل مجاني' : `${product.shippingCost || 0} ج.م`}</div>
                     </div>
                     <div className="col-6">
                       <div className="text-muted small">وقت التوصيل</div>
@@ -1174,14 +1176,12 @@ export default function ProductDetails() {
 
       {/* إضافة المربع العائم */}
       <Snackbar
-
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
       >
         <Alert
-
           onClose={handleCloseSnackbar}
           severity="success"
           sx={{
@@ -1229,6 +1229,17 @@ export default function ProductDetails() {
         }
         .dragging .product-similar-card {
           transition: none !important;
+        }
+        .product-img-zoom {
+          transition: transform 0.3s cubic-bezier(.4,1.3,.6,1);
+          will-change: transform;
+        }
+        .product-img-zoom:hover {
+          transform: scale(1.13);
+          z-index: 2;
+        }
+        .product-img-zoom.selected {
+          box-shadow: 0 0 0 2px #DB4444;
         }
         @media (max-width: 767px) {
           .container {

@@ -118,14 +118,15 @@ export default function Header() {
   return (
     <>
       {/* شريط الإعلان العلوي */}
-      <div className="bg-gradient-primary py-2">
+      <div className="bg-gradient-primary py-2 promo-bar-animated">
         <div className="container">
           <div className="row align-items-center">
-            <div className="col-12">
-              <span className="text-white me-3" style={{ marginLeft: '12px' }}>
+            <div className="col-12 d-flex flex-wrap align-items-center justify-content-center gap-3">
+              <span className="text-white me-3 promo-text-animate" style={{ marginLeft: '12px', fontWeight: 600, fontSize: '1.13rem', letterSpacing: '0.5px' }}>
                 عروض حصرية على جميع المنتجات وتوصيل سريع مجاني - خصم حتى 50%!
               </span>
-              <Link to="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2" style={{ fontSize: '1rem' }}>
+              <Link to="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2 promo-btn-animate" style={{ fontSize: '1rem', borderRadius: '24px', boxShadow: '0 2px 12px #0002', fontWeight: 700 }}>
+                <i className="fas fa-bolt text-warning ms-2"></i>
                 تسوق الآن
               </Link>
             </div>
@@ -137,7 +138,7 @@ export default function Header() {
       <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
         <div className="container">
           <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src="/images/logo.png" alt="Logo" className="header-logo" style={{ marginLeft: '8px', width: '280px', height: '250px' }} /> 
+            <img src="/images/logo.png" alt="Logo" className="header-logo" style={{ marginLeft: '8px', width: '280px', height: '250px' }} />
           </Link>
           <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
             <span className="navbar-toggler-icon"></span>
@@ -419,10 +420,45 @@ export default function Header() {
         </div>
       </nav>
       <style>{`
-        .bg-gradient-primary {
-          background: linear-gradient(45deg, #1e88e5, #1976d2);
+        .bg-gradient-primary, .promo-bar-animated {
+          background: linear-gradient(270deg, #1e88e5, #1976d2, #db4444, #43a047, #1e88e5);
+          background-size: 1200% 1200%;
+          animation: gradientMove 12s ease infinite;
         }
-        
+        @keyframes gradientMove {
+          0% {background-position: 0% 50%;}
+          50% {background-position: 100% 50%;}
+          100% {background-position: 0% 50%;}
+        }
+        .promo-text-animate {
+          opacity: 0;
+          transform: translateY(-10px);
+          animation: fadeInDown 1.2s 0.2s forwards;
+        }
+        .promo-btn-animate {
+          opacity: 0;
+          transform: translateY(10px) scale(0.95);
+          animation: fadeInUp 1.2s 0.6s forwards;
+          transition: box-shadow 0.3s, transform 0.2s;
+        }
+        .promo-btn-animate:hover {
+          background: #db4444 !important;
+          color: #fff !important;
+          transform: scale(1.07) translateY(-2px);
+          box-shadow: 0 4px 24px #db444455;
+        }
+        @keyframes fadeInDown {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
         .nav-link-hover {
           position: relative;
           transition: color 0.3s;
