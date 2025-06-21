@@ -100,9 +100,9 @@ const Products = () => {
     features: [],
     specifications: [],
     attributes: [], // Initialize attributes as an empty array
-    shippingAddressType: 'nag_hamadi',
+    shippingAddressType: 'other_governorates',
     shippingAddressDetails: '',
-    shippingCost: 20,
+    shippingCost: 0,
     deliveryDays: 4,
     maxQuantityPerOrder: ''
   };
@@ -486,15 +486,14 @@ const Products = () => {
         });
 
         // إضافة بيانات الشحن
-        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddress[type]', formData.shippingAddressType);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
         console.log('Shipping data being sent:', {
           shippingCost: formData.shippingCost,
           deliveryDays: formData.deliveryDays,
-          shippingAddressType: formData.shippingAddressType,
-          shippingAddressDetails: formData.shippingAddressDetails
+          shippingAddress: { type: formData.shippingAddressType }
         });
 
         // إضافة المتغيرات إذا كانت موجودة
@@ -616,15 +615,14 @@ const Products = () => {
         });
 
         // إضافة بيانات الشحن
-        formDataToSend.append('shippingAddressType', formData.shippingAddressType);
+        formDataToSend.append('shippingAddress[type]', formData.shippingAddressType);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
         console.log('Shipping data being sent:', {
           shippingCost: formData.shippingCost,
           deliveryDays: formData.deliveryDays,
-          shippingAddressType: formData.shippingAddressType,
-          shippingAddressDetails: formData.shippingAddressDetails
+          shippingAddress: { type: formData.shippingAddressType }
         });
 
         // إضافة المتغيرات إذا كانت موجودة
@@ -2771,8 +2769,8 @@ const Products = () => {
                               label="نطاق الشحن"
                               sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' } }}
                             >
-                              <MenuItem value="nag_hamadi">نجع حمادي و ضواحيها</MenuItem>
                               <MenuItem value="other_governorates">جميع محافظات مصر</MenuItem>
+                              <MenuItem value="nag_hamadi">نجع حمادي و ضواحيها</MenuItem>
                             </Select>
                           </FormControl>
                         </Grid>
