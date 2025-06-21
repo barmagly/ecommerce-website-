@@ -1,12 +1,140 @@
 html, body {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Container fixes */
+.container, .container-fluid {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Row and column fixes */
+.row {
+  margin-left: 0;
+  margin-right: 0;
+  max-width: 100%;
+}
+
+.row > [class^='col-'] {
+  padding-left: 15px;
+  padding-right: 15px;
+  max-width: 100%;
+}
+
+/* Image fixes */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Card fixes */
+.card {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+/* Mobile specific fixes */
+@media (max-width: 768px) {
+  .container, .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .row > [class^='col-'] {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  /* Ensure all elements respect container width */
+  .card, .btn, .form-control, .input-group {
+    max-width: 100%;
+  }
+  
+  /* Fix any potential overflow issues */
+  .navbar, .navbar-nav, .navbar-collapse {
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  
+  /* Header logo fixes */
+  .header-logo {
+    max-width: 200px !important;
+    height: auto !important;
+  }
+  
+  /* Navbar fixes */
+  .navbar-brand {
+    max-width: 100%;
+    overflow: hidden;
+  }
+  
+  /* Search form fixes */
+  .search-form {
+    max-width: 100%;
+    min-width: auto !important;
+  }
+  
+  .search-input {
+    max-width: 100%;
+  }
+  
+  /* Promo bar fixes */
+  .promo-bar-animated {
+    overflow-x: hidden;
+  }
+  
+  .promo-text-animate {
+    font-size: 0.9rem !important;
+    white-space: normal;
+    word-wrap: break-word;
+  }
+}
+
+/* Extra small screen fixes */
+@media (max-width: 400px) {
+  .container, .container-fluid {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+  
+  .header-logo {
+    max-width: 150px !important;
+  }
+  
+  .promo-text-animate {
+    font-size: 0.8rem !important;
+  }
+  
+  .search-form {
+    min-width: 200px !important;
+  }
+  
+  /* Ensure all text elements don't overflow */
+  h1, h2, h3, h4, h5, h6, p, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
 }
 
 .home-bg-animated {
   position: fixed;
   z-index: 0;
   inset: 0;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background: radial-gradient(circle at 80% 20%, #e0e7ff 0%, transparent 60%),
               radial-gradient(circle at 20% 80%, #ffe0f0 0%, transparent 60%);
@@ -20,7 +148,7 @@ html, body {
 
 /* Modern Gradient Backgrounds for Home Page Sections */
 .main-slider-section {
-  width: 100vw;
+  width: 100%;
   max-width: 100%;
   min-height: 60vh;
   display: flex;
@@ -31,7 +159,7 @@ html, body {
 }
 
 .main-carousel {
-  width: 100vw !important;
+  width: 100% !important;
   max-width: 100% !important;
   margin: 0 auto !important;
   border-radius: 2rem !important;
@@ -162,7 +290,7 @@ html, body {
     gap: 0.5rem;
   }
   .carousel-text {
-    max-width: 100vw;
+    max-width: 100%;
     padding: 0 0.5rem;
   }
 }
@@ -198,6 +326,10 @@ html, body {
     margin-top: 1rem !important;
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
+  }
+  .carousel-text {
+    max-width: 100%;
+    padding: 0 0.5rem;
   }
 }
 

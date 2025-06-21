@@ -387,8 +387,10 @@ export default function FlashSalesSection() {
       <style jsx>{`
         .scrollable-products-container {
           position: relative;
-          overflow: visible;
+          overflow: hidden;
           padding: 0 30px;
+          width: 100%;
+          max-width: 100%;
         }
         
         .scrollable-products-wrapper {
@@ -400,6 +402,8 @@ export default function FlashSalesSection() {
           -ms-overflow-style: none;
           padding: 10px 0;
           direction: ltr;
+          width: 100%;
+          max-width: 100%;
         }
         
         .scrollable-products-wrapper::-webkit-scrollbar {

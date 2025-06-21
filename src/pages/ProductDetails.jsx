@@ -1258,7 +1258,7 @@ export default function ProductDetails() {
             padding-left: 0 !important;
             padding-right: 0 !important;
             width: 100% !important;
-            max-width: 100vw !important;
+            max-width: 100% !important;
           }
           .name
           {

@@ -115,6 +115,7 @@
   padding: 10px 0 !important;
   position: relative;
   direction: rtl; /* عكس اتجاه التمرير */
+  max-width: 100%;
 }
 
 .scrollable-products-wrapper::-webkit-scrollbar {
@@ -349,34 +350,19 @@
   .bestsellers-section,
   .categories-3d-section,
   .service-features-section {
-    padding: 10px 0 !important;
-    min-height: unset;
+    padding: 20px 0 !important;
+    margin: 0 !important;
+    overflow-x: hidden;
   }
   .flashsales-header,
   .bestsellers-header {
-    flex-direction: column !important;
-    gap: 1rem !important;
+    padding: 0 10px !important;
     margin-bottom: 20px !important;
-    align-items: center !important;
-    text-align: center;
+    text-align: center !important;
+    overflow-x: hidden;
   }
   .flashsales-header > div,
-  .bestsellers-header > div,
-  .flashsales-header > button,
-  .bestsellers-header > button {
-    width: 100%;
-    justify-content: center !important;
-    align-items: center !important;
-    text-align: center;
-  }
-  .display-5 {
-    font-size: 1.2rem !important;
-    text-align: center;
-    width: 100%;
-    margin-bottom: 0.5rem;
-  }
-  .flashsales-header .d-flex.align-items-center.gap-3,
-  .bestsellers-header .d-flex.align-items-center.gap-3 {
+  .bestsellers-header > div {
     flex-direction: row !important;
     flex-wrap: nowrap !important;
     justify-content: center !important;
@@ -391,24 +377,28 @@
     overflow-x: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100%;
+    max-width: 100%;
   }
   .scrollable-products-wrapper {
     gap: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
+    width: 100%;
+    max-width: 100%;
   }
   .scrollable-product-card {
-    width: 100vw !important;
-    min-width: 100vw !important;
-    max-width: 100vw !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
   }
   .flashsales-card, .bestsellers-section .flashsales-card {
-    width: 92vw !important;
-    min-width: 92vw !important;
-    max-width: 92vw !important;
+    width: 92% !important;
+    min-width: 92% !important;
+    max-width: 92% !important;
     margin: 0 auto 24px auto !important;
     border-radius: 16px !important;
     box-shadow: 0 4px 16px rgba(0,0,0,0.1);
@@ -529,9 +519,9 @@
   }
   .flashsales-card,
   .bestsellers-section .flashsales-card {
-    flex: 0 0 95vw !important;
-    min-width: 95vw !important;
-    max-width: 95vw !important;
+    flex: 0 0 95% !important;
+    min-width: 95% !important;
+    max-width: 95% !important;
   }
   
   .scroll-btn {
