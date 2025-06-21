@@ -50,7 +50,7 @@ export default function MainSlider() {
         if (!isTransitioning && slides.length > 0) {
           nextSlide();
         }
-      }, 3000); 
+      }, 3000);
     };
 
     if (!loading && !error && slides.length > 0) {
@@ -110,7 +110,15 @@ export default function MainSlider() {
 
         <div className="slider-content">
           <div className="main-card-image">
-            <img src={slide?.imageCover} alt={slide?.name || 'منتج جديد'} />
+            <img
+              src={slide?.imageCover}
+              alt={slide?.name || 'منتج جديد'}
+              fetchpriority="high"
+              loading="eager"
+              width="300"
+              height="300"
+              style={{ aspectRatio: "1 / 1" }}
+            />
           </div>
           <div className="main-card-text">
             <h6 className="slide-title">{slide?.brand || 'العلامة التجارية'}</h6>

@@ -69,6 +69,9 @@ export default function DiscountedProductsSection() {
                     src={product.imageCover || product.images?.[0]?.url || '/images/Placeholder.png'}
                     alt={product.name}
                     className="product-img-main"
+                    width="170"
+                    height="170"
+                    loading="lazy"
                     style={{ height: 170, objectFit: 'contain', borderRadius: 12, background: '#f6f6f6', width: '100%' }}
                     onError={e => { e.target.onerror = null; e.target.src = '/images/Placeholder.png'; }}
                   />

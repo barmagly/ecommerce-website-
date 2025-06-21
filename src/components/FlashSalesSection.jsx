@@ -347,6 +347,9 @@ export default function FlashSalesSection() {
                         src={product?.imageCover || product?.image || product?.images?.[0] || '/images/Placeholder.png'}
                         alt={product?.name || 'Product'}
                         className="img-fluid mb-3"
+                        width="200"
+                        height="200"
+                        loading="lazy"
                         style={{ height: '200px', objectFit: 'contain', display: 'block', margin: '0 auto', maxWidth: '100%' }}
                       />
                     </Link>

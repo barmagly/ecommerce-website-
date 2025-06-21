@@ -38,7 +38,7 @@ export default function Categories3DCircle() {
     if (!isScrolling) {
       setIsScrolling(true);
       setActive((prev) => (prev + 1) % (categories?.length || 1));
-      
+
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
@@ -50,7 +50,7 @@ export default function Categories3DCircle() {
     if (!isScrolling) {
       setIsScrolling(true);
       setActive((prev) => (prev - 1 + (categories?.length || 1)) % (categories?.length || 1));
-      
+
       // إعادة تفعيل التمرير بعد انتهاء الانيميشن
       setTimeout(() => {
         setIsScrolling(false);
@@ -73,7 +73,7 @@ export default function Categories3DCircle() {
   const handleMouseEnter = () => {
     setIsAutoScrolling(false);
   };
-  
+
   const handleMouseLeave = () => {
     setIsAutoScrolling(true);
   };
@@ -94,13 +94,13 @@ export default function Categories3DCircle() {
   }
 
   return (
-    <div 
+    <div
       className="categories-3d-section d-flex flex-column align-items-center justify-content-center categories-section-bg"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       <h2 className="fw-bold mb-1">تصفح حسب التصنيف</h2>
-      <div className="categories-3d-perspective" style={{perspective: `${perspective}px`}}>
+      <div className="categories-3d-perspective" style={{ perspective: `${perspective}px` }}>
         <div className="categories-3d-ring mx-auto">
           <div
             className="categories-3d-items-ring"
@@ -132,9 +132,12 @@ export default function Categories3DCircle() {
                 >
                   <div className="categories-3d-image mb-2">
                     {cat.image ? (
-                      <img 
-                        src={cat.image} 
+                      <img
+                        src={cat.image}
                         alt={cat.name}
+                        width="150"
+                        height="150"
+                        loading="lazy"
                         style={{
                           width: isActive ? '100px' : '150px',
                           height: isActive ? '100px' : '150px',
@@ -146,7 +149,7 @@ export default function Categories3DCircle() {
                         }}
                       />
                     ) : (
-                      <div 
+                      <div
                         style={{
                           width: isActive ? '80px' : '60px',
                           height: isActive ? '80px' : '60px',
@@ -168,8 +171,8 @@ export default function Categories3DCircle() {
             })}
           </div>
           {/* أزرار التمرير */}
-          <button 
-            className="categories-3d-arrow right" 
+          <button
+            className="categories-3d-arrow right"
             onClick={scrollToPrev}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -183,8 +186,8 @@ export default function Categories3DCircle() {
           >
             <i className="fas fa-chevron-right"></i>
           </button>
-          <button 
-            className="categories-3d-arrow left" 
+          <button
+            className="categories-3d-arrow left"
             onClick={scrollToNext}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
@@ -200,7 +203,7 @@ export default function Categories3DCircle() {
           </button>
         </div>
       </div>
-      
+
       {/* مؤشرات التمرير */}
       <div className="d-flex justify-content-center mt-4">
         {categories.map((_, index) => (
