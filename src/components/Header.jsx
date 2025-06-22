@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
+import { searchProductsThunk, clearSearchResults } from "../services/Slice/product/product";
 import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
 import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt } from 'react-icons/fa';
+import debounce from 'lodash.debounce';
 
 // Custom styles for the new header
 const headerStyles = `
@@ -156,6 +158,9 @@ const headerStyles = `
     border: none;
     padding: 10px 15px;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .header-search-button:hover {
     background-color: #f3a847;
@@ -275,9 +280,6 @@ const headerStyles = `
       padding: 10px;
       text-align: center;
     }
-    .promo-content span {
-      display: none; /* Hide long promo text on mobile, keep button */
-    }
     .amazon-header-top {
       flex-direction: column;
       align-items: center;
@@ -330,11 +332,23 @@ export default function Header() {
   const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
   const { categories, loading: categoriesLoading } = useSelector((state) => state.categorie);
   const isAuthenticated = !!token;
-  const { products, loading: productsLoading } = useSelector(state => state.product);
-  const [suggestions, setSuggestions] = useState([]);
+  const { searchResults, searchLoading } = useSelector(state => state.product);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  const debouncedSearch = useCallback(
+    debounce((nextValue) => {
+      if (nextValue) {
+        dispatch(searchProductsThunk(nextValue));
+      }
+    }, 500),
+    [dispatch]
+  );
+
+  useEffect(() => {
+    debouncedSearch(search);
+  }, [search, debouncedSearch]);
 
   // Control header visibility on scroll for mobile
   useEffect(() => {
@@ -398,43 +412,30 @@ export default function Header() {
     }
   }, [authUser, profileUser, currentUser, loading, error]);
 
-  useEffect(() => {
-    if (search.trim()) {
-      const filteredSuggestions = products
-        .filter(item => item.name && item.name.toLowerCase().includes(search.toLowerCase()))
-        .slice(0, 5);
-      setSuggestions(filteredSuggestions);
+  const handleSearchChange = (e) => {
+    const { value } = e.target;
+    setSearch(value);
+    if (value) {
+      setShowSuggestions(true);
     } else {
-      setSuggestions([]);
+      setShowSuggestions(false);
+      dispatch(clearSearchResults());
     }
-  }, [search, products]);
-
-  useEffect(() => {
-    dispatch(getCategoriesThunk());
-  }, [dispatch]);
-
-  const handleSearch = (e) => {
+  };
+  
+  const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim()) {
       navigate(`/search?q=${encodeURIComponent(search)}`);
-    } else {
-      navigate('/search');
     }
     setShowSuggestions(false);
   };
-
-  const handleSearchIcon = () => {
-    if (search.trim()) {
-      navigate(`/search?q=${encodeURIComponent(search)}`);
-    } else {
-      navigate('/search');
-    }
-  };
-
+  
   const handleSuggestionClick = (suggestion) => {
     navigate(`/product/${suggestion.slug}`);
-    setSearch(suggestion.name);
+    setSearch('');
     setShowSuggestions(false);
+    dispatch(clearSearchResults());
   };
 
   const handleLogout = () => {
@@ -456,7 +457,7 @@ export default function Header() {
           <span>عرض حصري وتوصيل سريع - خصم حتى 50%!</span>
           <Link to="/shop" className="promo-button">
             <FaBolt />
-            تسوق الآن
+                تسوق الآن
           </Link>
         </div>
         <div className="top-bar-actions">
@@ -483,7 +484,7 @@ export default function Header() {
                 <Link className="dropdown-item" to="/wishlist">المفضلة</Link>
                 <div className="dropdown-divider"></div>
                 <button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button>
-              </div>
+            </div>
             )}
           </div>
         </div>
@@ -499,35 +500,27 @@ export default function Header() {
               <option value="" disabled>الكل</option>
               {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
             </select>
-            <input 
+                <input
               className="header-search-input" 
               type="text" 
               placeholder="ابحث في متجرنا"
-              value={search}
-              onChange={e => {
-                setSearch(e.target.value);
-                setShowSuggestions(true);
-              }}
-              onFocus={() => setShowSuggestions(true)}
+                  value={search}
+              onChange={handleSearchChange}
+              onFocus={() => { if(search) setShowSuggestions(true); }}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch(e);
-                  setShowSuggestions(false);
-                }
-              }}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
             />
-            <button className="header-search-button" onClick={handleSearch}>
-              <i className="fas fa-search"></i>
-            </button>
+            <button className="header-search-button" onClick={handleSearchSubmit}>
+                  <i className="fas fa-search"></i>
+                </button>
             {showSuggestions && search.trim() && (
               <div className="search-suggestions">
-                {productsLoading ? (
+                {searchLoading ? (
                   <div className="suggestion-item">جاري البحث...</div>
-                ) : suggestions.length > 0 ? (
-                  suggestions.map(item => (
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(item => (
                     <div 
-                      key={item._id} 
+                        key={item._id}
                       className="suggestion-item" 
                       onMouseDown={() => handleSuggestionClick(item)}
                     >
@@ -541,9 +534,9 @@ export default function Header() {
               </div>
             )}
           </div>
-          
+
           <div className="header-actions">
-            {isAuthenticated && (
+              {isAuthenticated && (
               <>
                 <Link to="/orders" className="header-nav-item">
                   <FaBoxOpen />
@@ -559,12 +552,12 @@ export default function Header() {
                 </Link>
               </>
             )}
-          </div>
+                    </div>
 
           <nav className="header-nav">
            
           </nav>
-        </div>
+                  </div>
         <div className="amazon-header-bottom">
           <div className="header-bottom-links">
             <Link to="/shop" state={{ showDiscounted: true }} className="header-bottom-link deals-link">
@@ -574,7 +567,7 @@ export default function Header() {
             {!categoriesLoading && categories && categories.slice(0, 8).map(cat => (
               <Link key={cat._id} to={`/shop?category=${cat.name}`} className="header-bottom-link">
                 {cat.name}
-              </Link>
+                    </Link>
             ))}
           </div>
         </div>
