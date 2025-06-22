@@ -461,10 +461,10 @@ export default function Header() {
           </Link>
         </div>
         <div className="top-bar-actions">
-          <div className="contact-info top-bar-item">
+          <a href="tel:01092474959" className="contact-info top-bar-item">
             <FaPhoneAlt />
-            <span>01234567890</span>
-          </div>
+            <span>01092474959</span>
+          </a>
           <div className="dropdown">
             {isAuthenticated ? (
               <Link to="/profile" className="top-bar-item">
