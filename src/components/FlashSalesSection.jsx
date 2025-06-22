@@ -90,6 +90,19 @@ export default function FlashSalesSection() {
       });
   };
 
+  // Helper function to calculate card width based on screen size
+  const getCardWidth = useCallback((container) => {
+    if (!container) return 300;
+    
+    if (window.innerWidth <= 600) {
+      // On mobile: card width = container width - margins
+      return container.clientWidth - 40; // 20px margin on each side
+    } else {
+      // On larger screens: fixed width
+      return 300;
+    }
+  }, []);
+
   const scrollToNext = useCallback(() => {
     console.log('scrollToNext called', {
       hasRef: !!scrollContainerRef.current,
@@ -100,7 +113,7 @@ export default function FlashSalesSection() {
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       const container = scrollContainerRef.current;
-      const cardWidth = 300;
+      const cardWidth = getCardWidth(container);
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       let newScrollLeft = container.scrollLeft + cardWidth;
@@ -128,7 +141,7 @@ export default function FlashSalesSection() {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling, products.length]);
+  }, [isScrolling, products.length, getCardWidth]);
 
   const scrollToPrev = useCallback(() => {
     console.log('scrollToPrev called', {
@@ -140,7 +153,7 @@ export default function FlashSalesSection() {
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       const container = scrollContainerRef.current;
-      const cardWidth = 300;
+      const cardWidth = getCardWidth(container);
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       let newScrollLeft = container.scrollLeft - cardWidth;
@@ -168,7 +181,7 @@ export default function FlashSalesSection() {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling, products.length]);
+  }, [isScrolling, products.length, getCardWidth]);
 
   // التمرير التلقائي
   useEffect(() => {
@@ -177,9 +190,8 @@ export default function FlashSalesSection() {
     const interval = setInterval(() => {
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        const cardWidth = 300;
+        const cardWidth = getCardWidth(container);
         const maxScroll = container.scrollWidth - container.clientWidth;
-
         let newScrollLeft = container.scrollLeft + cardWidth;
 
         // إذا وصلنا للنهاية، نعود للبداية
@@ -195,7 +207,22 @@ export default function FlashSalesSection() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [isAutoScrolling, isScrolling, products.length]);
+  }, [isAutoScrolling, isScrolling, products.length, getCardWidth]);
+
+  // إضافة مستمع لتغيير حجم النافذة
+  useEffect(() => {
+    const handleResize = () => {
+      // إعادة حساب عرض البطاقات عند تغيير حجم النافذة
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        // يمكن إضافة منطق إضافي هنا إذا لزم الأمر
+        console.log('Window resized, container width:', container.clientWidth);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleMouseEnter = () => {
     setIsAutoScrolling(false);
@@ -528,6 +555,29 @@ export default function FlashSalesSection() {
           .flashsales-arrow-mobile.scroll-right {
             right: 10px !important;
             left: auto !important;
+          }
+          
+          /* Mobile card styling */
+          .scrollable-product-card {
+            flex: 0 0 calc(100vw - 80px) !important;
+            min-width: calc(100vw - 80px) !important;
+            max-width: calc(100vw - 80px) !important;
+            margin: 0 20px !important;
+          }
+          
+          .scrollable-products-wrapper {
+            gap: 0 !important;
+            padding: 0 !important;
+            scroll-snap-type: x mandatory !important;
+          }
+          
+          .scrollable-product-card {
+            scroll-snap-align: center !important;
+          }
+          
+          .flashsales-card {
+            width: 100% !important;
+            margin: 0 !important;
           }
         }
       `}</style>

@@ -1,6 +1,6 @@
 import  { useState, useEffect } from "react";
 import axios from "axios";
-import {  useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
@@ -17,6 +17,7 @@ console.log('🔗 API_URL:', API_URL);
 
 export default function Shop() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
 
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -33,13 +34,32 @@ export default function Shop() {
     minRating: '',
     inStock: ''
   });
-  const [showDiscounted, setShowDiscounted] = useState(false);
+  const [showDiscounted, setShowDiscounted] = useState(location.state?.showDiscounted || false);
 
   // Fetch initial products and categories
   useEffect(() => {
     fetchProducts(showDiscounted);
     fetchCategories();
   }, [showDiscounted]);
+
+  // Fix mobile scrolling issue
+  useEffect(() => {
+    // Ensure body is scrollable on mobile
+    document.body.style.overflow = 'auto';
+    document.body.style.webkitOverflowScrolling = 'touch';
+    
+    // Force a reflow to ensure scrolling works
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.body.style.overflow = 'auto';
+    }, 100);
+
+    return () => {
+      // Cleanup
+      document.body.style.overflow = '';
+      document.body.style.webkitOverflowScrolling = '';
+    };
+  }, []);
 
   // Handle URL parameters on page load
   useEffect(() => {

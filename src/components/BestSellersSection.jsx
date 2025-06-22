@@ -93,11 +93,24 @@ export default function BestSellersSection() {
       });
   };
 
+  // Helper function to calculate card width based on screen size
+  const getCardWidth = useCallback((container) => {
+    if (!container) return 300;
+    
+    if (window.innerWidth <= 600) {
+      // On mobile: card width = container width - margins
+      return container.clientWidth - 40; // 20px margin on each side
+    } else {
+      // On larger screens: fixed width
+      return 300;
+    }
+  }, []);
+
   const scrollToNext = useCallback(() => {
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       const container = scrollContainerRef.current;
-      const cardWidth = 300; // عرض البطاقة + المسافة بينها
+      const cardWidth = getCardWidth(container);
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       // استخدام آخر اتجاه تم استخدامه
@@ -134,14 +147,14 @@ export default function BestSellersSection() {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling, products.length, lastScrollDirection]);
+  }, [isScrolling, products.length, lastScrollDirection, getCardWidth]);
 
   const scrollToPrev = useCallback(() => {
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       setLastScrollDirection('left'); // تحديث اتجاه التمرير
       const container = scrollContainerRef.current;
-      const cardWidth = 300;
+      const cardWidth = getCardWidth(container);
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       // التمرير للبطاقة السابقة مع انيميشن
@@ -162,14 +175,14 @@ export default function BestSellersSection() {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling, products.length]);
+  }, [isScrolling, products.length, getCardWidth]);
 
   const scrollToNextManual = useCallback(() => {
     if (scrollContainerRef.current && !isScrolling && products.length > 0) {
       setIsScrolling(true);
       setLastScrollDirection('right'); // تحديث اتجاه التمرير
       const container = scrollContainerRef.current;
-      const cardWidth = 300; // عرض البطاقة + المسافة بينها
+      const cardWidth = getCardWidth(container);
       const maxScroll = container.scrollWidth - container.clientWidth;
 
       // التمرير للبطاقة التالية مع انيميشن
@@ -190,7 +203,7 @@ export default function BestSellersSection() {
         setIsScrolling(false);
       }, 800);
     }
-  }, [isScrolling, products.length]);
+  }, [isScrolling, products.length, getCardWidth]);
 
   // التمرير التلقائي كل 3 ثواني (حلقة مغلقة مستمرة)
   useEffect(() => {
@@ -201,7 +214,7 @@ export default function BestSellersSection() {
       // التمرير الدائري المستمر
       if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
-        const cardWidth = 300;
+        const cardWidth = getCardWidth(container);
         const maxScroll = container.scrollWidth - container.clientWidth;
 
         // التمرير للأمام بشكل مستمر
@@ -225,7 +238,7 @@ export default function BestSellersSection() {
     const interval = setInterval(startAutoScroll, 3000);
 
     return () => clearInterval(interval);
-  }, [isAutoScrolling, isScrolling, products.length]);
+  }, [isAutoScrolling, isScrolling, products.length, getCardWidth]);
 
   // إضافة تأثير بصري للتمرير التلقائي
   useEffect(() => {
@@ -237,6 +250,20 @@ export default function BestSellersSection() {
       container.style.setProperty('--auto-scroll-active', 'false');
     }
   }, [isAutoScrolling]);
+
+  // إضافة مستمع لتغيير حجم النافذة
+  useEffect(() => {
+    const handleResize = () => {
+      // إعادة حساب عرض البطاقات عند تغيير حجم النافذة
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        console.log('Window resized, container width:', container.clientWidth);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // إيقاف التمرير التلقائي عند التفاعل مع الماوس
   const handleMouseEnter = () => {
@@ -458,6 +485,39 @@ export default function BestSellersSection() {
       </div>
 
       <style jsx>{`
+        .scrollable-products-container {
+          position: relative;
+          overflow: hidden;
+          padding: 0 30px;
+          width: 100%;
+          max-width: 100%;
+        }
+        
+        .scrollable-products-wrapper {
+          display: flex;
+          gap: 20px;
+          overflow-x: auto;
+          scroll-behavior: smooth;
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          padding: 10px 0;
+          direction: ltr;
+          width: 100%;
+          max-width: 100%;
+        }
+        
+        .scrollable-products-wrapper::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .scrollable-product-card {
+          flex: 0 0 280px;
+          min-width: 280px;
+          max-width: 280px;
+          margin: 0;
+          direction: ltr;
+        }
+
         @keyframes slideInUpDown {
           0% {
             opacity: 0;
@@ -516,6 +576,30 @@ export default function BestSellersSection() {
 
         .scrollable-product-card:hover {
           transform: scale(1.02);
+        }
+
+        @media (max-width: 600px) {
+          .scrollable-product-card {
+            flex: 0 0 calc(100vw - 80px) !important;
+            min-width: calc(100vw - 80px) !important;
+            max-width: calc(100vw - 80px) !important;
+            margin: 0 20px !important;
+          }
+          
+          .scrollable-products-wrapper {
+            gap: 0 !important;
+            padding: 0 !important;
+            scroll-snap-type: x mandatory !important;
+          }
+          
+          .scrollable-product-card {
+            scroll-snap-align: center !important;
+          }
+          
+          .flashsales-card {
+            width: 100% !important;
+            margin: 0 !important;
+          }
         }
       `}</style>
     </div>

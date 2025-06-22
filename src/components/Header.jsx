@@ -4,21 +4,319 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 import { getProductsThunk } from "../services/Slice/product/product";
+import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
+import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt } from 'react-icons/fa';
 
-const navLinks = [
-  { label: "الرئيسية", href: "/" },
-  { label: "المتجر", href: "/shop" },
-  { label: "تواصل معنا", href: "/contact" },
-  // { label: "من نحن", href: "/about" },
-];
+// Custom styles for the new header
+const headerStyles = `
+  @keyframes gradientAnimation {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  .top-bar {
+    background: linear-gradient(-45deg, #4caf50, #8bc34a, #5a8b3e, #6ab344);
+    background-size: 400% 400%;
+    animation: gradientAnimation 15s ease infinite;
+    color: white;
+    padding: 5px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  .promo-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-weight: 500;
+  }
+  .promo-button {
+    background-color: white;
+    color: black;
+    padding: 8px 16px;
+    border-radius: 20px;
+    text-decoration: none;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s;
+  }
+  .promo-button:hover {
+    transform: scale(1.05);
+  }
+  .top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+  }
+  .top-bar-item {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .top-bar-item:hover {
+    color: white;
+    text-decoration: underline;
+  }
+  .amazon-header {
+    background-color: #131921;
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    transition: transform 0.3s ease-in-out;
+  }
+  .amazon-header.hidden {
+    transform: translateY(-100%);
+  }
+  .amazon-header-top, .amazon-header-bottom {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+  }
+  .amazon-header-bottom {
+    background-color: #232f3e;
+    padding: 2px 10px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .amazon-header-bottom::-webkit-scrollbar {
+    display: none;
+  }
+  .header-logo {
+    padding: 5px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    margin-right: 5px;
+  }
+  .header-logo:hover {
+    border-color: white;
+  }
+  .header-logo img {
+    width: 170px;
+    height: 140px;
+    margin-top: 5px;
+  }
+  .header-search {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    background-color: white;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    border-radius: 0 0 4px 4px;
+    z-index: 1000;
+    color: #111;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .suggestion-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .suggestion-item img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+  }
+  .suggestion-item:hover {
+    background-color: #f3f3f3;
+  }
+  .header-search-select {
+    background-color: #f3f3f3;
+    border: none;
+    padding: 10px 5px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  .header-search-input {
+    border: none;
+    flex-grow: 1;
+    padding: 10px;
+    color: #111;
+  }
+  .header-search-button {
+    background-color: #febd69;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+  }
+  .header-search-button:hover {
+    background-color: #f3a847;
+  }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-left: 15px;
+  }
+  .header-actions .header-nav-item {
+     font-size: 14px;
+     color: white;
+     text-decoration: none;
+     display: flex;
+     align-items: center;
+     gap: 6px;
+     padding: 8px;
+     border-radius: 4px;
+     border: 1px solid transparent;
+  }
+  .header-actions .header-nav-item:hover {
+    border-color: white;
+  }
+  .header-nav {
+    display: flex;
+    align-items: center;
+    margin-left: 15px;
+  }
+  .header-nav-item {
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    color: white;
+    text-decoration: none;
+  }
+  .header-nav-item:hover {
+    border-color: white;
+  }
+  .header-nav-item span {
+    display: block;
+    font-size: 12px;
+    color: #ccc;
+  }
+  .header-nav-item-bold {
+    font-weight: bold;
+    color: white;
+  }
+  .header-cart {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .header-cart .fa-shopping-cart {
+    font-size: 24px;
+    margin-right: 5px;
+  }
+  .header-bottom-links {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    white-space: nowrap;
+  }
+  .header-bottom-link {
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    padding: 8px 10px;
+    border: 1px solid transparent;
+    border-radius: 3px;
+  }
+  .header-bottom-link:hover {
+    border-color: white;
+  }
+  .hamburger-menu {
+    font-size: 20px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  .contact-info {
+    font-size: 14px;
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .contact-info .fa-phone {
+    margin-left: 5px;
+  }
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(254, 189, 105, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(254, 189, 105, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(254, 189, 105, 0);
+    }
+  }
+  .deals-link {
+    animation: pulse 2s infinite;
+    border-radius: 4px;
+    background-color: #febd69;
+    color: #131921 !important;
+    font-weight: bold;
+  }
 
-const authLinks = [
-  { label: "الرئيسية", href: "/" },
-  { label: "المتجر", href: "/shop" },
-  { label: "طلباتي", href: "/orders" },
-  { label: "تواصل معنا", href: "/contact" },
-  // { label: "من نحن", href: "/about" },
-];
+  @media (max-width: 768px) {
+    .top-bar {
+      flex-direction: column;
+      gap: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .promo-content span {
+      display: none; /* Hide long promo text on mobile, keep button */
+    }
+    .amazon-header-top {
+      flex-direction: column;
+      align-items: center;
+      padding: 15px 10px;
+      margin-bottom: 15px;
+      gap: 20px;
+    }
+    .header-logo {
+      order: 1;
+      margin-bottom: 15px;
+    }
+    .header-logo img {
+      width: 130px; 
+      height: auto;
+    }
+    .header-actions {
+      order: 2;
+      margin-left: 0;
+      margin-bottom: 15px;
+      gap: 25px;
+    }
+    .header-search {
+      order: 3;
+      width: 100%;
+      margin: 0;
+    }
+    .header-actions .header-nav-item span {
+       font-size: 12px; 
+    }
+    .header-bottom-links {
+      justify-content: center;
+      padding: 8px 0;
+    }
+    .header-nav {
+      display: none;
+    }
+  }
+`;
 
 function isActive(href) {
   if (href === "/") {
@@ -33,9 +331,38 @@ export default function Header() {
   const [search, setSearch] = useState("");
   const { user: authUser, token } = useSelector((state) => state.auth);
   const { user: profileUser, loading, error } = useSelector((state) => state.userProfile);
+  const { categories, loading: categoriesLoading } = useSelector((state) => state.categorie);
   const isAuthenticated = !!token;
-  const products = useSelector(state => state.product.products || []);
+  const { products, loading: productsLoading } = useSelector(state => state.product);
   const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Control header visibility on scroll for mobile
+  useEffect(() => {
+    const controlHeader = () => {
+      if (typeof window !== 'undefined') {
+        if (window.innerWidth <= 768) { // Only on mobile
+          if (window.scrollY > lastScrollY && window.scrollY > 150) { // Scroll down
+            setIsHeaderVisible(false);
+          } else { // Scroll up
+            setIsHeaderVisible(true);
+          }
+        } else {
+            setIsHeaderVisible(true); // Always visible on desktop
+        }
+        setLastScrollY(window.scrollY);
+      }
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('scroll', controlHeader);
+      return () => {
+        window.removeEventListener('scroll', controlHeader);
+      };
+    }
+  }, [lastScrollY]);
 
   // استخدام بيانات Google إذا كانت متوفرة، وإلا استخدم بيانات userProfile
   const currentUser = authUser || profileUser;
@@ -76,11 +403,10 @@ export default function Header() {
 
   useEffect(() => {
     if (search.trim()) {
-      setSuggestions(
-        products
-          .filter(item => item.name && item.name.toLowerCase().includes(search.toLowerCase()))
-          .slice(0, 5)
-      );
+      const filteredSuggestions = products
+        .filter(item => item.name && item.name.toLowerCase().includes(search.toLowerCase()))
+        .slice(0, 5);
+      setSuggestions(filteredSuggestions);
     } else {
       setSuggestions([]);
     }
@@ -93,6 +419,10 @@ export default function Header() {
     }
   }, [dispatch, products]);
 
+  useEffect(() => {
+    dispatch(getCategoriesThunk());
+  }, [dispatch]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
@@ -100,6 +430,7 @@ export default function Header() {
     } else {
       navigate('/search');
     }
+    setShowSuggestions(false);
   };
 
   const handleSearchIcon = () => {
@@ -110,696 +441,154 @@ export default function Header() {
     }
   };
 
+  const handleSuggestionClick = (suggestion) => {
+    navigate(`/product/${suggestion.slug}`);
+    setSearch(suggestion.name);
+    setShowSuggestions(false);
+  };
+
   const handleLogout = () => {
     dispatch(logout());
     navigate('/');
   };
 
+  const navLinks = [
+    { label: "الرئيسية", href: "/" },
+    { label: "المتجر", href: "/shop" },
+    { label: "تواصل معنا", href: "/contact" },
+  ];
+
   return (
     <>
-      {/* شريط الإعلان العلوي */}
-      <div className="bg-gradient-primary py-2 promo-bar-animated">
-        <div className="container">
-          <div className="row align-items-center">
-            <div className="col-12 d-flex flex-wrap align-items-center justify-content-center gap-3">
-              <span className="text-white me-3 promo-text-animate" style={{ marginLeft: '12px', fontWeight: 600, fontSize: '1.13rem', letterSpacing: '0.5px' }}>
-                عروض حصرية على جميع المنتجات وتوصيل سريع مجاني - خصم حتى 50%!
-              </span>
-              <Link to="/shop" className="btn btn-light fw-bold px-4 py-1 ms-2 promo-btn-animate" style={{ fontSize: '1rem', borderRadius: '24px', boxShadow: '0 2px 12px #0002', fontWeight: 700 }}>
-                <i className="fas fa-bolt text-warning ms-2"></i>
-                تسوق الآن
+      <style>{headerStyles}</style>
+      <div className="top-bar">
+        <div className="promo-content">
+          <span>عرض حصري وتوصيل سريع - خصم حتى 50%!</span>
+          <Link to="/shop" className="promo-button">
+            <FaBolt />
+            تسوق الآن
+          </Link>
+        </div>
+        <div className="top-bar-actions">
+          <div className="contact-info top-bar-item">
+            <FaPhoneAlt />
+            <span>01234567890</span>
+          </div>
+          <div className="dropdown">
+            {isAuthenticated ? (
+              <Link to="/profile" className="top-bar-item">
+                <FaUser />
+                <span>مرحباً, {currentUser?.name}</span>
               </Link>
-            </div>
+            ) : (
+              <Link to="/login" className="top-bar-item">
+                <FaSignInAlt />
+                <span>دخول / تسجيل</span>
+              </Link>
+            )}
+            {isAuthenticated && (
+              <div className="dropdown-menu dropdown-menu-end">
+                <Link className="dropdown-item" to="/profile">حسابي</Link>
+                <Link className="dropdown-item" to="/orders">طلباتي</Link>
+                <Link className="dropdown-item" to="/wishlist">المفضلة</Link>
+                <div className="dropdown-divider"></div>
+                <button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* شريط التنقل */}
-      <nav className="navbar navbar-expand-lg navbar-light py-3 shadow-sm sticky-top bg-white">
-        <div className="container">
-          <Link className="navbar-brand d-flex align-items-center" to="/">
-            <img src="/images/logo.png" alt="Logo" className="header-logo" style={{ marginLeft: '8px', width: '280px', height: '250px' }} />
+      <header className={`amazon-header ${!isHeaderVisible ? 'hidden' : ''}`}>
+        <div className="amazon-header-top">
+          <Link className="header-logo" to="/">
+            <img src="/images/logo.png" alt="Logo" />
           </Link>
-          <button className="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse d-none d-lg-flex justify-content-between" id="navbarNav">
-            <ul className="navbar-nav mb-2 mb-lg-0 gap-4">
-              {(isAuthenticated ? authLinks : navLinks).map(link => (
-                <li key={link.href} className="nav-item">
-                  <Link
-                    className={`nav-link fw-bold nav-link-hover${isActive(link.href) ? " active text-danger" : ""}`}
-                    to={link.href}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            {/* Enhanced Search and Action Buttons */}
-            <div className="d-flex align-items-center gap-3 ms-3">
-              <form className="d-flex search-form position-relative" role="search" style={{ minWidth: 260 }} onSubmit={handleSearch}>
-                <input
-                  className="form-control search-input"
-                  type="search"
-                  placeholder="ماذا تبحث عن؟"
-                  aria-label="بحث"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                <button
-                  className="btn search-btn"
-                  type="button"
-                  onClick={handleSearchIcon}
-                  tabIndex={0}
-                >
-                  <i className="fas fa-search"></i>
-                </button>
-                {search && suggestions.length > 0 && (
-                  <ul className="search-suggestions-list" style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    left: 0,
-                    zIndex: 1000,
-                    background: '#fff',
-                    border: '1px solid #eee',
-                    borderTop: 'none',
-                    borderRadius: '0 0 16px 16px',
-                    boxShadow: '0 4px 16px #0001',
-                    listStyle: 'none',
-                    margin: 0,
-                    padding: 0,
-                    maxHeight: 300,
-                    overflowY: 'auto',
-                    textAlign: 'right'
-                  }}>
-                    {suggestions.map(item => (
-                      <li
-                        key={item._id}
-                        style={{ cursor: 'pointer', padding: '8px 16px', display: 'flex', alignItems: 'center', gap: 8 }}
-                        onMouseDown={() => navigate(`/product/${item._id}`)}
-                      >
-                        <img
-                          src={item.images?.[0]?.url || item.imageCover || 'https://via.placeholder.com/40x40?text=No+Image'}
-                          alt={item.name}
-                          style={{ width: 40, height: 40, objectFit: 'contain', borderRadius: 8, marginLeft: 8 }}
-                        />
-                        <span>{item.name}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </form>
-              <div className="d-flex align-items-center gap-3">
-                {isAuthenticated ? (
-                  <>
-                    <button
-                      className="btn btn-icon"
-                      onClick={() => navigate('/cart')}
-                      title="سلة المشتريات"
+          
+          <div className="header-search">
+             <select className="header-search-select" defaultValue="">
+              <option value="" disabled>الكل</option>
+              {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+            </select>
+            <input 
+              className="header-search-input" 
+              type="text" 
+              placeholder="ابحث في متجرنا"
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch(e);
+                  setShowSuggestions(false);
+                }
+              }}
+            />
+            <button className="header-search-button" onClick={handleSearch}>
+              <i className="fas fa-search"></i>
+            </button>
+            {showSuggestions && search.trim() && (
+              <div className="search-suggestions">
+                {productsLoading ? (
+                  <div className="suggestion-item">جاري البحث...</div>
+                ) : suggestions.length > 0 ? (
+                  suggestions.map(item => (
+                    <div 
+                      key={item._id} 
+                      className="suggestion-item" 
+                      onMouseDown={() => handleSuggestionClick(item)}
                     >
-                      <i className="fas fa-shopping-cart"></i>
-                    </button>
-                    <button
-                      className="btn btn-icon"
-                      onClick={() => navigate('/wishlist')}
-                      title="المفضلة"
-                    >
-                      <i className="fas fa-heart"></i>
-                    </button>
-                    <div className="dropdown">
-                      <button
-                        className="btn btn-icon"
-                        type="button"
-                        id="userDropdown"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false"
-                        title={currentUser?.name || "حسابي"}
-                      >
-                        {loading ? (
-                          <div className="spinner-border spinner-border-sm text-primary" role="status">
-                            <span className="visually-hidden">Loading...</span>
-                          </div>
-                        ) : currentUser?.profileImg ? (
-                          <>
-                            <img
-                              src={getProfileImageUrl(currentUser.profileImg)}
-                              alt={currentUser.name || "User"}
-                              className="rounded-circle"
-                              style={{
-                                width: '50px',
-                                height: '50px',
-                                objectFit: 'cover'
-                              }}
-                              onError={(e) => {
-                                e.target.onerror = null;
-                                e.target.src = "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
-                              }}
-                              onLoad={() => {
-                                console.log("✅ Profile image loaded successfully:", getProfileImageUrl(currentUser.profileImg));
-                              }}
-                            />
-                            <i className="fas fa-user" style={{ display: 'none' }}></i>
-                          </>
-                        ) : (
-                          <i className="fas fa-user"></i>
-                        )}
-                      </button>
-                      <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li>
-                          <div className="dropdown-item-text">
-                            <small className="text-muted">مرحباً،</small>
-                            <div className="fw-bold">{currentUser?.name || "المستخدم"}</div>
-                          </div>
-                        </li>
-                        <li><hr className="dropdown-divider" /></li>
-                        <li><Link className="dropdown-item" to="/profile">حسابي</Link></li>
-                        <li><Link className="dropdown-item" to="/orders">طلباتي</Link></li>
-                        <li><Link className="dropdown-item" to="/wishlist">المفضلة</Link></li>
-                        <li><hr className="dropdown-divider" /></li>
-                        <li><button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button></li>
-                      </ul>
+                      <img src={item.images && item.images[0] ? item.images[0].url : '/images/placeholder.png'} alt={item.name} />
+                      <span>{item.name}</span>
                     </div>
-                  </>
+                  ))
                 ) : (
-                  <>
-                    <button
-                      className="btn btn-outline-danger"
-                      onClick={() => navigate('/login')}
-                    >
-                      تسجيل الدخول
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => navigate('/signup')}
-                    >
-                      إنشاء حساب
-                    </button>
-                  </>
+                  <div className="suggestion-item">لا توجد نتائج</div>
                 )}
               </div>
-            </div>
+            )}
+          </div>
+          
+          <div className="header-actions">
+            {isAuthenticated && (
+              <>
+                <Link to="/orders" className="header-nav-item">
+                  <FaBoxOpen />
+                  <span>طلباتي</span>
+                </Link>
+                <Link to="/wishlist" className="header-nav-item">
+                  <FaHeart />
+                  <span>المفضلة</span>
+                </Link>
+                <Link to="/cart" className="header-nav-item">
+                  <FaShoppingCart />
+                  <span>عربة التسوق</span>
+                </Link>
+              </>
+            )}
           </div>
 
-          {/* Offcanvas Sidebar for Mobile */}
-          <div className="offcanvas offcanvas-end d-lg-none custom-sidebar" tabIndex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-            <div className="offcanvas-header border-bottom">
-              <h5 className="offcanvas-title" id="offcanvasNavbarLabel">
-                <img src="/images/logo.png" alt="Logo" className="sidebar-logo" style={{ width: '250px', height: 'auto' }} />
-              </h5>
-              <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div className="offcanvas-body">
-              {isAuthenticated && (
-                <div className="mb-4 p-3 bg-light rounded">
-                  <div className="d-flex align-items-center gap-3">
-                    {loading ? (
-                      <div className="spinner-border spinner-border-sm text-primary" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    ) : currentUser?.profileImg ? (
-                      <img
-                        src={getProfileImageUrl(currentUser.profileImg)}
-                        alt={currentUser.name || "User"}
-                        className="rounded-circle"
-                        style={{
-                          width: '50px',
-                          height: '50px',
-                          objectFit: 'cover'
-                        }}
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = "https://img.freepik.com/free-vector/blue-circle-with-white-user_78370-4707.jpg?semt=ais_hybrid&w=740";
-                        }}
-                      />
-                    ) : (
-                      <div className="btn-icon">
-                        <i className="fas fa-user"></i>
-                      </div>
-                    )}
-                    <div>
-                      <small className="text-muted d-block">مرحباً،</small>
-                      <div className="fw-bold">{currentUser?.name || "المستخدم"}</div>
-                    </div>
-                  </div>
-                </div>
-              )}
-              <form className="d-flex mb-3 position-relative" role="search" onSubmit={handleSearch}>
-                <input
-                  className="form-control search-input"
-                  type="search"
-                  placeholder="ماذا تبحث عن؟"
-                  aria-label="بحث"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                />
-                <button
-                  className="btn search-btn"
-                  type="button"
-                  onClick={handleSearchIcon}
-                  tabIndex={0}
-                >
-                  <i className="fas fa-search"></i>
-                </button>
-              </form>
-              <ul className="navbar-nav mb-4">
-                {(isAuthenticated ? authLinks : navLinks).map(link => (
-                  <li key={link.href} className="nav-item">
-                    <Link
-                      className={`nav-link fw-bold py-3 border-bottom${isActive(link.href) ? " active text-danger" : ""}`}
-                      to={link.href}
-                    >
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              {isAuthenticated ? (
-                <div className="d-flex flex-column gap-2">
-                  <div className="d-flex flex-wrap gap-2">
-                    <button
-                      className="btn btn-icon"
-                      onClick={() => navigate('/cart')}
-                      title="سلة المشتريات"
-                    >
-                      <i className="fas fa-shopping-cart"></i>
-                    </button>
-                    <button
-                      className="btn btn-icon"
-                      onClick={() => navigate('/wishlist')}
-                      title="المفضلة"
-                    >
-                      <i className="fas fa-heart"></i>
-                    </button>
-                  </div>
-                  <div className="d-flex flex-column gap-2 mt-2">
-                    <Link to="/profile" className="btn btn-outline-dark">حسابي</Link>
-                    <Link to="/orders" className="btn btn-outline-dark">طلباتي</Link>
-                    <button onClick={handleLogout} className="btn btn-danger">تسجيل الخروج</button>
-                  </div>
-                </div>
-              ) : (
-                <div className="d-flex flex-column gap-2">
-                  <button
-                    className="btn btn-outline-danger"
-                    onClick={() => navigate('/login')}
-                  >
-                    تسجيل الدخول
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => navigate('/signup')}
-                  >
-                    إنشاء حساب
-                  </button>
-                </div>
-              )}
-            </div>
+          <nav className="header-nav">
+           
+          </nav>
+        </div>
+        <div className="amazon-header-bottom">
+          <div className="header-bottom-links">
+            <Link to="/shop" state={{ showDiscounted: true }} className="header-bottom-link deals-link">
+              <FaFire style={{ marginLeft: '5px' }} />
+              عروض اليوم
+            </Link>
+            {!categoriesLoading && categories && categories.slice(0, 8).map(cat => (
+              <Link key={cat._id} to={`/shop?category=${cat.name}`} className="header-bottom-link">
+                {cat.name}
+              </Link>
+            ))}
           </div>
         </div>
-      </nav>
-      <style>{`
-        .bg-gradient-primary, .promo-bar-animated {
-          background: linear-gradient(270deg, #1e88e5, #1976d2, #db4444, #43a047, #1e88e5);
-          background-size: 1200% 1200%;
-          animation: gradientMove 12s ease infinite;
-        }
-        @keyframes gradientMove {
-          0% {background-position: 0% 50%;}
-          50% {background-position: 100% 50%;}
-          100% {background-position: 0% 50%;}
-        }
-        .promo-text-animate {
-          opacity: 0;
-          transform: translateY(-10px);
-          animation: fadeInDown 1.2s 0.2s forwards;
-        }
-        .promo-btn-animate {
-          opacity: 0;
-          transform: translateY(10px) scale(0.95);
-          animation: fadeInUp 1.2s 0.6s forwards;
-          transition: box-shadow 0.3s, transform 0.2s;
-        }
-        .promo-btn-animate:hover {
-          background: #db4444 !important;
-          color: #fff !important;
-          transform: scale(1.07) translateY(-2px);
-          box-shadow: 0 4px 24px #db444455;
-        }
-        @keyframes fadeInDown {
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeInUp {
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-        .nav-link-hover {
-          position: relative;
-          transition: color 0.3s;
-        }
-        
-        .nav-link-hover:after {
-          content: '';
-          position: absolute;
-          width: 0;
-          height: 2px;
-          bottom: 0;
-          left: 0;
-          background-color: #dc3545;
-          transition: width 0.3s;
-        }
-        
-        .nav-link-hover:hover:after {
-          width: 100%;
-        }
-        
-        .search-form {
-          position: relative;
-        }
-        
-        .search-input {
-          border-radius: 50px;
-          padding-right: 45px;
-          padding-left: 20px;
-          border: 2px solid #eee;
-          transition: all 0.3s;
-        }
-        
-        .search-input:focus {
-          border-color: #dc3545;
-          box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
-        }
-        
-        .search-btn {
-          position: absolute;
-          right: 5px;
-          top: 50%;
-          transform: translateY(-50%);
-          border: none;
-          background: none;
-          color: #666;
-          transition: color 0.3s;
-        }
-        
-        .search-btn:hover {
-          color: #dc3545;
-        }
-        
-        .btn-icon {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: #f8f9fa;
-          color: #666;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: all 0.3s;
-          border: none;
-          position: relative;
-        }
-        
-        .btn-icon:hover {
-          background: #dc3545;
-          color: white;
-          transform: translateY(-2px);
-        }
-        
-        .custom-sidebar {
-          width: 300px;
-          border-right: none;
-        }
-        
-        .custom-sidebar .offcanvas-header {
-          background: #f8f9fa;
-        }
-        
-        .custom-sidebar .nav-link {
-          transition: all 0.3s;
-        }
-        
-        .custom-sidebar .nav-link:hover {
-          background: #f8f9fa;
-          padding-right: 1.5rem;
-        }
-        
-        .dropdown-menu {
-          border: none;
-          box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-          border-radius: 0.5rem;
-        }
-        
-        .dropdown-item {
-          padding: 0.5rem 1rem;
-          transition: all 0.2s;
-        }
-        
-        .dropdown-item:hover {
-          background-color: #f8f9fa;
-        }
-        
-        .dropdown-item-text {
-          padding: 0.5rem 1rem;
-        }
-        
-        /* Enhanced Mobile Responsive Styles */
-        @media (max-width: 991px) {
-          .navbar {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
-          }
-          
-          .custom-sidebar {
-            width: 280px;
-          }
-          
-          .navbar-brand img {
-            height: 140px !important;
-            width: 140px !important;
-          }
-          
-          .search-form {
-            min-width: 200px !important;
-          }
-        }
-        
-        @media (max-width: 768px) {
-          .bg-gradient-primary .container {
-            padding: 0.5rem 1rem;
-          }
-          
-          .bg-gradient-primary span {
-            font-size: 0.85rem;
-            margin-left: 8px !important;
-          }
-          
-          .bg-gradient-primary .btn {
-            font-size: 0.8rem !important;
-            padding: 0.25rem 0.75rem !important;
-          }
-          
-          .navbar-brand img {
-            height: 140px !important;
-            width: 140px !important;
-          }
-          
-          .custom-sidebar {
-            width: 100%;
-            max-width: 320px;
-          }
-          
-          .search-form {
-            min-width: 100% !important;
-            margin-bottom: 1rem;
-          }
-          
-          .search-input {
-            border-radius: 25px;
-            padding: 10px 40px 10px 15px;
-            font-size: 0.9rem;
-          }
-          
-          .btn-icon {
-            width: 35px;
-            height: 35px;
-            font-size: 0.9rem;
-          }
-          
-          .offcanvas-body {
-            padding: 1rem;
-          }
-          
-          .offcanvas-body .nav-link {
-            padding: 0.75rem 0;
-            font-size: 1rem;
-            border-bottom: 1px solid #eee;
-          }
-          
-          .offcanvas-body .btn {
-            padding: 0.75rem 1rem;
-            font-size: 0.9rem;
-            border-radius: 8px;
-          }
-        }
-        
-        @media (max-width: 576px) {
-          .bg-gradient-primary {
-            padding: 0.5rem 0;
-          }
-          
-          .bg-gradient-primary .row {
-            flex-direction: column;
-            gap: 0.5rem;
-            text-align: center;
-          }
-          
-          .bg-gradient-primary span {
-            font-size: 0.8rem;
-            margin-left: 0 !important;
-            display: block;
-            margin-bottom: 0.5rem;
-          }
-          
-          .navbar-brand img {
-            height: 90px !important;
-            width: 90px !important;
-          }
-          
-          .custom-sidebar {
-            width: 100%;
-            max-width: 300px;
-          }
-          
-          .search-input {
-            padding: 8px 35px 8px 12px;
-            font-size: 0.85rem;
-          }
-          
-          .btn-icon {
-            width: 32px;
-            height: 32px;
-            font-size: 0.8rem;
-          }
-          
-          .offcanvas-body {
-            padding: 0.75rem;
-          }
-          
-          .offcanvas-body .nav-link {
-            padding: 0.6rem 0;
-            font-size: 0.95rem;
-          }
-          
-          .offcanvas-body .btn {
-            padding: 0.6rem 0.75rem;
-            font-size: 0.85rem;
-          }
-        }
-        
-        @media (max-width: 480px) {
-          .container {
-            padding-left: 0.75rem;
-            padding-right: 0.75rem;
-          }
-          
-          .navbar-brand img {
-            height: 70px !important;
-            width: 70px !important;
-          }
-          
-          .search-input {
-            padding: 6px 30px 6px 10px;
-            font-size: 0.8rem;
-          }
-          
-          .btn-icon {
-            width: 30px;
-            height: 30px;
-            font-size: 0.75rem;
-          }
-          
-          .offcanvas-body {
-            padding: 0.5rem;
-          }
-          
-          .offcanvas-body .nav-link {
-            padding: 0.5rem 0;
-            font-size: 0.9rem;
-          }
-          
-          .offcanvas-body .btn {
-            padding: 0.5rem 0.6rem;
-            font-size: 0.8rem;
-          }
-        }
-        
-        @media (max-width: 360px) {
-          .navbar-brand img {
-            height: 60px !important;
-            width: 60px !important;
-          }
-          
-          .search-input {
-            padding: 5px 25px 5px 8px;
-            font-size: 0.75rem;
-          }
-          
-          .btn-icon {
-            width: 28px;
-            height: 28px;
-            font-size: 0.7rem;
-          }
-        }
-        
-        .sidebar-logo {
-          height: 120px;
-          width: 120px;
-          transition: height 0.3s, width 0.3s;
-        }
-        @media (max-width: 576px) {
-          .sidebar-logo {
-            height: 60px !important;
-            width: 60px !important;
-          }
-        }
-        .header-logo {
-          height: 48px !important;
-          width: auto !important;
-          max-width: 180px !important;
-          transition: height 0.3s, width 0.3s;
-        }
-        @media (max-width: 991px) {
-          .header-logo {
-            height: 44px !important;
-            max-width: 140px !important;
-          }
-        }
-        @media (max-width: 768px) {
-          .header-logo {
-            height: 40px !important;
-            max-width: 120px !important;
-          }
-        }
-        @media (max-width: 576px) {
-          .header-logo {
-            height: 36px !important;
-            max-width: 90px !important;
-          }
-        }
-        @media (max-width: 400px) {
-          .header-logo {
-            height: 28px !important;
-            max-width: 60px !important;
-          }
-        }
-      `}</style>
-      <hr className="my-0" />
+      </header>
     </>
   );
 } 

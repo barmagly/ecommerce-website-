@@ -28,7 +28,7 @@ export default function Home() {
   }, []);
 
   return (
-    <>
+    <div className="home-page">
       <Header />
       <div className="home-bg-animated"></div>
       <div style={{ direction: 'rtl' }}>
@@ -51,6 +51,6 @@ export default function Home() {
           <Footer />
         </Suspense>
       </div>
-    </>
+    </div>
   );
 }
