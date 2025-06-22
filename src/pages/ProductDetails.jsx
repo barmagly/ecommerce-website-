@@ -393,7 +393,7 @@ export default function ProductDetails() {
 
   const currentUrl = typeof window !== 'undefined' ? window.location.origin + window.location.pathname : '';
   const whatsappMsg = `مرحبًا، أود شراء المنتج: ${product.name} بسعر ${product.price} ج.م\nرابط المنتج: ${currentUrl}`;
-  const whatsappUrl = `https://wa.me/201010254819?text=${encodeURIComponent(whatsappMsg)}`;
+  const whatsappUrl = `https://wa.me/201092474959?text=${encodeURIComponent(whatsappMsg)}`;
 
   const isReviewOwner = (reviewUserId) => {
     return profileUser && reviewUserId._id === profileUser._id;
