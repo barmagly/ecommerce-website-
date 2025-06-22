@@ -1,4 +1,5 @@
 import React, { useEffect, lazy, Suspense } from 'react';
+import SEO from '../components/SEO';
 import Header from '../components/Header';
 import MainSlider from '../components/MainSlider';
 import AOS from 'aos';
@@ -29,6 +30,11 @@ export default function Home() {
 
   return (
     <div className="home-page">
+      <SEO
+        title="Homepage - Your E-Commerce Site"
+        description="Welcome to our e-commerce site. Find the best products at the best prices."
+        name="Your E-Commerce Site"
+        type="website" />
       <Header />
       <div className="home-bg-animated"></div>
       <div style={{ direction: 'rtl' }}>

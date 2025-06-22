@@ -9,10 +9,12 @@ import Store from './services/Slice/Store';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
+import { HelmetProvider } from 'react-helmet-async';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   // <React.StrictMode>
+  <HelmetProvider>
     <Provider store={Store}>
       <GoogleOAuthProvider clientId="812727128915-pjdracpnf7dalh7ppeagmtfhkea0vf3s.apps.googleusercontent.com">
         <BrowserRouter
@@ -26,5 +28,6 @@ root.render(
         </BrowserRouter>
       </GoogleOAuthProvider>
     </Provider>
+  </HelmetProvider>
   // </React.StrictMode>
 ); 

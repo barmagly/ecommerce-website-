@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- TODO: Add dynamic URLs for products, categories etc. -->
+  <url>
+    <loc>https://www.mizanoo.com/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/login</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/signup</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/contact</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/cart</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/wishlist</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/search</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/shop</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/profile</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/checkout</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/orders</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/order-confirmation</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/forgot-password</loc>
+  </url>
+  <url>
+    <loc>https://www.mizanoo.com/reset-password</loc>
+  </url>
+</urlset> 

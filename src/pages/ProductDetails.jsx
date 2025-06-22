@@ -17,6 +17,7 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import SEO from "../components/SEO";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -73,6 +74,32 @@ export default function ProductDetails() {
   const [productDetailsError, setProductDetailsError] = useState(null);
 
   const product = productDetails || products?.find(p => p._id === id);
+
+  const productSchema = product ? {
+    "@context": "https://schema.org/",
+    "@type": "Product",
+    "name": product.title,
+    "image": product.imageCover,
+    "description": product.description,
+    "sku": product._id,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand?.name || "Unknown Brand"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": window.location.href,
+      "priceCurrency": "EGP", // Assuming EGP, should be confirmed
+      "price": product.priceAfterDiscount || product.price,
+      "availability": product.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": product.ratingsAverage,
+      "reviewCount": product.ratingsQuantity
+    }
+  } : null;
 
   useEffect(() => {
     dispatch(getProductsThunk());
@@ -456,6 +483,14 @@ export default function ProductDetails() {
 
   return (
     <>
+      {product && (
+        <SEO
+          title={product.title}
+          description={product.description}
+          schema={productSchema}
+          type="product"
+        />
+      )}
       <Header />
       <div className="container py-4">
         <div className="row mb-4 align-items-center">
