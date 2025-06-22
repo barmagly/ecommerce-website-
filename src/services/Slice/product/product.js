@@ -26,6 +26,19 @@ export const searchProductsThunk = createAsyncThunk(
     }
 );
 
+export const getDiscountedProductsThunk = createAsyncThunk(
+    "product/getDiscountedProducts",
+    async (_, thunkAPI) => {
+        try {
+            // This is the endpoint used by the DiscountedProductsSection component
+            const { data } = await axios.get(`${API_URL}?discounted=true`);
+            return data.products || [];
+        } catch (error) {
+            return thunkAPI.rejectWithValue(error.response?.data?.message || "Failed to retrieve discounted products");
+        }
+    }
+);
+
 const productSlice = createSlice({
     name: "product",
     initialState: {
@@ -53,6 +66,20 @@ const productSlice = createSlice({
             .addCase(getProductsThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload?.message || "getProducts failed";
+            })
+            // Reducers for discounted products
+            .addCase(getDiscountedProductsThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getDiscountedProductsThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                // We can reuse the main products array to store the discounted ones for the slider
+                state.products = action.payload;
+            })
+            .addCase(getDiscountedProductsThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             })
             // Search products reducers
             .addCase(searchProductsThunk.pending, (state) => {

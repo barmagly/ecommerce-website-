@@ -2,73 +2,56 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./MainSlider.css";
 import { useDispatch, useSelector } from "react-redux";
-import { getNewArrivalProductsThunk } from "../services/Slice/home/home";
+// Using the new, more efficient thunk
+import { getDiscountedProductsThunk } from "../services/Slice/product/product";
+
+// Expanded array of background gradients for the slides
+const slideBackgrounds = [
+    'linear-gradient(285deg, #fde4e1, #e6f0ff)', // Light pink to light blue
+    'linear-gradient(285deg, #e1f5fe, #fce4ec)', // Light cyan to light pink
+    'linear-gradient(285deg, #e8f5e9, #fff3e0)', // Light green to light orange
+    'linear-gradient(285deg, #f3e5f5, #e0f7fa)', // Light purple to light cyan
+    'linear-gradient(285deg, #fffde7, #e8eaf6)', // Light yellow to light indigo
+    'linear-gradient(285deg, #ffebee, #e3f2fd)', // Reddish to blueish
+    'linear-gradient(285deg, #fbe9e7, #e0f2f1)', // Deep orange to teal
+    'linear-gradient(285deg, #e1f5fe, #fff9c4)', // Light blue to yellow
+    'linear-gradient(285deg, #dcedc8, #fce4ec)', // Light green to pink
+    'linear-gradient(285deg, #f9fbe7, #f1f8e9)', // Lime to green
+    'linear-gradient(285deg, #eceff1, #fafafa)', // Blue grey to grey
+    'linear-gradient(285deg, #fff8e1, #fbe9e7)', // Amber to deep orange
+];
 
 export default function MainSlider() {
   const [current, setCurrent] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const dispatch = useDispatch();
-  const { products: slides = [], loading, error } = useSelector(state => state.home);
-
-  const prevSlide = () => {
-    if (!isTransitioning && slides.length > 0) {
-      setIsTransitioning(true);
-      setCurrent((current - 1 + slides.length) % slides.length);
-    }
-  };
-
-  const nextSlide = () => {
-    if (!isTransitioning && slides.length > 0) {
-      setIsTransitioning(true);
-      setCurrent((current + 1) % slides.length);
-    }
-  };
-
-  const goToSlide = (index) => {
-    if (!isTransitioning && slides.length > 0) {
-      setIsTransitioning(true);
-      setCurrent(index);
-    }
-  };
+  const { products: slides, loading, error } = useSelector((state) => state.product);
 
   useEffect(() => {
-    setIsTransitioning(false);
-    const timer = setTimeout(() => {
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [current]);
-
-  useEffect(() => {
-    dispatch(getNewArrivalProductsThunk());
+    // Dispatching the new thunk to get only discounted products
+    dispatch(getDiscountedProductsThunk());
   }, [dispatch]);
 
+  const nextSlide = () => {
+    setCurrent(current === slides.length - 1 ? 0 : current + 1);
+  };
+  
+  const prevSlide = () => {
+    setCurrent(current === 0 ? slides.length - 1 : current - 1);
+  };
+  
   useEffect(() => {
-    let slideInterval;
-
-    const startSliding = () => {
-      slideInterval = setInterval(() => {
-        if (!isTransitioning && slides.length > 0) {
-          nextSlide();
-        }
-      }, 3000);
-    };
-
-    if (!loading && !error && slides.length > 0) {
-      startSliding();
+    if (slides.length > 0) {
+      const slideInterval = setInterval(nextSlide, 5000);
+      return () => clearInterval(slideInterval);
     }
+  }, [current, slides.length]);
 
-    return () => {
-      if (slideInterval) {
-        clearInterval(slideInterval);
-      }
-    };
-  }, [loading, error, slides, isTransitioning, nextSlide]);
 
   if (loading) {
     return (
-      <div className="container py-5 text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">جاري التحميل...</span>
+      <div className="main-slider-placeholder">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
       </div>
     );
@@ -76,82 +59,71 @@ export default function MainSlider() {
 
   if (error) {
     return (
-      <div className="container py-5">
-        <div className="alert alert-danger" role="alert">
-          {error}
-        </div>
+      <div className="main-slider-placeholder">
+        <div className="alert alert-danger">Error loading products.</div>
       </div>
     );
   }
 
   if (!slides || slides.length === 0) {
     return (
-      <div className="container py-5 text-center">
-        <div className="alert alert-info" role="alert">
-          لا توجد منتجات جديدة متاحة حالياً
+        <div className="main-slider-placeholder">
+            <div className="alert alert-info">No discounted products available right now.</div>
         </div>
-      </div>
     );
   }
-
-  const slide = slides[current];
+  
+  // Dynamic background style
+  const sliderStyle = {
+    background: slideBackgrounds[current % slideBackgrounds.length],
+    transition: 'background 0.8s ease-in-out',
+  };
 
   return (
-    <div className="main-slider-section">
-      <div className="custom-slider-card position-relative" style={{ background: '#f7f7fa' }}>
-        <span className="badge bg-success position-absolute top-0 start-0 m-3">وصل حديثا</span>
-        <button
-          className={`slider-arrow left ${isTransitioning ? 'disabled' : ''}`}
-          onClick={prevSlide}
-          aria-label="Previous slide"
-        >
-          <i className="fas fa-chevron-right"></i>
-        </button>
-
-        <div className="slider-content">
-          <div className="main-card-image">
-            <img
-              src={slide?.imageCover}
-              alt={slide?.name || 'منتج جديد'}
-              fetchpriority="high"
-              loading="eager"
-              width="300"
-              height="300"
-              style={{ aspectRatio: "1 / 1" }}
-            />
+    <div className="main-slider-section" style={sliderStyle}>
+      <div className="slider-container">
+        {slides.map((slide, index) => (
+          <div
+            className={`slide-item ${index === current ? "active" : ""}`}
+            key={slide._id}
+          >
+            <div className="slide-content-wrapper">
+              <div className="slide-text">
+                <h3 className="slide-promo-title">عروض لا تقاوم!</h3>
+                <h2 className="slide-product-name">{slide.name}</h2>
+                <p className="slide-product-desc">
+                  خصم يصل إلى{" "}
+                  {slide.originalPrice ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100) : 0}%!
+                  اكتشف الجودة والفخامة بأفضل الأسعار.
+                </p>
+                <Link to={`/product/${slide._id}`} className="shop-now-btn">
+                  تسوق الآن <i className="fas fa-arrow-left"></i>
+                </Link>
+              </div>
+              <div className="slide-image-container">
+                <img
+                  src={slide.imageCover}
+                  alt={slide.name}
+                  className="slide-main-image"
+                />
+                 {slide.originalPrice && (
+                  <div className="price-badge">
+                    <span className="old-price">{slide.originalPrice} ج.م</span>
+                    <span className="new-price">{slide.price} ج.م</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="main-card-text">
-            <h6 className="slide-title">{slide?.brand || 'العلامة التجارية'}</h6>
-            <h2 className="slide-subtitle">{slide?.name || 'اسم المنتج'}</h2>
-            <Link
-              to={`/product/${slide?._id}`}
-              className={`shop-now-link bg-primary text-white`}
-              style={{ background: '#e75480', color: '#fff' }}
-            >
-              تسوق الآن <i className="fas fa-arrow-left me-2"></i>
-            </Link>
-          </div>
-        </div>
-
-        <button
-          className={`slider-arrow right ${isTransitioning ? 'disabled' : ''}`}
-          onClick={nextSlide}
-          aria-label="Next slide"
-        >
-          <i className="fas fa-chevron-left"></i>
-        </button>
-      </div>
-
-      <div className="slider-indicators">
-        {slides.map((_, index) => (
-          <button
-            key={index}
-            className={`indicator-dot ${current === index ? 'active' : ''}`}
-            onClick={() => goToSlide(index)}
-            aria-label={`Go to slide ${index + 1}`}
-          />
         ))}
       </div>
+
+      <button className="slider-nav prev" onClick={prevSlide}>
+        <i className="fas fa-chevron-left"></i>
+      </button>
+      <button className="slider-nav next" onClick={nextSlide}>
+        <i className="fas fa-chevron-right"></i>
+      </button>
     </div>
   );
 } 

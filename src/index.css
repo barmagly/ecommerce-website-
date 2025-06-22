@@ -5,6 +5,9 @@ html, body {
   max-width: 100%;
   margin: 0;
   padding: 0;
+  background: linear-gradient(270deg, #ff7e5f, #feb47b, #86a8e7, #7f7fd5, #91eae4);
+  background-size: 1000% 1000%;
+  animation: vibrant-gradient-animation 20s ease-in-out infinite;
 }
 
 * {
@@ -16,6 +19,17 @@ body {
   position: relative;
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
+  background: linear-gradient(270deg, #ff7e5f, #feb47b, #86a8e7, #7f7fd5, #91eae4);
+  background-size: 1000% 1000%;
+  animation: vibrant-gradient-animation 20s ease-in-out infinite;
+}
+
+@keyframes vibrant-gradient-animation {
+    0% { background-position: 0% 50%; }
+    25% { background-position: 100% 50%; }
+    50% { background-position: 50% 100%; }
+    75% { background-position: 0% 50%; }
+    100% { background-position: 0% 0%; }
 }
 
 /* Container fixes */
@@ -130,23 +144,6 @@ img {
     word-wrap: break-word;
     overflow-wrap: break-word;
   }
-}
-
-/* Home page background animation - only apply to home page */
-.home-page .home-bg-animated {
-  position: fixed;
-  z-index: 0;
-  inset: 0;
-  width: 100%;
-  height: 100vh;
-  background: radial-gradient(circle at 80% 20%, #e0e7ff 0%, transparent 60%),
-              radial-gradient(circle at 20% 80%, #ffe0f0 0%, transparent 60%);
-  animation: bgFade 10s ease-in-out infinite alternate;
-  pointer-events: none;
-}
-@keyframes bgFade {
-  0% { opacity: 0.7; }
-  100% { opacity: 1; }
 }
 
 /* Modern Gradient Backgrounds for Home Page Sections */
@@ -618,4 +615,25 @@ body:not(.home-page) {
 /* Fix for any fixed position elements that might interfere */
 body:not(.home-page) .home-bg-animated {
   display: none !important;
+}
+
+/* Ensure content sections have a solid background to be readable */
+.main-slider-section,
+.flashsales-section-bg,
+.categories-section-bg,
+.bestsellers-section-bg,
+.servicefeatures-section-bg,
+#about-page,
+#contact-page,
+.account-page,
+.cart-page,
+.checkout-page,
+.shop-page,
+.footer,
+.header-main,
+.header-sub,
+.top-bar {
+    background-color: #ffffff;
+    position: relative;
+    z-index: 1;
 }
