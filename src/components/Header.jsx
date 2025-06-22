@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 import { searchProductsThunk, clearSearchResults } from "../services/Slice/product/product";
 import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
-import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt } from 'react-icons/fa';
+import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt, FaSignOutAlt } from 'react-icons/fa';
 import debounce from 'lodash.debounce';
 
 // Custom styles for the new header
@@ -62,6 +62,13 @@ const headerStyles = `
   .top-bar-item:hover {
     color: white;
     text-decoration: underline;
+  }
+  .top-bar-item.dropdown-toggle {
+      background: none;
+      border: none;
+      padding: 0;
+      font: inherit;
+      color: inherit;
   }
   .amazon-header {
     background-color: #131921;
@@ -272,6 +279,16 @@ const headerStyles = `
     color: #131921 !important;
     font-weight: bold;
   }
+  .dropdown-item-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+  }
+  .dropdown-item-logout:hover {
+    background-color: #dc3545;
+    color: white !important;
+  }
 
   @media (max-width: 768px) {
     .top-bar {
@@ -336,6 +353,20 @@ export default function Header() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownRef]);
 
   const debouncedSearch = useCallback(
     debounce((nextValue) => {
@@ -465,25 +496,35 @@ export default function Header() {
             <FaPhoneAlt />
             <span>01092474959</span>
           </a>
-          <div className="dropdown">
+          <div className="dropdown" ref={dropdownRef}>
             {isAuthenticated ? (
-              <Link to="/profile" className="top-bar-item">
+              <button
+                type="button"
+                className="top-bar-item dropdown-toggle"
+                onClick={() => setIsDropdownOpen(o => !o)}
+              >
                 <FaUser />
                 <span>مرحباً, {currentUser?.name}</span>
-              </Link>
+              </button>
             ) : (
               <Link to="/login" className="top-bar-item">
                 <FaSignInAlt />
                 <span>دخول / تسجيل</span>
               </Link>
             )}
-            {isAuthenticated && (
-              <div className="dropdown-menu dropdown-menu-end">
+            {isAuthenticated && isDropdownOpen && (
+              <div 
+                className="dropdown-menu dropdown-menu-end"
+                style={{ display: 'block', position: 'absolute' }}
+              >
                 <Link className="dropdown-item" to="/profile">حسابي</Link>
                 <Link className="dropdown-item" to="/orders">طلباتي</Link>
                 <Link className="dropdown-item" to="/wishlist">المفضلة</Link>
                 <div className="dropdown-divider"></div>
-                <button className="dropdown-item text-danger" onClick={handleLogout}>تسجيل الخروج</button>
+                <button className="dropdown-item text-danger dropdown-item-logout" onClick={handleLogout}>
+                  <FaSignOutAlt />
+                  <span>تسجيل الخروج</span>
+                </button>
             </div>
             )}
           </div>
