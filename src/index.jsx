@@ -9,6 +9,10 @@ import Store from './services/Slice/Store';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
+import { getProductsThunk } from './services/Slice/product/product';
+
+// Fetch products as soon as the store is created
+Store.dispatch(getProductsThunk());
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

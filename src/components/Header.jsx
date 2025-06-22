@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
-import { getProductsThunk } from "../services/Slice/product/product";
 import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
 import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt } from 'react-icons/fa';
 
@@ -282,13 +281,11 @@ const headerStyles = `
     .amazon-header-top {
       flex-direction: column;
       align-items: center;
-      padding: 15px 10px;
-      margin-bottom: 15px;
-      gap: 20px;
+      padding: 5px;
     }
     .header-logo {
       order: 1;
-      margin-bottom: 15px;
+      margin-bottom: 5px;
     }
     .header-logo img {
       width: 130px; 
@@ -297,12 +294,12 @@ const headerStyles = `
     .header-actions {
       order: 2;
       margin-left: 0;
-      margin-bottom: 15px;
-      gap: 25px;
+      margin-bottom: 10px;
+      gap: 20px;
     }
     .header-search {
       order: 3;
-      width: 100%;
+      width: 85%;
       margin: 0;
     }
     .header-actions .header-nav-item span {
@@ -411,13 +408,6 @@ export default function Header() {
       setSuggestions([]);
     }
   }, [search, products]);
-
-  // جلب المنتجات عند أول تحميل إذا لم تكن موجودة
-  useEffect(() => {
-    if (!products || products.length === 0) {
-      dispatch(getProductsThunk());
-    }
-  }, [dispatch, products]);
 
   useEffect(() => {
     dispatch(getCategoriesThunk());
