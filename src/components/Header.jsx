@@ -5,7 +5,8 @@ import { logout } from "../services/Slice/auth/auth";
 import { getUserProfileThunk } from "../services/Slice/userProfile/userProfile";
 import { searchProductsThunk, clearSearchResults } from "../services/Slice/product/product";
 import { getCategoriesThunk } from "../services/Slice/categorie/categorie";
-import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt, FaSignOutAlt } from 'react-icons/fa';
+import { FaPhoneAlt, FaFire, FaUser, FaBoxOpen, FaHeart, FaShoppingCart, FaSignInAlt, FaBolt, FaSignOutAlt, FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import debounce from 'lodash.debounce';
 
 // Custom styles for the new header
@@ -289,6 +290,18 @@ const headerStyles = `
     background-color: #dc3545;
     color: white !important;
   }
+  .header-social-icon {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 20px !important;
+  }
+  @media (max-width: 600px) {
+    .header-social-icon {
+      width: 28px !important;
+      height: 28px !important;
+      font-size: 15px !important;
+    }
+  }
 
   @media (max-width: 768px) {
     .top-bar {
@@ -480,15 +493,42 @@ export default function Header() {
     { label: "تواصل معنا", href: "/contact" },
   ];
 
+  const socialLinks = [
+    { href: 'https://www.facebook.com/profile.php?id=61577629474920', icon: <FaFacebookF />, label: 'Facebook', color: '#1877f3' },
+    { href: 'https://www.instagram.com/mizanoomarket/', icon: <FaInstagram />, label: 'Instagram', color: '#E4405F' },
+    { href: 'https://x.com/mizanooMarket', icon: <FaXTwitter />, label: 'X', color: '#000' },
+    { href: 'https://www.tiktok.com/@mizanoomarket', icon: <FaTiktok />, label: 'TikTok', color: '#000' },
+  ];
+
   return (
     <>
       <style>{headerStyles}</style>
       <div className="top-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {socialLinks.map((item, idx) => (
+            <a
+              key={item.label}
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={item.label}
+              className="header-social-icon"
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                width: 32, height: 32, borderRadius: '50%', background: '#fff', color: item.color,
+                fontSize: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', border: `2px solid ${item.color}`,
+                margin: '0 2px', textDecoration: 'none', transition: 'all 0.2s',
+              }}
+            >
+              {item.icon}
+            </a>
+          ))}
+        </div>
         <div className="promo-content">
           <span>عرض حصري وتوصيل سريع - خصم حتى 50%!</span>
           <Link to="/shop" className="promo-button">
             <FaBolt />
-                تسوق الآن
+            تسوق الآن
           </Link>
         </div>
         <div className="top-bar-actions">
@@ -525,7 +565,7 @@ export default function Header() {
                   <FaSignOutAlt />
                   <span>تسجيل الخروج</span>
                 </button>
-            </div>
+              </div>
             )}
           </div>
         </div>

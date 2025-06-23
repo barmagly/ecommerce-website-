@@ -1,7 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 export default function Footer() {
+  const socialLinks = [
+    { href: 'https://www.facebook.com/profile.php?id=61577629474920', icon: <FaFacebookF />, label: 'Facebook', color: '#1877f3' },
+    { href: 'https://www.instagram.com/mizanoomarket/', icon: <FaInstagram />, label: 'Instagram', color: '#E4405F' },
+    { href: 'https://x.com/mizanooMarket', icon: <FaXTwitter />, label: 'X', color: '#000' },
+    { href: 'https://www.tiktok.com/@mizanoomarket', icon: <FaTiktok />, label: 'TikTok', color: '#000' },
+  ];
+
   return (
     <footer className="bg-black text-white py-4 py-md-5">
       <div className="container">
@@ -10,17 +19,38 @@ export default function Footer() {
             <div className="footer-section">
               <img src="/images/logo.png" alt="Logo" className="mb-3 mb-md-4 footer-logo" />
               <h5 className="mb-3 mb-md-4 footer-title">عن الشركة</h5>
-              <p className="mb-3 mb-md-4 footer-text">نحن نقدم أفضل المنتجات بأفضل الأسعار مع خدمة عملاء متميزة على مدار الساعة.</p>
-              <div className="d-flex gap-3 social-links">
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-white social-link">
-                  <i className="fab fa-facebook-f"></i>
-                </a>
-                <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-white social-link">
-                  <i className="fab fa-twitter"></i>
-                </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-white social-link">
-                  <i className="fab fa-instagram"></i>
-                </a>
+              <p className="mb-3 mb-md-4 footer-text">ميزانو هو متجر إلكتروني شامل مقره في نجع حمادي، يقدّم خدمة التوصيل إلى جميع أنحاء الجمهورية.
+يوفر المتجر تشكيلة واسعة من المنتجات تشمل الملابس، الإلكترونيات، الأدوات المنزلية، مستلزمات الأطفال، والمزيد.
+نسعى في ميزانو لتقديم تجربة تسوّق مريحة، بأسعار مناسبة وجودة عالية ترضي جميع الأذواق.</p>
+              <div className="d-flex gap-3 social-links" style={{ marginTop: '1rem' }}>
+                {socialLinks.map((item, idx) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: 38,
+                      height: 38,
+                      borderRadius: '50%',
+                      background: '#fff',
+                      color: item.color,
+                      fontSize: 20,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                      transition: 'all 0.2s',
+                      border: `2px solid ${item.color}`,
+                      margin: '0 2px',
+                      textDecoration: 'none',
+                    }}
+                    className="footer-social-icon"
+                  >
+                    {item.icon}
+                  </a>
+                ))}
               </div>
             </div>
           </div>
@@ -416,6 +446,20 @@ export default function Footer() {
             width: 28px;
             height: 28px;
             font-size: 0.7rem;
+          }
+        }
+        
+        .footer-social-icon {
+          width: 38px !important;
+          height: 38px !important;
+          font-size: 20px !important;
+        }
+        
+        @media (max-width: 600px) {
+          .footer-social-icon {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 15px !important;
           }
         }
       `}</style>
