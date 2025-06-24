@@ -301,6 +301,10 @@ const headerStyles = `
       height: 28px !important;
       font-size: 15px !important;
     }
+    .header-logo img {
+      width: 70px;
+      height: auto;
+    }
   }
 
   @media (max-width: 768px) {
@@ -317,10 +321,10 @@ const headerStyles = `
     }
     .header-logo {
       order: 1;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
     .header-logo img {
-      width: 130px; 
+      width: 80px; 
       height: auto;
     }
     .header-actions {
