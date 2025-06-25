@@ -580,7 +580,24 @@ ${headerStyles}
                 </button>
                 </div>
             {showSuggestions && search.trim() && (
-                  <div className="search-suggestions" style={{ zIndex: 3000, position: 'static', left: 0, right: 0, marginTop: 2, maxWidth: 500, width: '90vw', background: '#fff', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 4px 4px', color: '#111', maxHeight: 400, overflowY: 'auto', boxShadow: '0 8px 32px #0002', marginLeft: 'auto', marginRight: 'auto' }}>
+                  <div className="search-suggestions" style={{
+                    position: 'fixed',
+                    top: 110,
+                    left: 0,
+                    right: 0,
+                    margin: '0 auto',
+                    zIndex: 3000,
+                    maxWidth: 500,
+                    width: '90vw',
+                    background: '#fff',
+                    border: '1px solid #ddd',
+                    borderTop: 'none',
+                    borderRadius: '0 0 4px 4px',
+                    color: '#111',
+                    maxHeight: 400,
+                    overflowY: 'auto',
+                    boxShadow: '0 8px 32px #0002',
+                  }}>
                 {searchLoading ? (
                   <div className="suggestion-item">جاري البحث...</div>
                 ) : searchResults.length > 0 ? (
