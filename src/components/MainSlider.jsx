@@ -105,6 +105,7 @@ export default function MainSlider() {
                   src={slide.imageCover}
                   alt={slide.name}
                   className="slide-main-image"
+                  style={{ width: 320, height: 320, objectFit: 'contain', borderRadius: 16, background: '#f6f6f6', display: 'block', margin: '0 auto' }}
                 />
                  {slide.originalPrice && (
                   <div className="price-badge">

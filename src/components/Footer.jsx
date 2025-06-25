@@ -1,9 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { FaFacebookF, FaInstagram, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
+import { FaChevronUp, FaChevronDown } from 'react-icons/fa';
 
 export default function Footer() {
+  const [isFooterExpanded, setIsFooterExpanded] = useState(false);
+
   const socialLinks = [
     { href: 'https://www.facebook.com/profile.php?id=61577629474920', icon: <FaFacebookF />, label: 'Facebook', color: '#1877f3' },
     { href: 'https://www.instagram.com/mizanoomarket/', icon: <FaInstagram />, label: 'Instagram', color: '#E4405F' },
@@ -11,108 +14,136 @@ export default function Footer() {
     { href: 'https://www.tiktok.com/@mizanoomarket', icon: <FaTiktok />, label: 'TikTok', color: '#000' },
   ];
 
+  const toggleFooter = () => {
+    setIsFooterExpanded(!isFooterExpanded);
+  };
+
   return (
     <footer className="bg-black text-white py-4 py-md-5">
       <div className="container">
-        <div className="row g-4">
-          <div className="col-lg-3 col-md-6 col-12">
-            <div className="footer-section">
-              <img src="/images/logo.png" alt="Logo" className="mb-3 mb-md-4 footer-logo" />
-              <h5 className="mb-3 mb-md-4 footer-title">عن الشركة</h5>
-              <p className="mb-3 mb-md-4 footer-text">ميزانو هو متجر إلكتروني شامل مقره في نجع حمادي، يقدّم خدمة التوصيل إلى جميع أنحاء الجمهورية.
+        {/* Mobile Footer Toggle Button */}
+        <div className="d-md-none mobile-footer-toggle">
+          <button 
+            onClick={toggleFooter}
+            className="btn btn-outline-light w-100 d-flex align-items-center justify-content-center"
+            style={{
+              borderRadius: '8px',
+              padding: '12px 16px',
+              fontSize: '16px',
+              fontWeight: '500',
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.05)',
+              color: '#fff',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            <span>معلومات الموقع</span>
+            {isFooterExpanded ? <FaChevronUp /> : <FaChevronDown />}
+          </button>
+        </div>
+
+        {/* Footer Content */}
+        <div className={`footer-content ${isFooterExpanded ? 'footer-expanded' : 'footer-collapsed'}`}>
+          <div className="row g-4">
+            <div className="col-lg-3 col-md-6 col-12">
+              <div className="footer-section">
+                <img src="/images/logo.png" alt="Logo" className="mb-3 mb-md-4 footer-logo" />
+                <h5 className="mb-3 mb-md-4 footer-title">عن الشركة</h5>
+                <p className="mb-3 mb-md-4 footer-text">ميزانو هو متجر إلكتروني شامل مقره في نجع حمادي، يقدّم خدمة التوصيل إلى جميع أنحاء الجمهورية.
 يوفر المتجر تشكيلة واسعة من المنتجات تشمل الملابس، الإلكترونيات، الأدوات المنزلية، مستلزمات الأطفال، والمزيد.
 نسعى في ميزانو لتقديم تجربة تسوّق مريحة، بأسعار مناسبة وجودة عالية ترضي جميع الأذواق.</p>
-              <div className="d-flex gap-3 social-links" style={{ marginTop: '1rem' }}>
-                {socialLinks.map((item, idx) => (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={item.label}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      width: 38,
-                      height: 38,
-                      borderRadius: '50%',
-                      background: '#fff',
-                      color: item.color,
-                      fontSize: 20,
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-                      transition: 'all 0.2s',
-                      border: `2px solid ${item.color}`,
-                      margin: '0 2px',
-                      textDecoration: 'none',
-                    }}
-                    className="footer-social-icon"
-                  >
-                    {item.icon}
-                  </a>
-                ))}
+                <div className="d-flex gap-3 social-links" style={{ marginTop: '1rem' }}>
+                  {socialLinks.map((item, idx) => (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={item.label}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: 38,
+                        height: 38,
+                        borderRadius: '50%',
+                        background: '#fff',
+                        color: item.color,
+                        fontSize: 20,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+                        transition: 'all 0.2s',
+                        border: `2px solid ${item.color}`,
+                        margin: '0 2px',
+                        textDecoration: 'none',
+                      }}
+                      className="footer-social-icon"
+                    >
+                      {item.icon}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="col-lg-3 col-md-6 col-12">
+              <div className="footer-section">
+                <h5 className="mb-3 mb-md-4 footer-title">روابط سريعة</h5>
+                <ul className="list-unstyled footer-links">
+                  <li className="mb-2">
+                    <Link to="/" className="text-white text-decoration-none footer-link">الرئيسية</Link>
+                  </li>
+                  <li className="mb-2">
+                    <Link to="/shop" className="text-white text-decoration-none footer-link">المتجر</Link>
+                  </li>
+                  <li className="mb-2">
+                    <Link to="/contact" className="text-white text-decoration-none footer-link">اتصل بنا</Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="col-lg-3 col-md-6 col-12">
+              <div className="footer-section">
+                <h5 className="mb-3 mb-md-4 footer-title">حسابي</h5>
+                <ul className="list-unstyled footer-links">
+                  <li className="mb-2">
+                    <Link to="/profile" className="text-white text-decoration-none footer-link">حسابي</Link>
+                  </li>
+                  <li className="mb-2">
+                    <Link to="/orders" className="text-white text-decoration-none footer-link">طلباتي</Link>
+                  </li>
+                  <li className="mb-2">
+                    <Link to="/wishlist" className="text-white text-decoration-none footer-link">المفضلة</Link>
+                  </li>
+                  <li className="mb-2">
+                    <Link to="/cart" className="text-white text-decoration-none footer-link">سلة المشتريات</Link>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="col-lg-3 col-md-6 col-12">
+              <div className="footer-section">
+                <h5 className="mb-3 mb-md-4 footer-title">تواصل معنا</h5>
+                <ul className="list-unstyled footer-contact">
+                  <li className="mb-2 contact-item">
+                    <i className="fas fa-map-marker-alt me-2"></i>
+                    نجع حمادي, قنا, مصر 
+                  </li>
+                  <li className="mb-2 contact-item">
+                    <i className="fas fa-phone me-2"></i>
+                    01092474959
+                  </li>
+                  <li className="mb-2 contact-item">
+                    <i className="fas fa-envelope me-2"></i>
+                    support@mizanoo.com
+                  </li>
+                </ul>
               </div>
             </div>
           </div>
-          <div className="col-lg-3 col-md-6 col-12">
-            <div className="footer-section">
-              <h5 className="mb-3 mb-md-4 footer-title">روابط سريعة</h5>
-              <ul className="list-unstyled footer-links">
-                <li className="mb-2">
-                  <Link to="/" className="text-white text-decoration-none footer-link">الرئيسية</Link>
-                </li>
-                <li className="mb-2">
-                  <Link to="/shop" className="text-white text-decoration-none footer-link">المتجر</Link>
-                </li>
-                <li className="mb-2">
-                  <Link to="/contact" className="text-white text-decoration-none footer-link">اتصل بنا</Link>
-                </li>
-              </ul>
+          <hr className="my-4" />
+          <div className="row">
+            <div className="col-12 text-center">
+              <p className="mb-0 copyright-text">© 2025 جميع الحقوق محفوظة - برمجلى Barmagly</p>
             </div>
-          </div>
-          <div className="col-lg-3 col-md-6 col-12">
-            <div className="footer-section">
-              <h5 className="mb-3 mb-md-4 footer-title">حسابي</h5>
-              <ul className="list-unstyled footer-links">
-                <li className="mb-2">
-                  <Link to="/profile" className="text-white text-decoration-none footer-link">حسابي</Link>
-                </li>
-                <li className="mb-2">
-                  <Link to="/orders" className="text-white text-decoration-none footer-link">طلباتي</Link>
-                </li>
-                <li className="mb-2">
-                  <Link to="/wishlist" className="text-white text-decoration-none footer-link">المفضلة</Link>
-                </li>
-                <li className="mb-2">
-                  <Link to="/cart" className="text-white text-decoration-none footer-link">سلة المشتريات</Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="col-lg-3 col-md-6 col-12">
-            <div className="footer-section">
-              <h5 className="mb-3 mb-md-4 footer-title">تواصل معنا</h5>
-              <ul className="list-unstyled footer-contact">
-                <li className="mb-2 contact-item">
-                  <i className="fas fa-map-marker-alt me-2"></i>
-                  نجع حمادي, قنا, مصر 
-                </li>
-                <li className="mb-2 contact-item">
-                  <i className="fas fa-phone me-2"></i>
-                  01092474959
-                </li>
-                <li className="mb-2 contact-item">
-                  <i className="fas fa-envelope me-2"></i>
-                  support@mizanoo.com
-                </li>
-              </ul>
-            </div>
-          </div>
-        </div>
-        <hr className="my-4" />
-        <div className="row">
-          <div className="col-12 text-center">
-            <p className="mb-0 copyright-text">© 2025 جميع الحقوق محفوظة - برمجلى Barmagly</p>
           </div>
         </div>
       </div>
@@ -235,6 +266,39 @@ export default function Footer() {
           color: #999;
           font-size: 0.9rem;
         }
+
+        /* Mobile Footer Toggle Styles */
+        .mobile-footer-toggle {
+          margin-bottom: 1rem;
+        }
+
+        .mobile-footer-toggle button:hover {
+          background: rgba(255,255,255,0.1) !important;
+          border-color: rgba(255,255,255,0.5) !important;
+        }
+
+        .footer-content {
+          transition: all 0.3s ease;
+        }
+
+        .footer-collapsed {
+          display: none;
+        }
+
+        .footer-expanded {
+          display: block;
+        }
+        
+        /* Desktop Styles - Always Show Footer */
+        @media (min-width: 768px) {
+          .mobile-footer-toggle {
+            display: none !important;
+          }
+          
+          .footer-content {
+            display: block !important;
+          }
+        }
         
         /* Mobile Responsive */
         @media (max-width: 991px) {
@@ -251,7 +315,7 @@ export default function Footer() {
         
         @media (max-width: 768px) {
           footer {
-            padding: 2rem 0 !important;
+            padding: 1rem 0 !important;
           }
           
           .footer-section {
@@ -446,20 +510,6 @@ export default function Footer() {
             width: 28px;
             height: 28px;
             font-size: 0.7rem;
-          }
-        }
-        
-        .footer-social-icon {
-          width: 38px !important;
-          height: 38px !important;
-          font-size: 20px !important;
-        }
-        
-        @media (max-width: 600px) {
-          .footer-social-icon {
-            width: 28px !important;
-            height: 28px !important;
-            font-size: 15px !important;
           }
         }
       `}</style>

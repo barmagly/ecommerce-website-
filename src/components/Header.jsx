@@ -372,6 +372,7 @@ export default function Header() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -507,143 +508,113 @@ export default function Header() {
   return (
     <>
       <style>{headerStyles}</style>
-      <div className="top-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {socialLinks.map((item, idx) => (
-            <a
-              key={item.label}
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={item.label}
-              className="header-social-icon"
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                width: 32, height: 32, borderRadius: '50%', background: '#fff', color: item.color,
-                fontSize: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', border: `2px solid ${item.color}`,
-                margin: '0 2px', textDecoration: 'none', transition: 'all 0.2s',
-              }}
-            >
-              {item.icon}
-            </a>
-          ))}
-        </div>
-        <div className="promo-content">
-          <span>عرض حصري وتوصيل سريع - خصم حتى 50%!</span>
-          <Link to="/shop" className="promo-button">
-            <FaBolt />
-            تسوق الآن
-          </Link>
-        </div>
-        <div className="top-bar-actions">
-          <a href="tel:01092474959" className="contact-info top-bar-item">
-            <FaPhoneAlt />
-            <span>01092474959</span>
-          </a>
-          <div className="dropdown" ref={dropdownRef}>
-            {isAuthenticated ? (
-              <button
-                type="button"
-                className="top-bar-item dropdown-toggle"
-                onClick={() => setIsDropdownOpen(o => !o)}
-              >
-                <FaUser />
-                <span>مرحباً, {currentUser?.name}</span>
-              </button>
-            ) : (
-              <Link to="/login" className="top-bar-item">
-                <FaSignInAlt />
-                <span>دخول / تسجيل</span>
+      <style>{`
+${headerStyles}
+.amazon-header {
+  position: relative;
+  overflow: hidden;
+  background: #232f3e;
+}
+.bubble, .square {
+  position: absolute;
+  opacity: 0.18;
+  z-index: 1;
+  pointer-events: none;
+  animation-timing-function: linear;
+}
+.bubble {
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #4caf50 60%, #8bc34a 100%);
+  animation: bubbleMove 12s infinite;
+}
+.square {
+  border-radius: 8px;
+  background: linear-gradient(135deg, #ffb347 0%, #ffcc33 100%);
+  animation: squareMove 16s infinite;
+}
+@keyframes bubbleMove {
+  0% { top: 80%; left: 10%; transform: scale(0.7); }
+  30% { top: 30%; left: 30%; transform: scale(1.1); }
+  60% { top: 10%; left: 70%; transform: scale(0.9); }
+  100% { top: 80%; left: 10%; transform: scale(0.7); }
+}
+@keyframes squareMove {
+  0% { top: 10%; left: 80%; transform: rotate(0deg) scale(0.8); }
+  40% { top: 60%; left: 60%; transform: rotate(30deg) scale(1.2); }
+  70% { top: 40%; left: 20%; transform: rotate(-20deg) scale(1); }
+  100% { top: 10%; left: 80%; transform: rotate(0deg) scale(0.8); }
+}
+.bubble2 {
+  left: 60% !important; animation-delay: 3s; background: radial-gradient(circle at 60% 60%, #00bcd4 60%, #2196f3 100%); width: 90px; height: 90px; }
+.square2 {
+  left: 20% !important; animation-delay: 6s; background: linear-gradient(135deg, #e040fb 0%, #ff4081 100%); width: 60px; height: 60px; }
+`}</style>
+      <div className={`header-wrapper${!isHeaderVisible ? ' hidden' : ''}`}>
+        <header className="amazon-header">
+          {/* فقاعات ومربعات متحركة */}
+          <span className="bubble" style={{width: 120, height: 120}}></span>
+          <span className="bubble bubble2" style={{width: 90, height: 90}}></span>
+          <span className="square" style={{width: 70, height: 70}}></span>
+          <span className="square square2" style={{width: 60, height: 60}}></span>
+          <div className="d-flex flex-column align-items-center w-100" style={{position: 'relative'}}>
+            <div className="d-flex align-items-center justify-content-center w-100" style={{padding: '2px 0 0 0'}}>
+              <Link className="header-logo" to="/">
+                <img src="/images/logo.png" alt="Logo" style={{width: 220, height: 100, objectFit: 'contain', margin: 0}} />
               </Link>
-            )}
-            {isAuthenticated && isDropdownOpen && (
-              <div 
-                className="dropdown-menu dropdown-menu-end"
-                style={{ display: 'block', position: 'absolute' }}
+              <button
+                className="hamburger-menu"
+                style={{background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 28, marginRight: 0, marginLeft: 8, cursor: 'pointer', position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)'}}
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="فتح القائمة الجانبية"
               >
-                <Link className="dropdown-item" to="/profile">حسابي</Link>
-                <Link className="dropdown-item" to="/orders">طلباتي</Link>
-                <Link className="dropdown-item" to="/wishlist">المفضلة</Link>
-                <div className="dropdown-divider"></div>
-                <button className="dropdown-item text-danger dropdown-item-logout" onClick={handleLogout}>
-                  <FaSignOutAlt />
-                  <span>تسجيل الخروج</span>
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-      <header className={`amazon-header ${!isHeaderVisible ? 'hidden' : ''}`}>
-        <div className="amazon-header-top">
-          <Link className="header-logo" to="/">
-            <img src="/images/logo.png" alt="Logo" />
-          </Link>
-          
-          <div className="header-search">
-             <select className="header-search-select" defaultValue="">
-              <option value="" disabled>الكل</option>
-              {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-            </select>
+                <i className="fas fa-bars"></i>
+              </button>
+            </div>
+            <div className="w-100 d-flex justify-content-center" style={{marginTop: 4}}>
+              <div className="header-search" style={{width: '60%', minWidth: 180, maxWidth: 500, minHeight: 38}}>
+                <select className="header-search-select" defaultValue="" style={{padding: '6px 5px', fontSize: 13}}>
+                  <option value="" disabled>الكل</option>
+                  {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                </select>
                 <input
-              className="header-search-input" 
-              type="text" 
-              placeholder="ابحث في متجرنا"
+                  className="header-search-input"
+                  type="text"
+                  placeholder="ابحث في متجرنا"
                   value={search}
-              onChange={handleSearchChange}
-              onFocus={() => { if(search) setShowSuggestions(true); }}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
-            />
-            <button className="header-search-button" onClick={handleSearchSubmit}>
+                  onChange={handleSearchChange}
+                  onFocus={() => { if(search) setShowSuggestions(true); }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
+                  style={{padding: '6px', fontSize: 14}}
+                />
+                <button className="header-search-button" onClick={handleSearchSubmit} style={{padding: '6px 10px', fontSize: 16}}>
                   <i className="fas fa-search"></i>
                 </button>
-            {showSuggestions && search.trim() && (
-              <div className="search-suggestions">
-                {searchLoading ? (
-                  <div className="suggestion-item">جاري البحث...</div>
-                ) : searchResults.length > 0 ? (
-                  searchResults.map(item => (
-                    <div 
-                        key={item._id}
-                      className="suggestion-item" 
-                      onMouseDown={() => handleSuggestionClick(item)}
-                    >
-                      <img src={item.images && item.images[0] ? item.images[0].url : '/images/placeholder.png'} alt={item.name} />
-                      <span>{item.name}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="suggestion-item">لا توجد نتائج</div>
+                {showSuggestions && search.trim() && (
+                  <div className="search-suggestions">
+                    {searchLoading ? (
+                      <div className="suggestion-item">جاري البحث...</div>
+                    ) : searchResults.length > 0 ? (
+                      searchResults.map(item => (
+                        <div 
+                          key={item._id}
+                          className="suggestion-item"
+                          onMouseDown={() => handleSuggestionClick(item)}
+                        >
+                          <img src={item.images && item.images[0] ? item.images[0].url : '/images/placeholder.png'} alt={item.name} />
+                          <span>{item.name}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="suggestion-item">لا توجد نتائج</div>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
+            </div>
           </div>
-
-          <div className="header-actions">
-              {isAuthenticated && (
-              <>
-                <Link to="/orders" className="header-nav-item">
-                  <FaBoxOpen />
-                  <span>طلباتي</span>
-                </Link>
-                <Link to="/wishlist" className="header-nav-item">
-                  <FaHeart />
-                  <span>المفضلة</span>
-                </Link>
-                <Link to="/cart" className="header-nav-item">
-                  <FaShoppingCart />
-                  <span>عربة التسوق</span>
-                </Link>
-              </>
-            )}
-                    </div>
-
-          <nav className="header-nav">
-           
-          </nav>
-                  </div>
-        <div className="amazon-header-bottom">
+        </header>
+        <div className="amazon-header-bottom" style={{padding: '2px 10px', minHeight: 32}}>
           <div className="header-bottom-links">
             <Link to="/shop" state={{ showDiscounted: true }} className="header-bottom-link deals-link">
               <FaFire style={{ marginLeft: '5px' }} />
@@ -652,11 +623,135 @@ export default function Header() {
             {!categoriesLoading && categories && categories.slice(0, 8).map(cat => (
               <Link key={cat._id} to={`/shop?category=${cat.name}`} className="header-bottom-link">
                 {cat.name}
-                    </Link>
+              </Link>
             ))}
           </div>
         </div>
-      </header>
+      </div>
+      {isSidebarOpen && (
+        <div style={{position: 'fixed', top: 0, right: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.35)', zIndex: 2000}} onClick={() => setIsSidebarOpen(false)}>
+          <div
+            className="sidebar-animated"
+            style={{
+              position: 'fixed',
+              top: 0,
+              right: 0,
+              width: 340,
+              height: '100vh',
+              background: 'linear-gradient(270deg, #4caf50, #8bc34a, #5a8b3e, #6ab344, #232f3e, #4caf50)',
+              backgroundSize: '1200% 1200%',
+              animation: 'gradientMove 18s ease infinite',
+              color: '#fff',
+              boxShadow: '-4px 0 24px rgba(0,0,0,0.18)',
+              zIndex: 2100,
+              padding: '24px 18px 18px 18px',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+              direction: 'rtl',
+              justifyContent: 'space-between',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <style>{`
+              @keyframes gradientMove {
+                0% {background-position: 0% 50%;}
+                50% {background-position: 100% 50%;}
+                100% {background-position: 0% 50%;}
+              }
+              .sidebar-animated {
+                animation: sidebarSlideIn 0.5s cubic-bezier(.4,2,.3,1);
+              }
+              @keyframes sidebarSlideIn {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(0); }
+              }
+            `}</style>
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              style={{background: 'transparent', border: 'none', color: '#fff', fontSize: 28, position: 'absolute', top: 18, left: 18, right: 'auto', cursor: 'pointer'}}
+              aria-label="إغلاق القائمة"
+            >
+              <i className="fas fa-times"></i>
+            </button>
+            <div style={{marginTop: 40, width: '100%', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, overflowY: 'auto', minHeight: 0}}>
+              {/* السوشيال ميديا في الأعلى */}
+              <div className="d-flex flex-row gap-3" style={{justifyContent: 'flex-end', marginBottom: 8}}>
+                {socialLinks.map((item, idx) => (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    style={{color: item.color, fontSize: 22, background: '#fff1', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
+                    {item.icon}
+                  </a>
+                ))}
+              </div>
+              {/* بيانات المستخدم */}
+              {isAuthenticated && currentUser && (
+                <>
+                  <Link to="/profile" onClick={() => setIsSidebarOpen(false)} style={{display: 'flex', alignItems: 'center', gap: 12, alignSelf: 'flex-end', textDecoration: 'none', marginBottom: 8}}>
+                    <img src={getProfileImageUrl(currentUser.profileImg)} alt="صورة الحساب" style={{width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff'}} />
+                    <span style={{color: '#fff', fontWeight: 'bold', fontSize: 17}}>مرحباً، {currentUser.name}</span>
+                  </Link>
+                  {/* زر تسجيل الخروج أسفل اسم المستخدم */}
+                  <button onClick={() => { setIsSidebarOpen(false); handleLogout(); }} style={{margin: '0 0 8px 0', background: '#fff', color: '#c0392b', fontWeight: 'bold', border: 'none', borderRadius: 12, fontSize: 17, padding: '10px 0', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer'}}>
+                    <FaSignOutAlt /> تسجيل الخروج
+                  </button>
+                </>
+              )}
+              {/* زر الدخول/تسجيل */}
+              {!isAuthenticated && (
+                <Link to="/login" className="top-bar-item" style={{color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6}} onClick={() => setIsSidebarOpen(false)}>
+                  <FaSignInAlt /> دخول / تسجيل
+                </Link>
+              )}
+              {/* زر تسوق الآن */}
+              <Link to="/shop" className="promo-button w-100 mb-2" style={{background: '#fff', color: '#232f3e', fontWeight: 'bold', borderRadius: 16, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 0'}} onClick={() => setIsSidebarOpen(false)}>
+                <FaBolt /> تسوق الآن
+              </Link>
+              {/* عرض حصري */}
+              <div className="fw-bold text-end" style={{fontSize: 18, lineHeight: 1.6}}>
+                عرض حصري وتوصيل سريع - خصم حتى 50%!
+              </div>
+              {/* بيانات التواصل */}
+              <div className="d-flex flex-row align-items-center gap-2 mb-2" style={{justifyContent: 'flex-end'}}>
+                <a href="tel:01092474959" className="contact-info top-bar-item" style={{color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6}}>
+                  <FaPhoneAlt />
+                  <span>01092474959</span>
+                </a>
+              </div>
+              {/* روابط الحساب والطلبات والسلة والمفضلة فقط إذا كان مسجل دخول */}
+              {isAuthenticated && (
+                <>
+                  <div style={{borderTop: '1px solid #fff2', margin: '16px 0'}}></div>
+                  <Link to="/orders" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                    <FaBoxOpen /> <span>طلباتي</span>
+                  </Link>
+                  <Link to="/wishlist" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                    <FaHeart /> <span>المفضلة</span>
+                  </Link>
+                  <Link to="/cart" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                    <FaShoppingCart /> <span>عربة التسوق</span>
+                  </Link>
+                </>
+              )}
+              <div style={{borderTop: '1px solid #fff2', margin: '16px 0'}}></div>
+            </div>
+          </div>
+        </div>
+      )}
+      <style>{`
+${headerStyles}
+.header-wrapper.hidden { display: none !important; }
+@media (max-width: 700px) {
+  .header-search { width: 90% !important; min-width: 0 !important; }
+}
+`}</style>
     </>
   );
 } 
