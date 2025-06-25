@@ -120,7 +120,7 @@ const headerStyles = `
     overflow: hidden;
     position: relative;
   }
-    .suggestion-item {
+  .suggestion-item {
     padding: 8px 12px;
     cursor: pointer;
     display: flex;
@@ -397,7 +397,7 @@ export default function Header() {
             setIsHeaderVisible(true);
           }
         } else {
-          setIsHeaderVisible(true); // Always visible on desktop
+            setIsHeaderVisible(true); // Always visible on desktop
         }
         setLastScrollY(window.scrollY);
       }
@@ -458,7 +458,7 @@ export default function Header() {
       dispatch(clearSearchResults());
     }
   };
-
+  
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim()) {
@@ -466,7 +466,7 @@ export default function Header() {
     }
     setShowSuggestions(false);
   };
-
+  
   const handleSuggestionClick = (suggestion) => {
     navigate(`/product/${suggestion._id}`);
     setSearch('');
@@ -547,7 +547,7 @@ ${headerStyles}
             <div className="d-flex align-items-center justify-content-center w-100" style={{ padding: '2px 0 0 0' }}>
               <Link className="header-logo" to="/">
                 <img src="/images/logo.png" alt="Logo" style={{ width: 220, height: 100, objectFit: 'contain', margin: 0 }} />
-              </Link>
+          </Link>
               <button
                 className="hamburger-menu"
                 style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 28, marginRight: 0, marginLeft: 8, cursor: 'pointer', position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}
@@ -555,53 +555,53 @@ ${headerStyles}
                 aria-label="فتح القائمة الجانبية"
               >
                 <i className="fas fa-bars"></i>
-              </button>
-            </div>
+                </button>
+              </div>
             <div className="w-100 d-flex justify-content-center" style={{ marginTop: 4 }}>
-              <div className="header-search" style={{ width: '60%', minWidth: 180, maxWidth: 500, margin: '10px'}}>
+              <div className="header-search" style={{ width: '60%', minWidth: 180, maxWidth: 500}}>
                 <div className="d-flex align-items-center" style={{ width: '100%' }}>
                   <select className="header-search-select" defaultValue="" style={{ padding: '6px 5px', fontSize: 13 }}>
-                    <option value="" disabled>الكل</option>
-                    {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-                  </select>
-                  <input
-                    className="header-search-input"
-                    type="text"
-                    placeholder="ابحث في متجرنا"
-                    value={search}
-                    onChange={handleSearchChange}
+              <option value="" disabled>الكل</option>
+              {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+            </select>
+                <input
+              className="header-search-input" 
+              type="text" 
+              placeholder="ابحث في متجرنا"
+                  value={search}
+              onChange={handleSearchChange}
                     onFocus={() => { if (search) setShowSuggestions(true); }}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
                     style={{ padding: '6px', fontSize: 14 }}
-                  />
+            />
                   <button className="header-search-button" onClick={handleSearchSubmit} style={{ padding: '6px 10px', fontSize: 16 }}>
-                    <i className="fas fa-search"></i>
-                  </button>
+                  <i className="fas fa-search"></i>
+                </button>
                 </div>
-                {showSuggestions && search.trim() && (
+            {showSuggestions && search.trim() && (
                   <div className="search-suggestions" style={{ zIndex: 3000, position: 'static', left: 0, right: 0, marginTop: 2, maxWidth: 500, width: '90vw', background: '#fff', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 4px 4px', color: '#111', maxHeight: 400, overflowY: 'auto', boxShadow: '0 8px 32px #0002', marginLeft: 'auto', marginRight: 'auto' }}>
-                    {searchLoading ? (
-                      <div className="suggestion-item">جاري البحث...</div>
-                    ) : searchResults.length > 0 ? (
-                      searchResults.map(item => (
-                        <div
-                          key={item._id}
-                          className="suggestion-item"
-                          onMouseDown={() => handleSuggestionClick(item)}
-                        >
+                {searchLoading ? (
+                  <div className="suggestion-item">جاري البحث...</div>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map(item => (
+                    <div 
+                        key={item._id}
+                      className="suggestion-item" 
+                      onMouseDown={() => handleSuggestionClick(item)}
+                    >
                           <img src={item.imageCover} alt={item.name} />
-                          <span>{item.name}</span>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="suggestion-item">لا توجد نتائج</div>
-                    )}
-                  </div>
+                      <span>{item.name}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="suggestion-item">لا توجد نتائج</div>
                 )}
               </div>
-            </div>
+            )}
           </div>
+                    </div>
+                  </div>
         </header>
         <div className="amazon-header-bottom" style={{ padding: '2px 10px', minHeight: 32 }}>
           <div className="header-bottom-links">
@@ -612,7 +612,7 @@ ${headerStyles}
             {!categoriesLoading && categories && categories.slice(0, 8).map(cat => (
               <Link key={cat._id} to={`/shop?category=${cat.name}`} className="header-bottom-link">
                 {cat.name}
-              </Link>
+                    </Link>
             ))}
           </div>
         </div>
@@ -743,4 +743,4 @@ ${headerStyles}
 `}</style>
     </>
   );
-}
+} 

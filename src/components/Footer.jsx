@@ -5,8 +5,6 @@ import { FaXTwitter } from 'react-icons/fa6';
 import { FaChevronUp, FaChevronDown } from 'react-icons/fa';
 
 export default function Footer() {
-  const [isFooterExpanded, setIsFooterExpanded] = useState(false);
-
   const socialLinks = [
     { href: 'https://www.facebook.com/profile.php?id=61577629474920', icon: <FaFacebookF />, label: 'Facebook', color: '#1877f3' },
     { href: 'https://www.instagram.com/mizanoomarket/', icon: <FaInstagram />, label: 'Instagram', color: '#E4405F' },
@@ -14,36 +12,12 @@ export default function Footer() {
     { href: 'https://www.tiktok.com/@mizanoomarket', icon: <FaTiktok />, label: 'TikTok', color: '#000' },
   ];
 
-  const toggleFooter = () => {
-    setIsFooterExpanded(!isFooterExpanded);
-  };
-
   return (
-    <footer className="bg-black text-white py-4 py-md-5">
+    <>
+    <footer className="bg-black text-white py-4 py-md-5" style={{willChange: 'transform'}}>
       <div className="container">
-        {/* Mobile Footer Toggle Button */}
-        <div className="d-md-none mobile-footer-toggle">
-          <button 
-            onClick={toggleFooter}
-            className="btn btn-outline-light w-100 d-flex align-items-center justify-content-center"
-            style={{
-              borderRadius: '8px',
-              padding: '12px 16px',
-              fontSize: '16px',
-              fontWeight: '500',
-              border: '1px solid rgba(255,255,255,0.3)',
-              background: 'rgba(255,255,255,0.05)',
-              color: '#fff',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            <span>معلومات الموقع</span>
-            {isFooterExpanded ? <FaChevronUp /> : <FaChevronDown />}
-          </button>
-        </div>
-
         {/* Footer Content */}
-        <div className={`footer-content ${isFooterExpanded ? 'footer-expanded' : 'footer-collapsed'}`}>
+        <div className="footer-content footer-expanded">
           <div className="row g-4">
             <div className="col-lg-3 col-md-6 col-12">
               <div className="footer-section">
@@ -147,103 +121,325 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <style>{`
-        .footer-section {
-          padding: 1rem;
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.05);
-          height: 100%;
-          transition: all 0.3s ease;
+    </footer>
+    <style>{`
+      .footer-section {
+        padding: 0.15rem;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.05);
+        height: 100%;
+        transition: all 0.3s ease;
+        margin-bottom: 0.15rem;
+      }
+      
+      .footer-section:hover {
+        background: rgba(255, 255, 255, 0.1);
+        transform: translateY(-2px);
+      }
+      
+      .footer-logo {
+        height: 120px;
+        width: 120px;
+        margin-bottom: 0.15rem;
+      }
+      
+      .footer-logo:hover {
+        transform: scale(1.05);
+      }
+      
+      .footer-title {
+        font-size: 0.8rem;
+        margin-bottom: 0.15rem;
+      }
+      
+      .footer-title::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        right: 0;
+        width: 30px;
+        height: 2px;
+        background: #dc3545;
+        border-radius: 1px;
+      }
+      
+      .footer-text {
+        font-size: 0.8rem;
+        margin-bottom: 0.15rem;
+      }
+      
+      .footer-links {
+        margin: 0;
+      }
+      
+      .footer-link {
+        font-size: 0.8rem;
+        padding: 0.07rem 0;
+      }
+      
+      .footer-link:hover {
+        color: #dc3545 !important;
+        padding-right: 0.5rem;
+      }
+      
+      .footer-link::before {
+        content: '→';
+        position: absolute;
+        right: -15px;
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      
+      .footer-link:hover::before {
+        opacity: 1;
+        right: -20px;
+      }
+      
+      .contact-item {
+        font-size: 0.8rem;
+        margin-bottom: 0.08rem;
+      }
+      
+      .contact-item:hover {
+        color: #dc3545;
+        transform: translateX(-5px);
+      }
+      
+      .contact-item i {
+        color: #dc3545;
+        width: 20px;
+        text-align: center;
+      }
+      
+      .social-links {
+        margin-top: 1rem;
+      }
+      
+      .social-link {
+        display: flex;
+        alignItems: center;
+        justifyContent: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        transition: all 0.3s ease;
+        text-decoration: none;
+      }
+      
+      .social-link:hover {
+        background: #dc3545;
+        transform: translateY(-3px);
+        color: white !important;
+      }
+      
+      .copyright-text {
+        font-size: 0.7rem;
+        margin-bottom: 0.05rem;
+      }
+
+      /* Mobile Footer Toggle Styles */
+      .mobile-footer-toggle {
+        margin-bottom: 1rem;
+      }
+
+      .mobile-footer-toggle button:hover {
+        background: rgba(255,255,255,0.1) !important;
+        border-color: rgba(255,255,255,0.5) !important;
+      }
+
+      .footer-content {
+        transition: all 0.3s ease;
+      }
+
+      .footer-collapsed {
+        display: none;
+      }
+
+      .footer-expanded {
+        display: block;
+      }
+      
+      /* Desktop Styles - Always Show Footer */
+      @media (min-width: 768px) {
+        .mobile-footer-toggle {
+          display: none !important;
         }
         
-        .footer-section:hover {
-          background: rgba(255, 255, 255, 0.1);
-          transform: translateY(-2px);
+        .footer-content {
+          display: block !important;
+        }
+      }
+      
+      /* Mobile Responsive */
+      @media (max-width: 991px) {
+        .footer-section {
+          padding: 0.1rem;
+          margin-bottom: 0.1rem;
         }
         
         .footer-logo {
-          height: 160px;
-          width: 160px;
-          transition: transform 0.3s ease;
-        }
-        
-        .footer-logo:hover {
-          transform: scale(1.05);
+          height: 20px;
+          width: 20px;
         }
         
         .footer-title {
-          font-weight: 600;
-          color: #fff;
-          position: relative;
-        }
-        
-        .footer-title::after {
-          content: '';
-          position: absolute;
-          bottom: -8px;
-          right: 0;
-          width: 30px;
-          height: 2px;
-          background: #dc3545;
-          border-radius: 1px;
+          font-size: 0.7rem;
+          margin-bottom: 0.1rem;
         }
         
         .footer-text {
-          line-height: 1.6;
-          color: #ccc;
-        }
-        
-        .footer-links {
-          margin: 0;
+          font-size: 0.7rem;
+          margin-bottom: 0.1rem;
         }
         
         .footer-link {
-          display: block;
-          padding: 0.5rem 0;
-          transition: all 0.3s ease;
-          position: relative;
-        }
-        
-        .footer-link:hover {
-          color: #dc3545 !important;
-          padding-right: 0.5rem;
-        }
-        
-        .footer-link::before {
-          content: '→';
-          position: absolute;
-          right: -15px;
-          opacity: 0;
-          transition: all 0.3s ease;
-        }
-        
-        .footer-link:hover::before {
-          opacity: 1;
-          right: -20px;
+          font-size: 0.7rem;
+          padding: 0.04rem 0;
         }
         
         .contact-item {
-          display: flex;
-          align-items: center;
-          color: #ccc;
-          transition: all 0.3s ease;
+          font-size: 0.7rem;
+          margin-bottom: 0.05rem;
         }
         
-        .contact-item:hover {
-          color: #dc3545;
-          transform: translateX(-5px);
+        .copyright-text {
+          font-size: 0.65rem;
+          margin-bottom: 0.02rem;
         }
         
-        .contact-item i {
-          color: #dc3545;
-          width: 20px;
+        footer.bg-black {
+          padding-top: 0.12rem !important;
+          padding-bottom: 0.12rem !important;
+        }
+      }
+      
+      @media (max-width: 768px) {
+        footer {
+          padding: 1rem 0 !important;
+        }
+        
+        .footer-section {
+          padding: 1rem;
+          text-align: center;
+          margin-bottom: 1.5rem;
+        }
+        
+        .footer-logo {
+          height: 120px;
+          width: 120px;
+          margin: 0 auto 1rem;
+          display: block;
+        }
+        
+        .footer-title {
+          font-size: 1.1rem;
+          margin-bottom: 1rem;
+        }
+        
+        .footer-title::after {
+          right: 50%;
+          transform: translateX(50%);
+        }
+        
+        .footer-text {
+          font-size: 0.9rem;
           text-align: center;
         }
         
-        .social-links {
-          margin-top: 1rem;
+        .footer-links {
+          text-align: center;
         }
         
+        .footer-link {
+          padding: 0.4rem 0;
+          font-size: 0.9rem;
+        }
+        
+        .footer-link:hover {
+          padding-right: 0;
+        }
+        
+        .contact-item {
+          justify-content: center;
+          font-size: 0.9rem;
+          margin-bottom: 0.5rem;
+        }
+        
+        .contact-item i {
+          margin-left: 0.5rem;
+          margin-right: 0;
+        }
+        
+        .social-links {
+          justify-content: center;
+          margin-top: 1.5rem;
+        }
+        
+        .social-link {
+          width: 35px;
+          height: 35px;
+          font-size: 0.9rem;
+        }
+        
+        .copyright-text {
+          font-size: 0.8rem;
+          padding: 0 1rem;
+        }
+      }
+      
+      @media (max-width: 576px) {
+        .footer-section {
+          padding: 0.07rem;
+          margin-bottom: 0.07rem;
+          text-align: center;
+        }
+        .footer-logo {
+          height: 120px;
+          width: 120px;
+          margin: 0 auto 0.07rem auto;
+          display: block;
+        }
+        .footer-title {
+          font-size: 0.6rem;
+          margin-bottom: 0.07rem;
+          text-align: center;
+        }
+        .footer-text {
+          font-size: 0.6rem;
+          margin-bottom: 0.07rem;
+          text-align: center;
+        }
+        .footer-links {
+          text-align: center;
+        }
+        .footer-link {
+          padding: 0.02rem 0;
+          font-size: 0.6rem;
+          text-align: center;
+          display: block;
+        }
+        .contact-item {
+          font-size: 0.6rem;
+          margin-bottom: 0.02rem;
+          text-align: center;
+          justify-content: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .copyright-text {
+          font-size: 0.55rem;
+          margin-bottom: 0.01rem;
+          text-align: center;
+        }
+        footer.bg-black {
+          padding-top: 0.07rem !important;
+          padding-bottom: 0.07rem !important;
+        }
+      }
+      
+      @media (max-width: 480px) {
         .social-link {
           display: flex;
           align-items: center;
@@ -513,6 +709,6 @@ export default function Footer() {
           }
         }
       `}</style>
-    </footer>
+    </>
   );
 } 

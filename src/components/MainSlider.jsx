@@ -23,13 +23,14 @@ const slideBackgrounds = [
 
 export default function MainSlider() {
   const [current, setCurrent] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 5; // عدد المنتجات في كل صفحة
   const dispatch = useDispatch();
-  const { products: slides, loading, error } = useSelector((state) => state.product);
+  const { products: slides, loading, error, page, pages } = useSelector((state) => state.product);
 
   useEffect(() => {
-    // Dispatching the new thunk to get only discounted products
-    dispatch(getDiscountedProductsThunk());
-  }, [dispatch]);
+    dispatch(getDiscountedProductsThunk({ page: currentPage, limit: pageSize }));
+  }, [dispatch, currentPage]);
 
   const nextSlide = () => {
     setCurrent(current === slides.length - 1 ? 0 : current + 1);
@@ -46,6 +47,10 @@ export default function MainSlider() {
     }
   }, [current, slides.length]);
 
+  const handlePageChange = (newPage) => {
+    setCurrent(0); // إعادة السلايدر لأول منتج في الصفحة الجديدة
+    setCurrentPage(newPage);
+  };
 
   if (loading) {
     return (
@@ -125,6 +130,20 @@ export default function MainSlider() {
       <button className="slider-nav next" onClick={nextSlide}>
         <i className="fas fa-chevron-right"></i>
       </button>
+
+      {/* أزرار التنقل بين الصفحات */}
+      <div className="slider-pagination" style={{ textAlign: 'center', marginTop: 16 }}>
+        {Array.from({ length: pages || 1 }, (_, i) => (
+          <button
+            key={i + 1}
+            className={`slider-page-btn${currentPage === i + 1 ? ' active' : ''}`}
+            onClick={() => handlePageChange(i + 1)}
+            style={{ margin: '0 4px', padding: '4px 10px', borderRadius: 6, border: '1px solid #ddd', background: currentPage === i + 1 ? '#e53935' : '#fff', color: currentPage === i + 1 ? '#fff' : '#e53935', cursor: 'pointer' }}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
     </div>
   );
 } 
