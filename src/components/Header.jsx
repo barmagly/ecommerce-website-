@@ -113,27 +113,14 @@ const headerStyles = `
   .header-search {
     flex-grow: 1;
     display: flex;
+    flex-direction: column;
     align-items: center;
     background-color: white;
     border-radius: 4px;
     overflow: hidden;
     position: relative;
   }
-  .search-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-top: none;
-    border-radius: 0 0 4px 4px;
-    z-index: 1000;
-    color: #111;
-    max-height: 400px;
-    overflow-y: auto;
-  }
-  .suggestion-item {
+    .suggestion-item {
     padding: 8px 12px;
     cursor: pointer;
     display: flex;
@@ -410,7 +397,7 @@ export default function Header() {
             setIsHeaderVisible(true);
           }
         } else {
-            setIsHeaderVisible(true); // Always visible on desktop
+          setIsHeaderVisible(true); // Always visible on desktop
         }
         setLastScrollY(window.scrollY);
       }
@@ -471,7 +458,7 @@ export default function Header() {
       dispatch(clearSearchResults());
     }
   };
-  
+
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (search.trim()) {
@@ -479,9 +466,9 @@ export default function Header() {
     }
     setShowSuggestions(false);
   };
-  
+
   const handleSuggestionClick = (suggestion) => {
-    navigate(`/product/${suggestion.slug}`);
+    navigate(`/product/${suggestion._id}`);
     setSearch('');
     setShowSuggestions(false);
     dispatch(clearSearchResults());
@@ -552,56 +539,58 @@ ${headerStyles}
       <div className={`header-wrapper${!isHeaderVisible ? ' hidden' : ''}`}>
         <header className="amazon-header">
           {/* فقاعات ومربعات متحركة */}
-          <span className="bubble" style={{width: 120, height: 120}}></span>
-          <span className="bubble bubble2" style={{width: 90, height: 90}}></span>
-          <span className="square" style={{width: 70, height: 70}}></span>
-          <span className="square square2" style={{width: 60, height: 60}}></span>
-          <div className="d-flex flex-column align-items-center w-100" style={{position: 'relative'}}>
-            <div className="d-flex align-items-center justify-content-center w-100" style={{padding: '2px 0 0 0'}}>
+          <span className="bubble" style={{ width: 120, height: 120 }}></span>
+          <span className="bubble bubble2" style={{ width: 90, height: 90 }}></span>
+          <span className="square" style={{ width: 70, height: 70 }}></span>
+          <span className="square square2" style={{ width: 60, height: 60 }}></span>
+          <div className="d-flex flex-column align-items-center w-100" style={{ position: 'relative' }}>
+            <div className="d-flex align-items-center justify-content-center w-100" style={{ padding: '2px 0 0 0' }}>
               <Link className="header-logo" to="/">
-                <img src="/images/logo.png" alt="Logo" style={{width: 220, height: 100, objectFit: 'contain', margin: 0}} />
+                <img src="/images/logo.png" alt="Logo" style={{ width: 220, height: 100, objectFit: 'contain', margin: 0 }} />
               </Link>
               <button
                 className="hamburger-menu"
-                style={{background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 28, marginRight: 0, marginLeft: 8, cursor: 'pointer', position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)'}}
+                style={{ background: 'transparent', border: 'none', outline: 'none', color: '#fff', fontSize: 28, marginRight: 0, marginLeft: 8, cursor: 'pointer', position: 'absolute', right: 18, top: '50%', transform: 'translateY(-50%)' }}
                 onClick={() => setIsSidebarOpen(true)}
                 aria-label="فتح القائمة الجانبية"
               >
                 <i className="fas fa-bars"></i>
               </button>
             </div>
-            <div className="w-100 d-flex justify-content-center" style={{marginTop: 4}}>
-              <div className="header-search" style={{width: '60%', minWidth: 180, maxWidth: 500, minHeight: 38}}>
-                <select className="header-search-select" defaultValue="" style={{padding: '6px 5px', fontSize: 13}}>
-                  <option value="" disabled>الكل</option>
-                  {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
-                </select>
-                <input
-                  className="header-search-input"
-                  type="text"
-                  placeholder="ابحث في متجرنا"
-                  value={search}
-                  onChange={handleSearchChange}
-                  onFocus={() => { if(search) setShowSuggestions(true); }}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
-                  style={{padding: '6px', fontSize: 14}}
-                />
-                <button className="header-search-button" onClick={handleSearchSubmit} style={{padding: '6px 10px', fontSize: 16}}>
-                  <i className="fas fa-search"></i>
-                </button>
+            <div className="w-100 d-flex justify-content-center" style={{ marginTop: 4 }}>
+              <div className="header-search" style={{ width: '60%', minWidth: 180, maxWidth: 500, margin: '10px'}}>
+                <div className="d-flex align-items-center" style={{ width: '100%' }}>
+                  <select className="header-search-select" defaultValue="" style={{ padding: '6px 5px', fontSize: 13 }}>
+                    <option value="" disabled>الكل</option>
+                    {categories && categories.map(cat => <option key={cat._id} value={cat.name}>{cat.name}</option>)}
+                  </select>
+                  <input
+                    className="header-search-input"
+                    type="text"
+                    placeholder="ابحث في متجرنا"
+                    value={search}
+                    onChange={handleSearchChange}
+                    onFocus={() => { if (search) setShowSuggestions(true); }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSearchSubmit(e); }}
+                    style={{ padding: '6px', fontSize: 14 }}
+                  />
+                  <button className="header-search-button" onClick={handleSearchSubmit} style={{ padding: '6px 10px', fontSize: 16 }}>
+                    <i className="fas fa-search"></i>
+                  </button>
+                </div>
                 {showSuggestions && search.trim() && (
-                  <div className="search-suggestions">
+                  <div className="search-suggestions" style={{ zIndex: 3000, position: 'static', left: 0, right: 0, marginTop: 2, maxWidth: 500, width: '90vw', background: '#fff', border: '1px solid #ddd', borderTop: 'none', borderRadius: '0 0 4px 4px', color: '#111', maxHeight: 400, overflowY: 'auto', boxShadow: '0 8px 32px #0002', marginLeft: 'auto', marginRight: 'auto' }}>
                     {searchLoading ? (
                       <div className="suggestion-item">جاري البحث...</div>
                     ) : searchResults.length > 0 ? (
                       searchResults.map(item => (
-                        <div 
+                        <div
                           key={item._id}
                           className="suggestion-item"
                           onMouseDown={() => handleSuggestionClick(item)}
                         >
-                          <img src={item.images && item.images[0] ? item.images[0].url : '/images/placeholder.png'} alt={item.name} />
+                          <img src={item.imageCover} alt={item.name} />
                           <span>{item.name}</span>
                         </div>
                       ))
@@ -614,7 +603,7 @@ ${headerStyles}
             </div>
           </div>
         </header>
-        <div className="amazon-header-bottom" style={{padding: '2px 10px', minHeight: 32}}>
+        <div className="amazon-header-bottom" style={{ padding: '2px 10px', minHeight: 32 }}>
           <div className="header-bottom-links">
             <Link to="/shop" state={{ showDiscounted: true }} className="header-bottom-link deals-link">
               <FaFire style={{ marginLeft: '5px' }} />
@@ -629,7 +618,7 @@ ${headerStyles}
         </div>
       </div>
       {isSidebarOpen && (
-        <div style={{position: 'fixed', top: 0, right: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.35)', zIndex: 2000}} onClick={() => setIsSidebarOpen(false)}>
+        <div style={{ position: 'fixed', top: 0, right: 0, width: '100vw', height: '100vh', background: 'rgba(0,0,0,0.35)', zIndex: 2000 }} onClick={() => setIsSidebarOpen(false)}>
           <div
             className="sidebar-animated"
             style={{
@@ -669,14 +658,14 @@ ${headerStyles}
             `}</style>
             <button
               onClick={() => setIsSidebarOpen(false)}
-              style={{background: 'transparent', border: 'none', color: '#fff', fontSize: 28, position: 'absolute', top: 18, left: 18, right: 'auto', cursor: 'pointer'}}
+              style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 28, position: 'absolute', top: 18, left: 18, right: 'auto', cursor: 'pointer' }}
               aria-label="إغلاق القائمة"
             >
               <i className="fas fa-times"></i>
             </button>
-            <div style={{marginTop: 40, width: '100%', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, overflowY: 'auto', minHeight: 0}}>
+            <div style={{ marginTop: 40, width: '100%', display: 'flex', flexDirection: 'column', gap: 18, flex: 1, overflowY: 'auto', minHeight: 0 }}>
               {/* السوشيال ميديا في الأعلى */}
-              <div className="d-flex flex-row gap-3" style={{justifyContent: 'flex-end', marginBottom: 8}}>
+              <div className="d-flex flex-row gap-3" style={{ justifyContent: 'flex-end', marginBottom: 8 }}>
                 {socialLinks.map((item, idx) => (
                   <a
                     key={item.label}
@@ -684,7 +673,7 @@ ${headerStyles}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={item.label}
-                    style={{color: item.color, fontSize: 22, background: '#fff1', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center'}}
+                    style={{ color: item.color, fontSize: 22, background: '#fff1', borderRadius: '50%', width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                     onClick={() => setIsSidebarOpen(false)}
                   >
                     {item.icon}
@@ -694,33 +683,33 @@ ${headerStyles}
               {/* بيانات المستخدم */}
               {isAuthenticated && currentUser && (
                 <>
-                  <Link to="/profile" onClick={() => setIsSidebarOpen(false)} style={{display: 'flex', alignItems: 'center', gap: 12, alignSelf: 'flex-end', textDecoration: 'none', marginBottom: 8}}>
-                    <img src={getProfileImageUrl(currentUser.profileImg)} alt="صورة الحساب" style={{width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff'}} />
-                    <span style={{color: '#fff', fontWeight: 'bold', fontSize: 17}}>مرحباً، {currentUser.name}</span>
+                  <Link to="/profile" onClick={() => setIsSidebarOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: 12, alignSelf: 'flex-end', textDecoration: 'none', marginBottom: 8 }}>
+                    <img src={getProfileImageUrl(currentUser.profileImg)} alt="صورة الحساب" style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid #fff' }} />
+                    <span style={{ color: '#fff', fontWeight: 'bold', fontSize: 17 }}>مرحباً، {currentUser.name}</span>
                   </Link>
                   {/* زر تسجيل الخروج أسفل اسم المستخدم */}
-                  <button onClick={() => { setIsSidebarOpen(false); handleLogout(); }} style={{margin: '0 0 8px 0', background: '#fff', color: '#c0392b', fontWeight: 'bold', border: 'none', borderRadius: 12, fontSize: 17, padding: '10px 0', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer'}}>
+                  <button onClick={() => { setIsSidebarOpen(false); handleLogout(); }} style={{ margin: '0 0 8px 0', background: '#fff', color: '#c0392b', fontWeight: 'bold', border: 'none', borderRadius: 12, fontSize: 17, padding: '10px 0', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, cursor: 'pointer' }}>
                     <FaSignOutAlt /> تسجيل الخروج
                   </button>
                 </>
               )}
               {/* زر الدخول/تسجيل */}
               {!isAuthenticated && (
-                <Link to="/login" className="top-bar-item" style={{color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6}} onClick={() => setIsSidebarOpen(false)}>
+                <Link to="/login" className="top-bar-item" style={{ color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }} onClick={() => setIsSidebarOpen(false)}>
                   <FaSignInAlt /> دخول / تسجيل
                 </Link>
               )}
               {/* زر تسوق الآن */}
-              <Link to="/shop" className="promo-button w-100 mb-2" style={{background: '#fff', color: '#232f3e', fontWeight: 'bold', borderRadius: 16, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 0'}} onClick={() => setIsSidebarOpen(false)}>
+              <Link to="/shop" className="promo-button w-100 mb-2" style={{ background: '#fff', color: '#232f3e', fontWeight: 'bold', borderRadius: 16, fontSize: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '10px 0' }} onClick={() => setIsSidebarOpen(false)}>
                 <FaBolt /> تسوق الآن
               </Link>
               {/* عرض حصري */}
-              <div className="fw-bold text-end" style={{fontSize: 18, lineHeight: 1.6}}>
+              <div className="fw-bold text-end" style={{ fontSize: 18, lineHeight: 1.6 }}>
                 عرض حصري وتوصيل سريع - خصم حتى 50%!
               </div>
               {/* بيانات التواصل */}
-              <div className="d-flex flex-row align-items-center gap-2 mb-2" style={{justifyContent: 'flex-end'}}>
-                <a href="tel:01092474959" className="contact-info top-bar-item" style={{color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6}}>
+              <div className="d-flex flex-row align-items-center gap-2 mb-2" style={{ justifyContent: 'flex-end' }}>
+                <a href="tel:01092474959" className="contact-info top-bar-item" style={{ color: '#fff', fontSize: 16, textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 6 }}>
                   <FaPhoneAlt />
                   <span>01092474959</span>
                 </a>
@@ -728,19 +717,19 @@ ${headerStyles}
               {/* روابط الحساب والطلبات والسلة والمفضلة فقط إذا كان مسجل دخول */}
               {isAuthenticated && (
                 <>
-                  <div style={{borderTop: '1px solid #fff2', margin: '16px 0'}}></div>
-                  <Link to="/orders" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                  <div style={{ borderTop: '1px solid #fff2', margin: '16px 0' }}></div>
+                  <Link to="/orders" className="d-flex align-items-center gap-2 sidebar-link" style={{ color: '#fff', fontSize: 18 }} onClick={() => setIsSidebarOpen(false)}>
                     <FaBoxOpen /> <span>طلباتي</span>
                   </Link>
-                  <Link to="/wishlist" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                  <Link to="/wishlist" className="d-flex align-items-center gap-2 sidebar-link" style={{ color: '#fff', fontSize: 18 }} onClick={() => setIsSidebarOpen(false)}>
                     <FaHeart /> <span>المفضلة</span>
                   </Link>
-                  <Link to="/cart" className="d-flex align-items-center gap-2 sidebar-link" style={{color: '#fff', fontSize: 18}} onClick={() => setIsSidebarOpen(false)}>
+                  <Link to="/cart" className="d-flex align-items-center gap-2 sidebar-link" style={{ color: '#fff', fontSize: 18 }} onClick={() => setIsSidebarOpen(false)}>
                     <FaShoppingCart /> <span>عربة التسوق</span>
                   </Link>
                 </>
               )}
-              <div style={{borderTop: '1px solid #fff2', margin: '16px 0'}}></div>
+              <div style={{ borderTop: '1px solid #fff2', margin: '16px 0' }}></div>
             </div>
           </div>
         </div>
@@ -754,4 +743,4 @@ ${headerStyles}
 `}</style>
     </>
   );
-} 
+}

@@ -34,22 +34,20 @@ export default function SearchResults() {
 
   const [query, setQuery] = useState(q);
   const [results, setResults] = useState([]);
-  const products = useSelector(state => state.product.products || []);
+  const products = useSelector(state => state.product.products);
   const dispatch = useDispatch();
 
   // جلب المنتجات عند أول تحميل إذا لم تكن موجودة
   useEffect(() => {
-    if (!products || products.length === 0) {
-      dispatch(getProductsThunk());
-    }
-  }, [dispatch, products]);
+    dispatch(getProductsThunk());
+  }, [dispatch]);
 
   useEffect(() => {
     setQuery(q);
     if (q.trim()) {
       setResults(
         products.filter(item =>
-          item.name && item.name.toLowerCase().includes(q.toLowerCase())
+           item.name.toLowerCase().includes(q.toLowerCase())
         )
       );
     } else {
