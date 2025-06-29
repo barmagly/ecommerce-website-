@@ -103,7 +103,7 @@ const Products = () => {
     shippingAddressType: 'other_governorates',
     shippingAddressDetails: '',
     shippingCost: 0,
-    deliveryDays: 4,
+    deliveryDays: 1,
     maxQuantityPerOrder: ''
   };
 
@@ -2491,6 +2491,7 @@ const Products = () => {
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage="عدد الصفوف في الصفحة:"
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`}
+        rowsPerPageOptions={[10, 25, 50, 100, 200, { label: 'الكل', value: filterProducts.length }]}
       />
 
       {/* Modify the product form dialog */}
