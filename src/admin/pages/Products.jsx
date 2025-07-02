@@ -268,7 +268,7 @@ const Products = () => {
           images: variant.images?.map(img => img.url || img) || []
         })) || [],
         // إضافة معالجة عنوان الشحن
-        shippingAddressType: product.shippingAddress?.type || 'nag_hamadi',
+        shippingAddressType: product.shippingAddress?.type || 'other_governorates',
         shippingAddressDetails: product.shippingAddress?.details || '',
         shippingCost: product.shippingCost || 0,
         deliveryDays: product.deliveryDays || 2,
@@ -486,7 +486,7 @@ const Products = () => {
         });
 
         // إضافة بيانات الشحن
-        formDataToSend.append('shippingAddress[type]', formData.shippingAddressType);
+        formDataToSend.append('shippingAddress', formData.shippingAddressType);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
@@ -615,7 +615,7 @@ const Products = () => {
         });
 
         // إضافة بيانات الشحن
-        formDataToSend.append('shippingAddress[type]', formData.shippingAddressType);
+        formDataToSend.append('shippingAddress', formData.shippingAddressType);
         formDataToSend.append('shippingCost', formData.shippingCost);
         formDataToSend.append('deliveryDays', formData.deliveryDays);
 
@@ -2332,6 +2332,7 @@ const Products = () => {
                     <TableCell sx={{ width: '8%' }}>التقييم والمراجعات</TableCell>
                     <TableCell sx={{ width: '10%' }}>تاريخ الإضافة</TableCell>
                     <TableCell sx={{ width: '8%' }}>الحالة</TableCell>
+                    <TableCell sx={{ width: '10%' }}>نطاق الشحن</TableCell>
                     <TableCell sx={{ width: '15%' }}>الإجراءات</TableCell>
                   </TableRow>
                 </TableHead>
@@ -2468,6 +2469,16 @@ const Products = () => {
                               size="small"
                               variant="outlined"
                             />
+                          </TableCell>
+                          {/* نطاق الشحن */}
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'text.secondary' }}>
+                              {product.shippingAddress?.type === 'nag_hamadi'
+                                ? 'نجع حمادي و ضواحيها'
+                                : product.shippingAddress?.type === 'other_governorates'
+                                  ? 'جميع محافظات مصر'
+                                  : 'غير محدد'}
+                            </Typography>
                           </TableCell>
                           <TableCell>
                             {renderTableActions(product)}
@@ -2770,7 +2781,7 @@ const Products = () => {
                               label="نطاق الشحن"
                               sx={{ '& .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#ff9800' } }}
                             >
-                              <MenuItem value="other_governorates">جميع محافظات مصر</MenuItem>
+                              <MenuItem value="other_governorates" selected>جميع محافظات مصر</MenuItem>
                               <MenuItem value="nag_hamadi">نجع حمادي و ضواحيها</MenuItem>
                             </Select>
                           </FormControl>
