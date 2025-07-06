@@ -72,8 +72,16 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+    totalItems: 0,
+    results: 0
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -135,7 +143,7 @@ const Products = () => {
 
   // Reset page when filters change
   useEffect(() => {
-    setPage(0);
+    setPagination(prev => ({ ...prev, page: 1 }));
   }, [searchTerm, filterCategory, filterStatus]);
 
   // Add useEffect to monitor form data changes
@@ -149,7 +157,7 @@ const Products = () => {
   // Load products from localStorage on component mount
   useEffect(() => {
     fetchProducts();
-  }, []);
+  }, [pagination.page, pagination.limit]);
 
   // Function to filter products based on search term and category
   const filterProducts = products.filter(product => {
@@ -179,15 +187,59 @@ const Products = () => {
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await productsAPI.getAll();
-      console.log('Products fetched from server:', response.data.products);
+
+      // Build query parameters for pagination and filtering
+      const params = new URLSearchParams();
+      params.set('page', pagination.page.toString());
+      params.set('limit', pagination.limit.toString());
+
+      if (searchTerm) {
+        params.set('search', searchTerm);
+      }
+      if (filterCategory) {
+        params.set('category', filterCategory);
+      }
+      if (filterStatus) {
+        params.set('stock', '0'); // For out of stock filter
+      }
+
+      const response = await productsAPI.getAll(params);
+
+      // Handle the new paginated response structure
+      if (response.data && response.data.products) {
+        // New paginated response
+        const productsData = response.data.products;
+        setProducts(productsData);
+        setPagination({
+          page: response.data.page || 1,
+          limit: response.data.limit || 10,
+          totalPages: response.data.totalPages || 1,
+          totalItems: response.data.totalItems || 0,
+          results: response.data.results || 0
+        });
+        console.log('🛒 Paginated Products:', productsData);
+        console.log('📄 Pagination Info:', response.data);
+      } else {
+        // Fallback for old response format
+        const productsData = Array.isArray(response.data) ? response.data :
+          response.data.products ? response.data.products : [];
+        setProducts(productsData);
+        setPagination(prev => ({
+          ...prev,
+          page: 1,
+          totalPages: 1,
+          totalItems: productsData.length,
+          results: productsData.length
+        }));
+        console.log('🛒 All Products (fallback):', productsData);
+      }
 
       // التحقق من قيم مصاريف الشحن ومدة التوصيل
-      response.data.products.forEach(product => {
+      const productsToLog = response.data.products || response.data || [];
+      productsToLog.forEach(product => {
         console.log(`Product: ${product.name}, Shipping Cost: ${product.shippingCost}, Delivery Days: ${product.deliveryDays}`);
       });
 
-      setProducts(response.data.products);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('فشل في تحميل المنتجات');
@@ -224,12 +276,16 @@ const Products = () => {
   }, []);
 
   const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+    setLoading(true);
+    setPagination(prev => ({ ...prev, page: newPage + 1 })); // Material-UI uses 0-based indexing
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+    const newLimit = parseInt(event.target.value, 10);
+    setLoading(true);
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
   };
 
   const resetForm = () => {
@@ -2030,6 +2086,11 @@ const Products = () => {
                   placeholder="البحث في المنتجات والأكواد..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      setPagination(prev => ({ ...prev, page: 1 }));
+                    }
+                  }}
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
@@ -2077,11 +2138,24 @@ const Products = () => {
                 <Button
                   size='large'
                   variant="outlined"
+                  startIcon={<SearchIcon />}
+                  onClick={() => {
+                    setPagination(prev => ({ ...prev, page: 1 }));
+                  }}
+                >
+                  بحث
+                </Button>
+              </Grid>
+              <Grid item xs={12} md={2}>
+                <Button
+                  size='large'
+                  variant="outlined"
                   // startIcon={<FilterIcon />}
                   onClick={() => {
                     setSearchTerm('');
                     setFilterCategory('');
                     setFilterStatus('');
+                    setPagination(prev => ({ ...prev, page: 1 }));
                     toast.info('تم مسح جميع المرشحات');
                   }}
                 >
@@ -2148,11 +2222,11 @@ const Products = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }} position={'relative'}>
                     <Box>
                       <Typography variant="h4" fontWeight="bold" color="#1976d2">
-                        {products.length}
+                        {pagination.totalItems}
                       </Typography>
                       <Typography variant="body1" color="text.secondary">إجمالي المنتجات</Typography>
                       <Typography variant="caption" color="success.main">
-                        +{products.filter(p => p.featured).length} منتج مميز
+                        عرض {pagination.results} من {pagination.totalItems}
                       </Typography>
                     </Box>
                     <Avatar sx={{ bgcolor: '#1976d2', color: 'white', width: 48, height: 48, position: 'absolute', top: 0, left: 0 }}>
@@ -2243,7 +2317,7 @@ const Products = () => {
                       <Typography variant="h4" fontWeight="bold" color="#9c27b0">
                         {products.reduce((total, p) => total + (p.price * p.stock), 0).toFixed().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                       </Typography>
-                      <Typography variant="body1" color="text.secondary">قيمة المخزون</Typography>
+                      <Typography variant="body1" color="text.secondary">قيمة المخزون (الصفحة الحالية)</Typography>
                       <Typography variant="caption" color="text.secondary">
                         متوسط السعر: {products.length > 0 ? (products.reduce((total, p) => total + p.price, 0) / products.length).toFixed().toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '0.00'}
                       </Typography>
@@ -2265,7 +2339,10 @@ const Products = () => {
             <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="h6" fontWeight="bold">
-                  قائمة المنتجات ({filterProducts.length})
+                  قائمة المنتجات ({pagination.results} من {pagination.totalItems})
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  الصفحة {pagination.page} من {pagination.totalPages}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1 }}>
                   {/* <Button
@@ -2280,7 +2357,7 @@ const Products = () => {
                     size="small"
                     variant="outlined"
                     onClick={() => {
-                      const data = filterProducts.map(p => ({
+                      const data = products.map(p => ({
                         Name: p.name,
                         Brand: p.brand,
                         Category: typeof p.category === 'object' ? p.category.name : p.category,
@@ -2299,7 +2376,7 @@ const Products = () => {
                       const url = URL.createObjectURL(blob);
                       const link = document.createElement('a');
                       link.href = url;
-                      link.download = 'products.csv';
+                      link.download = `products-page-${pagination.page}.csv`;
                       link.click();
                       toast.success('تم تصدير البيانات بنجاح');
                     }}
@@ -2338,153 +2415,151 @@ const Products = () => {
                 </TableHead>
                 <TableBody>
                   <AnimatePresence>
-                    {filterProducts
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((product, index) => (
-                        <motion.tr
-                          key={product._id}
-                          component={TableRow}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          transition={{ duration: 0.3 }}
-                          sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
-                        >
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                              <Avatar
-                                src={typeof product.imageCover === 'string' ? product.imageCover : (product.imageCover?.url || undefined)}
-                                sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}
-                              >
-                                <ImageIcon />
-                              </Avatar>
-                              <Box>
-                                <Typography variant="subtitle1" fontWeight="bold" sx={{
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: '200px',
-                                  textAlign: 'right'
-                                }}>
-                                  {product.name}
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary" sx={{
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  maxWidth: '200px'
-                                }}>
-                                  {(product.description || '').substring(0, 50)}...
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              maxWidth: '120px'
-                            }}>
-                              {product.brand || 'غير محدد'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={typeof product.category === 'object' ? product.category.name : (product.category || 'غير محدد')}
-                              color="primary"
-                              size="small"
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight="bold" color="success.main">
-                              {product.price || 0} جنية
-                            </Typography>
-                            {product.salePrice && (
-                              <Typography
-                                component="span"
-                                variant="caption"
-                                sx={{
-                                  textDecoration: 'line-through',
-                                  color: 'text.secondary',
-                                  display: 'block'
-                                }}
-                              >
-                                {product.salePrice} جنية
+                    {products.map((product, index) => (
+                      <motion.tr
+                        key={product._id}
+                        component={TableRow}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        transition={{ duration: 0.3 }}
+                        sx={{ '&:hover': { backgroundColor: 'action.hover' } }}
+                      >
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                            <Avatar
+                              src={typeof product.imageCover === 'string' ? product.imageCover : (product.imageCover?.url || undefined)}
+                              sx={{ bgcolor: 'primary.main', width: 50, height: 50 }}
+                            >
+                              <ImageIcon />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle1" fontWeight="bold" sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '200px',
+                                textAlign: 'right'
+                              }}>
+                                {product.name}
                               </Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={(product.stock || 0) > 0 ? `${product.stock || 0} متوفر` : 'نفذ المخزون'}
-                              color={(product.stock || 0) > 0 ? ((product.stock || 0) <= 10 ? 'warning' : 'success') : 'error'}
-                              size="small"
-                              icon={(product.stock || 0) <= 10 && (product.stock || 0) > 0 ? <Alert /> : undefined}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{
-                              fontFamily: 'monospace',
-                              fontSize: '0.8rem',
-                              color: 'text.secondary'
-                            }}>
-                              {product.maxQuantityPerOrder ? `${product.maxQuantityPerOrder} قطعة` : 'غير محدد'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" sx={{
-                              fontFamily: 'monospace',
-                              fontSize: '0.8rem',
-                              color: 'text.secondary'
-                            }}>
-                              {product.sku || 'غير محدد'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
-                              <Typography variant="subtitle2" fontWeight="bold">
-                                {product.ratings?.average || 0}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                ({product.ratings?.count || 0})
+                              <Typography variant="caption" color="text.secondary" sx={{
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                maxWidth: '200px'
+                              }}>
+                                {(product.description || '').substring(0, 50)}...
                               </Typography>
                             </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ textAlign: 'center' }}>
-                              <Typography variant="body2" fontWeight="500">
-                                {product.createdAt ? new Date(product.createdAt).toLocaleDateString('ar-EG') : 'غير محدد'}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary">
-                                {product.createdAt ? new Date(product.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : ''}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              label={product.hasVariants ? 'متغيرات' : 'منتج عادي'}
-                              color={product.hasVariants ? 'secondary' : 'default'}
-                              size="small"
-                              variant="outlined"
-                            />
-                          </TableCell>
-                          {/* نطاق الشحن */}
-                          <TableCell>
-                            <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'text.secondary' }}>
-                              {product.shippingAddress?.type === 'nag_hamadi'
-                                ? 'نجع حمادي و ضواحيها'
-                                : product.shippingAddress?.type === 'other_governorates'
-                                  ? 'جميع محافظات مصر'
-                                  : 'غير محدد'}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            maxWidth: '120px'
+                          }}>
+                            {product.brand || 'غير محدد'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={typeof product.category === 'object' ? product.category.name : (product.category || 'غير محدد')}
+                            color="primary"
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold" color="success.main">
+                            {product.price || 0} جنية
+                          </Typography>
+                          {product.salePrice && (
+                            <Typography
+                              component="span"
+                              variant="caption"
+                              sx={{
+                                textDecoration: 'line-through',
+                                color: 'text.secondary',
+                                display: 'block'
+                              }}
+                            >
+                              {product.salePrice} جنية
                             </Typography>
-                          </TableCell>
-                          <TableCell>
-                            {renderTableActions(product)}
-                          </TableCell>
-                        </motion.tr>
-                      ))}
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={(product.stock || 0) > 0 ? `${product.stock || 0} متوفر` : 'نفذ المخزون'}
+                            color={(product.stock || 0) > 0 ? ((product.stock || 0) <= 10 ? 'warning' : 'success') : 'error'}
+                            size="small"
+                            icon={(product.stock || 0) <= 10 && (product.stock || 0) > 0 ? <Alert /> : undefined}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                            color: 'text.secondary'
+                          }}>
+                            {product.maxQuantityPerOrder ? `${product.maxQuantityPerOrder} قطعة` : 'غير محدد'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{
+                            fontFamily: 'monospace',
+                            fontSize: '0.8rem',
+                            color: 'text.secondary'
+                          }}>
+                            {product.sku || 'غير محدد'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <StarIcon sx={{ color: '#ffc107', fontSize: 18 }} />
+                            <Typography variant="subtitle2" fontWeight="bold">
+                              {product.ratings?.average || 0}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ({product.ratings?.count || 0})
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Box sx={{ textAlign: 'center' }}>
+                            <Typography variant="body2" fontWeight="500">
+                              {product.createdAt ? new Date(product.createdAt).toLocaleDateString('ar-EG') : 'غير محدد'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {product.createdAt ? new Date(product.createdAt).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={product.hasVariants ? 'متغيرات' : 'منتج عادي'}
+                            color={product.hasVariants ? 'secondary' : 'default'}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </TableCell>
+                        {/* نطاق الشحن */}
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'text.secondary' }}>
+                            {product.shippingAddress?.type === 'nag_hamadi'
+                              ? 'نجع حمادي و ضواحيها'
+                              : product.shippingAddress?.type === 'other_governorates'
+                                ? 'جميع محافظات مصر'
+                                : 'غير محدد'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {renderTableActions(product)}
+                        </TableCell>
+                      </motion.tr>
+                    ))}
                   </AnimatePresence>
                 </TableBody>
               </Table>
@@ -2495,14 +2570,14 @@ const Products = () => {
 
       <TablePagination
         component="div"
-        count={filterProducts.length}
-        page={page}
+        count={pagination.totalItems}
+        page={pagination.page - 1} // Material-UI uses 0-based indexing
         onPageChange={handleChangePage}
-        rowsPerPage={rowsPerPage}
+        rowsPerPage={pagination.limit}
         onRowsPerPageChange={handleChangeRowsPerPage}
         labelRowsPerPage="عدد الصفوف في الصفحة:"
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} من ${count}`}
-        rowsPerPageOptions={[10, 25, 50, 100, 200, { label: 'الكل', value: filterProducts.length }]}
+        rowsPerPageOptions={[10, 25, 50, 100, 200]}
       />
 
       {/* Modify the product form dialog */}

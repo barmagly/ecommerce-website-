@@ -1,4 +1,4 @@
-import  { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useLocation, useSearchParams } from "react-router-dom";
 import Header from "../components/Header";
@@ -6,13 +6,13 @@ import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
-import { Box, Grid, Typography, Checkbox, FormControlLabel } from "@mui/material";
+import { Box, Grid, Typography, Checkbox, FormControlLabel, Pagination, FormControl, Select, MenuItem } from "@mui/material";
 import { Image } from "react-bootstrap";
 import "./Shop.css";
 import { frontendAPI } from '../services/api';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 
-const API_URL = process.env.REACT_APP_API_URL 
+const API_URL = process.env.REACT_APP_API_URL
 console.log('🔗 API_URL:', API_URL);
 
 export default function Shop() {
@@ -36,6 +36,15 @@ export default function Shop() {
   });
   const [showDiscounted, setShowDiscounted] = useState(location.state?.showDiscounted || false);
 
+  // Pagination state
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 12,
+    totalPages: 1,
+    totalItems: 0,
+    results: 0
+  });
+
   // Fetch initial products and categories
   useEffect(() => {
     fetchProducts(showDiscounted);
@@ -47,7 +56,7 @@ export default function Shop() {
     // Ensure body is scrollable on mobile
     document.body.style.overflow = 'auto';
     document.body.style.webkitOverflowScrolling = 'touch';
-    
+
     // Force a reflow to ensure scrolling works
     setTimeout(() => {
       window.scrollTo(0, 0);
@@ -64,7 +73,10 @@ export default function Shop() {
   // Handle URL parameters on page load
   useEffect(() => {
     const categoryParam = searchParams.get('category');
+    const pageParam = searchParams.get('page');
     console.log('🔗 category param from URL:', categoryParam);
+    console.log('🔗 page param from URL:', pageParam);
+
     if (categoryParam && categories.length > 0) {
       // Find the category by name
       const normalize = str => (str || '').trim().replace(/\s+/g, ' ');
@@ -80,20 +92,68 @@ export default function Shop() {
       setSelectedCategory('');
       setFilteredProducts(products);
     }
+
+    // Handle page parameter
+    if (pageParam) {
+      const page = parseInt(pageParam, 10);
+      if (page > 0 && page !== pagination.page) {
+        setPagination(prev => ({ ...prev, page }));
+        fetchProducts(showDiscounted, page, pagination.limit);
+      }
+    }
   }, [categories, searchParams, products]);
 
-  const fetchProducts = async (discounted = false) => {
+  const fetchProducts = async (discounted = false, page = 1, limit = 12) => {
     try {
       setLoading(true);
       setError(null);
-      const url = discounted ? `${API_URL}/api/products?discounted=true` : `${API_URL}/api/products`;
+      const url = discounted ?
+        `${API_URL}/api/products?discounted=true&page=${page}&limit=${limit}` :
+        `${API_URL}/api/products?page=${page}&limit=${limit}`;
       const response = await axios.get(url);
-      const productsData = Array.isArray(response.data) ? response.data :
-        response.data.products ? response.data.products :
-          [];
-      setProducts(productsData);
-      setFilteredProducts(productsData);
-      console.log('🛒 All Products:', productsData);
+
+      // Handle the new paginated response structure
+      if (response.data && response.data.products) {
+        // New paginated response
+        const productsData = response.data.products;
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setPagination({
+          page: response.data.page || 1,
+          limit: response.data.limit || 12,
+          totalPages: response.data.totalPages || 1,
+          totalItems: response.data.totalItems || 0,
+          results: response.data.results || 0
+        });
+        console.log('🛒 Paginated Products:', productsData);
+        console.log('📄 Pagination Info:', response.data);
+      } else if (Array.isArray(response.data)) {
+        // Fallback for old response format (array)
+        const productsData = response.data;
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setPagination(prev => ({
+          ...prev,
+          page: 1,
+          totalPages: 1,
+          totalItems: productsData.length,
+          results: productsData.length
+        }));
+        console.log('🛒 All Products (fallback array):', productsData);
+      } else {
+        // Fallback for any other response format
+        const productsData = response.data?.products || [];
+        setProducts(productsData);
+        setFilteredProducts(productsData);
+        setPagination(prev => ({
+          ...prev,
+          page: 1,
+          totalPages: 1,
+          totalItems: productsData.length,
+          results: productsData.length
+        }));
+        console.log('🛒 All Products (fallback other):', productsData);
+      }
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
       console.error("Error fetching products:", err);
@@ -117,7 +177,12 @@ export default function Shop() {
   };
 
   const handleFiltersApplied = (filteredProducts) => {
+    // When filters are applied from the sidebar, we need to handle pagination
+    // For now, we'll set the filtered products directly, but ideally we should
+    // integrate this with the pagination system
     setFilteredProducts(filteredProducts);
+    // Reset pagination when filters are applied
+    setPagination(prev => ({ ...prev, page: 1 }));
   };
 
   const fetchProductCat = async (id, name) => {
@@ -141,13 +206,47 @@ export default function Shop() {
     setFilteredProducts(products);
     setSearchParams({});
     setSelectedCategory('');
+    // Reset pagination when showing all products
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchProducts(showDiscounted, 1, pagination.limit);
+  }
+
+  const clearFilters = () => {
+    setCurrentFilters({
+      search: '',
+      minPrice: '',
+      maxPrice: '',
+      category: '',
+      minRating: '',
+      inStock: ''
+    });
+    setSortOption('');
+    setFilteredProducts(products);
+    setPagination(prev => ({ ...prev, page: 1 }));
+    fetchProducts(showDiscounted, 1, pagination.limit);
   }
 
   const handleFilterChange = (filterParams) => {
     setLoading(true);
-    axios.get(`${API_URL}/api/products/filter?${filterParams}`)
+    // Reset to first page when applying filters
+    const params = new URLSearchParams(filterParams);
+    params.set('page', '1');
+    params.set('limit', pagination.limit.toString());
+
+    axios.get(`${API_URL}/api/products/filter?${params.toString()}`)
       .then(response => {
-        setFilteredProducts(response.data.data);
+        if (response.data && response.data.data) {
+          setFilteredProducts(response.data.data);
+          setPagination({
+            page: response.data.page || 1,
+            limit: response.data.limit || 12,
+            totalPages: response.data.totalPages || 1,
+            totalItems: response.data.totalItems || 0,
+            results: response.data.results || 0
+          });
+        } else {
+          setFilteredProducts(response.data.data || []);
+        }
         setCurrentFilters(filterParams);
       })
       .catch(error => {
@@ -228,7 +327,32 @@ export default function Shop() {
 
   const handleDiscountedChange = (e) => {
     setShowDiscounted(e.target.checked);
-    fetchProducts(e.target.checked);
+    fetchProducts(e.target.checked, 1, pagination.limit);
+  };
+
+  // Handle page change
+  const handlePageChange = (event, newPage) => {
+    setLoading(true);
+    setPagination(prev => ({ ...prev, page: newPage }));
+    fetchProducts(showDiscounted, newPage, pagination.limit);
+    // Update URL with page number
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (newPage > 1) {
+      newSearchParams.set('page', newPage.toString());
+    } else {
+      newSearchParams.delete('page');
+    }
+    setSearchParams(newSearchParams);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Handle limit change
+  const handleLimitChange = (event) => {
+    const newLimit = event.target.value;
+    setLoading(true);
+    setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
+    fetchProducts(showDiscounted, 1, newLimit);
   };
 
   if (loading) {
@@ -267,7 +391,8 @@ export default function Shop() {
           <Breadcrumb items={[{ label: "المتجر", to: "/shop" }]} />
 
           <Box
-            sx={{ display: "flex", overflowX: "auto", gap: 2, p: 2,
+            sx={{
+              display: "flex", overflowX: "auto", gap: 2, p: 2,
               scrollSnapType: "x mandatory",
               "&::-webkit-scrollbar": {
                 height: 4,
@@ -292,11 +417,11 @@ export default function Shop() {
               scrollSnapAlign: 'center',
               borderRadius: '50%',
               padding: '4px',
-               transition: 'border 0.3s ease',
-                '&:hover': {
-                  transform: 'scale(1.05)',
-                },
-            }} 
+              transition: 'border 0.3s ease',
+              '&:hover': {
+                transform: 'scale(1.05)',
+              },
+            }}
               rowSpacing={2}
             >
               <Image
@@ -311,7 +436,7 @@ export default function Shop() {
                   border: selectedCategory === '' ? '2px solid #007bff' : '2px solid transparent',
                 }}
               />
-              <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title="جميع المنتجات">
+              <Typography fontWeight={'bold'} textAlign={'center'} fontSize={14} title="جميع المنتجات">
                 جميع المنتجات
               </Typography>
             </Grid>
@@ -326,7 +451,7 @@ export default function Shop() {
                 '&:hover': {
                   transform: 'scale(1.05)',
                 },
-              }} 
+              }}
                 rowSpacing={2}
               >
                 <Image
@@ -341,7 +466,7 @@ export default function Shop() {
                     border: selectedCategory === cat.name ? '2px solid #007bff' : '2px solid transparent',
                   }}
                 />
-                <Typography fontWeight={'bold'} textAlign={'center'}  fontSize={14}  title={cat.name}>
+                <Typography fontWeight={'bold'} textAlign={'center'} fontSize={14} title={cat.name}>
                   {cat.name}
                 </Typography>
               </Grid>
@@ -391,6 +516,12 @@ export default function Shop() {
             >
               السعر: من الأعلى للأقل
             </button>
+            <button
+              className="btn btn-outline-secondary btn-sm"
+              onClick={clearFilters}
+            >
+              مسح الفلاتر
+            </button>
           </div>
 
           <div className="row">
@@ -407,6 +538,65 @@ export default function Shop() {
             <div className="col-lg-9">
               <ShopProducts products={filteredProducts} />
             </div>
+          </div>
+
+          {/* Results info and pagination controls */}
+          <div className="bg-white p-3 rounded shadow-sm mt-4">
+            <div className="row align-items-center">
+              <div className="col-md-6">
+                <Typography variant="body2" color="text.secondary" className="text-center text-md-start">
+                  عرض {pagination.results} من {pagination.totalItems} منتج
+                  {pagination.totalPages > 1 && ` (الصفحة ${pagination.page} من ${pagination.totalPages})`}
+                </Typography>
+              </div>
+              <div className="col-md-6">
+                <div className="d-flex justify-content-center justify-content-md-end align-items-center gap-3">
+                  <Typography variant="body2" color="text.secondary">
+                    عرض:
+                  </Typography>
+                  <FormControl size="small" sx={{ minWidth: 80 }}>
+                    <Select
+                      value={pagination.limit.toString()}
+                      onChange={handleLimitChange}
+                      displayEmpty
+                      inputProps={{ 'aria-label': 'عدد العناصر في الصفحة' }}
+                    >
+                      <MenuItem value={12}>12</MenuItem>
+                      <MenuItem value={20}>20</MenuItem>
+                      <MenuItem value={50}>50</MenuItem>
+                      <MenuItem value={100}>100</MenuItem>
+                    </Select>
+                  </FormControl>
+                </div>
+              </div>
+            </div>
+
+            {pagination.totalPages > 1 && (
+              <div className="d-flex justify-content-center mt-3">
+                <Pagination
+                  count={pagination.totalPages}
+                  page={pagination.page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  showFirstButton
+                  showLastButton
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      fontSize: '1rem',
+                      fontWeight: 'bold',
+                    },
+                    '& .MuiPaginationItem-page.Mui-selected': {
+                      backgroundColor: '#1976d2',
+                      color: 'white',
+                      '&:hover': {
+                        backgroundColor: '#1565c0',
+                      },
+                    },
+                  }}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
