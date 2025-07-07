@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL 
+const API_BASE_URL = process.env.REACT_APP_API_URL
 
 // Create axios instance with default config
 const api = axios.create({
@@ -83,7 +83,10 @@ export const dashboardAPI = {
 
 // Products API
 export const productsAPI = {
-    getAll: () => api.get('/api/products'),
+    getAll: (params) => {
+        const queryString = params ? `?${params.toString()}` : '';
+        return api.get(`/api/products${queryString}`);
+    },
     getOne: (id) => api.get(`/api/products/${id}`),
     create: (data) => {
         // If data contains files, use FormData
