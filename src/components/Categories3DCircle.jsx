@@ -165,7 +165,7 @@ export default function Categories3DCircle() {
                       </div>
                     )}
                   </div>
-                  <span className="fw-bold">{cat.name}</span>
+                  <span className="fw-bold" style={{fontSize: isActive ? '.45rem' : '.45rem'}}>{cat.name}</span>
                 </div>
               );
             })}
