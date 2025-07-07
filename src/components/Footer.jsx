@@ -61,7 +61,7 @@ export default function Footer() {
             <div className="col-lg-3 col-md-6 col-12">
               <div className="footer-section">
                 <h5 className="mb-3 mb-md-4 footer-title">روابط سريعة</h5>
-                <ul className="list-unstyled footer-links">
+                <ul className="list-unstyled footer-links p-0">
                   <li className="mb-2">
                     <Link to="/" className="text-white text-decoration-none footer-link">الرئيسية</Link>
                   </li>
@@ -77,7 +77,7 @@ export default function Footer() {
             <div className="col-lg-3 col-md-6 col-12">
               <div className="footer-section">
                 <h5 className="mb-3 mb-md-4 footer-title">حسابي</h5>
-                <ul className="list-unstyled footer-links">
+                <ul className="list-unstyled footer-links p-0">
                   <li className="mb-2">
                     <Link to="/profile" className="text-white text-decoration-none footer-link">حسابي</Link>
                   </li>
@@ -96,7 +96,7 @@ export default function Footer() {
             <div className="col-lg-3 col-md-6 col-12">
               <div className="footer-section">
                 <h5 className="mb-3 mb-md-4 footer-title">تواصل معنا</h5>
-                <ul className="list-unstyled footer-contact">
+                <ul className="list-unstyled footer-contact p-0">
                   <li className="mb-2 contact-item">
                     <i className="fas fa-map-marker-alt me-2"></i>
                     نجع حمادي, قنا, مصر 
@@ -150,17 +150,6 @@ export default function Footer() {
       .footer-title {
         font-size: 0.8rem;
         margin-bottom: 0.15rem;
-      }
-      
-      .footer-title::after {
-        content: '';
-        position: absolute;
-        bottom: -8px;
-        right: 0;
-        width: 30px;
-        height: 2px;
-        background: #dc3545;
-        border-radius: 1px;
       }
       
       .footer-text {

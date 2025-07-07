@@ -295,8 +295,8 @@ export default function FlashSalesSection() {
           </div>
         </div>
       )}
-      <div className="d-flex flex-column flex-md-row justify-content-between align-items-center mb-5 ms-lg-5 gap-4 gap-md-5">
-        <div className="d-flex flex-column flex-shrink-0 align-items-center align-items-md-start me-0 me-md-5 gap-3  w-md-auto">
+      <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
+        <div className="d-flex flex-column flex-shrink-0 me-0 me-md-5 gap-3  w-md-auto">
           <div className="d-flex align-items-center pe-1 gap-3">
             <div className="bg-danger rounded flashsales-bar"></div>
             <span className="text-danger fw-bold fs-6">هذا الشهر</span>
@@ -320,7 +320,7 @@ export default function FlashSalesSection() {
       >
         {/* أزرار التمرير */}
         <button
-          className="btn btn-light rounded-circle p-3 scroll-btn scroll-left flashsales-arrow-mobile"
+          className="btn btn-light rounded-circle p-3 scroll-btnm scroll-left flashsales-arrow-mobile"
           onClick={scrollToPrev}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -331,7 +331,7 @@ export default function FlashSalesSection() {
           <i className="fas fa-chevron-left"></i>
         </button>
         <button
-          className="btn btn-light rounded-circle p-3 scroll-btn scroll-right flashsales-arrow-mobile"
+          className="btn btn-light rounded-circle p-3 scroll-btnm scroll-right flashsales-arrow-mobile"
           onClick={scrollToNext}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -396,7 +396,7 @@ export default function FlashSalesSection() {
                       </div>
                     </div>
                     <button
-                      className="btn btn-danger w-100 mt-auto"
+                      className="btn btn-danger w-75 mt-auto"
                       onClick={() => handleAddToCart(product?._id)}
                       style={{ transition: 'all 0.3s ease' }}
                     >
@@ -445,7 +445,7 @@ export default function FlashSalesSection() {
           direction: ltr;
         }
         
-        .scroll-btn {
+        .scroll-btnm {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
@@ -473,7 +473,7 @@ export default function FlashSalesSection() {
           right: -25px;
         }
         
-        .scroll-btn:hover {
+        .scroll-btnm:hover {
           background: #db4444 !important;
           color: white !important;
           transform: translateY(-50%) scale(1.1) !important;
@@ -534,7 +534,7 @@ export default function FlashSalesSection() {
         }
 
         @media (max-width: 600px) {
-          .flashsales-arrow-mobile.scroll-btn {
+          .flashsales-arrow-mobile.scroll-btnm {
             width: 44px !important;
             height: 44px !important;
             font-size: 1.1rem !important;

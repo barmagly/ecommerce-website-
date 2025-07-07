@@ -1,7 +1,6 @@
 .shop-page {
   min-height: 100vh;
   /* Ensure proper scrolling on mobile */
-  overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   position: relative;
   z-index: 1;

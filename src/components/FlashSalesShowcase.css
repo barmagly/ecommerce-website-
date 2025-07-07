@@ -185,6 +185,7 @@
   justify-content: center !important;
   cursor: pointer !important;
   transition: all 0.3s ease !important;
+  margin-top: 100px; /* Center vertically */
 }
 
 .scroll-left { 
@@ -219,16 +220,6 @@
 }
 
 /* انيميشن للبطاقات */
-@keyframes slideInFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
 
 @keyframes slideInFromLeft {
   0% {
@@ -271,10 +262,6 @@
 /* تطبيق الانيميشن على البطاقات */
 .flashsales-card {
   animation: fadeInUp 0.6s ease-out;
-}
-
-.flashsales-card:nth-child(odd) {
-  animation: slideInFromRight 0.6s ease-out;
 }
 
 .flashsales-card:nth-child(even) {
@@ -488,8 +475,8 @@
     height: 60px;
   }
   .service-icon {
-    width: 36px !important;
-    height: 36px !important;
+    width: 100px !important;
+    height: 100px !important;
   }
   .slider-arrow.left {
     position: absolute !important;

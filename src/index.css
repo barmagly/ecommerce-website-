@@ -12,6 +12,8 @@ html, body {
 
 * {
   box-sizing: border-box;
+  /* margin: 0;
+  padding: 0; */
 }
 
 body {
@@ -336,7 +338,7 @@ img {
 .flashsales-section-bg {
   background: linear-gradient(135deg, #fff8f8 0%, #ffe6e6 100%) !important;
   border-radius: 32px !important;
-  box-shadow: 0 4px 32px rgba(219, 68, 68, 0.08) !important, 0 0 0 1px rgba(219, 68, 68, 0.05) !important;
+  box-shadow: 0 4px 32px rgba(219, 68, 68, 0.08) !important;
   margin: 2rem 0;
   position: relative;
   overflow: hidden;
@@ -361,7 +363,7 @@ img {
 .categories-section-bg {
   background: linear-gradient(135deg, #f5f9ff 0%, #e6f0ff 100%) !important;
   border-radius: 32px !important;
-  box-shadow: 0 4px 32px rgba(59, 130, 246, 0.08) !important, 0 0 0 1px rgba(59, 130, 246, 0.05) !important;
+  box-shadow: 0 4px 32px rgba(59, 130, 246, 0.08) !important;
   margin: 2rem 0;
   position: relative;
   overflow: hidden;
@@ -386,7 +388,7 @@ img {
 .bestsellers-section-bg {
   background: linear-gradient(135deg, #fffbf0 0%, #fff7cc 100%) !important;
   border-radius: 32px !important;
-  box-shadow: 0 4px 32px rgba(245, 158, 66, 0.08) !important, 0 0 0 1px rgba(245, 158, 66, 0.05) !important;
+  box-shadow: 0 4px 32px rgba(245, 158, 66, 0.08) !important;
   margin: 2rem 0;
   position: relative;
   overflow: hidden;
@@ -411,7 +413,7 @@ img {
 .servicefeatures-section-bg {
   background: linear-gradient(135deg, #f5fff7 0%, #e6fff0 100%) !important;
   border-radius: 32px !important;
-  box-shadow: 0 4px 32px rgba(16, 185, 129, 0.08) !important, 0 0 0 1px rgba(16, 185, 129, 0.05) !important;
+  box-shadow: 0 4px 32px rgba(16, 185, 129, 0.08) !important;
   margin: 2rem 0;
   position: relative;
   overflow: hidden;

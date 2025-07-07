@@ -205,7 +205,7 @@ export default function Categories3DCircle() {
       </div>
 
       {/* مؤشرات التمرير */}
-      <div className="d-flex justify-content-center mt-4">
+      {/* <div className="d-flex justify-content-center">
         {categories.map((_, index) => (
           <div
             key={index}
@@ -221,7 +221,7 @@ export default function Categories3DCircle() {
             }}
           />
         ))}
-      </div>
+      </div> */}
     </div>
   );
 } 

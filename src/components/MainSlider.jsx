@@ -92,7 +92,7 @@ export default function MainSlider() {
             className={`slide-item ${index === current ? "active" : ""}`}
             key={slide._id}
           >
-            <div className="slide-content-wrapper">
+            {/* <div className="slide-content-wrapper"> */}
               <div className="slide-text">
                 <h3 className="slide-promo-title">عروض لا تقاوم!</h3>
                 <h2 className="slide-product-name">{slide.name}</h2>
@@ -119,7 +119,7 @@ export default function MainSlider() {
                   </div>
                 )}
               </div>
-            </div>
+            {/* </div> */}
           </div>
         ))}
       </div>
@@ -133,16 +133,6 @@ export default function MainSlider() {
 
       {/* أزرار التنقل بين الصفحات */}
       <div className="slider-pagination" style={{ textAlign: 'center', marginTop: 16 }}>
-        {Array.from({ length: pages || 1 }, (_, i) => (
-          <button
-            key={i + 1}
-            className={`slider-page-btn${currentPage === i + 1 ? ' active' : ''}`}
-            onClick={() => handlePageChange(i + 1)}
-            style={{ margin: '0 4px', padding: '4px 10px', borderRadius: 6, border: '1px solid #ddd', background: currentPage === i + 1 ? '#e53935' : '#fff', color: currentPage === i + 1 ? '#fff' : '#e53935', cursor: 'pointer' }}
-          >
-            {i + 1}
-          </button>
-        ))}
       </div>
     </div>
   );

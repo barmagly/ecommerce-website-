@@ -337,8 +337,8 @@ export default function BestSellersSection() {
           </div>
         </div>
       )}
-      <div className="d-flex justify-content-between align-items-start mb-5 ms-lg-5 gap-5 position-relative">
-        <div className="d-flex flex-column flex-shrink-0 align-items-start me-5 gap-3">
+      <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
+        <div className="d-flex flex-column flex-shrink-0 me-0 me-md-5 gap-3 pe-3 w-md-auto">
           <div className="d-flex align-items-center pe-1 gap-3">
             <div className="bg-danger rounded flashsales-bar"></div>
             <span className="text-danger fw-bold fs-6">هذا الشهر</span>
@@ -363,7 +363,7 @@ export default function BestSellersSection() {
               zIndex: 10
             }}
           >
-            <i className="fas fa-chevron-left"></i>
+          <i className="fas fa-chevron-right"></i>
           </button>
           <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
@@ -375,7 +375,7 @@ export default function BestSellersSection() {
               zIndex: 10
             }}
           >
-            <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-left"></i>
           </button>
         </div>
         <style>{`
@@ -469,7 +469,7 @@ export default function BestSellersSection() {
                       </div>
                     </div>
                     <button
-                      className="btn btn-danger w-100 mt-auto"
+                      className="btn btn-danger w-75 mt-auto"
                       onClick={() => handleAddToCart(product?._id)}
                       style={{ transition: 'all 0.3s ease' }}
                     >

@@ -3,17 +3,17 @@ import './FlashSalesShowcase.css';
 
 const features = [
   {
-    icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/bqlwzzr2_expires_30_days.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/5952/5952766.png',
     title: 'توصيل سريع',
     desc: 'نضمن لك توصيل سريع لجميع طلباتك'
   },
   {
-    icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/swx9cswz_expires_30_days.png',
+    icon: 'https://img.freepik.com/free-vector/flat-design-illustration-customer-support_23-2148887720.jpg?semt=ais_hybrid&w=740',
     title: 'خدمة عملاء 24/7',
     desc: 'دعم فني متواصل وودود على مدار الساعة'
   },
   {
-    icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/SWeYrJ75rl/p0b3okwg_expires_30_days.png',
+    icon: 'https://cdn-icons-png.flaticon.com/512/5506/5506524.png',
     title: 'ضمان استرجاع الأموال',
     desc: 'استرجاع أموالك خلال ٣٠ يومًا'
   }
@@ -27,13 +27,13 @@ export default function ServiceFeaturesSection() {
           {features.map((f, idx) => (
             <div key={idx} className="col-12 col-md-4" data-aos="zoom-in" data-aos-delay={idx * 200}>
               <div className="service-feature-card d-flex flex-column align-items-center text-center p-4 h-100">
-                <div className="service-icon-wrapper mb-4">
+                <div className="service-icon-wrapper mb-4 d-flex justify-content-center align-items-center" style={{ width: 180, height: 180, borderRadius: '50%', backgroundColor: '#f6f6f6', boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)' }}>
                   <img 
                     src={f.icon} 
                     alt={f.title} 
                     style={{
-                      width: 80, 
-                      height: 80, 
+                      width: 180, 
+                      height: 180, 
                       objectFit: 'contain',
                       transition: 'all 0.3s ease'
                     }} 
