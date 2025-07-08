@@ -737,7 +737,6 @@ ${headerStyles}
       )}
       <style>{`
 ${headerStyles}
-.header-wrapper.hidden { display: none !important; }
 @media (max-width: 700px) {
   .header-search { width: 90% !important; min-width: 0 !important; }
 }

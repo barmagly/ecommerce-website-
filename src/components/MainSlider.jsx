@@ -1,56 +1,50 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
-import "./MainSlider.css";
 import { useDispatch, useSelector } from "react-redux";
-// Using the new, more efficient thunk
 import { getDiscountedProductsThunk } from "../services/Slice/product/product";
-
-// Expanded array of background gradients for the slides
-const slideBackgrounds = [
-    'linear-gradient(285deg, #fde4e1, #e6f0ff)', // Light pink to light blue
-    'linear-gradient(285deg, #e1f5fe, #fce4ec)', // Light cyan to light pink
-    'linear-gradient(285deg, #e8f5e9, #fff3e0)', // Light green to light orange
-    'linear-gradient(285deg, #f3e5f5, #e0f7fa)', // Light purple to light cyan
-    'linear-gradient(285deg, #fffde7, #e8eaf6)', // Light yellow to light indigo
-    'linear-gradient(285deg, #ffebee, #e3f2fd)', // Reddish to blueish
-    'linear-gradient(285deg, #fbe9e7, #e0f2f1)', // Deep orange to teal
-    'linear-gradient(285deg, #e1f5fe, #fff9c4)', // Light blue to yellow
-    'linear-gradient(285deg, #dcedc8, #fce4ec)', // Light green to pink
-    'linear-gradient(285deg, #f9fbe7, #f1f8e9)', // Lime to green
-    'linear-gradient(285deg, #eceff1, #fafafa)', // Blue grey to grey
-    'linear-gradient(285deg, #fff8e1, #fbe9e7)', // Amber to deep orange
-];
+import "./MainSlider.css";
 
 export default function MainSlider() {
   const [current, setCurrent] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5; // عدد المنتجات في كل صفحة
+  const [prev, setPrev] = useState(null);
+  const timeoutRef = useRef();
   const dispatch = useDispatch();
-  const { products: slides, loading, error, page, pages } = useSelector((state) => state.product);
+  const { products: slides, loading, error } = useSelector((state) => state.product);
+  const pageSize = 5;
 
   useEffect(() => {
-    dispatch(getDiscountedProductsThunk({ page: currentPage, limit: pageSize }));
-  }, [dispatch, currentPage]);
+    dispatch(getDiscountedProductsThunk({ page: 1, limit: pageSize }));
+  }, [dispatch]);
 
+  // Autoplay: advance every 4 seconds
+  useEffect(() => {
+    if (!slides || slides.length === 0) return;
+    timeoutRef.current = setInterval(() => {
+      setPrev(current);
+      setCurrent((prev) => (prev + 1) % slides.length);
+    }, 4000);
+    return () => clearInterval(timeoutRef.current);
+  }, [current, slides]);
+
+  // Manual navigation resets autoplay and animates
   const nextSlide = () => {
-    setCurrent(current === slides.length - 1 ? 0 : current + 1);
+    setPrev(current);
+    setCurrent((prev) => (prev + 1) % slides.length);
   };
-  
   const prevSlide = () => {
-    setCurrent(current === 0 ? slides.length - 1 : current - 1);
+    setPrev(current);
+    setCurrent((prev) => (prev - 1 + slides.length) % slides.length);
   };
-  
-  useEffect(() => {
-    if (slides.length > 0) {
-      const slideInterval = setInterval(nextSlide, 5000);
-      return () => clearInterval(slideInterval);
-    }
-  }, [current, slides.length]);
 
-  const handlePageChange = (newPage) => {
-    setCurrent(0); // إعادة السلايدر لأول منتج في الصفحة الجديدة
-    setCurrentPage(newPage);
-  };
+  // Custom backgrounds for each slide (repeat or randomize if fewer than slides)
+  const backgrounds = [
+    'linear-gradient(135deg, #fde4e1, #e6f0ff)',
+    'linear-gradient(135deg, #fff1eb,rgb(196, 221, 232))',
+    'linear-gradient(135deg, #f9f9f9,rgb(230, 211, 248))',
+    'linear-gradient(135deg,rgb(254, 230, 247),rgb(209, 217, 228))',
+    'linear-gradient(135deg, #f5f7fa, #c3cfe2)'
+  ];
+  const bg = backgrounds[current % backgrounds.length];
 
   if (loading) {
     return (
@@ -72,68 +66,40 @@ export default function MainSlider() {
 
   if (!slides || slides.length === 0) {
     return (
-        <div className="main-slider-placeholder">
-            <div className="alert alert-info">No discounted products available right now.</div>
-        </div>
+      <div className="main-slider-placeholder">
+        <div className="alert alert-info">No discounted products available right now.</div>
+      </div>
     );
   }
-  
-  // Dynamic background style
-  const sliderStyle = {
-    background: slideBackgrounds[current % slideBackgrounds.length],
-    transition: 'background 0.8s ease-in-out',
-  };
 
   return (
-    <div className="main-slider-section" style={sliderStyle}>
+    <section className="main-slider-section" style={{ background: bg }}>
       <div className="slider-container">
-        {slides.map((slide, index) => (
-          <div
-            className={`slide-item ${index === current ? "active" : ""}`}
-            key={slide._id}
-          >
-            {/* <div className="slide-content-wrapper"> */}
+        {slides.map((slide, idx) => {
+          let className = "slide-item";
+          if (idx === current) className += " active";
+          else if (idx === prev) className += " inactive";
+          else return null;
+          return (
+            <div className={className} key={slide._id}>
+              <div className="slide-image-container">
+                <img src={slide.imageCover} alt={slide.name} className="slide-main-image" />
+              </div>
               <div className="slide-text">
                 <h3 className="slide-promo-title">عروض لا تقاوم!</h3>
                 <h2 className="slide-product-name">{slide.name}</h2>
                 <p className="slide-product-desc">
-                  خصم يصل إلى{" "}
-                  {slide.originalPrice ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100) : 0}%!
+                  خصم يصل إلى {slide.originalPrice ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100) : 0}%!
                   اكتشف الجودة والفخامة بأفضل الأسعار.
                 </p>
-                <Link to={`/product/${slide._id}`} className="shop-now-btn">
-                  تسوق الآن <i className="fas fa-arrow-left"></i>
-                </Link>
+                <Link to={`/product/${slide._id}`} className="shop-now-btn">تسوق الآن <i className="fa-solid fa-arrow-left" style={{marginRight: "10px"}}></i></Link>
               </div>
-              <div className="slide-image-container">
-                <img
-                  src={slide.imageCover}
-                  alt={slide.name}
-                  className="slide-main-image"
-                  style={{ width: 320, height: 320, objectFit: 'contain', borderRadius: 16, background: '#f6f6f6', display: 'block', margin: '0 auto' }}
-                />
-                 {slide.originalPrice && (
-                  <div className="price-badge">
-                    <span className="old-price">{slide.originalPrice} ج.م</span>
-                    <span className="new-price">{slide.price} ج.م</span>
-                  </div>
-                )}
-              </div>
-            {/* </div> */}
-          </div>
-        ))}
+            </div>
+          );
+        })}
+        <button className="slider-nav prev" onClick={prevSlide}><i className="fa-solid fa-chevron-left"></i></button>
+        <button className="slider-nav next" onClick={nextSlide}><i className="fa-solid fa-chevron-right"></i></button>
       </div>
-
-      <button className="slider-nav prev" onClick={prevSlide}>
-        <i className="fas fa-chevron-left"></i>
-      </button>
-      <button className="slider-nav next" onClick={nextSlide}>
-        <i className="fas fa-chevron-right"></i>
-      </button>
-
-      {/* أزرار التنقل بين الصفحات */}
-      <div className="slider-pagination" style={{ textAlign: 'center', marginTop: 16 }}>
-      </div>
-    </div>
+    </section>
   );
-} 
+}

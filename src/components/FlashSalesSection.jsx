@@ -310,16 +310,42 @@ export default function FlashSalesSection() {
             </span>
           )}
         </div>
+        <div className="d-flex align-items-center gap-2 slider-arrows-best-sellers">
+          <button
+            className="btn btn-light rounded-circle p-3 scroll-btn scroll-left"
+            onClick={scrollToPrev}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transition: 'all 0.3s ease',
+              zIndex: 10
+            }}
+          >
+          <i className="fas fa-chevron-right"></i>
+          </button>
+          <button
+            className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"
+            onClick={scrollToNext}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            style={{
+              transition: 'all 0.3s ease',
+              zIndex: 10
+            }}
+          >
+            <i className="fas fa-chevron-left"></i>
+          </button>
+        </div>
       </div>
 
       {/* قائمة قابلة للتمرير */}
       <div
-        className="scrollable-products-container ms-lg-5 mb-5 position-relative"
+        className="scrollable-products-container ms-lg-5 mb-5"
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
         {/* أزرار التمرير */}
-        <button
+        {/* <button
           className="btn btn-light rounded-circle p-3 scroll-btnm scroll-left flashsales-arrow-mobile"
           onClick={scrollToPrev}
           onMouseEnter={handleMouseEnter}
@@ -340,7 +366,7 @@ export default function FlashSalesSection() {
           }}
         >
           <i className="fas fa-chevron-right"></i>
-        </button>
+        </button> */}
 
         {products.length === 0 && !isLoading ? (
           <div className="text-center py-5">
