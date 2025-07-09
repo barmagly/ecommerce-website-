@@ -46,15 +46,8 @@ export default function MainSlider() {
   ];
   const bg = backgrounds[current % backgrounds.length];
 
-  if (loading) {
-    return (
-      <div className="main-slider-placeholder">
-        <div className="spinner-border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="container py-5 text-center"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">جاري التحميل...</span></div></div>;
+
 
   if (error) {
     return (
@@ -92,7 +85,7 @@ export default function MainSlider() {
                   خصم يصل إلى {slide.originalPrice ? Math.round(((slide.originalPrice - slide.price) / slide.originalPrice) * 100) : 0}%!
                   اكتشف الجودة والفخامة بأفضل الأسعار.
                 </p>
-                <Link to={`/product/${slide._id}`} className="shop-now-btn">تسوق الآن <i className="fa-solid fa-arrow-left" style={{marginRight: "10px"}}></i></Link>
+                <Link to={`/product/${slide._id}`} className="shop-now-btn">تسوق الآن <i className="fa-solid fa-arrow-left" style={{ marginRight: "10px" }}></i></Link>
               </div>
             </div>
           );

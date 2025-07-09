@@ -2415,7 +2415,7 @@ const Products = () => {
                 </TableHead>
                 <TableBody>
                   <AnimatePresence>
-                    {products.map((product, index) => (
+                    {filterProducts.map((product, index) => (
                       <motion.tr
                         key={product._id}
                         component={TableRow}

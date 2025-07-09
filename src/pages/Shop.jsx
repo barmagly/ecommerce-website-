@@ -189,11 +189,17 @@ export default function Shop() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/api/products/category/${id}`)
-      setFilteredProducts(Array.isArray(response.data) ? response.data : response.data.products || [])
+      const response = await axios.get(`${API_URL}/api/products/filter?category=${id}&page=${pagination.page}&limit=${pagination.limit}`);
+      setFilteredProducts(Array.isArray(response.data) ? response.data : response.data.data || [])
       setSearchParams({ category: name });
       setSelectedCategory(name);
-      console.log('🔎 Products for category', name, ':', response.data);
+      setPagination({
+        page: response.data.page || 1,
+        limit: response.data.limit || 12,
+        totalPages: response.data.totalPages || 1,
+        totalItems: response.data.totalItems || 0,
+        results: response.data.results || 0
+      });
     } catch (err) {
       setError(err.response?.data?.message || "حدث خطأ أثناء جلب المنتجات");
       console.error("Error fetching products:", err);
@@ -335,6 +341,7 @@ export default function Shop() {
     setLoading(true);
     setPagination(prev => ({ ...prev, page: newPage }));
     fetchProducts(showDiscounted, newPage, pagination.limit);
+    
     // Update URL with page number
     const newSearchParams = new URLSearchParams(searchParams);
     if (newPage > 1) {
@@ -425,7 +432,7 @@ export default function Shop() {
               rowSpacing={2}
             >
               <Image
-                src="/images/Placeholder.png"
+                src="https://cdn2.mageplaza.com/media/general/OnWj0is.png"
                 alt="جميع المنتجات"
                 roundedCircle
                 height={100}
@@ -492,12 +499,12 @@ export default function Shop() {
             >
               الأحدث
             </button>
-            <button
+            {/* <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'bestselling' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('bestselling')}
             >
               الأكثر مبيعًا
-            </button>
+            </button> */}
             <button
               className={`btn btn-outline-dark btn-sm ${sortOption === 'topRated' ? 'btn-dark text-light' : ''}`}
               onClick={() => handleSort('topRated')}
