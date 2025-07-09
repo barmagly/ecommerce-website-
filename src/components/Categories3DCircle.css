@@ -26,7 +26,7 @@
   align-items: center;
   margin: 0 auto;
   left: 0 !important;
-  transform: translateX(-40px) !important;
+  /* transform: translateX(-40px) !important; */
 }
 .categories-3d-center {
   position: absolute;
@@ -338,10 +338,12 @@
   
   .categories-3d-arrow.right {
     right: -90px !important;
+    left: auto !important;
   }
   
   .categories-3d-arrow.left {
     left: -90px !important;
+    right: auto !important;
   }
   .categories-3d-image img {
     width: 30px !important;
