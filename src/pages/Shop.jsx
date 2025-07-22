@@ -366,10 +366,20 @@ export default function Shop() {
     return (
       <>
         <Header />
-        <div className="container py-5 text-center">
+        <div className="container pt-4">
+        <Breadcrumb items={[{ label: "المتجر", to: "/shop" }]} />
+        </div>
+        <div className="text-center">
+          <div>
           {[...Array(10)].map((_, index) => (
-            <Skeleton key={index} variant="rounded" width='25%' height='300px' style={{ display: 'inline-block', margin: '0 8px' }} />
+            <Skeleton key={index} variant="circular" width='100px' height='100px' style={{ display: 'inline-block', margin: '0 8px' }} />
           ))}
+          </div>
+          <div className="mt-4">
+            {[...Array(10)].map((_, index) => (
+            <Skeleton key={index} variant="rounded" width='250px' height='350px' style={{ display: 'inline-block', margin: '0 8px' }} />
+          ))}
+          </div>
         </div>
         <Footer />
       </>
