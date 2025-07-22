@@ -6,7 +6,7 @@ import Footer from "../components/Footer";
 import ShopFilters from "../components/ShopFilters";
 import ShopProducts from "../components/ShopProducts";
 import Breadcrumb from "../components/Breadcrumb";
-import { Box, Grid, Typography, Checkbox, FormControlLabel, Pagination, FormControl, Select, MenuItem } from "@mui/material";
+import { Box, Grid, Typography, Checkbox, FormControlLabel, Pagination, FormControl, Select, MenuItem, Skeleton } from "@mui/material";
 import { Image } from "react-bootstrap";
 import "./Shop.css";
 import { frontendAPI } from '../services/api';
@@ -341,7 +341,7 @@ export default function Shop() {
     setLoading(true);
     setPagination(prev => ({ ...prev, page: newPage }));
     fetchProducts(showDiscounted, newPage, pagination.limit);
-    
+
     // Update URL with page number
     const newSearchParams = new URLSearchParams(searchParams);
     if (newPage > 1) {
@@ -367,9 +367,9 @@ export default function Shop() {
       <>
         <Header />
         <div className="container py-5 text-center">
-          <div className="spinner-border text-danger" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
-          </div>
+          {[...Array(10)].map((_, index) => (
+            <Skeleton key={index} variant="rounded" width='25%' height='300px' style={{ display: 'inline-block', margin: '0 8px' }} />
+          ))}
         </div>
         <Footer />
       </>

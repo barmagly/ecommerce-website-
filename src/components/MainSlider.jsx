@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { getDiscountedProductsThunk } from "../services/Slice/product/product";
 import "./MainSlider.css";
+import { Skeleton } from "@mui/material";
 
 export default function MainSlider() {
   const [current, setCurrent] = useState(0);
@@ -46,7 +47,13 @@ export default function MainSlider() {
   ];
   const bg = backgrounds[current % backgrounds.length];
 
-  if (loading) return <div className="container py-5 text-center"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">جاري التحميل...</span></div></div>;
+  if (loading) {
+    return ( 
+      <div className="container py-5 text-center">
+        <Skeleton variant="rounded" width='100%' height='350px' />
+      </div>
+    );
+  }
 
 
   if (error) {

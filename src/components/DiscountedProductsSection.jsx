@@ -4,6 +4,7 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import Slider from 'react-slick';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import { Box, Skeleton } from '@mui/material';
 
 export default function DiscountedProductsSection() {
   const [products, setProducts] = useState([]);
@@ -48,9 +49,32 @@ export default function DiscountedProductsSection() {
       }
     ]
   };
+  const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
-  if (loading) return <div className="container py-5 text-center"><div className="spinner-border text-danger" role="status"><span className="visually-hidden">جاري التحميل...</span></div></div>;
-  if (error) return <div className="container py-5 text-center"><div className="alert alert-danger">{error}</div></div>;
+  if (loading) {
+    return (
+      <div className="container py-5 text-center">
+        <Skeleton width={250} height={60} />
+        {isMobile ? (
+          <Skeleton variant="rounded" width='100%' height='300px' />
+        ) : (
+          <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+          </Box>
+        )}
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="container py-5 text-center">
+        <div className="alert alert-danger">{error}</div>
+      </div>
+    );
+  }
 
   return (
     products.length !== 0 ? (

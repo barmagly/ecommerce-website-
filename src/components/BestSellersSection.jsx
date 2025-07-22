@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { addToCartThunk } from '../services/Slice/cart/cart';
 import { frontendAPI } from '../services/api';
+import { Box, Skeleton } from '@mui/material';
 
 export default function BestSellersSection() {
   const dispatch = useDispatch();
@@ -96,7 +97,7 @@ export default function BestSellersSection() {
   // Helper function to calculate card width based on screen size
   const getCardWidth = useCallback((container) => {
     if (!container) return 300;
-    
+
     if (window.innerWidth <= 600) {
       // On mobile: card width = container width - margins
       return container.clientWidth - 40; // 20px margin on each side
@@ -291,6 +292,7 @@ export default function BestSellersSection() {
 
     return <div className="d-flex gap-1">{stars}</div>;
   };
+  const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
   return (
     <div className="bestsellers-section bestsellers-section-bg container" data-aos="fade-up">
@@ -332,9 +334,19 @@ export default function BestSellersSection() {
       )}
       {isLoading && (
         <div className="container py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
-          </div>
+          <Skeleton width={200} height={40} />
+          <Skeleton width={200} height={40} />
+          <Skeleton width={200} height={40} />
+          {isMobile ? (
+            <Skeleton variant="rounded" width='100%' height='300px' />
+          ) : (
+            <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+              <Skeleton variant="rounded" width='25%' height='300px' />
+              <Skeleton variant="rounded" width='25%' height='300px' />
+              <Skeleton variant="rounded" width='25%' height='300px' />
+              <Skeleton variant="rounded" width='25%' height='300px' />
+            </Box>
+          )}
         </div>
       )}
       <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
@@ -363,7 +375,7 @@ export default function BestSellersSection() {
               zIndex: 10
             }}
           >
-          <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-right"></i>
           </button>
           <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"

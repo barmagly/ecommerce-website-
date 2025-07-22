@@ -5,6 +5,7 @@ import { addToCartThunk } from '../services/Slice/cart/cart';
 import { toast } from 'react-toastify';
 import './FlashSalesShowcase.css';
 import { frontendAPI } from '../services/api';
+import { Box, Skeleton } from '@mui/material';
 
 export default function FlashSalesSection() {
   const dispatch = useDispatch();
@@ -93,7 +94,7 @@ export default function FlashSalesSection() {
   // Helper function to calculate card width based on screen size
   const getCardWidth = useCallback((container) => {
     if (!container) return 300;
-    
+
     if (window.innerWidth <= 600) {
       // On mobile: card width = container width - margins
       return container.clientWidth - 40; // 20px margin on each side
@@ -290,9 +291,15 @@ export default function FlashSalesSection() {
       )}
       {isLoading && (
         <div className="container py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
-          </div>
+          <Skeleton width={250} height={60} />
+          <Skeleton width={250} height={60} />
+          <Skeleton width={250} height={60} />
+          <Box display="flex" justifyContent="center" alignItems="center" gap={2}>
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+            <Skeleton variant="rounded" width='25%' height='300px' />
+          </Box>
         </div>
       )}
       <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
@@ -321,7 +328,7 @@ export default function FlashSalesSection() {
               zIndex: 10
             }}
           >
-          <i className="fas fa-chevron-right"></i>
+            <i className="fas fa-chevron-right"></i>
           </button>
           <button
             className="btn btn-light rounded-circle p-3 scroll-btn scroll-right"

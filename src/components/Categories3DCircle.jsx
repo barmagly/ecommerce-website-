@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCategoriesThunk } from '../services/Slice/categorie/categorie';
 import './Categories3DCircle.css';
+import { Skeleton } from '@mui/material';
 
 function useResponsiveCircle() {
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 700;
@@ -82,12 +83,9 @@ export default function Categories3DCircle() {
   if (loading || !categories || categories.length === 0) {
     return (
       <div className="categories-3d-section d-flex flex-column align-items-center justify-content-center categories-section-bg">
-        <h2 className="fw-bold mb-1">تصفح حسب التصنيف</h2>
+        <Skeleton width={250} height={60} style={{ textAlign: 'center' }} />
         <div className="text-center">
-          <div className="spinner-border text-danger" role="status">
-            <span className="visually-hidden">جاري التحميل...</span>
-          </div>
-          <p className="mt-2">جاري تحميل التصنيفات...</p>
+          <Skeleton variant="rounded" width='50%' height='300px' />
         </div>
       </div>
     );
@@ -165,7 +163,7 @@ export default function Categories3DCircle() {
                       </div>
                     )}
                   </div>
-                  <span className="fw-bold" style={{fontSize: isActive ? '.45rem' : '.45rem'}}>{cat.name}</span>
+                  <span className="fw-bold" style={{ fontSize: isActive ? '.45rem' : '.45rem' }}>{cat.name}</span>
                 </div>
               );
             })}
