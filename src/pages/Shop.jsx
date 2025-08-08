@@ -361,6 +361,7 @@ export default function Shop() {
     setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
     fetchProducts(showDiscounted, 1, newLimit);
   };
+  const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
   if (loading) {
     return (
@@ -371,7 +372,7 @@ export default function Shop() {
         </div>
         <div className="text-center">
           <div>
-          {[...Array(10)].map((_, index) => (
+          {[...Array(isMobile ? 3 : 10)].map((_, index) => (
             <Skeleton key={index} variant="circular" width='100px' height='100px' style={{ display: 'inline-block', margin: '0 8px' }} />
           ))}
           </div>

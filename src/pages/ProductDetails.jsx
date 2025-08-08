@@ -18,6 +18,7 @@ import Button from '@mui/material/Button';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 import SEO from "../components/SEO";
+import { Box, Grid, Skeleton } from "@mui/material";
 
 const PLACEHOLDER_IMG = "https://via.placeholder.com/300x200?text=No+Image";
 
@@ -270,15 +271,30 @@ export default function ProductDetails() {
   const handleGoToCart = () => {
     navigate('/cart');
   };
+  const isMobile = window.matchMedia("(max-width: 600px)").matches;
 
   if (productDetailsLoading) {
     return (
       <>
         <Header />
         <div className="container py-5 text-center">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">جاري تحميل بيانات المنتج...</span>
-          </div>
+          <Grid container spacing={2} direction={isMobile ? "column" : "row"}>
+            <Grid item size={6}>
+              <Skeleton variant="rounded" width={isMobile ? '350px' : "500px"} height='500px' />
+            </Grid>
+            <Grid item size={6} >
+              <Skeleton variant="rounded" width='300px' height='30px' sx={{ marginBottom: '30px' }} />
+              <Skeleton variant="rounded" width='400px' height='30px' sx={{ marginBottom: '30px' }} />
+              <Skeleton variant="rounded" width='450px' height='30px' sx={{ marginBottom: '30px' }} />
+              <Skeleton variant="rounded" width='550px' height='30px' sx={{ marginBottom: '30px' }} />
+              <Skeleton variant="rounded" width='550px' height='30px' sx={{ marginBottom: '30px' }} />
+              <Grid container spacing={10} sx={{ marginTop: isMobile ? "" : "20px" }}>
+                <Skeleton variant="rounded" width={isMobile ? '100%' : "100px"} height='50px' />
+                <Skeleton variant="rounded" width={isMobile ? '100%' : "100px"} height='50px' />
+                <Skeleton variant="rounded" width={isMobile ? '100%' : "100px"} height='50px' />
+              </Grid>
+            </Grid>
+          </Grid>
         </div>
         <Footer />
       </>
