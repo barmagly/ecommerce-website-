@@ -349,7 +349,7 @@ export default function BestSellersSection() {
           )}
         </div>
       )}
-      <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
+      {!isLoading && <div className="d-flex flex-column flex-md-row mb-5 ms-lg-5 gap-4 gap-md-5">
         <div className="d-flex flex-column flex-shrink-0 me-0 me-md-5 gap-3 pe-3 w-md-auto">
           <div className="d-flex align-items-center pe-1 gap-3">
             <div className="bg-danger rounded flashsales-bar"></div>
@@ -418,7 +418,7 @@ export default function BestSellersSection() {
             }
           }
         `}</style>
-      </div>
+      </div>}
 
       {/* قائمة قابلة للتمرير */}
       <div
